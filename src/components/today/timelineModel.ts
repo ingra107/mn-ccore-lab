@@ -90,8 +90,8 @@ export const pxForMeeting = (min: number): number =>
 // ⚠️ A GAP'S HEIGHT MUST STAY minToPx(min). It is not just a visual choice —
 // the gap's interior is a coordinate system. Six call sites convert pointer
 // pixels to minutes inside a gap through pxToMin: the list-drop math
-// (TodayDndContext), block move and resize (useTaskBlockDrag,
-// useTaskBlockGesture), task-block placement (packTaskBlocks below), and the
+// (TodayDndContext), block move and resize (useTaskBlockDrag),
+// task-block placement (packTaskBlocks below), and the
 // drop preview + in-unit now-line offset (TimelineGrid). Rendering a gap at
 // anything other than its linear height makes every one of those conversions
 // wrong, so a task dropped near the bottom of a long gap would be saved at the

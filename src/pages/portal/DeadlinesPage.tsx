@@ -1,7 +1,7 @@
-import { Fragment, useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { Fragment, useState, useMemo, useCallback, useEffect } from 'react'
 import { portalTitle } from '../../constants/pageLabels'
 import { Link } from 'react-router-dom'
-import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
+import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, GitBranch, Presentation, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
@@ -17,7 +17,6 @@ import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
-import { useQueryClient } from '@tanstack/react-query'
 import { useSelection } from '../MyTasks/hooks/useSelection'
 import TaskDetailPanel from '../../components/tasks/LazyTaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
@@ -394,215 +393,62 @@ export default function DeadlinesPage() {
 function DeadlineRow({ item }: { item: DeadlineItem }) {
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
-  const isDueSoon = item.daysUntil >= 0 && item.daysUntil <= 7
   const isMilestone = item.type === 'milestone'
 
-  const [editingNote, setEditingNote] = useState(false)
-  const [noteText, setNoteText] = useState(item.future_note || '')
-  const [saving, setSaving] = useState(false)
-  const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => {
-    if (editingNote) noteTextareaRef.current?.focus({ preventScroll: true })
-  }, [editingNote])
-  const queryClient = useQueryClient()
-
-  const handleSaveNote = useCallback(async () => {
-    setSaving(true)
-    try {
-      const res = await fetch(`/api/milestones/${item.id}/note`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: noteText }),
-      })
-      if (res.ok) {
-        setEditingNote(false)
-        queryClient.invalidateQueries({ queryKey: ['grants-timeline'] })
-      }
-    } finally {
-      setSaving(false)
-    }
-  }, [item.id, noteText, queryClient])
-
   return (
-    <div>
-      <div
-        className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-        style={{ opacity: isDone ? 0.85 : 1 }}
+    <div
+      className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+      style={{ opacity: isDone ? 0.85 : 1 }}
+    >
+      {/* Type icon */}
+      {isMilestone ? (
+        <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
+      ) : item.isOverdue ? (
+        <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--job-overdue)', flexShrink: 0 }} />
+      ) : (
+        <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', flexShrink: 0, opacity: 0.85 }} />
+      )}
+
+      {/* Title */}
+      <span
+        className="flex-1 text-sm truncate"
+        style={{
+          color: 'var(--ink)',
+          textDecoration: isDone ? 'line-through' : 'none',
+        }}
+        title={item.fullTitle}
       >
-        {/* Type icon */}
-        {isMilestone ? (
-          <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
-        ) : item.isOverdue ? (
-          <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--job-overdue)', flexShrink: 0 }} />
-        ) : (
-          <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', flexShrink: 0, opacity: 0.85 }} />
-        )}
+        {item.title}
+      </span>
 
-        {/* Title */}
-        <span
-          className="flex-1 text-sm truncate"
-          style={{
-            color: 'var(--ink)',
-            textDecoration: isDone ? 'line-through' : 'none',
-          }}
-          title={item.fullTitle}
-        >
-          {item.title}
+      {/* Project */}
+      {item.project && (
+        <span className="text-[10px] hidden sm:block" style={{ color: 'var(--sk-t3)', opacity: 0.85 }}>
+          {item.project}
         </span>
+      )}
 
-        {/* Add note link (milestones only, no existing note) */}
-        {isMilestone && !item.future_note && !isDone && !editingNote && (
-          <button
-            onClick={() => setEditingNote(true)}
-            className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
-            style={{
-              color: 'var(--sk-t3)',
-              opacity: 0.85,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            <Pencil {...ICON_PROPS} size={9} />
-            Note to future me
-          </button>
-        )}
+      {/* Priority */}
+      {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--sk-t2)', backgroundColor: item.priority === 'urgent' ? 'color-mix(in srgb, var(--job-stale) 10%, transparent)' : 'var(--sk-line)' }}>
+          {item.priority}
+        </span>
+      )}
 
-        {/* Project */}
-        {item.project && (
-          <span className="text-[10px] hidden sm:block" style={{ color: 'var(--sk-t3)', opacity: 0.85 }}>
-            {item.project}
-          </span>
-        )}
-
-        {/* Priority */}
-        {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--sk-t2)', backgroundColor: item.priority === 'urgent' ? 'color-mix(in srgb, var(--job-stale) 10%, transparent)' : 'var(--sk-line)' }}>
-            {item.priority}
-          </span>
-        )}
-
-        {/* Assignee */}
-        {person && (
-          <div style={{ width: 22, height: 22 }}>
-            <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
-          </div>
-        )}
-
-        {/* Date */}
-        <DueLabel
-          due={item.due_date}
-          status={item.status}
-          className="text-[11px] flex-shrink-0 w-16 text-right"
-          style={{ opacity: item.isOverdue ? 1 : 0.85 }}
-        />
-      </div>
-
-      {/* Future Me note callout — shown when milestone is due within 7 days */}
-      {isMilestone && item.future_note && isDueSoon && !isDone && (
-        <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'color-mix(in srgb, var(--job-milestone) 6%, transparent)',
-          border: `1px solid color-mix(in srgb, var(--job-milestone) 15%, transparent)`,
-          borderLeft: '3px solid var(--job-milestone)',
-        }}>
-          <div className="flex items-center justify-between gap-1.5 mb-1">
-            <div className="flex items-center gap-1.5">
-              <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--job-milestone)' }} />
-              <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--job-milestone)' }}>
-                Note from past you
-              </span>
-            </div>
-            <button
-              onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
-              aria-label="Edit future-me note"
-              className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <Pencil {...ICON_PROPS} size={9} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-            </button>
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
-            {item.future_note}
-          </p>
+      {/* Assignee */}
+      {person && (
+        <div style={{ width: 22, height: 22 }}>
+          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
         </div>
       )}
 
-      {/* Future Me note — compact indicator when not due soon */}
-      {isMilestone && item.future_note && !isDueSoon && !isDone && (
-        <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
-          <Clock {...ICON_PROPS} size={9} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
-          <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-            Future Me note attached
-          </span>
-          <button
-            onClick={() => { setNoteText(item.future_note || ''); setEditingNote(true) }}
-            className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <Pencil {...ICON_PROPS} size={8} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-          </button>
-        </div>
-      )}
-
-      {/* Inline note editor */}
-      {isMilestone && editingNote && (
-        <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
-          background: 'var(--sk-card)',
-          border: `1px solid var(--sk-line2)`,
-        }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Pencil {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)' }} />
-            <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--sk-t2)' }}>
-              Note to future me
-            </span>
-          </div>
-          <textarea
-            ref={noteTextareaRef}
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            placeholder="What should you remember when this milestone arrives? Context, decisions, things to watch for..."
-            rows={3}
-            style={{
-              fontSize: '12px',
-              color: 'var(--ink)',
-              lineHeight: 1.5,
-              width: '100%',
-              resize: 'vertical',
-              border: `1px solid var(--sk-line2)`,
-              borderRadius: 'var(--radius-md)',
-              padding: '8px 10px',
-              background: 'var(--cream)',
-              outline: 'none',
-            }}
-          />
-          <div className="flex items-center gap-2 mt-2 justify-end">
-            <button
-              onClick={() => { setEditingNote(false); setNoteText(item.future_note || '') }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
-              style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <X {...ICON_PROPS} size={11} />
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveNote}
-              disabled={saving}
-              className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
-              style={{
-                color: 'var(--sk-card)',
-                background: 'var(--job-accent)',
-                border: `1px solid var(--job-accent)`,
-                cursor: saving ? 'wait' : 'pointer',
-                opacity: saving ? 0.85 : 1,
-              }}
-            >
-              <Check {...ICON_PROPS} size={11} />
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Date */}
+      <DueLabel
+        due={item.due_date}
+        status={item.status}
+        className="text-[11px] flex-shrink-0 w-16 text-right"
+        style={{ opacity: item.isOverdue ? 1 : 0.85 }}
+      />
     </div>
   )
 }

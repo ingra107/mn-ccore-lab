@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
 import { useMeetingsApi, useMeetingCadence, useMeetingDetail, useProjects, useMeetingLinkedTasks } from '../hooks/useApiData'
 import type { MeetingRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
@@ -474,7 +473,6 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
 export default function Meetings() {
   usePageMeta('Meetings · MN-CCORE', 'MNCCORE biweekly meetings, decisions, and action items archive.')
 
-  const headerRef = useScrollReveal<HTMLDivElement>()
   // Desktop page height = viewport minus everything the shell puts above and
   // below this page (top bar, host tabs, main padding, status bar); see the hook.
   const pageRef = useRef<HTMLDivElement>(null)
@@ -725,7 +723,7 @@ export default function Meetings() {
           margins of .content-container from shrinking and centring it inside
           this flex column (it is the host-tab band's own left edge). */}
       <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0, width: '100%' }}>
-        <div ref={headerRef} className="fade-in-up">
+        <div>
           <PageHeader
             title="Meeting Hub"
             subtitle={pageSubtitle || undefined}

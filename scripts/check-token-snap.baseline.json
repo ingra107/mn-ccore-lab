@@ -1158,18 +1158,6 @@
     "sample": "padding: 24px → var(--sp-xl)"
   },
   {
-    "file": "src/pages/MyTasks/primitives.tsx",
-    "line": 14,
-    "kind": "spacing-px-literal",
-    "sample": "gap: 4px → var(--sp-xs)"
-  },
-  {
-    "file": "src/pages/MyTasks/primitives.tsx",
-    "line": 14,
-    "kind": "radius-px-literal",
-    "sample": "borderRadius: 4px → var(--radius-sm)"
-  },
-  {
     "file": "src/pages/MyTasks/views/ColumnsView.tsx",
     "line": 75,
     "kind": "spacing-px-literal",

@@ -195,7 +195,15 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // GET /api/project-directory, POST /api/projects/:id/join-request,
     // GET /api/join-requests, POST /api/join-requests/:id/decision, and
     // GET + PUT /api/projects/:id/listing (description and Browse switch).
-    expect(ROUTE_REGISTRY).toHaveLength(272)
+    // 267 as of 2026-10-14 -- dead-route sweep (-5): GET /api/milestones,
+    // POST /api/milestones/:id/note (its only caller, the Deadlines "Note to
+    // future me" button, posted a TASK id and always got 404), GET
+    // /api/projects/:slug/revisions, GET /api/deadline-cascade (bare; /all and
+    // /impact stay), GET /api/regulatory (list). No client.
+    // 265 as of 2026-10-14 -- Nick's rulings (-2): POST /api/pb/capture (every
+    // prod row since April was a test-harness row) and POST /api/regulatory
+    // (no client; regulatory_items and its rows stay, edited via POST :id).
+    expect(ROUTE_REGISTRY).toHaveLength(265)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
@@ -210,6 +218,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
       'POST /api/digest-email', 'POST /api/digest-email/send',
       'POST /api/mentee-milestones/:id/complete', 'POST /api/regulatory/:id/renew',
       'GET /api/digest/comment-counts',
+      'GET /api/milestones', 'POST /api/milestones/:id/note', 'GET /api/projects/:slug/revisions',
+      'GET /api/deadline-cascade', 'GET /api/regulatory',
+      'POST /api/pb/capture', 'POST /api/regulatory',
     ]
     const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
     for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)

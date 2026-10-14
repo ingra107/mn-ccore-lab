@@ -7,7 +7,7 @@
  *
  * Run: npx tsx scripts/pre-flight/persona-trainee.ts
  */
-import { openPersona, closePersona, section, pass, record, snap, goto, assertVisible } from './shared'
+import { openPersona, closePersona, section, pass, record, snap, goto, assertVisible, cleanupPost, leaveForResidueSweep } from './shared'
 
 async function main() {
   const s = await openPersona({
@@ -75,7 +75,7 @@ async function main() {
     if (ackTaskResp.ok()) {
       const tid = ((await ackTaskResp.json()) as { data?: { id: string } }).data?.id
       if (tid) {
-        s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+        cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
         // Reassign to a trainee-like slug (use an actual team_members slug if known; fall back to nick)
         await s.api.post(`/api/tasks/${tid}`, { data: { assignee: 'nick' } })
         const ackResp = await s.api.post(`/api/tasks/${tid}/acknowledge`, { data: {} })
@@ -90,7 +90,7 @@ async function main() {
     if (iResp.ok()) {
       const iid = ((await iResp.json()) as { data?: { id: string } }).data?.id
       if (iid) {
-        s.cleanup.push(async () => { await s.api.post(`/api/ideas/${iid}/delete`).catch(() => {}) })
+        leaveForResidueSweep(s, 'ideas', iid)
         pass(s, 'Trainee submitted idea')
       }
     }

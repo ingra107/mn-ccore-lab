@@ -1,10 +1,10 @@
-// GET /api/tasks and GET /api/task-updates/recent use pbTaskVisibilitySql, the
-// one PB-visibility rule for task rows (helpers.ts).
+// GET /api/tasks and GET /api/task-updates/recent read task rows through the
+// viewer-bound handle (api/lib/table-scope.ts), the one visibility rule for
+// task rows since #145 (2026-10-09).
 //
 // Both routes used to carry their own `project_id NOT IN (PB ids UNION PB
 // slugs)` fragment. That form failed OPEN on a task whose project_id matched
-// no project row, disagreeing with canSeePbProject (fails closed) and with
-// pbTaskVisibilitySql. The recent-updates form also let through an update
+// no project row, and the recent-updates form also let through an update
 // whose task row did not exist. Prod on 2026-09-24 had 6 deleted tasks with an
 // unknown project ref (0 live) and 0 orphan team updates, so the stricter rule
 // hides nothing a team member reads today.

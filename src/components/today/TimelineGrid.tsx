@@ -34,7 +34,7 @@ import { useMemo, useState, useCallback, type CSSProperties, type ReactNode } fr
 import { GripHorizontal } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import { useTaskBlockDrag } from './useTaskBlockDrag'
-import type { FreeWindow } from './useTaskBlockGesture'
+import type { FreeWindow } from './freeWindows'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
@@ -330,7 +330,7 @@ function AgendaGapRow({
   nowMin?: number
   /** All droppable gap windows for the day — enables cross-gap drag.
    *  Each entry includes startMin, endMin, and the slot to write when a task
-   *  lands there. Passed through to useTaskBlockGesture on each timed block. */
+   *  lands there. Passed through to useTaskBlockDrag on each timed block. */
   freeWindows: FreeWindow[]
   tasks: TaskRow[]
   state: TodayStateApi

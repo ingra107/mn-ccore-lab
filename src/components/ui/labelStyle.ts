@@ -9,10 +9,6 @@ export const LABEL_STYLE = {
   color: 'var(--sk-t1)',
 } as const
 
-// Neutral colour for the small icon beside a section label (one colour, not a
-// per-section rainbow).
-export const LABEL_ICON_COLOR = 'var(--sk-t3)'
-
 // A form-field or sub-section label inside a panel: Field voice (12px, 500, --sk-t2).
 export const FIELD_LABEL_STYLE = {
   display: 'block',

@@ -26,31 +26,9 @@ import { ActivityThread } from '../../activity/ActivityThread'
 import { ShowHiddenToggle } from '../../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../../activity/activityPermissions'
 import { filterMatchesKind, isRepliableKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
-import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'
 import { useDeleteActivityEntry, useEditActivityEntry, useDismissThread } from '../../../hooks/useMutations'
 import { activityQueryKey } from '../../../lib/askHermes'
-
-// ── Shape ────────────────────────────────────────────────────────────────────
-
-export type { ActivityEntryItemRow as ActivityEntryRow }
-
-// ActivityEntryRow alias for callers that import this type from here.
-// Prefer ActivityEntryItemRow from activityRender.tsx for new code.
-export interface ActivityEntryRowLegacy {
-  id: string
-  entity_type: string
-  entity_id: string
-  project_id: string | null
-  kind: StoredKind
-  visibility: 'team' | 'author'
-  actor_slug: string
-  body: string
-  mentions_json: string | null
-  update_type: UpdateType | null
-  metadata_json: string | null
-  created_at: string
-}
 
 // ── Feed filter pills ─────────────────────────────────────────────────────────
 

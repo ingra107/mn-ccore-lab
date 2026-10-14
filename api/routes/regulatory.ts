@@ -1,6 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
-import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
+import { json, error, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
+import { withExistingRowProject } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { safeRow } from '../lib/task-cols';
@@ -20,31 +20,6 @@ const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'o
 // (handleGetExpiringItems WHERE clause). Omitting them from VALID_STATUSES caused
 // validation to reject values the system itself writes.
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
-
-// GET /api/regulatory?project_id=
-// Rows come through the caller's handle: only the caller's projects.
-export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-
-  // A project the caller cannot see is a 403, not an empty list.
-  if (projectId) {
-    const block = await assertProjectVisible(request, env, projectId);
-    if (block) return block;
-  }
-
-  let query = `SELECT r.* FROM regulatory_items r WHERE 1=1`;
-  const params: string[] = [];
-
-  if (projectId) {
-    query += ' AND r.project_id = ?';
-    params.push(projectId);
-  }
-
-  query += ' ORDER BY CASE r.status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, r.expiration_date ASC, r.created_at DESC';
-
-  const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
-}
 
 // GET /api/regulatory/expiring?days=30
 export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
@@ -75,67 +50,6 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
   });
 
   return json({ data: items, count: items.length });
-}
-
-// POST /api/regulatory — create item
-// Z2.3 (2026-05-28): withProjectWrite wraps the resolve+visibility-gate so
-// bypass is impossible. The outer signature (request, user, env) is
-// unchanged for api/index.ts compatibility. The inner handler receives the
-// canonical projectId already resolved and PB-gated.
-export async function handleCreateRegulatoryItem(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  type CreateBody = {
-    project_id?: string;
-    item_type?: string;
-    title?: string;
-    protocol_number?: string;
-    approved_date?: string;
-    expiration_date?: string;
-    renewal_due?: string;
-    status?: string;
-    notes?: string;
-  };
-
-  const body = await request.json() as CreateBody;
-
-  if (!body.item_type) return error('item_type required', 400);
-  if (!body.title) return error('title required', 400);
-
-  if (!VALID_TYPES.includes(body.item_type as typeof VALID_TYPES[number])) {
-    return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
-  }
-
-  if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
-    return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
-  }
-
-  // withProjectWrite checks project_id presence (→ 400 if absent) + runs
-  // resolveAndGuardProject (→ 403/400 if hidden/unknown). Inner handler only
-  // runs when project is confirmed visible; receives the canonical projectId.
-  return withProjectWrite<CreateBody>(async (_req, e, resolvedProjectId, b) => {
-    const id = generateId();
-    const status = b.status || 'active';
-
-    await e.DB.prepare(
-      'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(
-      id,
-      resolvedProjectId,
-      b.item_type!,
-      b.title!,
-      b.protocol_number || null,
-      b.approved_date || null,
-      b.expiration_date || null,
-      b.renewal_due || null,
-      status,
-      b.notes || null,
-    ).run();
-
-    const actor = user.slug;
-    await logActivity(e, 'regulatory', `New regulatory item for ${b.project_id}: "${b.title}"`, actor, id, 'regulatory');
-
-    const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
-    return json({ data: created ? safeRow('regulatory_items', created) : null }, 201);
-  })(request, env, body);
 }
 
 // POST /api/regulatory/:id — update item

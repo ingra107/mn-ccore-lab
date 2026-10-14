@@ -10,7 +10,7 @@ const team: TeamMember[] = [
   { name: 'Nick Ingraham', initials: 'NI', role: 'pi', slug: 'nick-ingraham', email: 'ingra107@umn.edu' },
   { name: 'Casey Eddington', initials: 'CE', role: 'analyst', slug: 'casey-eddington', email: 'eddin022@umn.edu' },
   { name: 'Dana Reyes', initials: 'DR', role: 'fellow', slug: 'dana-reyes', email: 'reyes001@umn.edu' },
-  { name: 'kaur0147', initials: 'K', role: '', slug: 'kaur0147', email: 'kaur0147@umn.edu', autoCreated: true },
+  { name: 'kaur0147', initials: 'K', role: '', slug: 'kaur0147', email: 'kaur0147@umn.edu' },
 ]
 
 describe('resolveAttendeeViews', () => {

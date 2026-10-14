@@ -21,6 +21,7 @@ import {
   pass,
   bug,
   marker,
+  cleanupPost,
 } from './harness'
 
 interface NotificationRow {
@@ -216,10 +217,10 @@ async function main() {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
     for (const tid of createdTaskIds) {
-      s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+      cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
     }
     for (const slug of createdProjectSlugs) {
-      s.cleanup.push(async () => { await s.api.post(`/api/projects/${slug}/delete`).catch(() => {}) })
+      cleanupPost(s, `/api/projects/${slug}/delete`)
     }
     await closeSession(s)
   }

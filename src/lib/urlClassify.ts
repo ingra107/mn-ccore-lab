@@ -27,13 +27,6 @@ export function gmailKind(url: string): 'draft' | 'thread' | null {
 }
 
 /**
- * The Obsidian vault that maps to the Peripheral-Brain folder. Verified against
- * PB's own URI builder (scripts/today/utils.py → `?vault=Peripheral-Brain`).
- * Both machines open the same vault name; only the on-disk user dir differs.
- */
-const OBSIDIAN_VAULT = 'Peripheral-Brain'
-
-/**
  * Detect a NORMALIZED local path (forward slashes, no file://) that lives inside
  * the Peripheral-Brain Obsidian vault AND is a markdown note. Matches the vault
  * segment for ANY user dir — `/Users/ingra107/Peripheral-Brain/` (work) and
@@ -67,18 +60,6 @@ export function parseWikilink(value: string): { target: string; alias: string | 
   const target = m[1].trim().replace(/\.md$/i, '')
   if (!target) return null
   return { target, alias: m[2]?.trim() || null }
-}
-
-/**
- * Build `obsidian://open?vault=Peripheral-Brain&file=<vault-relative-path>` for
- * a markdown note inside the vault. The `file` value is the vault-relative path
- * (percent-encoded; `/` separators preserved so Obsidian resolves nested notes).
- */
-export function buildObsidianUri(vaultRelPath: string): string {
-  // encodeURIComponent escapes `/` to %2F; Obsidian wants the slashes intact
-  // for nested folders, so re-introduce them. Spaces → %20, other chars escaped.
-  const file = encodeURIComponent(vaultRelPath).replace(/%2F/gi, '/')
-  return `obsidian://open?vault=${encodeURIComponent(OBSIDIAN_VAULT)}&file=${file}`
 }
 
 /**

@@ -298,3 +298,20 @@ export const UNIQ = (): string => Math.random().toString(36).slice(2, 8)
 export function marker(kind: string): string {
   return `test_delete_deep_${kind}_${UNIQ()}`
 }
+
+/** Queue a cleanup POST that fails loud: a non-2xx throws, and closeSession
+ *  logs it. A swallowed 404 here once left test rows in prod because suites
+ *  posted to delete routes that do not exist. */
+export function cleanupPost(s: AuditSession, path: string, data?: unknown): void {
+  s.cleanup.push(async () => {
+    const r = await s.api.post(path, data === undefined ? undefined : { data })
+    if (!r.ok()) throw new Error(`POST ${path} -> HTTP ${r.status()}`)
+  })
+}
+
+/** Ideas, decisions, questions and meetings have no delete route. Their test
+ *  rows carry the test_delete_ prefix, and scripts/test-residue-cleanup.sql
+ *  removes them; this says so in the log instead of pretending to delete. */
+export function leaveForResidueSweep(s: AuditSession, table: string, id: string): void {
+  s.cleanup.push(async () => { log(s, `  left for scripts/test-residue-cleanup.sql: ${table} ${id}`) })
+}

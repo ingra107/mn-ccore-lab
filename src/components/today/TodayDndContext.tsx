@@ -6,7 +6,7 @@
 //   (b) HTML5 drag-and-drop (draggable/onDragStart/onDrop) for list→gap drops
 //       — replaced by dnd-kit PointerSensor + useDroppable() on gaps.
 //
-// KEPT: all coord→minute and snap math lives unchanged in useTaskBlockGesture.ts
+// KEPT: all coord→minute and snap math lives unchanged in useTaskBlockDrag.ts
 // and AgendaGapRow. Only the event/sensor plumbing changes here.
 //
 // KEPT: the resize strip in TimedTaskBlock stays as raw pointer events — dnd-kit
@@ -109,7 +109,7 @@ export function TodayDndContext({ children, state, tasks }: TodayDndContextProps
   const sensors = useSensors(
     useSensor(InputSafePointerSensor, {
       // 4px activation constraint — separates click-to-expand from drag-to-plan.
-      // Matches the prior 4px threshold in useTaskBlockGesture (raised to 8px for
+      // Matches the prior 4px threshold of the old pointer hook (raised to 8px for
       // move, but list drags only need 4px since click=expand is on the body not
       // the grip handle).
       activationConstraint: { distance: 4 },

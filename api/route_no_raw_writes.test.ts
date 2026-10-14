@@ -25,7 +25,6 @@ import { describe, it, expect } from 'vitest'
 const routeFiles = [
   'api/routes/tasks.ts',
   'api/routes/projects.ts',
-  'api/routes/pb-sector.ts',
 ]
 
 // Raw write patterns that are BANNED outside mutations.ts.

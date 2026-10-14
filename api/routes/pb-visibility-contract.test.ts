@@ -49,13 +49,10 @@ import {
   handleGetUpcomingConferences,
 } from './conferences'
 import {
-  handleGetRegulatoryItems,
   handleGetExpiringItems,
-  handleCreateRegulatoryItem,
   handleUpdateRegulatoryItem,
 } from './regulatory'
 import {
-  handleGetCascade,
   handleGetImpact,
   handleGetAllCascades,
 } from './deadline-cascade'
@@ -315,19 +312,11 @@ const patternACases: PatternACase[] = [
     label: 'GET /api/conferences?project_id= (handleGetConferences)',
     call: (c, r, env) => handleGetConferences(q('?project_id={ref}', r), c.get(), env),
   },
-  {
-    // NOTE: handleUpdateConference was moved from Pattern A to Pattern W
-    // (codex final-audit #2, 2026-05-28) because it uses withExistingRowProject,
-    // which returns hiddenResource() 404 for hidden rows — not 403. The Pattern A
-    // loop asserts 403 for all cases; this handler now belongs in Pattern W with
-    // blockedStatus: 404 where the per-case expected status is respected.
-    label: 'GET /api/regulatory?project_id= (handleGetRegulatoryItems)',
-    call: (c, r, env) => handleGetRegulatoryItems(q('?project_id={ref}', r), c.get(), env),
-  },
-  {
-    label: 'GET /api/deadline-cascade?project_id= (handleGetCascade)',
-    call: (c, r, env) => handleGetCascade(q('?project_id={ref}', r), c.get(), env),
-  },
+  // NOTE: handleUpdateConference was moved from Pattern A to Pattern W
+  // (codex final-audit #2, 2026-05-28) because it uses withExistingRowProject,
+  // which returns hiddenResource() 404 for hidden rows — not 403. The Pattern A
+  // loop asserts 403 for all cases; this handler now belongs in Pattern W with
+  // blockedStatus: 404 where the per-case expected status is respected.
   {
     label: 'GET /api/tasks/:id/comments (handleGetTaskComments)',
     call: (c, r, env) => handleGetTaskComments(r.task, c.get(), env),
@@ -543,7 +532,7 @@ const patternWriteCases: PatternWriteCase[] = [
   },
   // Project direct writes (T3.1 — F04 security fix, 2026-05-28)
   // handleUpdateProject and handleDeleteProject previously had no PI gate.
-  // They now call assertProjectVisible / canSeePbProjectRow on the existing row.
+  // They now call assertProjectVisible on the existing row.
   {
     label: 'POST /api/projects/:slug (handleUpdateProject) — T3.1 PI gate',
     touches: ['projects'],
@@ -599,11 +588,6 @@ const patternWriteCases: PatternWriteCase[] = [
     call: (c, r, env) => handleDeleteConference(r.conf, c.post({}), c.user, env),
   },
   // Lifecycle CRUD — regulatory
-  {
-    label: 'POST /api/regulatory (handleCreateRegulatoryItem)',
-    touches: ['regulatory_items'],
-    call: (c, r, env) => handleCreateRegulatoryItem(c.post({ project_id: r.slug, item_type: 'irb', title: 'T' }), c.user, env),
-  },
   {
     // withExistingRowProject: both "row missing" and "row hidden" return hiddenResource() 404.
     label: 'POST /api/regulatory/:id (handleUpdateRegulatoryItem)',
@@ -701,7 +685,7 @@ describe('Project visibility contract — Pattern W (writes)', () => {
   }
 })
 
-// ── Pattern B: canSeePb filter routes (body-content assertions) ────────────────
+// ── Pattern B: filtered feed routes (body-content assertions) ──────────────────
 //
 // Codex final review insisted on inspecting the result BODY, not the status.
 // The old stub returned its canned rows verbatim from every .all(), so it could
@@ -734,7 +718,7 @@ const patternBCases: PatternBCase[] = [
     callNonPi: (env) => handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), env, false),
     callPi:    (env) => handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), env, true),
   },
-  // Fix 2a: GET /api/tasks (list) is now gated by canSeePb flag (was unguarded)
+  // Fix 2a: GET /api/tasks (list) is filtered by the viewer-bound handle (was unguarded)
   {
     label: 'GET /api/tasks (list, handleGetTasks) — Fix 2a: PB-project tasks filtered for non-PI',
     callNonPi: (env) => handleGetTasks(new URL('https://x/api/tasks'), env, false),
@@ -749,11 +733,6 @@ const patternBCases: PatternBCase[] = [
     label: 'GET /api/conferences/upcoming — filtered for non-PI',
     callNonPi: (env) => handleGetUpcomingConferences(env),
     callPi:    (env) => handleGetUpcomingConferences(env),
-  },
-  {
-    label: 'GET /api/regulatory (cross-project) — filtered for non-PI',
-    callNonPi: (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), nonPiRequest(), env),
-    callPi:    (env) => handleGetRegulatoryItems(new URL('https://x/api/regulatory'), piRequest(), env),
   },
   {
     label: 'GET /api/regulatory/expiring — filtered for non-PI',
@@ -830,7 +809,9 @@ describe('PB-visibility contract — registry drift guard', () => {
     //     now returns 404 not 403, so it can't use the shared 403-asserting loop)
     // -1: handleUpdateConference moved to Pattern W with blockedStatus:404 (codex #2,
     //     2026-05-28; uses withExistingRowProject so hidden row → 404 not 403)
-    expect(patternACases.length).toBeGreaterThanOrEqual(13) // -1: GET /api/tasks/:id/updates deleted 2026-10-09
+    // -1: GET /api/tasks/:id/updates deleted 2026-10-09
+    // -2: GET /api/regulatory and bare GET /api/deadline-cascade deleted 2026-10-14
+    expect(patternACases.length).toBeGreaterThanOrEqual(12)
   })
 
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
@@ -847,7 +828,9 @@ describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {
     // 3 originals + 5 new cross-project feeds + 1 Fix 2a (handleGetTasks list) = 9
     // + #8842 R6 meeting detail + calendar events = 11
-    expect(patternBCases.length).toBeGreaterThanOrEqual(10) // -1: GET /api/revisions/active deleted 2026-10-09
+    // -1: GET /api/revisions/active deleted 2026-10-09
+    // -1: GET /api/regulatory (cross-project list) deleted 2026-10-14
+    expect(patternBCases.length).toBeGreaterThanOrEqual(9)
   })
 })
 
@@ -941,22 +924,6 @@ describe('a task with no project is visible only to the people it names', () => 
 describe('project-scoped reads answer 400 when project_id is missing (no visibility question asked)', () => {
   it('GET /api/submissions', async () => {
     expect((await handleGetSubmissions(new URL('https://x/api/submissions'), nonPiRequest(), as(NON_PI, world()))).status).toBe(400)
-  })
-  it('GET /api/deadline-cascade', async () => {
-    expect((await handleGetCascade(new URL('https://x/api/deadline-cascade'), nonPiRequest(), as(NON_PI, world()))).status).toBe(400)
-  })
-})
-
-describe('GET /api/deadline-cascade?project_id= drops edges to nodes the caller cannot see', () => {
-  it('an edge from a team node to the hidden project\'s task is not returned to a non-member', async () => {
-    const w = world((db) => insertRow(db, 'deadline_dependencies', { id: 'dep-x', upstream_id: TEAM.task, upstream_type: 'task', downstream_id: PB.task, downstream_type: 'task' }))
-    const res = await handleGetCascade(q('?project_id={ref}', TEAM), nonPiRequest(), as(NON_PI, w))
-    expect(res.status).toBe(200)
-    const text = await res.text()
-    expect(text).not.toContain(PB.task)
-    // Nick, a member of both, gets the edge.
-    const nick = await handleGetCascade(q('?project_id={ref}', TEAM), piRequest(), as(PI, w))
-    expect(await nick.text()).toContain(PB.task)
   })
 })
 

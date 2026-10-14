@@ -235,13 +235,6 @@ test.describe('API — Missing write endpoints', () => {
     expect([200, 201]).toContain(res.status())
   })
 
-  test('API POST: PB capture (quick capture)', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/pb/capture`, {
-      data: { text: 'INSPECTION capture — delete', type: 'task' }
-    })
-    expect([200, 201]).toContain(res.status())
-  })
-
   test('API POST: Create dependency between tasks', async ({ request }) => {
     const tasks = await (await request.get(`${BASE}/api/tasks?limit=2`)).json()
     if (tasks.data?.length < 2) { test.skip(); return }
