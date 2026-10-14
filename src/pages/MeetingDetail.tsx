@@ -627,7 +627,7 @@ export default function MeetingDetail() {
                   >
                     Cancel
                   </button>
-                  <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                  <span className="kbd-hint" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                     Ctrl+Enter to save · Esc to cancel
                   </span>
                 </div>

@@ -671,14 +671,16 @@ function Clock() {
     month: 'long',
     day: 'numeric',
   })
-  // Phone: short date so the clock stays on one line beside the scene dots.
+  // Phone: short date, stacked under the time. On one line beside six scene
+  // dots it needed ~387px of a 342px row and ran off the screen ("WED, OCT"
+  // with the day cut, phone audit 2026-10-14).
   const dateShort = now.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
   })
   return (
-    <div className="flex items-baseline gap-2 sm:gap-4 whitespace-nowrap">
+    <div className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-baseline sm:gap-4 whitespace-nowrap">
       <span
         className="tabular-nums"
         style={{

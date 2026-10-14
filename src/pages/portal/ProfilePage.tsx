@@ -210,7 +210,7 @@ export default function ProfilePage() {
       <section>
         <Link
           to={PATHS.settings}
-          className="inline-flex items-center gap-2 text-xs"
+          className="inline-link inline-flex items-center gap-2 text-xs"
           style={{ color: 'var(--job-accent)' }}
         >
           <SettingsIcon {...ICON_PROPS} size={14} /> Open full Settings (theme, lab thresholds, etc.)

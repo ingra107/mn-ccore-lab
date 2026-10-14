@@ -255,7 +255,7 @@ export default function SettingsPage() {
       {/* Team Directory shortcut: a plain link, no card. */}
       <Link
         to={PATHS.team}
-        className="inline-flex items-center gap-1.5 mb-4 text-[13px] hover:underline"
+        className="inline-link inline-flex items-center gap-1.5 mb-4 text-[13px] hover:underline"
         style={{ color: 'var(--sk-t2)', textDecoration: 'none' }}
       >
         Team directory

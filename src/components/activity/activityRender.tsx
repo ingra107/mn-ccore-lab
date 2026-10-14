@@ -517,7 +517,7 @@ function InlineCommentEditor({ initial, onSave, onCancel }: { initial: string; o
         <button type="button" onClick={onCancel} className="cursor-pointer" style={{ fontSize: META_FONT_SIZE, color: 'var(--slate)', background: 'transparent', border: 'none', padding: '3px 6px' }}>
           Cancel
         </button>
-        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>⌘↵ save · Esc cancel</span>
+        <span className="kbd-hint" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>⌘↵ save · Esc cancel</span>
       </div>
     </div>
   )
