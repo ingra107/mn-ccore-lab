@@ -11,10 +11,13 @@ interface StatusBarProps {
 // indicator is gone. The bar now just hosts the keyboard-shortcuts hint.
 
 export default function StatusBar({ onOpenShortcuts }: StatusBarProps) {
+  // kbd-hint: the bar holds only a keyboard hint, so it is hidden on touch
+  // screens (on a phone it rendered under the tab bar as an 11px target).
   return (
     <div
       role="status"
       aria-label="Status bar"
+      className="kbd-hint"
       style={{
         height: '24px',
         display: 'flex',

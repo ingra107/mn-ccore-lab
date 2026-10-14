@@ -54,8 +54,22 @@ interface PBSessionTotals {
   total_commits: number;
 }
 
-// GET /api/pb/sessions/stats
-export async function handlePBSessionStats(env: Env): Promise<Response> {
+// GET /api/pb/sessions/stats?project=&since=
+// project/since are the SAME filters GET /api/pb/sessions takes, so the Session
+// History tiles and the "N of M" count describe the range the list shows (the
+// tiles used to read all-time totals beside a 7-day list). per_project stays
+// unfiltered: it feeds the project picker, which must list every project.
+export async function handlePBSessionStats(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url)
+  const project = url.searchParams.get('project') || ''
+  const since = url.searchParams.get('since') || ''
+  const conditions: string[] = []
+  const binds: unknown[] = []
+  if (project) { conditions.push('project_name = ?'); binds.push(project) }
+  if (since) { conditions.push('started_at >= ?'); binds.push(since) }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const andWhere = conditions.length ? `AND ${conditions.join(' AND ')}` : ''
+
   const [totals, perProject, perDay] = await Promise.all([
     // Aggregate totals
     env.DB.prepare(`
@@ -67,7 +81,8 @@ export async function handlePBSessionStats(env: Env): Promise<Response> {
         COALESCE(SUM(actions_count), 0) as total_actions,
         COALESCE(SUM(commits_count), 0) as total_commits
       FROM pb_sessions
-    `).first<PBSessionTotals>(),
+      ${where}
+    `).bind(...binds).first<PBSessionTotals>(),
 
     // Sessions per project (top 20)
     env.DB.prepare(`
@@ -83,10 +98,10 @@ export async function handlePBSessionStats(env: Env): Promise<Response> {
     env.DB.prepare(`
       SELECT date(started_at) as day, COUNT(*) as count, SUM(duration_minutes) as total_minutes
       FROM pb_sessions
-      WHERE started_at >= date('now', '-30 days')
+      WHERE started_at >= date('now', '-30 days') ${andWhere}
       GROUP BY date(started_at)
       ORDER BY day ASC
-    `).all(),
+    `).bind(...binds).all(),
   ])
 
   return json({

@@ -170,13 +170,21 @@ export default function SessionHistory() {
     project: projectFilter || undefined,
     since: sinceFilter || undefined,
   })
-  const { data: stats, isLoading: statsLoading } = usePBSessionStats()
+  // Range stats share the list's filter, so the tiles and the "N of M" count
+  // describe the range on screen. The project picker reads the unfiltered set.
+  // No filter = the same all-time query (one cache entry, one request).
+  const { data: stats, isLoading: statsLoading } = usePBSessionStats(
+    projectFilter || sinceFilter
+      ? { project: projectFilter || undefined, since: sinceFilter || undefined }
+      : undefined,
+  )
+  const { data: allStats } = usePBSessionStats()
 
   // Derive project list for dropdown
   const projectNames = useMemo(() => {
-    if (!stats?.per_project) return []
-    return stats.per_project.map(p => p.project_name).filter(Boolean).sort()
-  }, [stats])
+    if (!allStats?.per_project) return []
+    return allStats.per_project.map(p => p.project_name).filter(Boolean).sort()
+  }, [allStats])
 
   // Filter by search term
   const filteredSessions = useMemo(() => {
@@ -246,7 +254,9 @@ export default function SessionHistory() {
     <PageContainer>
       <PageHeader
         title="Session History"
-        subtitle={stats ? `${filteredSessions.length}${searchTerm ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
+        // The list is capped (limit 100); say so whenever it shows fewer rows
+        // than the range holds, not only while searching.
+        subtitle={stats ? `${filteredSessions.length}${searchTerm || filteredSessions.length < stats.total_sessions ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
       >
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -301,7 +311,7 @@ export default function SessionHistory() {
         <div style={{ marginBottom: 'var(--sp-xl)' }}>
           <StatRow
             stats={[
-              { label: 'Total sessions', value: stats.total_sessions },
+              { label: activePreset === 'all' ? 'Total sessions' : `Sessions, last ${activePreset}`, value: stats.total_sessions },
               { label: 'Total hours', value: stats.total_hours, sub: `${stats.total_commits} commits` },
               { label: 'Avg session', value: formatDuration(stats.avg_minutes) },
               { label: 'This week', value: stats.sessions_this_week, sub: `${stats.total_actions} actions total` },
@@ -333,11 +343,11 @@ export default function SessionHistory() {
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible">
           {/* Table header */}
+          {/* .sess-grid (index.css) owns the columns: six on a wide screen,
+              stacked on a phone, where the header row hides. */}
           <div
+            className="sess-grid sess-head"
             style={{
-              display: 'grid',
-              gridTemplateColumns: '100px 80px 1fr 2fr 60px 60px',
-              gap: 'var(--sp-sm)',
               padding: 'var(--sp-sm) var(--sp-md)',
               fontSize: 10,
               fontWeight: 500,
@@ -393,10 +403,8 @@ export default function SessionHistory() {
                       key={session.id}
                       variants={staggerItem}
                       data-session-idx={globalIdx}
+                      className="sess-grid"
                       style={{
-                        display: 'grid',
-                        gridTemplateColumns: '100px 80px 1fr 2fr 60px 60px',
-                        gap: 'var(--sp-sm)',
                         padding: '6px 12px',
                         fontSize: 13,
                         color: 'var(--ink)',
@@ -406,24 +414,23 @@ export default function SessionHistory() {
                         outlineOffset: -1,
                         borderRadius: 'var(--radius-sm)',
                         minHeight: 36,
-                        alignItems: 'center',
                         transition: 'background-color 0.15s',
                       }}
                       onMouseEnter={() => setFocusedIndex(globalIdx)}
                     >
                       {/* Time */}
-                      <div style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
+                      <div className="sg-time" style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
                         <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
                         {formatTime(session.started_at)}
                       </div>
 
                       {/* Duration */}
-                      <div style={{ fontSize: 12, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                      <div className="sg-dur" style={{ fontSize: 12, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                         {formatDuration(session.duration_minutes)}
                       </div>
 
                       {/* Project */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <div className="sg-proj" style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                         {session.project_name ? (
                           <>
                             <span
@@ -446,12 +453,10 @@ export default function SessionHistory() {
 
                       {/* Summary */}
                       <div
+                        className="sg-sum"
                         style={{
                           fontSize: 12,
                           color: 'var(--slate)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
                         }}
                         title={session.summary || ''}
                       >
@@ -459,7 +464,7 @@ export default function SessionHistory() {
                       </div>
 
                       {/* Actions count */}
-                      <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+                      <div className="sg-act" style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.actions_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                             <Zap {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
@@ -471,7 +476,7 @@ export default function SessionHistory() {
                       </div>
 
                       {/* Commits count */}
-                      <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+                      <div className="sg-com" style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.commits_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                             <GitCommit {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
@@ -497,7 +502,7 @@ export default function SessionHistory() {
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}
           </span>
-          <span style={{ marginLeft: 'auto' }}>
+          <span className="kbd-hint" style={{ marginLeft: 'auto' }}>
             J/K to navigate rows
           </span>
         </div>

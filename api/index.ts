@@ -686,7 +686,7 @@ defineRoute({
   path: '/api/pb/sessions/stats',
   auth: 'pi',
   entity: 'pb',
-  handler: (c) => handlePBSessionStats(E(c)),
+  handler: (c) => handlePBSessionStats(R(c), E(c)),
 });
 defineRoute({
   method: 'GET',

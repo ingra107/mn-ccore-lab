@@ -1816,13 +1816,14 @@ export function usePBSessions(params?: { limit?: number; project?: string; since
   })
 }
 
-export function usePBSessionStats() {
+/** All-time stats with no params; Session History passes its project/since filter. */
+export function usePBSessionStats(params?: { project?: string; since?: string }) {
   const enabled = usePiOnlyEnabled()
   return useQuery({
-    queryKey: ['pb-session-stats'],
+    queryKey: params ? ['pb-session-stats', params] : ['pb-session-stats'],
     enabled,
     queryFn: async () => {
-      const res = await fetchPBSessionStats()
+      const res = await fetchPBSessionStats(params)
       return res.data
     },
     staleTime: STALE_TIME,

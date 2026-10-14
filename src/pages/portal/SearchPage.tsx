@@ -45,21 +45,22 @@ interface SearchResult {
   details?: Record<string, any> | null
 }
 
-const typeConfig: Record<string, { icon: typeof Search; color: string; label: string }> = {
-  task: { icon: SquareCheck, color: 'var(--sk-t3)', label: 'Task' },
-  project: { icon: FolderKanban, color: 'var(--sk-t3)', label: 'Project' },
-  meeting: { icon: Users, color: 'var(--sk-t3)', label: 'Meeting' },
-  idea: { icon: Lightbulb, color: 'var(--sk-t3)', label: 'Idea' },
-  note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Note' },
-  task_note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Task note' },
-  comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Comment' },
-  task_comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Task comment' },
-  decision: { icon: Scale, color: 'var(--sk-t3)', label: 'Decision' },
-  file: { icon: Paperclip, color: 'var(--slate)', label: 'File' },
-  publication: { icon: BookOpen, color: 'var(--sk-t3)', label: 'Publication' },
-  grant: { icon: Banknote, color: 'var(--sk-t3)', label: 'Grant' },
-  artifact: { icon: FileText, color: 'var(--sk-t3)', label: 'Artifact' },
-  activity: { icon: Activity, color: 'var(--slate)', label: 'Activity' },
+// `plural` is required so no type can fall back to `${label}s` (which gave 'Activitys').
+const typeConfig: Record<string, { icon: typeof Search; color: string; label: string; plural: string }> = {
+  task: { icon: SquareCheck, color: 'var(--sk-t3)', label: 'Task', plural: 'Tasks' },
+  project: { icon: FolderKanban, color: 'var(--sk-t3)', label: 'Project', plural: 'Projects' },
+  meeting: { icon: Users, color: 'var(--sk-t3)', label: 'Meeting', plural: 'Meetings' },
+  idea: { icon: Lightbulb, color: 'var(--sk-t3)', label: 'Idea', plural: 'Ideas' },
+  note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Note', plural: 'Notes' },
+  task_note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Task note', plural: 'Task notes' },
+  comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Comment', plural: 'Comments' },
+  task_comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Task comment', plural: 'Task comments' },
+  decision: { icon: Scale, color: 'var(--sk-t3)', label: 'Decision', plural: 'Decisions' },
+  file: { icon: Paperclip, color: 'var(--slate)', label: 'File', plural: 'Files' },
+  publication: { icon: BookOpen, color: 'var(--sk-t3)', label: 'Publication', plural: 'Publications' },
+  grant: { icon: Banknote, color: 'var(--sk-t3)', label: 'Grant', plural: 'Grants' },
+  artifact: { icon: FileText, color: 'var(--sk-t3)', label: 'Artifact', plural: 'Artifacts' },
+  activity: { icon: Activity, color: 'var(--slate)', label: 'Activity', plural: 'Activity' },
 }
 
 const RECENT_KEY = 'mnccore-recent-searches'
@@ -515,7 +516,7 @@ export default function SearchPage() {
           {query && (
             <button
               onClick={() => { setQuery(''); inputRef.current?.focus() }}
-              className="absolute right-4 top-1/2 -translate-y-1/2"
+              className="hit-area absolute right-4 top-1/2 -translate-y-1/2"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
               aria-label="Clear search"
             >
@@ -535,13 +536,13 @@ export default function SearchPage() {
                 { value: FILTER_ALL, label: 'All', count: results.length },
                 ...typeOrder
                   .filter((t) => (countByType[t] || 0) > 0)
-                  .map((t) => ({ value: t, label: `${(typeConfig[t] || typeConfig.activity).label}s`, count: countByType[t] || 0 })),
+                  .map((t) => ({ value: t, label: (typeConfig[t] || typeConfig.activity).plural, count: countByType[t] || 0 })),
               ]}
             />
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-[11px] underline-offset-2 hover:underline"
+                className="hit-area text-[11px] underline-offset-2 hover:underline"
                 style={{ color: 'var(--slate)', opacity: 0.85, background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 Clear filter
@@ -664,7 +665,7 @@ export default function SearchPage() {
             </span>
             <button
               onClick={() => { clearRecentSearches(); setRecentSearches([]) }}
-              className="text-[10px] flex items-center gap-1 transition-colors"
+              className="hit-area text-[10px] flex items-center gap-1 transition-colors"
               style={{ color: 'var(--slate)', opacity: 0.75, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               <Trash2 {...ICON_PROPS} size={9} /> Clear
@@ -680,7 +681,7 @@ export default function SearchPage() {
                 <button
                   onClick={() => { setQuery(s); inputRef.current?.focus() }}
                   className="flex items-center gap-1"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '4px 0', margin: '-4px 0' }}
                 >
                   <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
                   {s}
@@ -688,7 +689,7 @@ export default function SearchPage() {
                 <button
                   onClick={() => removeRecent(s)}
                   aria-label={`Remove "${s}" from recent searches`}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.55, padding: 0, marginLeft: 2 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.55, padding: 7, margin: '-7px -7px -7px -5px', display: 'inline-flex' }}
                 >
                   <X {...ICON_PROPS} size={10} />
                 </button>
@@ -756,7 +757,7 @@ export default function SearchPage() {
 
               return (
                 <div key={type}>
-                  <SectionHead as="h3" title={`${config.label}s`} count={items.length} />
+                  <SectionHead as="h3" title={config.plural} count={items.length} />
                   <motion.div className="flex flex-col gap-1" variants={staggerContainer} initial="hidden" animate="visible">
                     {items.map((item) => (
                       <ResultRow key={`${item.type}:${item.id}`} item={item} tokens={tokens} />

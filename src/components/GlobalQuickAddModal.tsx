@@ -164,6 +164,9 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
           {/* Panel */}
           <motion.div
             key="gqa-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quick add task"
             // N1.03: the centering offset must live in the motion values —
             // framer-motion's animated transform REPLACES style.transform, so
             // a style-level translateX(-50%) is silently dropped and the
