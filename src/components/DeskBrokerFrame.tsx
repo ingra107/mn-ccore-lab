@@ -1,7 +1,7 @@
 // DeskBrokerFrame — renders a content_type='html' artifact for
 // /portal/artifacts/:id back on the Hub's own opaque-origin blob iframe
-// (the HtmlArtifactFrame pattern: `sandbox="allow-scripts allow-popups
-// allow-popups-to-escape-sandbox"`, NEVER allow-same-origin), with the Hub
+// (`sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"`,
+// NEVER allow-same-origin), with the Hub
 // itself brokering the working-desk kit's localStorage.
 //
 // ═══ WHY (2026-09-23 decision, Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md) ═══
@@ -214,13 +214,9 @@ export default function DeskBrokerFrame({ id, title, html }: { id: string; title
       sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       allow="clipboard-write"
       src={url}
-      style={{
-        width: '100%',
-        minHeight: '70vh',
-        border: '1px solid var(--sk-line)',
-        borderRadius: 'var(--radius-lg)',
-        background: '#fff',
-      }}
+      // Sizing lives in index.css .desk-frame: the visible screen between the
+      // portal header and the tab bar, and why it does not grow to content.
+      className="desk-frame"
     />
   )
 }

@@ -24,12 +24,15 @@ interface CollapsibleBodyProps {
   /** What the content IS (the body string) — re-measured when it changes.
    *  `children` cannot serve: it is a new element every render. */
   contentKey?: string
+  /** The body's line-height; the cap is measured in the same unit. Set it HERE,
+   *  not on a child: a child's own line-height overrides the wrapper's, and a
+   *  3-line cap then shows 3.4 lines (1.375) or cuts the third (1.6). */
+  lineHeight?: number
 }
 
-// The body's own line-height; the cap is measured in the same unit.
-const LINE_HEIGHT = 1.55
+const DEFAULT_LINE_HEIGHT = 1.55
 
-export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey }: CollapsibleBodyProps) {
+export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, lineHeight = DEFAULT_LINE_HEIGHT }: CollapsibleBodyProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
@@ -39,9 +42,9 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey }
   const measure = useCallback(() => {
     const el = ref.current
     if (!el) return
-    const capPx = parseFloat(getComputedStyle(el).fontSize) * LINE_HEIGHT * maxLines
+    const capPx = parseFloat(getComputedStyle(el).fontSize) * lineHeight * maxLines
     setOverflows(el.scrollHeight > capPx + 1)
-  }, [maxLines])
+  }, [maxLines, lineHeight])
 
   // One observer for the row's lifetime (per cap). Keying it on `children`
   // (a fresh element every render) rebuilt it on every feed poll, for every
@@ -63,9 +66,9 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey }
         ref={ref}
         data-collapsible-body=""
         style={{
-          lineHeight: LINE_HEIGHT,
+          lineHeight,
           fontSize,
-          ...(expanded ? {} : { maxHeight: `${maxLines * LINE_HEIGHT}em`, overflow: 'hidden' }),
+          ...(expanded ? {} : { maxHeight: `${maxLines * lineHeight}em`, overflow: 'hidden' }),
         }}
       >
         {children}
@@ -75,6 +78,8 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey }
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
+          // .hit-area: a 44px tap target on touch without growing the row.
+          className="hit-area"
           style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
         >{expanded ? 'less' : 'more'}</button>
       )}

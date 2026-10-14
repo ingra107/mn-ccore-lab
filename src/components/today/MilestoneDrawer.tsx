@@ -23,6 +23,7 @@ import { Button } from '../ui/Button'
 import { PATHS } from '../../constants/paths'
 import { Link } from 'react-router-dom'
 import { stripMeetingMarker } from '../../lib/textUtils'
+import { CollapsibleBody } from '../activity/CollapsibleBody'
 import { INK_DIM, INK_MUTED } from './constants'
 import type { TaskRow } from '../../lib/api'
 
@@ -38,7 +39,6 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
   onToggleComplete: (t: TaskRow) => void
 }) {
   const isDone = isTaskDone(task)
-  const [descExpanded, setDescExpanded] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
 
   // Two-date milestone rendering (Nick 2026-09-17): due_date is the INTERNAL
@@ -117,25 +117,9 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
       {/* Description — same static-context + 3-line-clamp treatment as TaskDetailDrawer. */}
       {task.description ? (
         <div style={{ marginBottom: 4 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: INK_MUTED,
-              lineHeight: 1.55,
-              ...(descExpanded ? {} : {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                overflow: 'hidden',
-              }),
-            }}
-          >{stripMeetingMarker(task.description)}</div>
-          {!descExpanded && (
-            <button
-              onClick={() => setDescExpanded(true)}
-              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-            >more</button>
-          )}
+          <CollapsibleBody maxLines={3} fontSize={12} contentKey={task.description}>
+            <div style={{ color: INK_MUTED }}>{stripMeetingMarker(task.description)}</div>
+          </CollapsibleBody>
         </div>
       ) : null}
 

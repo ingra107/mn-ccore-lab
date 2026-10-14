@@ -25,7 +25,7 @@ export function MeLockToggle({ locked, onToggle }: MeLockToggleProps) {
       onClick={onToggle}
       title={locked ? 'Private note — click to post publicly' : 'Post publicly — click to make private'}
       aria-label={locked ? 'Private note lock on — only you see this' : 'Private note lock off — visible to team'}
-      className="flex-shrink-0 inline-flex items-center gap-1"
+      className="flex-shrink-0 inline-flex items-center gap-1 sc-tool"
       style={{
         height: 22,
         paddingLeft: 6,

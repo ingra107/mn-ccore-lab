@@ -25,6 +25,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import type { QuestionRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { projectFullTitleHint, projectShortLabel, projectShortLabelMap } from '../../lib/displayNames'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   open: { label: 'Open', color: 'var(--sk-t1)', bg: 'var(--sk-line)' },
@@ -36,6 +37,8 @@ export default function AskTheLab() {
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const { data: projects = [] } = useProjects()
+  const projectLabel = useMemo(() => projectShortLabelMap(projects), [projects])
   const [searchQuery, setSearchQuery] = useState('')
 
   // Auto-open create modal from URL params. Kept as an effect (not moved to
@@ -128,6 +131,7 @@ export default function AskTheLab() {
               question={q}
               expanded={expandedId === q.id}
               onToggle={() => setExpandedId(expandedId === q.id ? null : q.id)}
+              projectLabel={projectLabel}
             />
           ))
         )}
@@ -145,10 +149,13 @@ function QuestionCard({
   question,
   expanded,
   onToggle,
+  projectLabel,
 }: {
   question: QuestionRow
   expanded: boolean
   onToggle: () => void
+  /** slug -> short label, built once by the page (principle 8: never the raw slug). */
+  projectLabel: ReadonlyMap<string, string>
 }) {
   const person = getPersonInfo(question.asked_by)
   const status = statusConfig[question.status] || statusConfig.open
@@ -162,6 +169,7 @@ function QuestionCard({
       {/* Clickable header */}
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
         className="w-full text-left px-5 py-4 flex items-start gap-3 transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]"
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
@@ -204,7 +212,7 @@ function QuestionCard({
                 className="text-[10px] px-1.5 py-0.5 rounded-full"
                 style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}
               >
-                {question.project_slug}
+                {projectLabel.get(question.project_slug) ?? question.project_slug}
               </span>
             )}
           </div>
@@ -502,7 +510,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             value={projectSlug}
             options={[
               { value: '', label: 'None (general question)' },
-              ...projects.map((p) => ({ value: p.slug, label: p.title })),
+              ...projects.map((p) => ({ value: p.slug, label: projectShortLabel(p), hint: projectFullTitleHint(p) })),
             ]}
             onChange={setProjectSlug}
             size="md"

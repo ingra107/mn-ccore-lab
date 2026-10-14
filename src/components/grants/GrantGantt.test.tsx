@@ -133,17 +133,25 @@ describe('GrantGantt drag gesture, real touch input', () => {
   }
 
   it('a swipe up that starts on a bar scrolls the page and writes nothing', async () => {
-    const { onMove, scroller, at, touch, done } = await touchSetup()
+    const { onMove, at, touch, done } = await touchSetup()
+    // The contract is "the browser is free to pan": no touchmove is cancelled and
+    // the bar allows vertical pan. Reading scrollTop instead depends on the
+    // compositor scrolling this test iframe, which it did alone and did not in
+    // the full parallel run (2026-10-14 gate, twice), so it proved nothing there.
+    const cancelled: boolean[] = []
+    const seen = (e: TouchEvent) => cancelled.push(e.defaultPrevented)
+    window.addEventListener('touchmove', seen)
     try {
+      const bar = document.querySelector<HTMLElement>('[data-testid="gantt-bar-p-k23"]')!
+      expect(getComputedStyle(bar).touchAction).toBe('pan-y')
       const o = at(0, 0)
       await touch('touchStart', o)
       for (let i = 1; i <= 10; i++) await touch('touchMove', { x: o.x + i * 0.4, y: o.y - i * 8 })
       await touch('touchEnd')
-      // The compositor applies the pan asynchronously; under load a fixed 350 ms
-      // wait read scrollTop before it landed (2026-10-14 gate). Poll instead.
-      await expect.poll(() => scroller.scrollTop, { timeout: 3000 }).toBeGreaterThan(0)
+      await expect.poll(() => cancelled.length).toBeGreaterThan(0)
+      expect(cancelled.every((c) => !c)).toBe(true)
       expect(onMove).not.toHaveBeenCalled()
-    } finally { await done() }
+    } finally { window.removeEventListener('touchmove', seen); await done() }
   })
 
   it('press and hold, then drag: the bar moves and the page does not pan', async () => {

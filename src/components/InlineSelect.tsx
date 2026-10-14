@@ -6,7 +6,10 @@ import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePort
 
 interface InlineSelectProps {
   value: string
-  options: { value: string; label: string; color?: string }[]
+  /** `hint` is the long form behind a short label (a project's full title):
+   *  typing matches it too, and it shows on hover, so a short label never hides
+   *  the words a user searches by. */
+  options: { value: string; label: string; hint?: string; color?: string }[]
   onChange: (value: string) => void
   size?: 'sm' | 'md'
   /** Force chevron always-visible. Default false — chevron only appears on
@@ -70,7 +73,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   const filtered = useMemo(() => {
     if (!filter) return options
     const lower = filter.toLowerCase()
-    return options.filter(o => o.label.toLowerCase().includes(lower))
+    return options.filter(o => o.label.toLowerCase().includes(lower) || !!o.hint?.toLowerCase().includes(lower))
   }, [options, filter])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -239,6 +242,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
                 textAlign: 'left',
                 transition: 'background-color var(--duration-fast) var(--ease-out)',
               }}
+              title={opt.hint}
             >
               {opt.label}
             </button>

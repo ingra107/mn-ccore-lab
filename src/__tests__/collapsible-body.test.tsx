@@ -40,8 +40,34 @@ describe('CollapsibleBody', () => {
     await expect.poll(() => box.scrollHeight - box.clientHeight).toBe(0)
   })
 
+  // #8635: the drawer, feed and project-page sites cap at 3 lines with their own
+  // line-height. The cap must be exactly 3 of THOSE lines, or a 1.6 body cuts
+  // its third line and a 1.375 body shows a sliver of a fourth.
+  it.each([1.375, 1.5, 1.6])('caps at exactly 3 lines at line-height %s', async (lh) => {
+    const host = await mount(
+      <CollapsibleBody maxLines={3} fontSize="14px" lineHeight={lh}>
+        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{LONG}</p>
+      </CollapsibleBody>,
+    )
+    const box = host.querySelector<HTMLElement>('[data-collapsible-body]')!
+    expect(Math.abs(box.clientHeight - 14 * lh * 3)).toBeLessThanOrEqual(1)
+    expect(host.querySelector('button')?.textContent).toBe('more')
+  })
+
   it('shows no control on a short body', async () => {
     const host = await mount(<CollapsibleBody maxLines={5}><p style={{ margin: 0 }}>two words</p></CollapsibleBody>)
+    expect(host.querySelector('button')).toBeNull()
+  })
+
+  // A body of exactly maxLines lines fits: no "more" that expands to nothing.
+  // Padding or a border on the child counts against the cap, which is why
+  // ProjectDetail keeps its click-to-edit chrome on the wrapper (#8635 review).
+  it.each([1.375, 1.5, 1.6])('shows no control on a body of exactly 3 lines at line-height %s', async (lh) => {
+    const host = await mount(
+      <CollapsibleBody maxLines={3} fontSize="14px" lineHeight={lh}>
+        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{'one\ntwo\nthree'}</p>
+      </CollapsibleBody>,
+    )
     expect(host.querySelector('button')).toBeNull()
   })
 })

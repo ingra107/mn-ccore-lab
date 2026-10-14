@@ -55,6 +55,7 @@ import { AllProjectsBanner } from '../components/AllProjectsControls'
 import ProjectPublications from '../components/ProjectPublications'
 import ProjectFolderActions from '../components/project/ProjectFolderActions'
 import LinkifiedText from '../components/LinkifiedText'
+import { CollapsibleBody } from '../components/activity/CollapsibleBody'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
@@ -421,7 +422,6 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Inline editing
   const [editingDescription, setEditingDescription] = useState(false)
-  const [descExpanded, setDescExpanded] = useState(false)
   const [descDraft, setDescDraft] = useState(project.description ?? '')
   // Parse the running description log into leading prose + dated entries. Pure
   const [editingShortName, setEditingShortName] = useState(false)
@@ -1349,54 +1349,42 @@ recentActivity.length === 0 ? (
                   }}
                 />
               ) : (
-                <div>
-                  <p
-                    onClick={() => {
-                      setDescDraft(project.description ?? '')
-                      setEditingDescription(true)
-                    }}
-                    className="hov-border"
-                    style={{
-                      fontSize: '14px',
-                      color: project.description ? 'var(--ink)' : 'var(--slate)',
-                      lineHeight: 1.6,
-                      margin: 0,
-                      cursor: 'pointer',
-                      padding: 'var(--sp-xs) 0',
-                      opacity: project.description ? 1 : 0.85,
-                      borderBottom: '1px dashed transparent',
-                      transition: 'border-color 0.2s',
-                      whiteSpace: 'pre-wrap',
-                      '--hov-border': 'var(--sk-line2)',
-                      ...(!descExpanded && project.description && project.description.length > 200 ? {
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical' as const,
-                      } : {}),
-                    } as React.CSSProperties}
-                    title="Click to edit"
-                  >
-                    {project.description
-                      ? <LinkifiedText text={project.description} />
-                      : 'Click to add a description...'}
-                  </p>
-                  {project.description && project.description.length > 200 && (
-                    <button
-                      onClick={() => setDescExpanded(!descExpanded)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: 'var(--label-size)',
-                        color: 'var(--job-accent)',
-                        padding: 'var(--sp-xs) 0',
-                        opacity: 0.8,
+                // CollapsibleBody wraps the click-to-edit <p> from outside, so its
+                // more/less control is not part of the edit target, and shows only
+                // when the text measurably overflows 3 lines (#8635; was length > 200).
+                // The padding and the dashed hover rule sit on the wrapper, outside
+                // the measured box: inside it they add 5px to a 3-line body, which
+                // then shows a "more" that reveals nothing and clips the rule.
+                // .desc-edit lights the rule only while the TEXT is hovered.
+                <div
+                  className="desc-edit"
+                  style={{
+                    padding: 'var(--sp-xs) 0',
+                    borderBottom: '1px dashed transparent',
+                    transition: 'border-color 0.2s',
+                  }}
+                >
+                  <CollapsibleBody maxLines={3} fontSize="14px" lineHeight={1.6} contentKey={project.description ?? ''}>
+                    <p
+                      onClick={() => {
+                        setDescDraft(project.description ?? '')
+                        setEditingDescription(true)
                       }}
+                      data-desc-text=""
+                      style={{
+                        color: project.description ? 'var(--ink)' : 'var(--slate)',
+                        margin: 0,
+                        cursor: 'pointer',
+                        opacity: project.description ? 1 : 0.85,
+                        whiteSpace: 'pre-wrap',
+                      }}
+                      title="Click to edit"
                     >
-                      {descExpanded ? 'Show less' : 'Show more'}
-                    </button>
-                  )}
+                      {project.description
+                        ? <LinkifiedText text={project.description} />
+                        : 'Click to add a description...'}
+                    </p>
+                  </CollapsibleBody>
                 </div>
               )}
             </div>

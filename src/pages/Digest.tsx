@@ -481,8 +481,9 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
               <button
                 onClick={() => setExpanded(!expanded)}
                 aria-expanded={expanded}
-                className="cursor-pointer flex items-center gap-1 text-xs mt-1"
-                style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: 0 }}
+                className="hit-area cursor-pointer flex items-center gap-1 text-xs"
+                // 24px tall on every pointer (WCAG 2.5.8); .hit-area takes it to 44px on touch.
+                style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: '4px 0', minHeight: 24 }}
               >
                 {expanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
                 {expanded ? 'Hide abstract' : 'Show abstract'}

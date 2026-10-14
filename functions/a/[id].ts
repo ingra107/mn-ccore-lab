@@ -26,10 +26,12 @@
  * 2026-09-23 and was retired the same day; see
  * Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md). For
  * any future need to render artifact HTML OUTSIDE an authenticated context,
- * use HtmlArtifactFrame.tsx's opaque-origin blob-url embed instead — it uses
- * a blob url rather than srcDoc because srcDoc leaves the document at
- * about:srcdoc, where one in-page anchor click blanks the artifact
- * (2026-07-24).
+ * use the same opaque-origin blob-url embed (src/lib/artifactBlob.ts) without
+ * the desk broker; never srcDoc, which leaves the document at about:srcdoc,
+ * where one in-page anchor click blanks the artifact (2026-07-24). The
+ * broker-less HtmlArtifactFrame.tsx had no importer and was deleted
+ * 2026-10-14; `git show c08e36b3:src/components/HtmlArtifactFrame.tsx`
+ * restores it.
  */
 
 import { handleLegacyPublicArtifactRedirect } from '../../api/routes/public-artifact'

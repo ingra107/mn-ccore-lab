@@ -479,7 +479,9 @@ export default function SmartCompose(props: SmartComposeProps) {
       )}
       {/* Slack-style action row — below the textarea, left = quiet icon-buttons, right = Post */}
       {showToolbar && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative', minHeight: 22 }}>
+        // sc-bar / sc-tool: on phones and touch tablets the 22px controls grow
+        // to a 36px tap target (index.css, WCAG 2.5.8); desktop keeps the dense row.
+        <div className="sc-bar" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative', minHeight: 22 }}>
           {/* Attach */}
           {uploadContext && (
             <ToolbarBtn label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
@@ -508,6 +510,7 @@ export default function SmartCompose(props: SmartComposeProps) {
             <button
               type="button"
               role="switch"
+              className="sc-tool"
               aria-checked={hermesLocked ? "true" : "false"}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
@@ -590,6 +593,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               type="button"
               onClick={submit}
               disabled={submitting}
+              className="sc-tool"
               aria-label={submitting ? submittingLabel : submitLabel}
               style={{
                 display: 'inline-flex',
@@ -645,7 +649,7 @@ function ToolbarBtn({ children, onClick, label, active, disabled }: { children: 
   return (
     <button
       type="button"
-      className="hov-color hov-border"
+      className="hov-color hov-border sc-tool"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={label}
