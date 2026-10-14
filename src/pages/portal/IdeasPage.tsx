@@ -1091,7 +1091,6 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
       onClose={onClose}
       title="New idea"
       maxWidth="sm"
-      variant="modal"
       onExtraKeyDown={(e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault()

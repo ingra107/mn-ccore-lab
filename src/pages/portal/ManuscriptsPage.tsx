@@ -440,13 +440,16 @@ export default function ManuscriptsPage() {
         isLoading={isLoading || productsLoading}
         skeletonRows={6}
         skeletonCols={5}
+        // The kind tabs switch what the page lists, so they sit with the view
+        // controls in the header: below the stacked rail they were ~1,000px
+        // down a phone in List view, and near the top in Pipeline.
+        headControls={kindTabs.length > 1 && (
+          <div className="tk" style={{ marginBottom: 'var(--sp-md)' }} data-testid="product-kind-tabs">
+            <SegmentedToggle scrollable ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
+          </div>
+        )}
         beforeBody={
           <>
-            {kindTabs.length > 1 && (
-              <div className="tk" style={{ marginBottom: 'var(--sp-md)' }} data-testid="product-kind-tabs">
-                <SegmentedToggle scrollable ariaLabel="Product kind" options={kindTabs} value={kindTab} onChange={setKindTab} />
-              </div>
-            )}
             {/* T-29: Needs your attention — three-subgroup triage. */}
             {/* The List view carries it in the right rail (s79); Pipeline and Trophy stay full width. */}
             {!isLoading && kindTab === 'manuscript' && view !== 'list' && (
@@ -759,13 +762,13 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
+      className="md:min-h-[200px]"
       style={{
         background: isOver ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'var(--ice)',
         borderRadius: 'var(--radius-xl)',
         // Teal only marks the drop target (a selection); a resting column is gray.
         borderTop: isOver ? '2px solid var(--job-accent)' : '2px solid var(--border-subtle)',
         padding: 'var(--sp-lg)',
-        minHeight: '200px',
         transition: 'background var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out',
       }}
     >
@@ -821,14 +824,13 @@ function PipelineBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
+      {/* A phone stacks the stages, each column its own height (the Tasks
+          Board and Ideas do the same). Side by side, the grid stretched every
+          column to the tallest (Published, 65 cards), so the two columns on
+          screen were ~14,000px of empty gray and the cards sat off-screen. */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${STAGES.length}, minmax(180px, 1fr))`,
-          gap: '20px',
-          overflowX: 'auto',
-          paddingBottom: '1rem',
-        }}
+        className="grid grid-cols-1 gap-5 pb-4 md:overflow-x-auto md:grid-cols-[repeat(var(--ms-stages),minmax(180px,1fr))]"
+        style={{ '--ms-stages': STAGES.length } as React.CSSProperties}
       >
         {STAGES.map((stage) => {
           const stageProjects = byStage[stage] || []

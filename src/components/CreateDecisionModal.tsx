@@ -134,7 +134,6 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
       onClose={onClose}
       title="Log a Decision"
       maxWidth="md"
-      variant="modal"
       animated
       onExtraKeyDown={handleExtraKeyDown}
       footer={

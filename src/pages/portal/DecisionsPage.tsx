@@ -132,12 +132,12 @@ function DecisionTimeline({
                 boxShadow: `0 0 0 2px ${config.bg}`,
               }}
             />
+            {/* md and up: the date hangs in the gutter left of the line. A phone
+                has no gutter (pl-8), so there it sits above the card, in flow;
+                in the gutter it started at x=-54 and read 'or 16'. */}
             <div
-              className="absolute text-right"
+              className="mb-1 md:mb-0 md:absolute md:left-[-110px] md:top-[2px] md:w-[75px] md:text-right"
               style={{
-                left: '-110px',
-                top: '2px',
-                width: '75px',
                 fontSize: 'var(--text-micro)',
                 color: 'var(--slate)',
                 opacity: 'var(--ink-label)',

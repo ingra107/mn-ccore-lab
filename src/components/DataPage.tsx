@@ -58,6 +58,11 @@ interface DataPageProps {
   /** Hide the controls row entirely (page renders only header + body). */
   hideControls?: boolean
 
+  /** A switcher that changes WHAT the page lists (Manuscripts' product kind
+   *  tabs). It rides in the header under the controls row, so a stacked rail
+   *  (railFirst) can never push it below the rail on a phone. */
+  headControls?: ReactNode
+
   // ── Content between the controls row and the body (e.g. attention
   //    dashboards, category pill rows the page owns). ──
   beforeBody?: ReactNode
@@ -107,6 +112,7 @@ export default function DataPage({
   controlsCount,
   controlsCountLabel,
   hideControls,
+  headControls,
   beforeBody,
   wideBody,
   isLoading,
@@ -155,6 +161,7 @@ export default function DataPage({
           countLabel={controlsCountLabel}
         />
       )}
+      {headControls}
     </PageHeader>
   )
 

@@ -179,4 +179,10 @@ const CSS = `
   .gl-row > [role="cell"]:nth-child(4), .gl-row > [role="cell"]:nth-child(5) { grid-column: auto; }
   .gl-row > [role="cell"]:nth-child(6) { grid-column: 1 / -1; }
 }
+/* index.css forces 16px on every phone input (the iOS no-zoom rule), and at
+   16px a blank date input's 'mm/dd/yyyy' ran under the calendar icon in 132px.
+   On a phone the field takes its own natural width, so it always fits. */
+@media (max-width: 768px) {
+  .gl-date-input { width: auto; max-width: 100%; }
+}
 `
