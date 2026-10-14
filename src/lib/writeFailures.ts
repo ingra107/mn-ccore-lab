@@ -33,11 +33,14 @@ export function reason(err: unknown): string {
 }
 
 /** The generic failure toast. When the failure withdrew an Undo toast, name
- *  what did not save ("Task completed: not saved. ..."). */
+ *  the action that did not go through ("Did not go through: Task completed.
+ *  ..."). Undo labels name the outcome ("Saved", "Deleted ..."), so the old
+ *  shape "<label>: not saved" read "Saved: not saved" on the digest (O2B,
+ *  2026-10-14); the label now follows the verdict instead of leading it. */
 export function failureMessage(err: unknown, undoMessage?: string): string {
   const why = reason(err)
   const sentence = why.charAt(0).toUpperCase() + why.slice(1)
-  return undoMessage ? `${undoMessage}: not saved. ${sentence}` : `Not saved. ${sentence}`
+  return undoMessage ? `Did not go through: ${undoMessage}. ${sentence}` : `Not saved. ${sentence}`
 }
 
 /** How close (ms) a mutation's submit must sit to an Undo toast for the two to

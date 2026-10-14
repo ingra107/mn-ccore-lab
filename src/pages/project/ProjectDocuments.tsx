@@ -89,6 +89,10 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 borderRadius: 'var(--radius-md)',
                 background: 'var(--sk-line)',
                 maxWidth: 240,
+                // minWidth 0 lets the chip give way in a narrow rail: without it the
+                // chip kept its full 240px and pushed the date and the archive button
+                // past the rail edge ('Aug 1, 202', no button; O2B 2026-10-14).
+                minWidth: 0,
                 fontSize: 12,
                 fontWeight: 500,
                 textDecoration: 'none',

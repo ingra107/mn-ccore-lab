@@ -8,6 +8,7 @@ import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
 import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from '../lib/activity-entry';
 import { postedActivityRows, postedCountsByDay, legacyEchoExclude } from '../lib/posted-activity';
+import { labFeedWhere } from '../lib/activity-feed-types';
 
 // GET /api/activity?limit=20&actor=slug
 // Public (the /pulse kiosk reads it signed out). Which rows a caller sees is
@@ -15,16 +16,18 @@ import { postedActivityRows, postedCountsByDay, legacyEchoExclude } from '../lib
 // follow it, so a project the caller is not on adds nothing here. The audit
 // trail comes from activity_log; the comments and notes people posted come from
 // activity_entries (their one store), shaped like activity_log rows and gated by
-// the caller's visibility, so an @me note reaches no one else.
+// the caller's visibility, so an @me note reaches no one else. Machine audit rows
+// (bulk syncs, '<table> <id> deleted') are left out by labFeedWhere, the same
+// rule the meeting prep reads (api/lib/activity-feed-types.ts).
 export async function handleGetActivity(url: URL, env: Env, request: Request): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
-  let query = 'SELECT * FROM activity_log';
+  let query = 'SELECT a.* FROM activity_log a';
   const params: (string | number)[] = [];
-  const where: string[] = [legacyEchoExclude()];
+  const where: string[] = [legacyEchoExclude('a'), labFeedWhere('a')];
   if (actor) {
-    where.push('actor = ?');
+    where.push('a.actor = ?');
     params.push(actor);
   }
   if (where.length > 0) {
@@ -32,7 +35,7 @@ export async function handleGetActivity(url: URL, env: Env, request: Request): P
   }
   // Over-fetch when filtering so the final count still honours the caller's limit.
   const fetchLimit = includeFixtures ? limit : Math.min(limit * 3, 500);
-  query += ' ORDER BY timestamp DESC LIMIT ?';
+  query += ' ORDER BY a.timestamp DESC LIMIT ?';
   params.push(fetchLimit);
   const [result, posted] = await Promise.all([
     env.DB.prepare(query).bind(...params).all(),

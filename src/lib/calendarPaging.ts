@@ -43,3 +43,14 @@ export function agendaWindow(date: Date, now: Date = new Date()): { from: string
   const last = new Date(date.getFullYear(), date.getMonth() + (isCurrent ? 2 : 1), 0)
   return { from: isCurrent ? localDateKey(now) : localDateKey(first), to: localDateKey(last) }
 }
+
+/** The empty Agenda's title names the window it shows. The page pages the
+ *  Agenda by month (G4-1), and the old fixed "The week ahead is open" sat under
+ *  "November 2026 / 0 events in November" (O2B, 2026-10-14). */
+export function agendaEmptyTitle(from: string, to: string | undefined, today: string): string {
+  if (!to) return 'Nothing coming up'
+  const [y, m] = from.split('-').map(Number)
+  const month = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long' })
+  // The current month's window runs from today to the end of next month (agendaWindow).
+  return from.slice(0, 7) === today.slice(0, 7) ? 'Nothing coming up' : `Nothing in ${month}`
+}

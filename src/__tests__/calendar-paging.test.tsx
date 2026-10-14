@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AgendaView, MonthView, WeekView } from '../pages/portal/CalendarPage'
-import { agendaWindow, showsToday, stepDate, stepLabel } from '../lib/calendarPaging'
+import { agendaEmptyTitle, agendaWindow, showsToday, stepDate, stepLabel } from '../lib/calendarPaging'
 import type { CalendarEvent } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
 import css from '../index.css?raw'
@@ -94,5 +94,15 @@ describe('Calendar week on a phone (G4-3)', () => {
     const grid = h.querySelector('.cal-week') as HTMLElement
     expect(getComputedStyle(grid).gridTemplateColumns.split(' ').length).toBe(1)
     expect(getComputedStyle(chip).whiteSpace).toBe('nowrap')
+  })
+})
+
+// O2B (2026-10-14): paged to an empty November, the Agenda still said "The
+// week ahead is open" under "November 2026 / 0 events in November".
+describe('the empty Agenda names its window', () => {
+  it('names the month it was paged to, and says "coming up" for the current window', () => {
+    expect(agendaEmptyTitle('2026-11-01', '2026-11-30', '2026-10-14')).toBe('Nothing in November')
+    expect(agendaEmptyTitle('2026-10-14', '2026-11-30', '2026-10-14')).toBe('Nothing coming up')
+    expect(agendaEmptyTitle('2026-10-14', undefined, '2026-10-14')).toBe('Nothing coming up')
   })
 })

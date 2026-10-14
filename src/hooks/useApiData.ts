@@ -68,6 +68,7 @@ import type {
   ProjectPublicationLink,
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
+import { nameSlugsInText } from '../lib/personLabel'
 import { isPlaceholderPublication, dedupePublications } from '../lib/publicationCounts'
 
 // Re-export lib/api row types that consumers import via this module.
@@ -401,7 +402,10 @@ export function useActivity(limit: number = 20, actor?: string) {
       const params = new URLSearchParams({ limit: String(limit) })
       if (actor) params.set('actor', actor)
       const data = await fetchJson<{ data?: ActivityEntry[] }>(`/api/activity?${params}`)
-      return data.data || []
+      // Server-written lines carry team slugs ("Created task: X -> nick-ingraham").
+      // Every reader of this feed (Overview card, Activity page, Pulse) gets first
+      // names from here, the one place the rows enter the app (principle 12).
+      return (data.data || []).map((a) => (a.description ? { ...a, description: nameSlugsInText(a.description) } : a))
     },
     staleTime: 60 * 1000,
   })

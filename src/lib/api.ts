@@ -316,7 +316,10 @@ export interface PBSessionRow {
   started_at: string
   ended_at: string | null
   machine: string | null
+  /** The project's name as the session recorded it (the filter key). */
   project_name: string | null
+  /** That project's short name, when the name matches a project title. */
+  project_short_name?: string | null
   summary: string | null
   actions_count: number
   commits_count: number
@@ -331,7 +334,7 @@ interface PBSessionStats {
   sessions_this_week: number
   total_actions: number
   total_commits: number
-  per_project: { project_name: string; count: number; total_minutes: number }[]
+  per_project: { project_name: string; project_short_name?: string | null; count: number; total_minutes: number }[]
   per_day: { day: string; count: number; total_minutes: number }[]
 }
 

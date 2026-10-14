@@ -168,7 +168,11 @@ export default function DeadlineCascadePage() {
                   className="table-container"
                   style={{ overflow: 'visible' }}
                 >
-                  {/* Project header: the card's fold toggle and its summary line. */}
+                  {/* Project header: the card's fold toggle and its summary line.
+                      The chevron keeps its own slot on the first line; the title
+                      and summary wrap beside it, never under it. A long title used
+                      to wrap the whole row and leave the chevron alone on a line
+                      above it (O2B, 2026-10-14; principle 14, fixed slots). */}
                   <button
                     type="button"
                     onClick={() => toggleCard(group.projectId)}
@@ -180,29 +184,31 @@ export default function DeadlineCascadePage() {
                       border: 'none',
                       borderBottom: open ? '1px solid var(--border-subtle)' : '1px solid transparent',
                       display: 'flex',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
                       columnGap: 'var(--sp-sm)',
-                      rowGap: 2,
                       background: 'none',
                       cursor: 'pointer',
                       textAlign: 'left',
                     }}
                   >
-                    <Chev {...ICON_PROPS} size={14} aria-hidden="true" style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
-                    <span style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                    }}>
-                      {group.title}
-                    </span>
-                    <span style={{
-                      fontSize: '11px',
-                      color: 'var(--sk-t3)',
-                    }}>
-                      {summary}
-                      {group.graph.dependencies.length > 0 && ` · ${group.graph.dependencies.length} ${group.graph.dependencies.length === 1 ? 'link' : 'links'}`}
+                    <Chev {...ICON_PROPS} size={14} aria-hidden="true" style={{ color: 'var(--sk-t3)', flexShrink: 0, marginTop: 3 }} />
+                    <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 'var(--sp-sm)', rowGap: 2, minWidth: 0, flex: 1 }}>
+                      <span style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        minWidth: 0,
+                        overflowWrap: 'anywhere',
+                      }}>
+                        {group.title}
+                      </span>
+                      <span style={{
+                        fontSize: '11px',
+                        color: 'var(--sk-t3)',
+                      }}>
+                        {summary}
+                        {group.graph.dependencies.length > 0 && ` · ${group.graph.dependencies.length} ${group.graph.dependencies.length === 1 ? 'link' : 'links'}`}
+                      </span>
                     </span>
                   </button>
 

@@ -18,6 +18,14 @@ import { hiddenResource } from './hidden-resource';
 // as a local constant to avoid a circular import (lib → route).
 const STATUS_BEARING_DELETE_TABLES = new Set(['tasks', 'projects']);
 
+/** The activity line for a delete: "Deleted conference", not
+ *  "conferences 4f1c... deleted" (a table name and a 32-character id read on
+ *  the Overview feed and ran past its card edge, O2B 2026-10-14). The row's id
+ *  stays in related_id. */
+export function deletedDescription(entityType: string): string {
+  return `Deleted ${entityType.replace(/_/g, ' ')}`;
+}
+
 export interface IdempotentDeleteArgs {
   table: string;
   id: string;
@@ -117,7 +125,7 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
       await logActivity(
         env,
         args.activityCategory,
-        `${table} ${id} soft-deleted`,
+        deletedDescription(args.activityEntityType ?? table),
         args.actorSlug,
         id,
         args.activityEntityType ?? table,
@@ -145,7 +153,7 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
     await logActivity(
       env,
       args.activityCategory,
-      `${table} ${id} deleted`,
+      deletedDescription(args.activityEntityType ?? table),
       args.actorSlug,
       id,
       args.activityEntityType ?? table,
