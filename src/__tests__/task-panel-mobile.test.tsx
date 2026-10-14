@@ -15,6 +15,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
@@ -197,6 +198,58 @@ describe('useLongPress', () => {
     row.click()
     expect(clicked).toHaveBeenCalledTimes(1)
     expect(fired).toHaveBeenCalledTimes(1)
+  })
+
+  // Cold review 2026-10-14: List bound the press to a wrapper that also holds
+  // the expanded drawer (comment box, checkboxes) and, through React, the
+  // portalled full editor. A hold anywhere there selected the row behind it.
+  it('a hold on a field, a button, a drawer region or a portal child does not fire; the row text still does', async () => {
+    const fired = vi.fn()
+    function Row() {
+      const bind = useLongPress(() => fired(), { thresholdMs: 60, mouse: true })
+      return (
+        <div data-testid="row" {...bind}>
+          <span data-testid="title" role="button">title</span>
+          <textarea data-testid="field" />
+          <button type="button" data-testid="btn">b</button>
+          <div data-no-long-press><p data-testid="drawer-text">drawer</p></div>
+          {createPortal(<p data-testid="ported">full editor</p>, document.body)}
+        </div>
+      )
+    }
+    await mount(<Row />, { ready: () => document.querySelector('[data-testid="ported"]'), label: 'row' })
+    const hold = async (id: string) => {
+      const el = document.querySelector<HTMLElement>(`[data-testid="${id}"]`)!
+      const touch = new Touch({ identifier: 3, target: el, clientX: 5, clientY: 5 })
+      el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true }))
+      await new Promise((r) => setTimeout(r, 200))
+      el.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touch], bubbles: true, cancelable: true }))
+    }
+    for (const id of ['field', 'btn', 'drawer-text', 'ported']) await hold(id)
+    expect(fired).not.toHaveBeenCalled()
+    // The control: the same hold on the row's title (role=button span) fires.
+    await hold('title')
+    expect(fired).toHaveBeenCalledTimes(1)
+  })
+
+  it('a mouse drag (selecting text) is not a hold', async () => {
+    const fired = vi.fn()
+    function Row() {
+      const bind = useLongPress(() => fired(), { thresholdMs: 60, mouse: true })
+      return <div data-testid="row" {...bind} style={{ width: 200, height: 40 }}>some row text</div>
+    }
+    const host = await mount(<Row />, { ready: (h) => h.querySelector('[data-testid="row"]'), label: 'row' })
+    const row = host.querySelector<HTMLElement>('[data-testid="row"]')!
+    const mouse = (type: string, x: number) => row.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: 10, button: 0, bubbles: true }))
+    mouse('mousedown', 10)
+    mouse('mousemove', 40)
+    await new Promise((r) => setTimeout(r, 200))
+    mouse('mouseup', 40)
+    expect(fired).not.toHaveBeenCalled()
+    // The control: a still hold fires.
+    mouse('mousedown', 10)
+    await expect.poll(() => fired.mock.calls.length).toBe(1)
+    mouse('mouseup', 10)
   })
 })
 

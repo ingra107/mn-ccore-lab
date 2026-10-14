@@ -36,9 +36,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 
 import { nextSleekSort, type SleekSort } from './sleekSort'
 import { useLongPress } from '../../hooks/useLongPress'
-
-/** Hold time for a SleekRow long-press (the shared row's 420ms, TaskRow.tsx). */
-const LONG_PRESS_MS = 420
+import { LONG_PRESS_MS } from '../../lib/uiTiming'
 
 export type { SleekSort }
 

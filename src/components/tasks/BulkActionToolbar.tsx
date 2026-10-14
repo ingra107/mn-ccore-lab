@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmC
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { DELETE_ARM_WINDOW_MS } from '../activity/activityRender'
+import { DELETE_ARM_WINDOW_MS } from '../../lib/uiTiming'
 
 interface BulkActionToolbarProps {
   selectedIds: Set<string>

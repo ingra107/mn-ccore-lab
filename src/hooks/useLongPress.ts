@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react'
+import { isEditableTarget } from '../lib/editableTarget'
 
 /**
  * DD-7 long-press — fires onLongPress after `thresholdMs` of continuous
@@ -19,6 +20,13 @@ import { useCallback, useRef } from 'react'
  *
  * Skips on right-click + multi-touch so it doesn't interfere with native
  * context menus or pinch gestures.
+ *
+ * A press only counts when it lands on the bound element's own content
+ * (pressStartsHere): not on a form field or editor (caret, text selection,
+ * the paste callout), not on a native button or link (they act on their
+ * own), not inside a [data-no-long-press] region (a row's expanded drawer),
+ * and not on a portal child whose React events bubble here but whose DOM sits
+ * elsewhere (the full-screen task panel opened from a List row).
  */
 export interface LongPressOptions {
   thresholdMs?: number
@@ -29,6 +37,20 @@ export interface LongPressOptions {
 
 /** A click or contextmenu this soon after the press fired belongs to that press. */
 const RELEASE_WINDOW_MS = 1000
+
+/** Native controls that act on a press themselves. role="button" spans are left
+ *  out on purpose: a row's title is one, and holding the title must select. */
+const OWN_ACTION = 'button,a[href],input,select,textarea,summary,[data-no-long-press]'
+
+/** Does this press belong to the bound element (see the header comment)? */
+export function pressStartsHere(e: React.SyntheticEvent): boolean {
+  const host = e.currentTarget as Element
+  const target = e.target
+  if (!(target instanceof Element) || !host.contains(target)) return false
+  if (isEditableTarget(target)) return false
+  const owner = target.closest(OWN_ACTION)
+  return !(owner && owner !== host && host.contains(owner))
+}
 
 export function useLongPress(
   onLongPress: (e: React.TouchEvent | React.MouseEvent) => void,
@@ -71,7 +93,15 @@ export function useLongPress(
           if (e.button !== 0 || e.shiftKey || e.ctrlKey || e.metaKey) return
           // The compat mousedown that trails a touch press: the touch path ran.
           if (startRef.current || justFired()) return
+          if (!pressStartsHere(e)) return
           begin(e.clientX, e.clientY, e)
+        },
+        // A drag (selecting text) is not a hold, same as a moving finger.
+        onMouseMove: (e: React.MouseEvent) => {
+          if (!startRef.current) return
+          const dx = Math.abs(e.clientX - startRef.current.x)
+          const dy = Math.abs(e.clientY - startRef.current.y)
+          if (dx > moveTolerance || dy > moveTolerance) clear()
         },
         onMouseUp: clear,
         onMouseLeave: clear,
@@ -80,7 +110,7 @@ export function useLongPress(
 
   return {
     onTouchStart: (e: React.TouchEvent) => {
-      if (e.touches.length !== 1) { clear(); return }
+      if (e.touches.length !== 1 || !pressStartsHere(e)) { clear(); return }
       const t = e.touches[0]
       begin(t.clientX, t.clientY, e)
     },

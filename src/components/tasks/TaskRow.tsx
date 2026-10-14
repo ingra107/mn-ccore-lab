@@ -43,6 +43,7 @@ import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
+import { LONG_PRESS_MS } from '../../lib/uiTiming'
 import { usePairName } from '../../hooks/useProjectPairs'
 
 // Reserved priority-dot color. only urgent carries a colored dot; everything
@@ -430,7 +431,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
           )}
         </div>
         <div style={{ borderBottom: `1px solid ${withAlpha(INK, 13)}` }} />
-        {isExpanded && children}
+        {isExpanded && <div data-no-long-press style={{ display: 'contents' }}>{children}</div>}
       </div>
   )
 }
@@ -540,7 +541,7 @@ function StandardRow(props: SharedTaskRowProps) {
     // selection extends during mousedown-drag before click fires.
     if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey)) { e.preventDefault() }
     if (!selectable || e.button !== 0) return
-    lpTimer.current = setTimeout(() => { onToggleSelect?.(); lpTimer.current = 'fired' }, 420)
+    lpTimer.current = setTimeout(() => { onToggleSelect?.(); lpTimer.current = 'fired' }, LONG_PRESS_MS)
   }
   const endPress = () => {
     if (lpTimer.current && lpTimer.current !== 'fired') { clearTimeout(lpTimer.current); lpTimer.current = null }
@@ -781,7 +782,11 @@ function StandardRow(props: SharedTaskRowProps) {
           </span>
         )}
       </div>
-      {isExpanded && children}
+      {/* The expanded drawer is not part of the row's press target: a hold on
+          its comment box, checkboxes or text must not select the row behind it
+          (useLongPress skips [data-no-long-press]; display:contents keeps the
+          layout as it was). */}
+      {isExpanded && <div data-no-long-press style={{ display: 'contents' }}>{children}</div>}
     </div>
   )
 }
