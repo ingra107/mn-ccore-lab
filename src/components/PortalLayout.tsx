@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useRef, Suspense } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { useDarkMode } from '../hooks/useDarkMode'
@@ -8,6 +8,7 @@ import LogoMark from './LogoMark'
 import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
 import RouteTransition from './RouteTransition'
+import PageLoader from './PageLoader'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAddModal'
 import QuickCaptureInbox from './QuickCaptureInbox'
 import RouteProgressBar from './RouteProgressBar'
@@ -319,7 +320,12 @@ export default function PortalLayout() {
           className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(var(--fab-stack-2)+56px)] lg:pb-8"
           style={{ flex: 1 }}
         >
-          <RouteTransition />
+          {/* The shell stays up while a page chunk loads: without this boundary a
+              lazy page suspended to the app-level one and the WHOLE shell
+              (sidebar, header, tab bar) was replaced by the loader. */}
+          <Suspense fallback={<PageLoader />}>
+            <RouteTransition />
+          </Suspense>
         </main>
 
         {/* Status bar */}

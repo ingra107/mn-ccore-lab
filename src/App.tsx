@@ -8,17 +8,41 @@ import Layout from './components/Layout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
-import HeartbeatLine from './components/HeartbeatLine'
+import PageLoader from './components/PageLoader'
 import { Button } from './components/ui/Button'
 import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazyRoute(() => import('./pages/Home'))
 // Member-only shell, behind RequireAuth: an anonymous visitor never downloads it.
 const PortalLayout = lazyRoute(() => import('./components/PortalLayout'))
-// A member landing on /portal/* needs the shell AND the page chunk; the page
-// chunk is only requested once the shell renders. Start the shell now so the
-// two loads overlap. The module cache makes lazyRoute's later import free.
+// A member landing on /portal/* needs the shell AND the page chunk. They used to
+// load one after the other: the page chunk was only requested once the shell had
+// rendered under RequireAuth, i.e. after the session check answered. Start both
+// now so the shell, the page and /api/auth/me load together. The module cache
+// makes lazyRoute's later import free.
+//
+// Each loader below is the SAME function the route's lazyRoute() uses, so the
+// preload and the route cannot name different chunks.
+const loadToday = () => import('./pages/portal/TodayPage')
+const loadMyTasks = () => import('./pages/MyTasks')
+const loadProjectDetail = () => import('./pages/ProjectDetail')
+const loadProjectsHost = () => import('./pages/portal/hosts/ProjectsHost')
+const loadMeetingsHost = () => import('./pages/portal/hosts/MeetingsHost')
+const loadLabOverviewHost = () => import('./pages/portal/hosts/LabOverviewHost')
+const loadCalendar = () => import('./pages/portal/CalendarPage')
+const PORTAL_PAGE_PRELOADS: ReadonlyArray<readonly [RegExp, () => Promise<unknown>]> = [
+  [/^\/portal\/dashboard\/?$/, loadToday],
+  [/^\/portal\/my-tasks\/?$/, loadMyTasks],
+  [/^\/portal\/projects\/[^/]+\/?$/, loadProjectDetail],
+  [/^\/portal\/projects\/?$/, loadProjectsHost],
+  [/^\/portal\/meetings\/?$/, loadMeetingsHost],
+  [/^\/portal\/overview\/?$/, loadLabOverviewHost],
+  [/^\/portal\/calendar\/?$/, loadCalendar],
+]
 if (typeof window !== 'undefined' && window.location.pathname.startsWith('/portal')) {
-  void import('./components/PortalLayout').catch(() => { /* lazyRoute reports a failed load */ })
+  const quiet = () => { /* lazyRoute reports a failed load */ }
+  void import('./components/PortalLayout').catch(quiet)
+  const hit = PORTAL_PAGE_PRELOADS.find(([re]) => re.test(window.location.pathname))
+  if (hit) void hit[1]().catch(quiet)
 }
 import { AuthProvider } from './context/AuthContext'
 import { AllProjectsRouteGuard } from './components/AllProjectsControls'
@@ -130,25 +154,25 @@ const NotFound = lazyRoute(() => import('./pages/NotFound'))
 const Network = lazyRoute(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
-const TodayPage = lazyRoute(() => import('./pages/portal/TodayPage'))
-const ProjectDetail = lazyRoute(() => import('./pages/ProjectDetail'))
+const TodayPage = lazyRoute(loadToday)
+const ProjectDetail = lazyRoute(loadProjectDetail)
 const ArtifactPage = lazyRoute(() => import('./pages/portal/ArtifactPage'))
 const MeetingDetail = lazyRoute(() => import('./pages/MeetingDetail'))
 const MeetingPrep = lazyRoute(() => import('./pages/MeetingPrep'))
 
 // Tabbed pages (nav redesign, 2026-10-09). Each tab renders the page it
 // replaced, unchanged; the old routes redirect to the tab (see below).
-const LabOverviewHost = lazyRoute(() => import('./pages/portal/hosts/LabOverviewHost'))
-const ProjectsHost = lazyRoute(() => import('./pages/portal/hosts/ProjectsHost'))
-const MeetingsHost = lazyRoute(() => import('./pages/portal/hosts/MeetingsHost'))
+const LabOverviewHost = lazyRoute(loadLabOverviewHost)
+const ProjectsHost = lazyRoute(loadProjectsHost)
+const MeetingsHost = lazyRoute(loadMeetingsHost)
 const LibraryPage = lazyRoute(() => import('./pages/portal/hosts/LibraryPage'))
 const LaunchesPage = lazyRoute(() => import('./pages/portal/LaunchesPage'))
 
 const TrajectoryPage = lazyRoute(() => import('./pages/TrajectoryPage'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
-const UnifiedMyTasks = lazyRoute(() => import('./pages/MyTasks'))
-const CalendarPage = lazyRoute(() => import('./pages/portal/CalendarPage'))
+const UnifiedMyTasks = lazyRoute(loadMyTasks)
+const CalendarPage = lazyRoute(loadCalendar)
 const DeadlinesPage = lazyRoute(() => import('./pages/portal/DeadlinesPage'))
 const ManuscriptsPage = lazyRoute(() => import('./pages/portal/ManuscriptsPage'))
 const SearchPage = lazyRoute(() => import('./pages/portal/SearchPage'))
@@ -162,18 +186,6 @@ const TeamDirectoryPage = lazyRoute(() => import('./pages/portal/TeamDirectoryPa
 const SessionHistory = lazyRoute(() => import('./pages/portal/SessionHistory'))
 const Pulse = lazyRoute(() => import('./pages/Pulse'))
 const GrantsPage = lazyRoute(() => import('./pages/portal/GrantsPage'))
-
-function PageLoader() {
-  // P1-10: the lab's own ECG pulse instead of a generic spinner. HeartbeatLine
-  // is reduced-motion safe (pauses fully-drawn) and shares the favicon trace.
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-3" role="status" aria-label="Loading">
-        <HeartbeatLine width={180} height={48} color="var(--sk-t3)" ariaLabel="Loading" />
-      </div>
-    </div>
-  )
-}
 
 /**
  * Navigate helper that expands `:slug`-style path params into the target URL.

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import HeartbeatLine from './HeartbeatLine'
+import PageLoader from './PageLoader'
 import { withAlpha } from '../lib/taskGrouping'
 import JoinSteps from './JoinSteps'
 import ErrorReporterBinding from './ErrorReporterBinding'
@@ -19,9 +20,10 @@ import ErrorReporterBinding from './ErrorReporterBinding'
  * instead of the portal, flag or no flag: every member API answers them 403,
  * so the portal would only be a page of errors.
  *
- * The splash always renders against a fixed dark surface regardless of the
- * viewer's chosen theme — the sign-in gate is treated as the front door of
- * the lab, not a themed page.
+ * The sign-in and members-only walls always render against a fixed dark surface
+ * regardless of the viewer's chosen theme — the gate is treated as the front
+ * door of the lab, not a themed page. The "checking your session" wait before
+ * either wall is NOT a wall: it is the themed page loader.
  */
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth()
@@ -43,22 +45,11 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (!enforce) return <>{reporter}{children}</>
 
   if (isLoading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#0b1017',
-          color: '#e2e8f0',
-          fontFamily: 'var(--font-sans)',
-          fontSize: 14,
-        }}
-      >
-        <span style={{ opacity: 0.85 }}>Checking your session…</span>
-      </div>
-    )
+    // The same loader the route Suspense shows, in the page's own theme: a cold
+    // load used to flash a fixed dark splash (wrong on light theme) and then a
+    // second, different loader. Now it is one screen, and only until the
+    // session answers (or never, when the device has a cached member).
+    return <PageLoader label="Checking your session" />
   }
 
   if (!isAuthenticated) return <SignInWall />

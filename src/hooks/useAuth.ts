@@ -68,6 +68,56 @@ function cacheSlug(email: string, slug: string): void {
   if (!email || !slug) return
   try { localStorage.setItem(SLUG_CACHE_PREFIX + email.toLowerCase(), slug) } catch { /* storage off: first paint waits for the API */ }
 }
+/**
+ * The one member this device has seen answer as a member, for a first paint
+ * when the cookie cannot say who is signed in (not readable, or not set yet on
+ * this load). Exactly one cached member = unambiguous; none or several = null,
+ * and the page waits for /api/auth/me as before.
+ *
+ * A cache of the Worker's last answer, never a source: hydration overwrites it,
+ * a non-member answer forgets it (authUserFromMe), and fetchAuthStatus never
+ * falls back to it, so an API failure or a signed-out answer cannot leave this
+ * guess standing as a signed-in session (RequireAuth shows the sign-in wall).
+ */
+export function soleCachedMember(storage: Pick<Storage, 'length' | 'key' | 'getItem'> | null = safeStorage()): { email: string; slug: string } | null {
+  if (!storage) return null
+  try {
+    let found: { email: string; slug: string } | null = null
+    for (let i = 0; i < storage.length; i++) {
+      const k = storage.key(i)
+      if (!k || !k.startsWith(SLUG_CACHE_PREFIX)) continue
+      const slug = storage.getItem(k) ?? ''
+      if (!slug) continue
+      if (found) return null
+      found = { email: k.slice(SLUG_CACHE_PREFIX.length), slug }
+    }
+    return found
+  } catch { return null }
+}
+function safeStorage(): Storage | null {
+  try { return typeof localStorage === 'undefined' ? null : localStorage } catch { return null }
+}
+function provisionalMember(): AuthUser | null {
+  const m = soleCachedMember()
+  if (!m) return null
+  loadCachedDirectory()
+  return {
+    email: m.email,
+    slug: m.slug,
+    name: nameFromEmail(m.slug, m.email),
+    isAuthenticated: true,
+    isPi: false,
+    isMember: true,
+    canShowAllProjects: false,
+    piResolved: false,
+  }
+}
+/** First-paint user: the cookie's if readable, else this device's sole cached member. */
+function initialAuth(): AuthUser {
+  const cookieUser = getAuthFromCookie()
+  if (cookieUser.isAuthenticated) return cookieUser
+  return provisionalMember() ?? defaultUser
+}
 function forgetDirectory(): void {
   setEmailDirectory([])
   try { localStorage.removeItem(DIRECTORY_CACHE_KEY) } catch { /* storage off: nothing cached */ }
@@ -208,15 +258,13 @@ export function useAuthState(): AuthContextValue {
   // First try cookie (instant paint — isPi=false until API hydrates).
   // getAuthFromCookie() reads synchronously-available document.cookie, so the
   // initial value is decided via lazy init instead of an effect.
-  const [user, setUser] = useState<AuthUser>(() => {
-    const cookieUser = getAuthFromCookie()
-    return cookieUser.isAuthenticated ? cookieUser : defaultUser
-  })
+  const [user, setUser] = useState<AuthUser>(initialAuth)
   // Still loading until the Worker has confirmed the slug at least once for
-  // this email: a first-ever cookie paint only has the email-prefix guess.
+  // this email: a first-ever cookie paint only has the email-prefix guess. A
+  // cached member (cookie or not) paints the shell now and hydrates behind it.
   const [isLoading, setIsLoading] = useState(() => {
-    const cookieUser = getAuthFromCookie()
-    return !cookieUser.isAuthenticated || !cachedSlug(cookieUser.email)
+    const first = initialAuth()
+    return !first.isAuthenticated || !cachedSlug(first.email)
   })
 
   useEffect(() => {
