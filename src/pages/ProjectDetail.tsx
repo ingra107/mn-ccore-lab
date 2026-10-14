@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
-import { useQueryClient, useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { Button } from '../components/ui/Button'
@@ -85,6 +85,9 @@ import ProductDescription from '../components/project/ProductDescription'
 import { pairFields } from '../lib/projectPairs'
 import { scopeByProduct } from '../lib/products'
 import { useProjectProducts } from '../hooks/useProjectProducts'
+import { useProjectFiles } from '../hooks/useProjectFiles'
+import { useProjectDetailQueries } from '../hooks/useProjectDetailQueries'
+import { TextSkeleton } from '../components/LoadingSkeleton'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 import PageWithRail from '../components/PageWithRail'
 
@@ -95,6 +98,8 @@ type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
   const { data: projects = [], isLoading, isError } = useProjects()
+  // The project's own queries start with the list, not after it (the slug is in the URL).
+  useProjectDetailQueries(slug)
 
   const project = projects.find((p) => p.slug === slug)
 
@@ -194,8 +199,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
   const { showUndo, showSuccess, showError } = useUndoToast()
-  const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
-  const { data: projectComments = [] } = useComments(project.slug)
+  const { data: projectUpdates = [], isPending: updatesPending } = useProjectUpdates(project.slug)
+  const { data: projectComments = [], isPending: commentsPending } = useComments(project.slug)
+  const activityPending = updatesPending || commentsPending
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
 
@@ -245,17 +251,11 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Tab counts (PD-12)
   const { data: papers = [] } = useProjectPapers(project.slug)
   const { data: publications = [] } = useProjectPublications(project.slug)
-  const { data: filesData = [] } = useQuery<Array<unknown>>({
-    queryKey: ['attachments', 'project', project.slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/files?entity_type=project&entity_id=${project.slug}`)
-      const json = await res.json() as { data: Array<unknown> }
-      return json.data || []
-    },
-  })
+  const { data: filesData = [] } = useProjectFiles(project.slug)
 
   // Tasks for this project
-  const { data: projectTasks = [] } = useTasks({ project: project.slug })
+  // isPending, not the empty array: "No open tasks" must wait for the tasks.
+  const { data: projectTasks = [], isPending: tasksPending } = useTasks({ project: project.slug })
   const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
@@ -938,7 +938,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   )
 
   const openListEl = (
-pendingTasks.length === 0 ? (
+tasksPending ? (
+              <div aria-busy="true" aria-label="Loading tasks" style={{ padding: '8px 0' }}><TextSkeleton lines={3} widths={['90%', '75%', '60%']} /></div>
+            ) : pendingTasks.length === 0 ? (
               <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, padding: '12px 0' }}>
                 No open tasks.{' '}
                 <button
@@ -1009,7 +1011,9 @@ isAuthenticated && (project.slug ?? project.id) && (
   )
 
   const recentListEl = (
-recentActivity.length === 0 ? (
+activityPending && recentActivity.length === 0 ? (
+                <div aria-busy="true" aria-label="Loading activity" style={{ padding: '4px 0' }}><TextSkeleton lines={2} widths={['85%', '65%']} /></div>
+              ) : recentActivity.length === 0 ? (
                 <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '4px 0' }}>
                   No activity yet.
                 </p>
@@ -1606,7 +1610,7 @@ recentActivity.length === 0 ? (
                 </button>
               </div>
             </div>
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && !tasksPending ? (
               <EmptyState
                 icon={<CheckCircle2 size={32} />}
                 title={taskFilter === 'active' ? 'No active tasks' : taskFilter === 'done' ? 'No completed tasks' : taskFilter === 'blocked' ? 'No blocked tasks' : 'No tasks for this project'}
@@ -1628,6 +1632,7 @@ recentActivity.length === 0 ? (
                 onToggleSelect={toggleSelect}
                 anchorId={selectAnchorId}
                 onSelectRange={handleSelectRange}
+                isLoading={tasksPending}
               />
             )}
 
