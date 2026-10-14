@@ -35,11 +35,21 @@
  * source_id = the id it stamps on the tasks. Joining both resolves those rows
  * exactly, with no inference. `meeting_ref` is the joined `m.id`, so a link
  * never targets a source_id (handleGetMeeting looks up meetings.id only).
- * Measured on prod 2026-10-14: 169 live tasks match by source_id, 0 by id, and
- * no task matches two meetings rows (no meetings.id equals another row's
- * source_id). Rows the join misses fall to resolveMeetingRef below.
+ *
+ * Shape, on purpose: the ON clause pins `m.id` (the primary key) to ONE value,
+ * picked by two indexed lookups -- the meetings row whose id is the task's
+ * meeting_id, else the row whose source_id is. So a task can join at most one
+ * meetings row by construction, even if one row's id ever equals another's
+ * source_id (nothing in the schema forbids that), and the id match wins. It is
+ * also index-only: `t.meeting_id IN (m.id, m.source_id)` scanned the whole
+ * meetings table per task row, on the Hub's hottest read and the PB pull.
+ * tasks.meeting-join.test.ts asserts both the one-row rule and the query plan.
+ * Measured on prod 2026-10-14: 169 live tasks match by source_id, 0 by id.
+ * Rows the join misses fall to resolveMeetingRef below.
  */
-export const TASK_MEETING_JOIN = 'LEFT JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)';
+export const TASK_MEETING_REF_SQL =
+  '(COALESCE((SELECT id FROM meetings WHERE id = t.meeting_id), (SELECT id FROM meetings WHERE source_id = t.meeting_id)))';
+export const TASK_MEETING_JOIN = `LEFT JOIN meetings m ON m.id = ${TASK_MEETING_REF_SQL}`;
 export const TASK_MEETING_COLS = 'm.id AS meeting_ref, m.title AS meeting_title, m.date AS meeting_date';
 
 export interface MeetingLike {

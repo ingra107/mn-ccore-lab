@@ -4,7 +4,7 @@
 // The PB debrief stamps its action items with the meeting's calendar id and
 // pushes the meeting first with that id as source_id (v95). The task reads
 // joined on `t.meeting_id = m.id` only, so every such task fell to the
-// date+slug guess in resolveMeetingRef. Joining `IN (m.id, m.source_id)` makes
+// date+slug guess in resolveMeetingRef. Joining both id spaces (TASK_MEETING_JOIN) makes
 // it exact; meeting_ref must still be the joined m.id, because a link to a
 // source_id is a 404 (handleGetMeeting reads meetings.id only). Runs on the
 // migration-chain database (api/test-support/prod-schema-db.ts).
@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import { handleGetTasks, handleGetTask } from './tasks'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
+import { TASK_MEETING_JOIN } from '../lib/meeting-ref'
 
 let db: InstanceType<typeof Database>
 let env: any
@@ -68,5 +69,27 @@ describe('task list meeting join', () => {
   it('GET /api/tasks/:id carries the same meeting_ref', async () => {
     const body = await (await handleGetTask('t_src', env)).json() as any
     expect(body.data.meeting_ref).toBe('mtg-2026-10-12-bb24f00f')
+  })
+})
+
+describe('TASK_MEETING_JOIN shape', () => {
+  it('joins at most one meetings row, the id match first, when one row id is another row source_id', async () => {
+    // Nothing in the schema forbids this overlap; the join must not double the task.
+    insertRow(db, 'meetings', { id: 'mtg-A', date: '2026-10-01', title: 'A', source_id: 'mtg-B' })
+    insertRow(db, 'meetings', { id: 'mtg-B', date: '2026-10-02', title: 'B', source_id: null })
+    task('t_overlap', 'mtg-B')
+    const rows = db.prepare(`SELECT t.id, m.id AS meeting_ref FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = 't_overlap'`).all()
+    expect(rows).toEqual([{ id: 't_overlap', meeting_ref: 'mtg-B' }])
+    const body = await (await handleGetTasks(new URL('https://x/api/tasks'), env, true)).json() as any
+    expect((body.data as any[]).filter((r) => r.id === 't_overlap')).toHaveLength(1)
+    const one = await (await handleGetTask('t_overlap', env)).json() as any
+    expect(one.data.meeting_ref).toBe('mtg-B')
+  })
+
+  it('reaches meetings only through its indexes, never a scan per task row', () => {
+    const plan = (db.prepare(`EXPLAIN QUERY PLAN SELECT t.id, m.title FROM tasks t ${TASK_MEETING_JOIN}`).all() as any[])
+      .map((r) => String(r.detail))
+    expect(plan.filter((d) => / SCAN (m|meetings)$|^SCAN (m|meetings)$|^SCAN (m|meetings) /.test(d))).toEqual([])
+    expect(plan.some((d) => d.includes('SEARCH m USING'))).toBe(true)
   })
 })

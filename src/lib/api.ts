@@ -247,6 +247,10 @@ export interface TaskRow {
   updated_at?: string
   meeting_title?: string
   meeting_date?: string
+  /** The canonical meetings.id the task read resolved (TASK_MEETING_JOIN, or the
+   *  date bridge). The only id a meeting link may target: `meeting_id` is often
+   *  a calendar source_id and 404s. Build links with meetingHrefFor(). */
+  meeting_ref?: string | null
   /** Approval status for meeting-approval tasks (source='meeting_approval').
    *  Set by PB when creating the task (pending), updated here via Accept/Decline.
    *  Non-meeting tasks leave this null. Schema v83 (approval_status column). */
@@ -294,7 +298,7 @@ export const TASK_ROW_KEYS = [
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date',
   'planned_for', 'plan_slot', 'plan_rank', 'estimated_minutes',
   'plan_start_min', 'created_at', 'updated_at', 'meeting_title',
-  'meeting_date', 'approval_status', 'kind',
+  'meeting_date', 'meeting_ref', 'approval_status', 'kind',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',
