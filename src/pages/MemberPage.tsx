@@ -177,7 +177,7 @@ export default function MemberPage() {
     .filter(Boolean) ?? [])
 
   // Expertise tags for this member
-  const { data: expertiseTags = [], isError: expertiseError, refetch: refetchExpertise } = useExpertise(slug)
+  const { data: expertiseTags = [], isPending: expertisePending, isError: expertiseError, refetch: refetchExpertise } = useExpertise(slug)
   const addExpertiseMut = useAddExpertise(slug || '')
   const removeExpertiseMut = useRemoveExpertise(slug || '')
   const [newTag, setNewTag] = useState('')
@@ -607,7 +607,7 @@ export default function MemberPage() {
 
             {expertiseError ? (
               <QueryErrorNote label="expertise tags" onRetry={() => refetchExpertise()} />
-            ) : expertiseTags.length === 0 && !showAddTag && (
+            ) : expertiseTags.length === 0 && !expertisePending && !showAddTag && (
               <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 No expertise tags yet.{canEditProfile ? ' Click + Add to tag areas of expertise.' : ''}
               </p>

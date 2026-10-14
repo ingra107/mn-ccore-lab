@@ -635,7 +635,19 @@ export default function TodayPage() {
             a snoozable "Set up your profile" (replaces My Hub's checklist). */}
         <ProfileSetupPrompt />
 
-        <StatLine counts={counts} doneThisWeek={doneThisWeek} />
+        {/* Each number waits on the query it counts: a dash, never a false 0. */}
+        <StatLine
+          counts={counts}
+          doneThisWeek={doneThisWeek}
+          pending={{
+            overdue: tasksQuery.isPending,
+            planned: tasksQuery.isPending,
+            done: tasksQuery.isPending,
+            'done-week': tasksQuery.isPending,
+            stalled: projectsQuery.isPending,
+            meetings: meetingsQuery.isPending,
+          }}
+        />
 
         {/* PI only: the Lab pulse line, one gray line that opens PI Analytics. */}
         <LabPulseLine />

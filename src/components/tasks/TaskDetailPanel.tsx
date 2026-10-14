@@ -1161,11 +1161,14 @@ const DECISIONS_SENTIMENT_BADGE: Record<string, { color: string; bg: string }> =
 }
 
 function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
-  const { data: decisions = [], isError, refetch } = useDecisions(projectSlug)
+  const { data: decisions = [], isPending, isError, refetch } = useDecisions(projectSlug)
 
   if (isError) {
     return <QueryErrorNote label="decisions" onRetry={() => refetch()} />
   }
+
+  // Nothing to say until the answer is in: "none linked" is a claim about loaded data.
+  if (isPending) return null
 
   if (decisions.length === 0) {
     return (

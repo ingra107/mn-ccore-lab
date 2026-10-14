@@ -21,6 +21,11 @@
 // build. No rule color either: it is not the day's number. The PillStrip scroll-to-section behavior is gone: the
 // sections are right below, and the link now goes somewhere new.
 //
+// A number whose data has not arrived is NOT zero. While its query is pending a
+// stat shows a dim dash (same width as a digit, no rule color, not a link, read
+// aloud as "loading"), so the line never says "0 overdue" for the half second
+// before the tasks land (the false-empty class, 2026-10-14).
+//
 // The completion moment (color-back pick 5, 2026-10-11): when the Hub accepts a
 // completion, "done this week" counts up and its rule lights teal for a beat,
 // then rests gray (useConfirmedCount). The caller leaves still-pending
@@ -46,7 +51,14 @@ interface Stat {
   beat?: boolean
 }
 
-export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneThisWeek?: number }) {
+export type StatKey = 'overdue' | 'stalled' | 'planned' | 'meetings' | 'done' | 'done-week'
+
+export function StatLine({ counts, doneThisWeek, pending }: {
+  counts: DailyCounts
+  doneThisWeek?: number
+  /** Stats whose source query has not answered yet; each renders a dash, not a number. */
+  pending?: Partial<Record<StatKey, boolean>>
+}) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
     { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'u', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
@@ -68,21 +80,25 @@ export function StatLine({ counts, doneThisWeek }: { counts: DailyCounts; doneTh
       data-b2-stats
       title={`Day progress: ${counts.doneToday} done of ${total} (done plus still planned)`}
     >
-      {stats.map((s) => {
+      {stats.map((raw) => {
+        const loading = !!pending?.[raw.key as StatKey]
+        // A pending stat reads as a quiet zero in every way except its text.
+        const s = loading ? { ...raw, value: 0, beat: false } : raw
         const inner = (
           <>
             <span className={`tk-rl${s.value > 0 ? ` tk-${s.rule}` : ''}${s.beat ? ' cm-beat' : ''}`} aria-hidden="true" />
             <span>
-              <span className="tk-v" style={{ display: 'block' }}>{s.value}</span>
+              <span className="tk-v" style={{ display: 'block' }}>{loading ? '–' : s.value}</span>
               <span className="tk-l">{s.label}{s.value > 0 && s.to && <span className="tk-ar" aria-hidden="true">&rarr;</span>}</span>
             </span>
           </>
         )
+        const busy = loading ? { 'aria-busy': true as const } : {}
         if (!s.to) {
-          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={`${s.value} ${s.label}`} data-stat={s.key}>{inner}</div>
+          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={loading ? `${s.label}: loading` : `${s.value} ${s.label}`} data-stat={s.key} {...busy}>{inner}</div>
         }
         return s.value === 0 ? (
-          <div key={s.key} className="tk-st tk-zero" aria-label={`0 ${s.label}`}>{inner}</div>
+          <div key={s.key} className="tk-st tk-zero" aria-label={loading ? `${s.label}: loading` : `0 ${s.label}`} {...busy}>{inner}</div>
         ) : (
           <Link key={s.key} to={s.to} className="tk-st" aria-label={`${s.value} ${s.label}: open ${s.dest}`} title={s.dest}>{inner}</Link>
         )

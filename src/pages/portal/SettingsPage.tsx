@@ -138,7 +138,7 @@ export default function SettingsPage() {
   })
 
   // Load workflow templates
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], isPending: templatesPending } = useQuery({
     queryKey: ['workflow-templates'],
     queryFn: async () => {
       const res = await fetch('/api/workflow-templates')
@@ -331,7 +331,7 @@ export default function SettingsPage() {
         {/* Workflow Templates */}
         {activeTab === 'templates' && (
         <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)">
-          {templates.length === 0 && (
+          {templates.length === 0 && !templatesPending && (
             <EmptyState
               icon={<Layers size={32} />}
               title="No workflow templates"

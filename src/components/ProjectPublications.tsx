@@ -43,7 +43,7 @@ interface ProjectPublicationsProps {
 }
 
 export default function ProjectPublications({ projectSlug, projectTitle, isPi, variant = 'card' }: ProjectPublicationsProps) {
-  const { data: links = [] } = useProjectPublications(projectSlug)
+  const { data: links = [], isPending: linksPending } = useProjectPublications(projectSlug)
   const { data: allPubs = [] } = usePublications(undefined, { enabled: isPi })
   const linkMutation = useLinkProjectPublication(projectSlug)
   const unlinkMutation = useUnlinkProjectPublication(projectSlug)
@@ -81,7 +81,7 @@ export default function ProjectPublications({ projectSlug, projectTitle, isPi, v
           />
         ))}
 
-        {links.length === 0 && isPi && (
+        {links.length === 0 && !linksPending && isPi && (
           <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 0 }}>
             No publications linked yet.
           </p>
