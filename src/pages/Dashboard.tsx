@@ -346,7 +346,7 @@ export default function Dashboard() {
           same centered band + left edge as every other page. The old
           maxWidth:'100%' override is gone. Since 2026-10-10 (principle 17) the
           card grid stops at --page-width like every page; no exception. */}
-      <div className="content-container" style={{ paddingBottom: '4rem', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="content-container" data-customizing={showCustomize || undefined} style={{ paddingBottom: '4rem', minHeight: 'calc(100vh - 120px)' }}>
         {/* Title, the hero number and the heartbeat line (color-back picks 2, 10). */}
         <PageHeader
           title="Lab overview"
@@ -796,16 +796,21 @@ export default function Dashboard() {
           color: var(--sk-t3);
           cursor: pointer;
           opacity: 0;
+          /* Invisible means untouchable: a hidden pin takes no pointer events,
+             so no width, display or tap-target rule elsewhere can give an
+             unseen control a hit area over the card's own tabs (G8-01). */
+          pointer-events: none;
           transition: opacity 120ms ease, background 120ms ease;
           z-index: 3;
         }
         .dashboard-grid-item:hover .dashboard-pin-btn,
-        .dashboard-grid-item:focus-within .dashboard-pin-btn {
+        .dashboard-grid-item:focus-within .dashboard-pin-btn,
+        .dashboard-pin-btn:focus-visible {
           opacity: 1;
+          pointer-events: auto;
         }
         .dashboard-pin-btn--inactive {
           color: var(--slate);
-          opacity: 0;
         }
         .dark .dashboard-pin-btn { background: rgba(255, 255, 255, 0.08); }
         /* Touch has no hover, so the pin stayed invisible yet still took taps:
@@ -814,7 +819,7 @@ export default function Dashboard() {
            exist on touch (the N1.07 rule in index.css); Customize carries the
            pin toggle there, at 44px. */
         @media (hover: none) {
-          .dashboard-pin-btn { display: none; }
+          .dashboard-grid-item .dashboard-pin-btn { display: none; }
         }
 
         /* "Reset layout" link in section header */

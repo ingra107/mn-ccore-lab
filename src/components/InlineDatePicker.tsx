@@ -4,6 +4,7 @@ import { ChevronDown, CalendarDays } from 'lucide-react'
 import { formatShortDate, addDaysYmd, dueLabelText, dueLabelCompact } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
+import { dropdownTop } from '../lib/viewportBottom'
 
 interface InlineDatePickerProps {
   value: string | null
@@ -69,7 +70,7 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
   // when a day/preset is actually picked) — `onClose` here is a pure
   // setOpen(false), matching the removed handler exactly.
   const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
-    top: Math.min(rect.bottom + 4, window.innerHeight - 320),
+    top: dropdownTop(rect, 320),
     left: Math.min(rect.left, window.innerWidth - 256),
     minWidth: 248,
     maxHeight: 320,

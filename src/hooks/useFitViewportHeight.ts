@@ -1,4 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
+import { viewportBottom } from '../lib/viewportBottom'
 
 interface FitViewportOptions {
   /** Floor for the page height in px. Default 320. */
@@ -28,8 +29,11 @@ interface FitViewportOptions {
  *
  * It refits on window resize, on a resize of the first child, <body> or
  * #portal-main (record forms, focus mode collapsing the top bar, the shell
- * reflowing), and once after the page transition has settled. fit() reads but
- * never changes those sizes, so it cannot feed back into the observer.
+ * reflowing), and once after the page transition has settled. fit() writes the
+ * element's own height and, while the phone tab bar shows, main's bottom
+ * padding (a fixed 0, the same value every run). The padding write does change
+ * #portal-main's size, but only on the first fit after the bar appears; the
+ * refit it triggers writes the same values, so the observer settles in one pass.
  */
 export function useFitViewportHeight(
   ref: RefObject<HTMLElement | null>,
@@ -43,13 +47,37 @@ export function useFitViewportHeight(
       el.style.minHeight = '100vh'
       return
     }
+    // Remember main's own inline padding while the hook has it zeroed.
+    let zeroed = false
+    let savedPadding = ''
+    const zeroPadding = (main: HTMLElement, on: boolean) => {
+      if (on && !zeroed) { savedPadding = main.style.paddingBottom; zeroed = true }
+      if (on) main.style.paddingBottom = '0px'
+      else if (zeroed) { main.style.paddingBottom = savedPadding; zeroed = false }
+    }
     const fit = () => {
       el.style.minHeight = '0px'
       const top = el.getBoundingClientRect().top + window.scrollY
       let below = 0
       const main = el.closest('#portal-main') as HTMLElement | null
-      if (main) {
+      // Below lg a fixed tab bar owns the bottom of the screen and the shell
+      // ends at its top edge. main's bottom padding is window-scroll clearance
+      // (tab bar + floater reserve) for pages whose document scrolls; a fitted
+      // shell scrolls inside itself (its scroller carries .fab-clear), so it
+      // would only leave a blank band above the bar (127px at 390, overnight
+      // 2026-10-14) and, if left in place, make the document taller than the
+      // screen. So while the bar shows, the padding is zeroed here; it is
+      // restored on resize past lg and on unmount.
+      const screenEnd = viewportBottom()
+      const barShowing = screenEnd < window.innerHeight
+      if (barShowing) {
+        below += window.innerHeight - screenEnd
+        if (main) zeroPadding(main, true)
+      } else if (main) {
+        zeroPadding(main, false)
         below += parseFloat(getComputedStyle(main).paddingBottom) || 0
+      }
+      if (main) {
         for (let sib = main.nextElementSibling as HTMLElement | null; sib; sib = sib.nextElementSibling as HTMLElement | null) {
           const pos = getComputedStyle(sib).position
           if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight
@@ -73,6 +101,8 @@ export function useFitViewportHeight(
     // PageTransition animates the page in; re-measure once it has settled.
     const settle = window.setTimeout(fit, 450)
     return () => {
+      const main = el.closest('#portal-main') as HTMLElement | null
+      if (main) zeroPadding(main, false)
       window.removeEventListener('resize', fit)
       ro?.disconnect()
       cancelAnimationFrame(raf)

@@ -1253,7 +1253,7 @@ recentActivity.length === 0 ? (
                 >
                   Cancel
                 </button>
-                <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                <span className="kbd-hint text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                   Ctrl+Enter to save
                 </span>
               </div>

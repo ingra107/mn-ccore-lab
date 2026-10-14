@@ -2174,6 +2174,13 @@ button[aria-label="Deselect task"]::before {
   button[aria-label="Select task"], button[aria-label="Deselect task"]))::before {
   right: 0;
 }
+/* The same rule for the card body: a task card's plan pin rides in the tail
+   after the title, so on a short title it sits mid-card. Its hit area grows up
+   and sideways, never down into the context line, so a tap on the card's
+   middle opens the card instead of planning it for today (overnight
+   2026-10-14 probe: 3 of 16 Today rows, blocked POSTs on My Tasks and the
+   project page). card-plan-pin-touch.test.tsx measures it. */
+.tk .tk-tail .tk-hov::before { bottom: 0; }
 
 /* Touch devices have no hover, so hover-revealed row actions are unreachable.
    The Today 📌 plan button is the no-drag planning path (drag never works on
@@ -2315,17 +2322,6 @@ button[aria-label="Deselect task"]::before {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
-  }
-
-  /* Dashboard card overlay controls (pin/drag/unpin — hover-only, still need tap area) */
-  button[title="Pin to top"],
-  button[title="Unpin"],
-  button[title="Drag to reorder"] {
-    min-height: 44px;
-    min-width: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 }
 

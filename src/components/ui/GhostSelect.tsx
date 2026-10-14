@@ -25,6 +25,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { usePortalDropdown, type PortalDropdownPosition } from '../../hooks/usePortalDropdown'
+import { dropdownTop } from '../../lib/viewportBottom'
 
 export interface GhostSelectOption {
   value: string
@@ -84,7 +85,7 @@ export default function GhostSelect({
   // is constant (list + optional sticky search), so repositioning it as a
   // whole keeps it fully visible rather than truncating content.
   const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
-    top: Math.min(rect.bottom + 4, window.innerHeight - 308),
+    top: dropdownTop(rect, 308),
     left: Math.min(rect.left, window.innerWidth - 160),
     minWidth: rect.width,
     maxHeight: 300,
