@@ -1100,7 +1100,11 @@ export function TimelineGrid({
               overscrollBehavior: 'contain',
               display: 'grid',
               gridTemplateColumns: isPhone ? 'repeat(auto-fill, minmax(140px, 1fr))' : `repeat(${serviceCols}, minmax(0, 1fr))`,
-              gridAutoRows: 72,
+              // 72px is the floor, not a cap: a tile with a continuation note
+              // ("all day · started yesterday") needs a fourth line, and a fixed
+              // 72 clipped its "× hide" in half (phone audit 2026-10-14). The
+              // rail's maxHeight above still bounds the whole strip.
+              gridAutoRows: 'minmax(72px, auto)',
               gap: 4,
               alignContent: 'start',
             }}>

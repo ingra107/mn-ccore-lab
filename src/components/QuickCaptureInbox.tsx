@@ -9,6 +9,7 @@ import InlineSelect from './InlineSelect'
 import Field from './ui/Field'
 import { nowInstant } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
+import { isTouchOnly, modKeyLabel } from '../lib/platform'
 import { Button } from './ui/Button'
 
 type InboxTag = 'note' | 'idea' | 'decision' | 'follow-up' | 'meeting-note'
@@ -280,7 +281,7 @@ export default function QuickCaptureInbox() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onTextareaKeyDown}
-          placeholder="What's on your mind? (Ctrl+Enter to save, or @hermes to ask)"
+          placeholder={isTouchOnly() ? "What's on your mind? (or @hermes to ask)" : `What's on your mind? (${modKeyLabel()}+Enter to save, or @hermes to ask)`}
           rows={3}
           style={{
             width: '100%',
@@ -366,6 +367,7 @@ export default function QuickCaptureInbox() {
           }}
         >
           <span
+            className="kbd-hint"
             style={{
               fontSize: 'var(--text-micro, 10px)',
               color: 'var(--ink-hint, var(--slate))',

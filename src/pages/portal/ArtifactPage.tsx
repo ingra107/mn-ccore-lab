@@ -35,6 +35,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
 import { getPersonInfo } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTouchOnly, modKeyLabel } from '../../lib/platform'
 import PageHeartbeat from '../../components/moments/PageHeartbeat'
 
 interface ArtifactVersion {
@@ -459,7 +460,7 @@ export default function ArtifactPage() {
                 }}
                 rows={3}
                 aria-label="Add a comment"
-                placeholder="Comment, or ask @hermes to revise this document based on the discussion (⌘⏎ to post)"
+                placeholder={`Comment, or ask @hermes to revise this document based on the discussion${isTouchOnly() ? '' : ` (${modKeyLabel()}+Enter to post)`}`}
                 style={{
                   width: '100%', resize: 'vertical', fontSize: 13, lineHeight: 1.5,
                   border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)',

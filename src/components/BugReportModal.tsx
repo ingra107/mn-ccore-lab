@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import Modal from './ui/Modal'
 import Field from './ui/Field'
 import { ICON_PROPS } from '../lib/iconProps'
+import { isTouchOnly, modKeyLabel } from '../lib/platform'
 
 interface BugReportModalProps {
   open: boolean
@@ -191,7 +192,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                   onChange={(e) => setDescription(e.target.value)}
                   onPaste={handlePaste}
                   onKeyDown={handleKeyDown}
-                  placeholder="Describe the bug... (Ctrl+V screenshot, Ctrl+Enter submit)"
+                  placeholder={isTouchOnly() ? 'Describe the bug...' : `Describe the bug... (${modKeyLabel()}+V screenshot, ${modKeyLabel()}+Enter submit)`}
                   rows={4}
                   style={{
                     width: '100%',

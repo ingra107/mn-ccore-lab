@@ -210,6 +210,7 @@ function ProjectVelocityList({ projectStages }: { projectStages: TrajectoryData[
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem 0.75rem', marginBottom: '0.35rem' }}>
                 <Link
                   to={PATHS.project(project.slug)}
+                  className="hit-area"
                   style={{
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
@@ -518,6 +519,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
             </div>
             {pub.doi && (
               <a
+                className="hit-area"
                 href={pub.doi.startsWith('http') ? pub.doi : `https://doi.org/${pub.doi}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1327,7 +1329,7 @@ export default function TrajectoryPage() {
       {/* Back link */}
       <Link
         to={`${teamBase}/${slug}`}
-        className="inline-flex items-center gap-1.5 mb-6 no-print hover:!opacity-100 transition-opacity"
+        className="inline-link inline-flex items-center gap-1.5 mb-6 no-print hover:!opacity-100 transition-opacity"
         style={{
           fontSize: '12px',
           color: 'var(--slate)',

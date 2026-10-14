@@ -583,7 +583,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           <CommandBadge value={val} />
           {/* ⌘⏎ hint */}
           {!hideKbdHint && val.trim().length > 0 && (
-            <kbd style={{
+            <kbd className="kbd-hint" style={{
               fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
               fontSize: 9,
               padding: '1px 4px',

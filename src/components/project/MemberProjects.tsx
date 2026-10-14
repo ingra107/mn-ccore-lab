@@ -24,7 +24,7 @@ export default function MemberProjects({ slug }: { slug: string }) {
         <ul className="list-none p-0 m-0 flex flex-col gap-2">
           {projects.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center gap-2">
-              <Link to={PATHS.project(p.slug ?? p.id)} style={{ color: 'var(--ink)', fontSize: 'var(--value-size)' }}>
+              <Link to={PATHS.project(p.slug ?? p.id)} className="hit-area" style={{ color: 'var(--ink)', fontSize: 'var(--value-size)' }}>
                 {p.title}
               </Link>
               {compactStageLabel(p) && <Chip color="var(--slate)" bordered>{compactStageLabel(p)}</Chip>}
