@@ -7,7 +7,7 @@ import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
-import { initialAudience, isLabSeriesTitle, isMeetingAudience } from '../../shared/meetingAudience';
+import { initialAudience, isLabSeriesTitle, isMeetingAudience, meetingSeriesKey } from '../../shared/meetingAudience';
 import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/viewer-db';
 import { meetingArms } from '../lib/table-scope';
 
@@ -455,6 +455,43 @@ export async function handleMeetingAccess(meetingId: string, request: Request, e
   return json({ data: { meeting_id: meetingId, member: tm.slug, visible: held.length > 0, arms: held } });
 }
 
+// A meeting's SERIES is meetingSeriesKey(title) (shared/meetingAudience.ts): a
+// lab series by its pattern ("MNCCORE" and "MNCCORE Biweekly Meeting October 6
+// 2026" are one series), any other meeting by its normalized title, which a
+// recurring calendar series keeps ("Weekly Meeting with Daniel/Nick"). The
+// meetings table has no series column. Picking the previous meeting by date
+// alone handed a one-on-one the action items of whatever other meeting happened
+// last (G5-3, 2026-10-14). A renamed meeting starts a new series; "no previous
+// meeting" is the honest answer then, not a neighbour's.
+type SeriesMeeting = { id: string; date: string; title: string; source_id: string | null };
+
+// D1 caps a statement at 100 bound values; two per meeting (id + source_id).
+const SERIES_LOOKBACK = 30;
+
+export async function seriesMeetingsBefore(env: Env, date: string, title: string | null): Promise<SeriesMeeting[]> {
+  const key = meetingSeriesKey(title);
+  if (!key) return [];
+  const { results } = await env.DB.prepare(
+    'SELECT id, date, title, source_id FROM meetings WHERE date < ? ORDER BY date DESC'
+  ).bind(date).all<SeriesMeeting>();
+  return (results ?? []).filter((m) => meetingSeriesKey(m.title) === key).slice(0, SERIES_LOOKBACK);
+}
+
+/** The ids a task's meeting_id may carry for these meetings (v95: Hub id or PB source_id). */
+function seriesTaskRefs(meetings: SeriesMeeting[]): string[] {
+  return meetings.flatMap((m) => (m.source_id ? [m.id, m.source_id] : [m.id]));
+}
+
+// The prep page's Recent activity is about people: someone created, completed or
+// reassigned a task, changed a project, logged a meeting. activity_log is also the
+// machine audit trail ("Bulk sync: 0 created, 1 updated", "Deleted links record
+// link_01M...", "Bulk complete: 1 tasks", digest dismissals), so this NAMES the
+// human event types instead of excluding machine ones: a new machine type stays
+// out by default (G5-5, 2026-10-14).
+const PREP_ACTIVITY_TYPES = ['task', 'project', 'meeting', 'stage_change', 'assignee_change', 'project_update'];
+const PREP_ACTIVITY_WHERE =
+  `a.type IN (${PREP_ACTIVITY_TYPES.map((t) => `'${t}'`).join(', ')}) AND a.description NOT LIKE 'Bulk %'`;
+
 // GET /api/meetings/:id/prep — facilitator prep view data.
 // Auth-gated: prep data contains task details, prior action items, activity log.
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).
@@ -466,11 +503,9 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
   if (!meeting) return error('Meeting not found', 404);
 
 
-  // Find the previous meeting (for carry-forward context). MUST resolve
-  // before the parallel fan-out below — prevActionItems depends on it.
-  const prevMeeting = await env.DB.prepare(
-    'SELECT id, date, title, source_id FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
-  ).bind(meeting.date as string).first<{ id: string; date: string; title: string; source_id: string | null }>();
+  // The previous meeting OF THIS SERIES (for carry-forward context). MUST
+  // resolve before the parallel fan-out below — prevActionItems depends on it.
+  const prevMeeting = (await seriesMeetingsBefore(env, meeting.date as string, meeting.title as string | null))[0] ?? null;
 
   // T2.3 (2026-05-28): parallelize the 5 independent reads. recentActivity,
   // upcomingDeadlines, agendaItems, overdueTasks read disjoint tables on
@@ -491,22 +526,23 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     // v95: matches either the Hub id or PB's calendar-match source_id.
     prevMeeting
       ? env.DB.prepare(
-          `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
+          `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.completed, t.due_date
            FROM tasks t
            WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL
            ORDER BY t.completed ASC, t.assignee`
         ).bind(prevMeeting.id, prevMeeting.source_id ?? prevMeeting.id).all()
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
-    // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
+    // Recent activity (last 14 days): what people did to tasks, projects and
+    // meetings. Only the human event types, never the machine audit rows.
     env.DB.prepare(
       `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
        FROM activity_log a
-       WHERE a.timestamp > ? AND ${legacyEchoExclude('a')}
+       WHERE a.timestamp > ? AND ${legacyEchoExclude('a')} AND ${PREP_ACTIVITY_WHERE}
        ORDER BY a.timestamp DESC LIMIT 30`
     ).bind(twoWeeksAgo).all(),
     // Upcoming deadlines (next 14 days)
     env.DB.prepare(
-      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
+      `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
        WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL
        ORDER BY t.due_date`
@@ -517,7 +553,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     ).bind(meetingId).all(),
     // Overdue tasks
     env.DB.prepare(
-      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
+      `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority
        FROM tasks t
        WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL
        ORDER BY t.due_date`
@@ -557,10 +593,11 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first<{ id: string; title: string; date: string }>();
   if (!meeting) return error('Meeting not found', 404);
 
-  // Find the previous meeting date for context
-  const prevMeeting = await env.DB.prepare(
-    'SELECT id, date FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
-  ).bind(meeting.date).first<{ id: string; date: string }>();
+  // Earlier meetings of this series: the newest sets the "since last time"
+  // window, and carry-forward reads only their action items.
+  const series = await seriesMeetingsBefore(env, meeting.date, meeting.title);
+  const prevMeeting = series[0] ?? null;
+  const seriesRefs = seriesTaskRefs(series);
 
   const prevDate = prevMeeting?.date ?? '1970-01-01';
 
@@ -573,17 +610,20 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
   // today / weekOut, all available at fan-out time). Sequential await accumulated
   // ~5x round-trip latency on a frequent-ish endpoint (agenda generation).
   const [carriedForward, urgentTasks, stalledProjects, regulatory, recentUpdates] = await Promise.all([
-    // 1. Carried-forward and open action items from previous meetings.
-    // v95: JOIN matches either id space; NULL-safe by construction
-    // (`IN (m.id, NULL)` degrades to `= m.id`) — no guard needed.
-    env.DB.prepare(
-      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
-       FROM tasks t
-       JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
-       WHERE m.date < ? AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
-       ORDER BY m.date DESC, t.created_at
-       LIMIT 20`
-    ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),
+    // 1. Carried-forward and open action items from earlier meetings of THIS
+    // series (the prep page's rule, seriesMeetingsBefore). No earlier meeting in
+    // the series means nothing to carry forward.
+    seriesRefs.length === 0
+      ? Promise.resolve({ results: [] as { id: string; title: string; description: string; assignee: string; due_date: string; status: string }[] })
+      : env.DB.prepare(
+          `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
+           FROM tasks t
+           JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
+           WHERE t.meeting_id IN (${seriesRefs.map(() => '?').join(', ')})
+             AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
+           ORDER BY m.date DESC, t.created_at
+           LIMIT 20`
+        ).bind(...seriesRefs).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),
     // 2. Urgent / high-priority open tasks due this week
     env.DB.prepare(
       `SELECT t.id, t.title, t.assignee, t.due_date, t.priority, t.status

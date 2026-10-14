@@ -58,3 +58,16 @@ export function initialsOfName(name: string): string {
   const parts = name.split(/\s+/).filter(Boolean)
   return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? (parts[parts.length - 1][0] ?? '') : '')).toUpperCase() || '?'
 }
+
+/** Team slugs inside server-written text ("Created task: X → nick-ingraham",
+ *  "Added adams-dudley to CCI") read as first names ("→ Nick", "Added Adams").
+ *  Only slugs the team data knows are replaced, as whole tokens, so a hyphenated
+ *  word that merely looks like a slug is left alone. */
+export function nameSlugsInText(text: string): string {
+  if (!text) return text
+  const slugs = getAllMembers().map((m) => m.slug).filter((s): s is string => !!s && s.includes('-'))
+  if (slugs.length === 0) return text
+  const escaped = slugs.sort((a, b) => b.length - a.length).map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const re = new RegExp(`(?<![\\w-])(${escaped.join('|')})(?![\\w-])`, 'g')
+  return text.replace(re, (slug) => firstNameFor(slug))
+}

@@ -57,6 +57,17 @@ export function isLabSeriesTitle(title: string | null | undefined): boolean {
   return labSeriesKey(title) !== null
 }
 
+/**
+ * Which series a meeting belongs to, for "the previous meeting" (prep page
+ * carry-forward, generated agenda). A lab series by its pattern, so title
+ * variants of one series match; any other meeting by its normalized title,
+ * which a recurring calendar series keeps. Null for an untitled meeting.
+ */
+export function meetingSeriesKey(title: string | null | undefined): string | null {
+  if (!title) return null
+  return labSeriesKey(title) ?? (normalizeSeriesTitle(title) || null)
+}
+
 /** The audience a NEW meeting row of this title starts with. */
 export function initialAudience(title: string | null | undefined): MeetingAudience {
   return isLabSeriesTitle(title) ? 'lab' : 'private'

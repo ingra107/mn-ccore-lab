@@ -17,15 +17,22 @@ import { PATHS } from '../constants/paths'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
+import { taskShortLabel } from '../lib/displayNames'
+import { nameSlugsInText } from '../lib/personLabel'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
+
+// An action item from the previous meeting of this series. `description` is the
+// ingestion provenance body ("From the X meeting on ... Source: [[...]]"), never
+// a label: every row names the task through taskShortLabel (G5-2, 2026-10-14).
+interface PrepActionItem { id: string; short_title?: string | null; title: string | null; description: string | null; assignee: string; completed: number; due_date: string | null }
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null; facilitator?: string | null }
   previousMeeting: { id: string; date: string; title: string } | null
-  previousActionItems: { id: string; description: string; assignee: string; completed: number; due_date: string | null }[]
+  previousActionItems: PrepActionItem[]
   recentActivity: { type: string; description: string; actor: string; entity_id: string; entity_type: string; created_at: string }[]
-  upcomingDeadlines: { id: string; title: string; description: string; assignee: string; due_date: string; priority: string; status: string }[]
-  overdueTasks: { id: string; title: string; description: string; assignee: string; due_date: string; priority: string }[]
+  upcomingDeadlines: { id: string; short_title?: string | null; title: string; description: string; assignee: string; due_date: string; priority: string; status: string }[]
+  overdueTasks: { id: string; short_title?: string | null; title: string; description: string; assignee: string; due_date: string; priority: string }[]
   agendaItems: { id: string; content: string; added_by: string; type: string; sort_order: number }[]
 }
 
@@ -193,7 +200,7 @@ export default function MeetingPrep() {
                     return (
                       <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
                         <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(task)}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
@@ -229,7 +236,7 @@ export default function MeetingPrep() {
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1.5">
                         <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(item)}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
@@ -257,7 +264,7 @@ export default function MeetingPrep() {
                   return (
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
                       <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(task)}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
@@ -283,7 +290,7 @@ export default function MeetingPrep() {
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
-                      <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{act.description}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{nameSlugsInText(act.description)}</span>
                     </div>
                   )
                 })
@@ -313,7 +320,7 @@ export default function MeetingPrep() {
 
 // ── Sub-components ──────────────────
 
-function ActionRow({ item }: { item: { id: string; description: string; assignee: string; completed: number; due_date: string | null } }) {
+function ActionRow({ item }: { item: PrepActionItem }) {
   const person = getPersonInfo(item.assignee)
   // R4: canonical isOverdue() uses T23:59:59 — hand-rolled missed same-day items.
   const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
@@ -329,7 +336,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
         textDecoration: item.completed ? 'line-through' : 'none',
         opacity: item.completed ? 0.85 : 1,
       }}>
-        {item.description}
+        {taskShortLabel(item)}
       </span>
       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
