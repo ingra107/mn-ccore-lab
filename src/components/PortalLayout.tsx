@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useLayoutEffect } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
@@ -36,6 +36,9 @@ export default function PortalLayout() {
     return localStorage.getItem('mn-ccore-sidebar-collapsed') === 'true'
   })
   const [mobileOpen, setMobileOpen] = useState(false)
+  const themePickerRef = useRef<HTMLDivElement>(null)
+  const navDialogRef = useRef<HTMLDivElement>(null)
+  const hamburgerRef = useRef<HTMLButtonElement>(null)
   const location = useLocation()
   const [focusMode, setFocusMode] = useState(false)
 
@@ -56,6 +59,37 @@ export default function PortalLayout() {
     setPrevPathname(location.pathname)
     setMobileOpen(false)
   }
+
+  // Theme menu: close on a tap or click anywhere outside the picker, or Escape.
+  // A document listener, not a `fixed inset-0` click-away div: the header's
+  // backdrop-blur makes it the containing block for fixed descendants, so that
+  // div covered only the 56px header and a tap on the page left the menu open
+  // (overnight 2026-10-14 audit, G1-2). A listener has no box to clip.
+  useEffect(() => {
+    if (!showThemeMenu) return
+    const onDown = (e: PointerEvent) => {
+      if (!themePickerRef.current?.contains(e.target as Node)) setShowThemeMenu(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowThemeMenu(false) }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [showThemeMenu])
+
+  // Mobile navigation dialog: focus moves into it on open (it is aria-modal),
+  // and back to the hamburger on close if focus was left inside it.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const dialog = navDialogRef.current
+    dialog?.focus()
+    const opener = hamburgerRef.current
+    return () => {
+      if (dialog && dialog.contains(document.activeElement)) opener?.focus()
+    }
+  }, [mobileOpen])
 
   // Close mobile menu on Escape key
   useEffect(() => {
@@ -123,15 +157,22 @@ export default function PortalLayout() {
         </div>
       )}
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile sidebar overlay. Modal layers (--z-modal-backdrop / --z-modal),
+          above the MobileTabBar (--z-sidebar): at z-30/z-40 the tab bar stayed
+          undimmed and tappable over the backdrop and cut off the sidebar's
+          account row (overnight 2026-10-14 audit, G1-10). */}
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+            className="fixed inset-0 bg-black/40 lg:hidden"
+            style={{ zIndex: 'var(--z-modal-backdrop)' }}
             onClick={() => setMobileOpen(false)}
           />
           <div
-            className="lg:hidden fixed top-0 left-0 z-40"
+            ref={navDialogRef}
+            tabIndex={-1}
+            className="lg:hidden fixed top-0 left-0 outline-none"
+            style={{ zIndex: 'var(--z-modal)' }}
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
@@ -160,6 +201,7 @@ export default function PortalLayout() {
         >
           {/* Mobile hamburger */}
           <button
+            ref={hamburgerRef}
             className="lg:hidden flex items-center justify-center min-w-[44px] min-h-[44px] mr-2 rounded-md"
             onClick={() => setMobileOpen((prev) => !prev)}
             aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
@@ -221,7 +263,7 @@ export default function PortalLayout() {
               in Settings → Appearance (key: hub-table-density, compact default). */}
 
           {/* Theme picker */}
-          <div className="relative">
+          <div className="relative" ref={themePickerRef}>
             <button
               onClick={() => setShowThemeMenu(!showThemeMenu)}
               className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
@@ -232,7 +274,6 @@ export default function PortalLayout() {
             </button>
             {showThemeMenu && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
                 <div
                   className="absolute right-0 top-full mt-1 rounded-lg z-50 py-1 min-w-[140px]"
                   style={{ backgroundColor: 'var(--cream, #fff)', boxShadow: 'var(--shadow-menu)' }}

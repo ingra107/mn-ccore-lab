@@ -1046,11 +1046,17 @@ export function TimelineGrid({
         </div>
       )}
 
-      {/* Outer layout: time-spine + agenda | service */}
+      {/* Outer layout: time-spine + agenda | service. On a phone the service
+          blocks become a full-width strip ABOVE the agenda: beside a spine that
+          already has 56px of left padding, a clamp(96px,25%,180px) column
+          squeezed meeting cards to ~150px, wrapped titles to three lines and
+          pushed each card's hide x off its action row (overnight 2026-10-14
+          audit, G1-9; rules-ui-design #14, actions on one baseline). */}
       <div style={{
         display: 'flex',
+        flexDirection: isPhone ? 'column' : 'row',
         gap: 8,
-        alignItems: 'flex-start',
+        alignItems: isPhone ? 'stretch' : 'flex-start',
       }}>
         {/* Time spine + agenda column */}
         <div style={{ flex: 1, minWidth: 0, paddingLeft: 56, position: 'relative' }}>
@@ -1082,7 +1088,8 @@ export function TimelineGrid({
           const serviceCols = serviceBlocks.length <= 1 ? 1 : 2
           return (
           <div style={{
-            width: 'clamp(96px, 25%, 180px)',
+            width: isPhone ? '100%' : 'clamp(96px, 25%, 180px)',
+            order: isPhone ? -1 : undefined,
             flexShrink: 0,
             zIndex: 1,
           }}>
@@ -1092,7 +1099,7 @@ export function TimelineGrid({
               overflowY: 'auto',
               overscrollBehavior: 'contain',
               display: 'grid',
-              gridTemplateColumns: `repeat(${serviceCols}, minmax(0, 1fr))`,
+              gridTemplateColumns: isPhone ? 'repeat(auto-fill, minmax(140px, 1fr))' : `repeat(${serviceCols}, minmax(0, 1fr))`,
               gridAutoRows: 72,
               gap: 4,
               alignContent: 'start',

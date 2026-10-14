@@ -32,6 +32,9 @@ export function useNotifications(slug: string) {
     },
     staleTime: 30 * 1000,
     enabled: !!slug,
+    // Marking read no longer bumps /api/version (it is a per-user receipt), so
+    // the list on the reader's OTHER device catches up here, like the count.
+    refetchOnWindowFocus: true,
   })
 }
 

@@ -307,7 +307,9 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         </SleekTable>
        </div>
       </div>
-      <div style={{ flexShrink: 0, boxShadow: '0 -1px 0 var(--sk-line)' }}>
+      {/* Keyboard-only footer (j/k cursor, keys): hidden below sm, where no
+          keyboard drives it (as on Deadlines; overnight 2026-10-14 audit, G2-10). */}
+      <div className="hidden sm:block" style={{ flexShrink: 0, boxShadow: '0 -1px 0 var(--sk-line)' }}>
        <div className="mt-band sr-foot" style={{ paddingTop: 6, paddingBottom: 6 }}>
         <span style={{ fontVariantNumeric: 'tabular-nums' }}>{filtered.length > 0 ? `${cursor + 1} / ${filtered.length}` : '0 / 0'}</span>
         <span style={{ flex: 1 }} />
