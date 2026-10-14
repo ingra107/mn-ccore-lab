@@ -263,11 +263,13 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
 
   const handleSubmitAnswer = (content: string) =>
     new Promise<void>((resolve) => {
+      // Clear the box only once the Hub has the answer (SmartCompose leaves
+      // clearing to a controlled caller for exactly this). A failed post keeps
+      // the text; the failed-write toast (lib/writeFailures) says it failed.
       createAnswerMut.mutate(content, {
-        onSuccess: () => { showSuccess('Answer posted'); resolve() },
+        onSuccess: () => { setAnswerText(''); showSuccess('Answer posted'); resolve() },
         onError: () => resolve(),
       })
-      setAnswerText('')
     })
 
   if (isLoading || !detail) {

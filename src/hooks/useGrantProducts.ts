@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchApi } from '../lib/api'
 import { useUndoToast } from '../components/UndoToast'
-import { reason } from './useProjectProducts'
+import { reason } from '../lib/writeFailures'
 import type { GrantMilestone, GrantProduct, GrantsTimeline } from '../lib/grants'
 
 export const GRANTS_KEY = ['grants-timeline'] as const

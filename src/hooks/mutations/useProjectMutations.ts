@@ -339,7 +339,9 @@ export function useDeleteProjectDocument(projectSlug: string) {
 
   return useMutation({
     mutationFn: (docId: string) =>
-      fetch(`/api/projects/${projectSlug}/documents/${docId}/delete`, { method: 'POST' }).then(r => r.json()),
+      // fetchApi, not raw fetch: a refused write must reject so onError
+      // rolls back and the failed-write toast shows (lib/writeFailures).
+      fetchApi(`/api/projects/${projectSlug}/documents/${docId}/delete`, { method: 'POST' }),
 
     onMutate: async (docId) => {
       await queryClient.cancelQueries({ queryKey: ['project-documents', projectSlug] })
@@ -372,11 +374,9 @@ export function useLinkPaper() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: { paper_id: string; project_slug: string; note?: string }) =>
-      fetch('/api/paper-links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      // fetchApi rejects on a non-2xx answer; raw fetch().json() read a
+      // refusal as a success.
+      fetchApi('/api/paper-links', { method: 'POST', body: JSON.stringify(input) }),
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
@@ -388,7 +388,7 @@ export function useUnlinkPaper() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id }: { id: string; project_slug: string }) =>
-      fetch(`/api/paper-links/${id}/delete`, { method: 'POST' }).then((r) => r.json()),
+      fetchApi(`/api/paper-links/${id}/delete`, { method: 'POST' }),
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })

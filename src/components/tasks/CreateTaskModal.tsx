@@ -24,7 +24,7 @@ interface CreateTaskModalProps {
     product_id?: string
     due_date?: string
     priority?: string
-  }) => void
+  }) => Promise<unknown>
   /** Preselect a project (and product) when the modal opens, e.g. from a project page with a product chip selected. */
   defaultProject?: string
   defaultProductId?: string | null
@@ -180,11 +180,17 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
     )
   )
 
-  const handleSubmit = useCallback((e?: React.FormEvent) => {
+  // The sheet closes only once the Hub has the task. A failed create keeps the
+  // sheet open with everything typed still in it; the failure itself reaches
+  // the person through the failed-write toast (lib/writeFailures).
+  const [submitting, setSubmitting] = useState(false)
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault()
-    if (!title.trim() || !assignee) return
+    if (!title.trim() || !assignee || submitting) return
 
-    onCreate({
+    setSubmitting(true)
+    try {
+      await onCreate({
       title: title.trim(),
       description: description.trim() || title.trim(),
       assignee,
@@ -192,7 +198,14 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
       ...(decodePair(projectId).product_id ? { product_id: decodePair(projectId).product_id! } : {}),
       due_date: dueDate || undefined,
       priority,
-    })
+      })
+    } catch {
+      // Not swallowed: the failed-write toast already told the person. Keep
+      // the form as typed so they can try again.
+      setSubmitting(false)
+      return
+    }
+    setSubmitting(false)
 
     // Reset form
     setTitle('')
@@ -207,7 +220,7 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
     setSuggestions({ project: null, priority: null, assignee: null })
     setAcceptedFields(new Set())
     onClose()
-  }, [title, description, assignee, projectId, dueDate, priority, defaultAssignee, onCreate, onClose])
+  }, [title, description, assignee, projectId, dueDate, priority, defaultAssignee, onCreate, onClose, submitting])
 
   const handleSubmitRef = useRef(handleSubmit)
   useEffect(() => {
@@ -252,11 +265,11 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
               type="button"
               variant="primary"
               data-testid="task-submit"
-              disabled={!title.trim() || !assignee}
+              disabled={!title.trim() || !assignee || submitting}
               aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
               onClick={() => handleSubmitRef.current()}
             >
-              Create Task
+              {submitting ? 'Creating…' : 'Create Task'}
             </Button>
             <kbd
               className="text-[10px] px-1.5 py-0.5 rounded select-none"

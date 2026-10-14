@@ -23,7 +23,8 @@ import { formatMediumDate, formatPublicationDate, formatRelativeTime } from '../
 import { withAlpha } from '../lib/taskGrouping'
 import { FaceDisc } from '../components/today/skin'
 import FilterLinks from '../components/ui/FilterLinks'
-import GhostSelect from '../components/ui/GhostSelect'
+import GhostSelect, { type GhostSelectOption } from '../components/ui/GhostSelect'
+import { projectShortLabel } from '../lib/displayNames'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -87,11 +88,6 @@ function parseTopics(topicsJson: string | null): string[] {
 
 // ── Paper Card ───────────────────────────────────────────────
 
-interface ProjectOption {
-  slug: string
-  title: string
-}
-
 // Text actions share one slot and one hit size (principle 14).
 const ACTION_CLASS = 'cursor-pointer px-2 py-2 rounded-md hover:underline'
 
@@ -139,12 +135,11 @@ function NoteTaskAction({ noteId, paperId, taskId, taskVisible }: { noteId: stri
   )
 }
 
-function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPaper; projects: ProjectOption[]; compactWhenProcessed: boolean }) {
+function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPaper; projects: GhostSelectOption[]; compactWhenProcessed: boolean }) {
   const [expanded, setExpanded] = useState(false)
   // A processed paper is one line until the reader opens it (Show).
   const [reopened, setReopened] = useState(false)
-  const [showLinkPicker, setShowLinkPicker] = useState(false)
-  const [linkSuccess, setLinkSuccess] = useState<string | null>(null)
+  const [linkSuccess, setLinkSuccess] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText] = useState('')
   const updateStatus = useUpdateDigestStatus()
@@ -183,6 +178,9 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
     const prev = paper.status
     if (prev === next) return
     processedAt.current = Date.now()
+    // `settled` only orders the Undo after this write. A failure is not lost
+    // here: the failed-write floor (lib/writeFailures) withdraws the Undo
+    // toast and shows the error.
     const settled = updateStatus.mutateAsync({ id: paper.id, status: next }).then(() => undefined, () => undefined)
     showUndo(label, () => {
       void settled.then(() => updateStatus.mutate({ id: paper.id, status: prev }))
@@ -214,8 +212,9 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
     updateStatus.mutate({ id: paper.id, status: 'new' })
   }
 
-  // No drag while typing a note or picking a project.
-  const swipeProps = showComments || showLinkPicker ? null : swipe.motionProps
+  // No drag while typing a note. The project picker stops its own pointer
+  // events, so it cannot start a drag.
+  const swipeProps = showComments ? null : swipe.motionProps
 
   const submitNote = () => {
     if (!commentText.trim()) return
@@ -532,69 +531,33 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
             >
               Note{noteCount > 0 ? ` ${noteCount}` : ''}
             </button>
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowLinkPicker(!showLinkPicker) }}
-                className={ACTION_CLASS}
-                style={{ color: linkSuccess || showLinkPicker ? 'var(--job-accent)' : 'var(--slate)' }}
-                aria-label="Link paper to a project"
-                aria-expanded={showLinkPicker}
-              >
-                {linkSuccess ? 'Linked' : 'To project'}
-              </button>
-              {showLinkPicker && projects.length > 0 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    bottom: '100%',
-                    marginBottom: '4px',
-                    background: 'var(--cream)',
-                    border: '1px solid var(--sk-line2)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-menu)',
-                    minWidth: '220px',
-                    maxHeight: '240px',
-                    overflowY: 'auto',
-                    zIndex: 'var(--z-dropdown)',
+            {projects.length > 0 && (
+              // GhostSelect brings the filter, Escape, outside-tap close and a
+              // portal menu that is not clipped by the card. Its events still
+              // bubble through the React tree, so stop them here: a tap in the
+              // menu must not toggle the card, a drag must not start a swipe.
+              <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                <GhostSelect
+                  aria-label="Link paper to a project"
+                  value=""
+                  triggerLabel={linkSuccess ? 'Linked' : 'To project'}
+                  triggerColor={linkSuccess ? 'var(--job-accent)' : 'var(--slate)'}
+                  triggerStyle={{ padding: 'var(--sp-sm)', fontSize: 'inherit' }}
+                  searchable
+                  options={projects}
+                  onChange={(slug) => {
+                    // "Linked" only once the Hub has the link; a refusal is
+                    // toasted by the failed-write floor (lib/writeFailures).
+                    linkPaper.mutate({ paper_id: paper.id, project_slug: slug }, {
+                      onSuccess: () => {
+                        setLinkSuccess(true)
+                        setTimeout(() => setLinkSuccess(false), 2000)
+                      },
+                    })
                   }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div
-                    style={{
-                      padding: 'var(--sp-sm) var(--sp-md) var(--sp-xs)',
-                      fontSize: '11px',
-                      color: 'var(--slate)',
-                      opacity: 'var(--ink-label)',
-                    }}
-                  >
-                    Link to project
-                  </div>
-                  {projects.map((proj) => (
-                    <button
-                      key={proj.slug}
-                      onClick={() => {
-                        linkPaper.mutate({ paper_id: paper.id, project_slug: proj.slug })
-                        setShowLinkPicker(false)
-                        setLinkSuccess(proj.title)
-                        setTimeout(() => setLinkSuccess(null), 2000)
-                      }}
-                      className="cursor-pointer w-full text-left px-3 py-2 text-sm transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--job-accent)_6%,transparent)]"
-                      style={{
-                        fontSize: '12px',
-                        color: 'var(--ink)',
-                        background: 'none',
-                        border: 'none',
-                        borderTop: '1px solid var(--border-subtle)',
-                        display: 'block',
-                      }}
-                    >
-                      {proj.title}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                />
+              </div>
+            )}
             <button
               onClick={handleSave}
               className={ACTION_CLASS}
@@ -816,8 +779,10 @@ export default function Digest() {
   const projectOptions = useMemo(() =>
     allProjects
       .filter((p) => p.slug)
-      .map((p) => ({ slug: p.slug, title: p.title }))
-      .sort((a, b) => a.title.localeCompare(b.title)),
+      // Short names (design principle 8): a full title filled the whole
+      // picker on a phone, two projects to a screen.
+      .map((p): GhostSelectOption => ({ value: p.slug, label: projectShortLabel(p) }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
     [allProjects]
   )
 

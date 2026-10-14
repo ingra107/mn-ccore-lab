@@ -64,10 +64,15 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
       ? { from_slug: project.slug, to_slug: newTarget, relationship_type: newRelType, note: newNote || undefined }
       : { from_slug: newTarget, to_slug: project.slug, relationship_type: newRelType, note: newNote || undefined }
 
-    createDep.mutate(input)
-    setNewTarget('')
-    setNewNote('')
-    setShowAddForm(false)
+    // Reset the form only once the Hub has the link; a failed add keeps what
+    // was picked and typed (the failed-write toast says why).
+    createDep.mutate(input, {
+      onSuccess: () => {
+        setNewTarget('')
+        setNewNote('')
+        setShowAddForm(false)
+      },
+    })
   }
 
   function getProjectTitle(slug: string): string {

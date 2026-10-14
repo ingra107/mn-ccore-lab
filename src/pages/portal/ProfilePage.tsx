@@ -19,6 +19,7 @@ import { FaceDisc } from '../../components/today/skin'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { INLINE_ERROR_META } from '../../lib/writeFailures'
 
 interface ProfileForm {
   preferred_name: string
@@ -86,6 +87,8 @@ export default function ProfilePage() {
   }, [rawRow])
 
   const save = useMutation({
+    // The form renders save.error under the fields.
+    meta: INLINE_ERROR_META,
     mutationFn: async (patch: Partial<ProfileForm>) => {
       const res = await fetch(`/api/team/${slug}`, {
         method: 'POST',

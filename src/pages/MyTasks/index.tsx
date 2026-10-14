@@ -235,10 +235,8 @@ export default function UnifiedMyTasks() {
     due_date?: string
     priority?: string
   }) => {
-    createTask.mutate(task, {
-      onSuccess: () => undoToast.showSuccess('Task created'),
-    })
-    setShowCreate(false)
+    // The sheet closes itself once this resolves; a rejection keeps it open.
+    return createTask.mutateAsync(task).then(() => undoToast.showSuccess('Task created'))
   }, [createTask, undoToast])
 
   const onBulkPlanToday = useCallback(() => {
