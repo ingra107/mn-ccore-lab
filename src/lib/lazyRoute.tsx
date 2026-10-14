@@ -21,10 +21,14 @@
 // same settled rejection. Only a document reload can fix it, so that is what
 // this does — once, then it gets out of the way.
 //
-// Note there is no `vite:preloadError` listener here. That event only fires for
-// <link rel="modulepreload"> failures, and vite.config.ts sets
-// `build.modulePreload: false`, so it can never fire in this app. The import
-// rejection below is the only signal that exists.
+// Module preload is on (2026-10-14), so a lazy import runs through Vite's
+// preload helper, which fetches the chunk's deps and CSS in parallel. A failed
+// JS dep still surfaces as the browser's own import error. A failed CSS dep
+// rejects with Vite's "Unable to preload CSS for <url>", which an old tab hits
+// the same way after a deploy, so that message counts as a stale chunk too.
+// The helper also fires `vite:preloadError`; there is no listener for it,
+// because it rethrows when nobody cancels it, and the rejection below then
+// goes through the same one-reload guard.
 
 import { lazy } from 'react'
 import type { ComponentType } from 'react'
@@ -41,8 +45,9 @@ const RELOAD_WINDOW_MS = 30_000
 // Chrome:  "Failed to fetch dynamically imported module: <url>"
 // Firefox: "error loading dynamically imported module"
 // Safari:  "Importing a module script failed."
+// Vite preload helper, a chunk's CSS: "Unable to preload CSS for <url>"
 const STALE_CHUNK_MESSAGE =
-  /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed/i
+  /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|unable to preload css for/i
 
 export function isStaleChunkError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err ?? '')
