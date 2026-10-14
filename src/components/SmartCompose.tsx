@@ -481,7 +481,12 @@ export default function SmartCompose(props: SmartComposeProps) {
       {showToolbar && (
         // sc-bar / sc-tool: on phones and touch tablets the 22px controls grow
         // to a 36px tap target (index.css, WCAG 2.5.8); desktop keeps the dense row.
-        <div className="sc-bar" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative', minHeight: 22 }}>
+        // The row WRAPS: on a phone the tools + a toolbarExtra chip + the command
+        // badge + Post are wider than the field, and a nowrap row pushed Post off
+        // the screen and squeezed its label to 36px (Today's Capture,
+        // 2026-10-14). A wrapping line breaks before items shrink. Post keeps the
+        // right edge via margin-left: auto on whichever line it lands.
+        <div className="sc-bar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, rowGap: 6, marginTop: 6, position: 'relative', minHeight: 22 }}>
           {/* Attach */}
           {uploadContext && (
             <ToolbarBtn label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
@@ -599,6 +604,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
+                marginLeft: 'auto',
                 // Fixed 22px, the chip height: the row does not grow when Post appears.
                 height: 22,
                 padding: '0 12px',
