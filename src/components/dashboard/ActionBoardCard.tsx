@@ -16,6 +16,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
+import { meetingHrefFor } from '../../lib/meetingOrigin'
 
 function ActionBoardCard() {
   const { data: items = [] } = useRecentTasks() // Already deduped by useRecentTasks hook
@@ -52,6 +53,9 @@ function ActionBoardCard() {
           {lead.length > 0 ? (
             lead.map((item) => {
               const person = getPersonInfo(item.assignee)
+              // Link to the resolved meetings.id (meeting_ref), never the raw
+              // meeting_id: on debrief rows that is a calendar source_id and 404s.
+              const meetingHref = meetingHrefFor(item)
               return (
                 <div key={item.id} className="bento-row action-board-row" style={{ cursor: 'pointer' }} onClick={() => setDetailTask(item)}>
                   {/* C15 DoneBox: the canonical square = complete */}
@@ -82,9 +86,9 @@ function ActionBoardCard() {
                       target: a 44px hit area here took taps meant for the
                       title and the next row. The row opens the task detail,
                       whose meeting tag links the meeting (principle 16). */}
-                  {item.meeting_id && item.meeting_title && (
+                  {meetingHref && item.meeting_title && (
                     <Link
-                      to={PATHS.meeting(item.meeting_id)}
+                      to={meetingHref}
                       title={`Meeting: ${item.meeting_title}`}
                       aria-label={`Open meeting: ${item.meeting_title}`}
                       className="touch-cue flex-shrink-0 inline-flex items-center"

@@ -86,7 +86,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                   </span>
                   <button
                     onClick={() => removeBlocker(bt.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="reveal-on-hover"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
                     title="Remove blocker"
                   >

@@ -2192,6 +2192,28 @@ button[aria-label="Deselect task"]::before {
   }
 }
 
+/* Hover-revealed control, the shared form: put .reveal-on-hover on the control
+   and .reveal-host on the element whose hover reveals it. Hidden until the host
+   is hovered or holds keyboard focus; ALWAYS shown on touch, which has no hover
+   (rules-ui-design 13: "hover-only is fine on desktop, always visible on
+   touch"). Opacity, not visibility, because these are controls: a hidden one
+   must stay reachable by Tab, and :focus-visible then shows it (Rule 27's
+   visibility rule is for non-interactive badges). --reveal-opacity sets how
+   strong the shown state is. A bare Tailwind `opacity-0 group-hover:` pair has
+   no touch arm, which is how the meeting page's title pencil and notes Edit
+   button never appeared on a phone (2026-10-14). A Tailwind `group` host works
+   too, so a hover-only control is one class, never the bare pair; the
+   meetingTouchAndNames test refuses `opacity-0 group-hover` anywhere in src. */
+.reveal-on-hover { opacity: 0; transition: opacity 0.15s ease; }
+.reveal-host:hover .reveal-on-hover,
+.reveal-host:focus-within .reveal-on-hover,
+.group:hover .reveal-on-hover,
+.group:focus-within .reveal-on-hover,
+.reveal-on-hover:focus-visible { opacity: var(--reveal-opacity, 1); }
+@media (hover: none) {
+  .reveal-on-hover { opacity: var(--reveal-opacity, 1); }
+}
+
 /* UX-9 (2026-06-09): iPad portrait (768–1023) is a touch device but sits
    ABOVE the prior 768px width gate, so it missed the touch-target floor +
    the iOS no-zoom font rule. Key these on `(hover: none) and (pointer: coarse)`

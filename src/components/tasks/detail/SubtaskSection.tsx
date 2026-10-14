@@ -66,7 +66,7 @@ function SortableSubtaskItem({
       {/* Drag handle — visible on hover */}
       <button
         {...listeners}
-        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        className="cursor-grab active:cursor-grabbing reveal-on-hover flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: undefined }}
       >
         <GripVertical {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />
@@ -99,7 +99,7 @@ function SortableSubtaskItem({
       {/* Delete button (visible on hover) */}
       <button
         onClick={() => onDelete(subtask.id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        className="reveal-on-hover"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
       >
         <Trash2 {...ICON_PROPS} size={12} />

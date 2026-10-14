@@ -42,8 +42,10 @@ beforeEach(() => {
   db = prodSchemaDb()
   insertRow(db, 'projects', { id: 'proj_pb', slug: 'pb-private', title: 'Private', category: 'Peripheral Brain', status: 'active' })
   insertRow(db, 'projects', { id: 'proj_team', slug: 'team-proj', title: 'Team', category: 'MNCCORE', status: 'active' })
-  insertRow(db, 'meetings', { id: 'mtg_prev', date: '2026-09-01', title: 'Prev', type: 'lab' })
-  insertRow(db, 'meetings', { id: 'mtg_now', date: TODAY, title: 'Now', type: 'lab' })
+  // One series (same title): prep and the agenda carry forward only from an
+  // earlier meeting of the same series (seriesMeetingsBefore).
+  insertRow(db, 'meetings', { id: 'mtg_prev', date: '2026-09-01', title: 'Lab sync', type: 'lab' })
+  insertRow(db, 'meetings', { id: 'mtg_now', date: TODAY, title: 'Lab sync', type: 'lab' })
   task('t_pb', 'PB PRIVATE', 'proj_pb')
   task('t_pb_slug', 'PB PRIVATE BY SLUG', 'pb-private')
   task('t_team', 'TEAM TASK', 'proj_team')

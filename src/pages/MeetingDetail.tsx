@@ -313,15 +313,28 @@ export default function MeetingDetail() {
                 }}
               />
             ) : (
-              <h1
-                className="group/title"
-                onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
-                title="Click to edit title"
-                style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
-              >
-                {emDashifyTitle(meeting.title)}
-                <Pencil {...ICON_PROPS} size={14} className="opacity-0 group-hover/title:opacity-60 transition-opacity" style={{ color: 'var(--slate)', flexShrink: 0 }} />
-              </h1>
+              // The title opens its editor on a click (mouse convenience); the
+              // pencil is the real control: a button keyboard and screen-reader
+              // users reach, shown on hover and always on touch (.reveal-on-hover).
+              <div className="reveal-host" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h1
+                  onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
+                  title="Click to edit title"
+                  style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer' }}
+                >
+                  {emDashifyTitle(meeting.title)}
+                </h1>
+                <button
+                  type="button"
+                  className="reveal-on-hover hit-area"
+                  aria-label="Edit meeting title"
+                  title="Edit title"
+                  onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
+                  style={{ '--reveal-opacity': 0.85, background: 'none', border: 'none', padding: 2, cursor: 'pointer', display: 'inline-flex', color: 'var(--slate)', flexShrink: 0 } as React.CSSProperties}
+                >
+                  <Pencil {...ICON_PROPS} size={14} aria-hidden="true" />
+                </button>
+              </div>
             )}
             {/* The heartbeat line under the title (color-back pick 10). */}
             <PageHeartbeat />
@@ -536,7 +549,9 @@ export default function MeetingDetail() {
                   straight to the team. Copies the raw markdown source (what
                   pastes cleanly into mail/Slack), not the rendered DOM. Sits in
                   the section header rather than the hover layer: "copy quick"
-                  means always visible, unlike the Edit affordance below. */}
+                  means always visible. Edit sits beside it in the same slot
+                  (rules-ui-design 14): pinned over the notes it covered their
+                  first line on a phone, where it can never hide. */}
               {!editingNotes && meeting?.notes && (
                 <button
                   onClick={() => {
@@ -559,6 +574,18 @@ export default function MeetingDetail() {
                 >
                   {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
                   {copiedNotes ? 'Copied!' : 'Copy'}
+                </button>
+              )}
+              {!editingNotes && meeting?.notes && (
+                <button
+                  type="button"
+                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
+                  aria-label="Edit meeting notes"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors hit-area"
+                  style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+                >
+                  <Pencil {...ICON_PROPS} size={11} />
+                  Edit
                 </button>
               )}
             </>}
@@ -606,22 +633,18 @@ export default function MeetingDetail() {
                 </div>
               </div>
             ) : (
-              <div className="relative group tk">
+              <div className="tk">
                 {meeting?.notes ? (
                   <MarkdownView source={meeting.notes} className="tk-msum" />
                 ) : (
-                  <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
-                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
+                  <button
+                    type="button"
+                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}
+                    style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, padding: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  >
                     No notes yet. Click to add.
-                  </p>
+                  </button>
                 )}
-                <button
-                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
-                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
-                >
-                  Edit
-                </button>
               </div>
             )}
           </div>

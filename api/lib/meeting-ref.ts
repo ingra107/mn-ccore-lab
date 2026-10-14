@@ -22,9 +22,35 @@
  * touching the data. This is a read-side bridge, deliberately conservative: it
  * returns null rather than guess, because a wrong link is worse than none.
  *
- * The durable fix is to make the writers mint the canonical id; this bridge is
- * what makes the link work for everything already written.
+ * Since #1593 (2026-10-14) the SQL join above resolves every source_id-keyed
+ * task, so this bridge only sees rows the join missed: on prod that is the 151
+ * `mtg_<stamp>` rows the meeting-approval and meeting-match lanes wrote (147
+ * approval tasks, 4 questions), which name no meetings row at all.
  */
+
+/**
+ * The ONE task -> meeting join for task reads (#1593). A task's meeting_id is
+ * the Hub id or, for everything the PB debrief writes, the meeting's calendar
+ * `source_id` (v95, UNIQUE): the debrief pushes the meeting first with
+ * source_id = the id it stamps on the tasks. Joining both resolves those rows
+ * exactly, with no inference. `meeting_ref` is the joined `m.id`, so a link
+ * never targets a source_id (handleGetMeeting looks up meetings.id only).
+ *
+ * Shape, on purpose: the ON clause pins `m.id` (the primary key) to ONE value,
+ * picked by two indexed lookups -- the meetings row whose id is the task's
+ * meeting_id, else the row whose source_id is. So a task can join at most one
+ * meetings row by construction, even if one row's id ever equals another's
+ * source_id (nothing in the schema forbids that), and the id match wins. It is
+ * also index-only: `t.meeting_id IN (m.id, m.source_id)` scanned the whole
+ * meetings table per task row, on the Hub's hottest read and the PB pull.
+ * tasks.meeting-join.test.ts asserts both the one-row rule and the query plan.
+ * Measured on prod 2026-10-14: 169 live tasks match by source_id, 0 by id.
+ * Rows the join misses fall to resolveMeetingRef below.
+ */
+export const TASK_MEETING_REF_SQL =
+  '(COALESCE((SELECT id FROM meetings WHERE id = t.meeting_id), (SELECT id FROM meetings WHERE source_id = t.meeting_id)))';
+export const TASK_MEETING_JOIN = `LEFT JOIN meetings m ON m.id = ${TASK_MEETING_REF_SQL}`;
+export const TASK_MEETING_COLS = 'm.id AS meeting_ref, m.title AS meeting_title, m.date AS meeting_date';
 
 export interface MeetingLike {
   id: string;

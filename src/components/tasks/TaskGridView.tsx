@@ -1673,7 +1673,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
     >
       <button
         {...listeners}
-        className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        className="cursor-grab active:cursor-grabbing reveal-on-hover flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
         onClick={(e) => e.stopPropagation()}
       >

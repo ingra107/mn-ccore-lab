@@ -9,7 +9,7 @@ import { applyMutation } from './mutations';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
-import { resolveMeetingRef, type MeetingLike } from '../lib/meeting-ref';
+import { resolveMeetingRef, TASK_MEETING_COLS, TASK_MEETING_JOIN, type MeetingLike } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
@@ -124,7 +124,7 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
   // Which tasks the caller sees is the viewer-bound handle's rule,
   // api/lib/table-scope.ts (#145 Lane B).
-  let query = `SELECT ${selectCols}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
+  let query = `SELECT ${selectCols}, ${TASK_MEETING_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -148,7 +148,12 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
     query += ' AND (t.project_id = (SELECT id FROM projects WHERE slug = ? OR id = ? LIMIT 1) OR t.project_id = ?)';
     params.push(project, project, project);
   }
-  if (meetingId) { query += ' AND t.meeting_id = ?'; params.push(meetingId); }
+  // ?meeting= takes a meetings.id or the raw stored value; a meetings.id also
+  // matches the tasks keyed by that meeting's source_id (TASK_MEETING_JOIN).
+  if (meetingId) {
+    query += ' AND t.meeting_id IN (?, COALESCE((SELECT source_id FROM meetings WHERE id = ?), ?))';
+    params.push(meetingId, meetingId, meetingId);
+  }
   if (source) { query += ' AND t.source = ?'; params.push(source); }
   if (kind) { query += ' AND t.kind = ?'; params.push(kind); }
   if (completed !== null && completed !== undefined) {
@@ -185,8 +190,8 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
 // applies. Soft-deleted rows are left out.
 export async function handleGetBlockingTasks(id: string, env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date
-     FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id
+    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS}
+     FROM tasks t ${TASK_MEETING_JOIN}
      WHERE t.deleted_at IS NULL AND t.id != ? AND ${blockedByContainsSql('t.blocked_by')}
      ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC`
   ).bind(id, id).all();
@@ -195,19 +200,15 @@ export async function handleGetBlockingTasks(id: string, env: Env): Promise<Resp
 }
 
 /**
- * Fill in the meeting a task came from, for the ~95% of rows whose meeting_id
- * does not equal any meetings.id (#108).
+ * Fill in the meeting a task came from, for rows TASK_MEETING_JOIN missed (#108).
  *
- * The SQL `LEFT JOIN meetings ON t.meeting_id = m.id` above only matches when
- * the writer happened to mint the canonical id. It usually did not — the
- * calendar and approval lanes mint their own id spaces — so `meeting_title`
- * came back NULL for 144 of 152 tasks and every meeting badge in the UI
- * silently rendered nothing. resolveMeetingRef bridges the id spaces by the
- * date and title slug embedded in those ids (72% of them, measured against
- * prod 2026-08-03).
+ * The join (api/lib/meeting-ref.ts) sets `meeting_ref` to the joined meetings.id
+ * for every task keyed by a meeting's id or source_id (#1593). What is left is a
+ * meeting_id that names no meetings row; resolveMeetingRef bridges those by the
+ * date and title slug embedded in the id.
  *
- * Adds `meeting_ref` (the resolved canonical id — what a link should target)
- * and backfills `meeting_title`/`meeting_date`. Deliberately does NOT touch
+ * Sets `meeting_ref` (the canonical id — what a link should target) and
+ * backfills `meeting_title`/`meeting_date`. Deliberately does NOT touch
  * `meeting_id`: that is the stored value PB replicates, and rewriting it on the
  * wire would make the Hub disagree with brain.db about what is stored.
  *
@@ -219,9 +220,9 @@ async function decorateMeetingRefs(
   rows: Record<string, unknown>[],
 ): Promise<Record<string, unknown>[]> {
   // Only pay for the meetings lookup when some row actually needs bridging; a
-  // natively-joined row just gets meeting_ref set from its own id, so clients
-  // have ONE field to read either way.
-  const needsBridge = rows.some((r) => r.meeting_id && !r.meeting_title);
+  // joined row already carries meeting_ref = m.id, so clients have ONE field to
+  // read either way.
+  const needsBridge = rows.some((r) => r.meeting_id && !r.meeting_ref);
   let meetings: MeetingLike[] = [];
   if (needsBridge) {
     try {
@@ -233,8 +234,7 @@ async function decorateMeetingRefs(
     }
   }
   return rows.map((r) => {
-    if (!r.meeting_id) return r;
-    if (r.meeting_title) return { ...r, meeting_ref: r.meeting_id };
+    if (!r.meeting_id || r.meeting_ref) return r;
     const hit = resolveMeetingRef(r.meeting_id as string, meetings);
     return hit ? { ...r, meeting_ref: hit.id, meeting_title: hit.title, meeting_date: hit.date } : r;
   });
@@ -300,7 +300,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // read is a 404.
 export async function handleGetTask(id: string, env: Env): Promise<Response> {
   const task = await env.DB.prepare(
-    `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
+    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
   // Same meeting-ref bridge as the list read, so the detail panel resolves the
