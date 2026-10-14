@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useProjects } from './useApiData'
 
 /**
  * The project list BEHIND the project picker (ProjectInlineGhostSelect).
@@ -21,16 +22,25 @@ import { useQuery } from '@tanstack/react-query'
  *
  * One source removes the disagreement by construction instead of guarding
  * against it: two controls reading one cache cannot contradict each other.
+ *
+ * Update 2026-10-14: the picker no longer has a query of its own. It reads the
+ * `useProjects()` cache (key ['projects', undefined]) through a select, so a
+ * page that shows the project list and the picker beside it makes ONE
+ * /api/projects request, not two (the old key ['projects'] was a second entry
+ * for the same URL). The disagreement the note above guards against cannot
+ * come back: there is still exactly one cache. In DEV that cache's fixture
+ * seed is marked stale (initialDataUpdatedAt: 0 in useProjects), so the real
+ * rows replace it on mount.
  */
+export type ProjectPickerRow = { id?: string; slug: string; title: string; short_name?: string | null }
+
 export function useProjectPickerList() {
-  return useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const res = await fetch('/api/projects')
-      if (!res.ok) return []
-      const data = await res.json()
-      return data.data as { id?: string; slug: string; title: string; short_name?: string | null }[]
-    },
-    staleTime: 5 * 60 * 1000,
-  })
+  const query = useProjects()
+  // Same row set as the list, trimmed to what a picker reads. Memoized on the
+  // cache's own array so consumers keep a stable reference between renders.
+  const data = useMemo<ProjectPickerRow[] | undefined>(
+    () => query.data?.map((p) => ({ id: p.id, slug: p.slug, title: p.title, short_name: p.short_name })),
+    [query.data],
+  )
+  return { ...query, data }
 }

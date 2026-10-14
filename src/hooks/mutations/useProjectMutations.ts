@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   createProject,
@@ -87,8 +88,7 @@ export function suggestPaperLink(
   const allLinks = queryClient.getQueryData<{ project_slug: string | null }[]>(['project-publications', 'all'])
   if (allLinks?.some((l) => l.project_slug === slug)) return
 
-  const projects = queryClient.getQueryData<Project[]>(['projects'])
-  const project = projects?.find((p) => p.slug === slug)
+  const project = cachedProjects(queryClient).find((p) => p.slug === slug)
   const title = project?.title
   if (!title) return
 
@@ -112,6 +112,17 @@ export function suggestPaperLink(
   })
 }
 
+/** Every cached project-list row set. The list lives under ['projects', params]
+ *  (useProjects), one entry per filter; a bare ['projects'] entry may also
+ *  exist. Read by prefix, never by one exact key. */
+function cachedProjects(queryClient: QueryClient): Project[] {
+  const rows: Project[] = []
+  for (const [, data] of queryClient.getQueriesData<Project[]>({ queryKey: ['projects'] })) {
+    if (Array.isArray(data)) rows.push(...data)
+  }
+  return rows
+}
+
 export function useUpdateProjectFields() {
   const queryClient = useQueryClient()
   const { showError } = useUndoToast()
@@ -123,23 +134,19 @@ export function useUpdateProjectFields() {
     onMutate: async ({ slug, fields }) => {
       await queryClient.cancelQueries({ queryKey: ['projects'] })
 
-      const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
-
-      if (previousProjects) {
-        queryClient.setQueryData<Project[]>(
-          ['projects'],
-          previousProjects.map((p) =>
-            p.slug === slug ? { ...p, ...fields } : p
-          )
-        )
-      }
+      // Patch every cached project list (all filters), keep the snapshots to roll back.
+      const previousProjects = queryClient.getQueriesData<Project[]>({ queryKey: ['projects'] })
+      queryClient.setQueriesData<Project[]>(
+        { queryKey: ['projects'] },
+        (old) => Array.isArray(old) ? old.map((p) => (p.slug === slug ? { ...p, ...fields } : p)) : old,
+      )
 
       return { previousProjects }
     },
 
     onError: (err, { fields }, context) => {
-      if (context?.previousProjects) {
-        queryClient.setQueryData(['projects'], context.previousProjects)
+      for (const [key, data] of context?.previousProjects ?? []) {
+        queryClient.setQueryData(key, data)
       }
       const what = Object.keys(fields).join(', ') || 'project'
       const why = err instanceof Error && err.message ? err.message : 'request failed'

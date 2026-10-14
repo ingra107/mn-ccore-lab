@@ -317,6 +317,9 @@ export function useProjects(params?: { status?: string; category?: string }, opt
       return res.data.map(rowToProject)
     },
     initialData: (import.meta.env.DEV && !params) ? () => _devProjects : undefined,
+    // The DEV fixture paints instantly but is NOT data: stale at once, so the
+    // real list replaces it on mount (the project picker reads this cache).
+    initialDataUpdatedAt: (import.meta.env.DEV && !params) ? 0 : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
