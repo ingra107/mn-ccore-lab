@@ -1,6 +1,8 @@
 // Cascade rows (overnight audit 2026-10-14, G4-5 / G4-6): a selected row is
 // ringed in the accent, never its status red; Simulate is the accent, not the
-// going-stale orange; a row is a real button; the chevron has a name.
+// going-stale orange; the row selects through a real title button and is
+// itself role-free, so no button nests inside a role=button (axe
+// nested-interactive); the chevron has a name.
 //
 // Real Chromium (vitest.config.ts browser mode), react-dom directly.
 
@@ -23,12 +25,17 @@ describe('DeadlineCascade row', () => {
   it('selects by keyboard, rings the selection in the accent and draws Simulate in the accent', async () => {
     const h = await mount(<DeadlineCascade graph={graph} onSimulateImpact={() => {}} />, { ready: (x) => x.querySelector('.cascade-row'), label: 'DeadlineCascade' })
     const row = h.querySelector('.cascade-row') as HTMLElement
-    expect(row.getAttribute('role')).toBe('button')
-    expect(row.tabIndex).toBe(0)
+    expect(row.hasAttribute('role')).toBe(false)
+    expect(row.hasAttribute('tabindex')).toBe(false)
+    // No interactive element inside another interactive element.
+    expect(h.querySelector('[role="button"] button, button button')).toBeNull()
     expect(h.querySelector('button[aria-expanded][aria-label^="Collapse"]')).not.toBeNull()
-    row.focus()
-    row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await waitFor(() => row.getAttribute('aria-pressed') === 'true', 'row selected')
+    const select = row.querySelector('button.cascade-row-select') as HTMLButtonElement
+    expect(select.textContent).toBe('Send out meeting notes')
+    expect(select.getAttribute('aria-pressed')).toBe('false')
+    select.focus()
+    select.click()
+    await waitFor(() => select.getAttribute('aria-pressed') === 'true', 'row selected')
     expect(row.style.border).toContain('var(--job-accent)')
     const simulate = await waitFor(() => Array.from(h.querySelectorAll('button')).find((b) => b.textContent === 'Simulate'), 'Simulate button')
     expect(simulate.style.color).toBe('var(--job-accent)')

@@ -1930,7 +1930,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
                  control already 44px or larger gets no extension and a small one
                  gets exactly enough. Put it on any small button, link or trigger.
                  position is :where() so a class or inline style that makes the
-                 control absolute/fixed still wins.
+                 control absolute/fixed still wins. The overlay paints above
+                 non-positioned neighbours and takes their taps, so it must only
+                 reach dead space. Inside a row that is itself a tap target,
+                 either lift the neighbour that has its own action above it
+                 (position:relative; z-index:1) or, for a small marker whose
+                 target the row already reaches, use .touch-cue instead.
+     .touch-cue  on touch the small link is a marker, not a target: a tap falls
+                 through to the row, whose detail view carries the same link.
+                 Desktop keeps the link.
      .touch-tall a real 44px minimum height, for stand-alone full-size controls
                  only (the shared Button at md/lg, tabs). Never on a control that
                  sits inside a flex or inline row.
@@ -1945,6 +1953,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   .filter-chip {
     min-height: 44px;
   }
+  .touch-cue { pointer-events: none; }
   :where(.hit-area) { position: relative; }
   .hit-area::before {
     content: '';
@@ -3370,7 +3379,8 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 /* Cascade row: the status word and "Task" repeat what the dot and date color
    say, so below md they are screen-reader text and the title gets the room. */
 @media (max-width:767px){.cascade-meta-md{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
-.cascade-row:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
+.cascade-row:has(.cascade-row-select:focus-visible){outline:2px solid var(--job-accent);outline-offset:1px}
+.cascade-row-select:focus-visible{outline:none}
 .cal-dots{display:none}
 /* Week: seven columns from 768px; below it the days stack as rows, date on the
    left, one-line events on the right (G4-3: ~48px columns broke titles mid-word). */

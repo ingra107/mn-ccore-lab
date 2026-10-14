@@ -139,16 +139,12 @@ function CascadeRow({
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.15 }}
+        // A click anywhere on the row selects it (mouse convenience). The row
+        // itself stays role-free: it holds the chevron button, and a
+        // role=button wrapper around a button is axe nested-interactive (same
+        // rule as DashboardGrid.tsx and TaskGridView.tsx). Keyboard and screen
+        // readers select through the title, a real <button> (G4-6).
         onClick={() => onSelect(node)}
-        // A row is a real button (G4-6, 2026-10-14): it selects the node for
-        // the What-if panel, so Tab + Enter/Space must reach it too.
-        role="button"
-        tabIndex={0}
-        aria-pressed={isSelected}
-        onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(node) }
-        }}
         className="group cascade-row"
         style={{
           display: 'flex',
@@ -214,19 +210,36 @@ function CascadeRow({
           </span>
         )}
 
-        {/* Title */}
-        <span style={{
-          fontSize: 'var(--value-size)',
-          fontWeight: 400,
-          color: status === 'completed' ? 'var(--slate)' : 'var(--ink)',
-          textDecoration: status === 'completed' ? 'line-through' : 'none',
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap' as const,
-        }}>
+        {/* Title: the row's select control (Tab + Enter/Space, aria-pressed). */}
+        <button
+          type="button"
+          className="cascade-row-select"
+          aria-pressed={isSelected}
+          onClick={(e) => { e.stopPropagation(); onSelect(node) }}
+          style={{
+            // Above the chevron's 44px touch overlay, so a tap on the title
+            // always selects and the overlay only reaches dead space.
+            position: 'relative',
+            zIndex: 1,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            textAlign: 'left',
+            cursor: 'pointer',
+            minWidth: 0,
+            fontSize: 'var(--value-size)',
+            fontWeight: 400,
+            color: status === 'completed' ? 'var(--slate)' : 'var(--ink)',
+            textDecoration: status === 'completed' ? 'line-through' : 'none',
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap' as const,
+          }}
+        >
           {node.title}
-        </span>
+        </button>
 
         {/* Due date */}
         <span style={{

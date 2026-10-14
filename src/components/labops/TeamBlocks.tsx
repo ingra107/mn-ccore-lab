@@ -10,7 +10,7 @@ import EmptyStateArt from '../EmptyStateArt'
 import { FaceDisc } from '../today/skin'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
-import { isOverdue } from '../../lib/dateUtils'
+import { isOverdueWork } from '../../lib/taskStats'
 import { addDays, mondayOf } from '../../lib/isoWeek'
 import { buildLeadershipInsights, commitmentRate } from '../../lib/labReports'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
@@ -93,7 +93,7 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
       if (t.completed) r.done++
       else {
         r.open++
-        if (isOverdue(t.due_date, t.status)) r.overdue++
+        if (isOverdueWork(t)) r.overdue++
       }
     }
     if (isPi && insights) {

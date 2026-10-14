@@ -21,7 +21,9 @@ export default function DeadlineCascadePage() {
   // Progressive disclosure (principle 5, G4-6 2026-10-14): on a phone every
   // card starts folded to its summary line; 427 deadlines across 42 open cards
   // made the tab ~22,700px tall. From md up the cards start open. A tap on a
-  // card's header flips it either way.
+  // card's header flips it either way. The width is read once, at mount, on
+  // purpose: rotating a tablet or resizing the window never re-folds or
+  // re-opens cards the user is reading; a reload picks up the new width.
   const [startOpen] = useState(() => !(typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches))
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set())
   const toggleCard = useCallback((id: string) => setFlipped((prev) => {

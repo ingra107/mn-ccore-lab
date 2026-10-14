@@ -31,11 +31,15 @@ export function showsToday(view: ViewMode, date: Date, now: Date = new Date()): 
   return ws(date) === ws(now)
 }
 
-/** The Agenda window for the month in view: today onward in the current month,
- *  from the 1st in any other, through the end of the fetch window (next month). */
+/** The Agenda window for the month in view. The current month lists what is
+ *  upcoming: today through the end of the fetch window (next month), so the
+ *  list never runs short late in a month. Any other month lists exactly that
+ *  month, 1st to last day, so its header ("September 2026") and its count
+ *  ("events in September") describe the same rows (principle 6), and paging
+ *  month to month never shows a row twice. */
 export function agendaWindow(date: Date, now: Date = new Date()): { from: string; to: string } {
   const isCurrent = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()
   const first = new Date(date.getFullYear(), date.getMonth(), 1)
-  const last = new Date(date.getFullYear(), date.getMonth() + 2, 0)
+  const last = new Date(date.getFullYear(), date.getMonth() + (isCurrent ? 2 : 1), 0)
   return { from: isCurrent ? localDateKey(now) : localDateKey(first), to: localDateKey(last) }
 }

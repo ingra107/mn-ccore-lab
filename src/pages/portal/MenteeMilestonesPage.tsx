@@ -611,9 +611,11 @@ function MilestoneRow({
   const isDone = item.status === 'completed'
   const dueStr = item.due_date ? formatShortDate(item.due_date) : '--'
   const daysLate = (item._isOverdue && item.due_date) ? getDaysAgo(item.due_date) : 0
-  // A past-due row stored as Upcoming reads Overdue in its status too, so it
-  // does not say "151d overdue · Upcoming" (G8-12, 2026-10-14).
-  const shownStatus = item._isOverdue && item.status === 'upcoming' ? 'overdue' : item.status
+  // A past-due open row (stored Upcoming or In Progress) reads Overdue in its
+  // status too, so it never says "151d overdue · Upcoming" and matches the
+  // server's overview count, which calls the same rows overdue (G8-12,
+  // 2026-10-14). _isOverdue is false for a completed row.
+  const shownStatus = item._isOverdue ? 'overdue' : item.status
 
   return (
     <div

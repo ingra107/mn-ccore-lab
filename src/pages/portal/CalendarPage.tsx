@@ -126,7 +126,7 @@ export default function CalendarPage() {
   const visibleCount = visibleEvents.length
   const isCurrentMonth = monthPrefix === localDateKey().slice(0, 7)
   const monthPhrase = isCurrentMonth ? 'this month' : `in ${currentDate.toLocaleDateString('en-US', { month: 'long' })}`
-  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : view === 'agenda' ? (isCurrentMonth ? 'upcoming' : `from ${currentDate.toLocaleDateString('en-US', { month: 'long' })}`) : monthPhrase}`
+  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : view === 'agenda' && isCurrentMonth ? 'upcoming' : monthPhrase}`
 
   const goToPrev = () => setCurrentDate(stepDate(view, currentDate, -1))
   const goToNext = () => setCurrentDate(stepDate(view, currentDate, 1))

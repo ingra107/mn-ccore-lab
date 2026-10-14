@@ -7,10 +7,9 @@ import StatRow from '../ui/StatRow'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
-import { isOverdue } from '../../lib/dateUtils'
+import { isOverdueWork } from '../../lib/taskStats'
 import { parseDbUtc } from '../../lib/time'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
-import { isTaskDone } from '../../lib/taskGrouping'
 import { taskShortLabel } from '../../lib/displayNames'
 import { MANUSCRIPTS_PAGE_KINDS } from '../../lib/products'
 import { stageCountLabel, type ProductStageCount } from '../../lib/projectStage'
@@ -48,7 +47,7 @@ export function ThisWeekBlock({ stats, sparks, tasks, health, stalled }: {
   stalled?: InsightsDashboardData['metrics']['stalledProjects']
 }) {
   const overdueTasks = useMemo(
-    () => tasks.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).slice(0, 5),
+    () => tasks.filter((t) => isOverdueWork(t)).slice(0, 5),
     [tasks],
   )
   const net = stats.completed - stats.created

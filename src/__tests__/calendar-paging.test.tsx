@@ -48,10 +48,10 @@ describe('Calendar paging (G4-1)', () => {
     expect(showsToday('day', new Date(2026, 9, 15), now)).toBe(false)
   })
 
-  it('Agenda window: today onward this month, from the 1st in another, to the end of next month', () => {
+  it('Agenda window: today to the end of next month this month, exactly the month in any other', () => {
     const now = new Date(2026, 9, 14)
     expect(agendaWindow(new Date(2026, 9, 1), now)).toEqual({ from: '2026-10-14', to: '2026-11-30' })
-    expect(agendaWindow(new Date(2026, 10, 1), now)).toEqual({ from: '2026-11-01', to: '2026-12-31' })
+    expect(agendaWindow(new Date(2026, 10, 1), now)).toEqual({ from: '2026-11-01', to: '2026-11-30' })
   })
 
   it('AgendaView lists only the window it is given', async () => {

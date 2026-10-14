@@ -14,6 +14,7 @@ describe('countOverdueBefore', () => {
       row('late', '2026-10-01'),
       row('due-that-day', '2026-10-14'),
       row('done', '2026-10-01', { completed: 1, status: 'done' }),
+      row('completed-status', '2026-10-01', { status: 'completed' }),
       row('approval', '2026-10-01', { approval_status: 'pending' }),
       row('question', '2026-10-01', { kind: 'question' }),
       row('no-date', null),
