@@ -104,6 +104,22 @@ export default defineConfig([
       }],
     },
   },
+  // The full task editor loads on demand (2026-10-14): a static default import
+  // of TaskDetailPanel puts its ~109 kB chunk back on the critical path of the
+  // page that imports it. Named imports (OverviewQuickAdd in a test) are fine.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/tasks/LazyTaskDetailPanel.tsx'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          regex: '/TaskDetailPanel$',
+          importNames: ['default'],
+          message: 'Import the task editor from components/tasks/LazyTaskDetailPanel so it stays off the page\'s critical path.',
+        }],
+      }],
+    },
+  },
   // Time discipline, product AND test files under src/ + api/.
   {
     files: ['src/**/*.{ts,tsx}', 'api/**/*.{ts,tsx}'],
