@@ -13,7 +13,7 @@
  *
  * Run: npx tsx scripts/deep-audit/13-error-resilience.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGetTaskFromList, marker } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGetTaskFromList, marker, cleanupPost } from './harness'
 
 async function main() {
   const s = await openSession('13-error-resilience')
@@ -210,7 +210,7 @@ async function main() {
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
-    for (const t of cleanupTasks) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [t], action: 'delete' } }).catch(() => {}) })
+    for (const t of cleanupTasks) cleanupPost(s, '/api/tasks/batch', { ids: [t], action: 'delete' })
     await closeSession(s)
   }
 }

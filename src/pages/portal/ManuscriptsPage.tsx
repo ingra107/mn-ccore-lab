@@ -36,7 +36,6 @@ import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import ProductKindList from '../../components/project/ProductKindList'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
-import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
 import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
@@ -151,7 +150,6 @@ export default function ManuscriptsPage() {
   // null = stage order (with stage headers); a header click cycles asc -> desc -> cleared.
   const [sort, setSort] = useState<SleekSort>(null)
   const [attentionFilter, setAttentionFilter] = useState<AttentionFilter>(null)
-  useScrollReveal<HTMLDivElement>()
 
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useRecentTasks()

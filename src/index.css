@@ -16,8 +16,6 @@
      4.5:1 on both white and the tinted hover bgs (gold-active, teal-active,
      etc.). Visual identity is preserved — just sturdier contrast. */
   --gold: #6b5420;       /* Darker than before; passes on gold-active (self-tint) + white */
-  --on-gold: #ffffff;    /* text on a solid --gold fill (7.4:1 on #6b5420) */
-  --gold-light: #f0efe8;
   --cream: #ffffff;
   --maroon: #7a0019;
   --ice: #f4f5f7;
@@ -30,10 +28,8 @@
      same requirement regardless of page bg. 2026-04-18 axe AA.
      Hex (not OKLCH) so axe-core 4.11 grades the literal sRGB it sees. */
   --teal-solid: #0d6f68;      /* 6.1:1 with #fff */
-  --maroon-solid: #8a1f2e;    /* 7.1:1 with #fff */
   --orange: #a23d08;                     /* darker than oklch(0.6) for AA on tinted bg */
   --green: #066e2f;                      /* darker green for AA on tinted bg */
-  --green-light: #16a34a;
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', sans-serif;
@@ -68,7 +64,6 @@
   /* Letter-spacing — tighten at display sizes (Linear/Vercel/Stripe pattern) */
   --tracking-display: -0.04em;   /* 32px+ headings */
   --tracking-heading: -0.02em;   /* 24px headings */
-  --tracking-body: 0;            /* 16px and below */
 
   /* ── Anchored-column width system (P1-1, 2026-06-09) ──
      One source of truth for the centered band + its anchored primary column.
@@ -110,7 +105,6 @@
   --radius-circle: 50%;
 
   /* Shadow elevation system */
-  --shadow-flat: none;
   /* P1-2: light-mode card elevation is a hairline ring, not a drop shadow
      on a grey wash. Dark mode keeps a real shadow (see .dark). Ink-based
      alpha for the same reason as --border-* above (ee95db28 regression). */
@@ -123,7 +117,6 @@
   --shadow-menu: 0 0 0 1px var(--border-subtle), 0 4px 16px rgba(0, 0, 0, 0.12);
 
   /* Animation timing — 4 durations + 2 easings (cross-system consensus) */
-  --duration-instant: 0ms;
   --duration-fast: 100ms;
   --duration-normal: 150ms;
   --duration-moderate: 200ms;
@@ -231,18 +224,14 @@
   --slate: #b0b5b9;
   color-scheme: dark;
   --gold: #dcb355;          /* was oklch(0.73 0.12 85) — brighter for AA on #0b0b0b */
-  --on-gold: #1a1a1a;       /* text on a solid --gold fill (8.9:1 on #dcb355) */
-  --gold-light: oklch(0.18 0 0);         /* true achromatic — not used as text */
   --cream: oklch(0.12 0 0);              /* dark body bg in dark mode */
   --maroon: #f0737e;         /* was oklch(0.65 0.15 20) — brighter for AA */
   --ice: oklch(0.14 0 0);                /* true achromatic — bg use */
   --teal: #5cbcb4;           /* was oklch(0.65 0.07 190) — brighter for AA */
   --teal-subtle: #4a9a95;
   --teal-solid: #0d6f68;    /* shared with light mode — axe-safe hex */
-  --maroon-solid: #8a1f2e;
   --orange: #f08a5b;         /* brighter for AA on near-black */
   --green: #6ee89a;          /* brighter for AA */
-  --green-light: #6ee89a;
 
   --muted: color-mix(in oklch, var(--ink) 70%, transparent);
 
@@ -281,7 +270,6 @@
   --sk-t2: #4c5663;
   --sk-t3: #646e7a;
   --sk-ac: #006b66;
-  --sk-ac-soft: rgba(0, 107, 102, 0.09);
   --sk-ac-fg: #ffffff;
   /* Light job hues (retuned 2026-10-11, prod7 check): the old maroon, burnt
      orange and olive gold all read as one brown at 11-12px. Each is now the
@@ -296,10 +284,8 @@
      Orange cannot get lighter: any lighter orange drops under 4.5:1 on its
      tint over these surfaces. */
   --sk-gold: #785c00;
-  --sk-gold-soft: rgba(120, 92, 0, 0.11);
   --sk-wants-fg: #ffffff;  /* text on a solid --job-wants fill: 6.3:1 */
   --sk-od: #ba003a;
-  --sk-od-soft: rgba(186, 0, 58, 0.08);
   --sk-urg: #a34003;
   --sk-hatch: color-mix(in srgb, var(--sk-t1) 13%, transparent);
   --sk-face: #d9dcdf;
@@ -318,13 +304,10 @@
   --sk-t2: #a3abb3;
   --sk-t3: #7d858e;
   --sk-ac: #5cbcb4;
-  --sk-ac-soft: color-mix(in srgb, var(--sk-ac) 13%, transparent);
   --sk-ac-fg: #062320;
   --sk-gold: #dcb355;
-  --sk-gold-soft: rgba(220, 179, 85, 0.13);
   --sk-wants-fg: #0f1923;  /* dark ink on the bright dark-mode gold */
   --sk-od: #f0737e;
-  --sk-od-soft: color-mix(in srgb, var(--sk-od) 10%, transparent);
   --sk-urg: #f08a5b;
   --sk-hatch: rgba(255, 255, 255, 0.11);
   --sk-face: #2a323b;
@@ -416,9 +399,7 @@
   --hover-subtle: rgba(0, 0, 0, 0.03);
   --hover-light: rgba(0, 0, 0, 0.06);
   --hover-medium: rgba(0, 0, 0, 0.10);
-  --overlay-light: rgba(0, 0, 0, 0.15);
   --overlay-medium: rgba(0, 0, 0, 0.40);
-  --overlay-heavy: rgba(0, 0, 0, 0.70);
 
   --gold-hover: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
   --gold-active: color-mix(in srgb, var(--task-accent-gold) 10%, transparent);
@@ -426,9 +407,6 @@
   --teal-hover: rgba(45, 138, 138, 0.06);
   --teal-active: rgba(45, 138, 138, 0.10);
   --teal-emphasis: rgba(45, 138, 138, 0.15);
-  --maroon-hover: rgba(122, 0, 25, 0.06);
-  --maroon-emphasis: rgba(122, 0, 25, 0.15);
-  --orange-hover: rgba(194, 65, 12, 0.06);
   --green-hover: rgba(22, 163, 74, 0.06);
 }
 
@@ -436,9 +414,7 @@
   --hover-subtle: rgba(255, 255, 255, 0.03);
   --hover-light: rgba(255, 255, 255, 0.06);
   --hover-medium: rgba(255, 255, 255, 0.10);
-  --overlay-light: rgba(0, 0, 0, 0.30);
   --overlay-medium: rgba(0, 0, 0, 0.50);
-  --overlay-heavy: rgba(0, 0, 0, 0.80);
 }
 
 /* ── Table Density Modes ── */
@@ -488,10 +464,7 @@ html[data-density="comfortable"] {
 /* ── UX Tokens — consistent interactive elements across all pages ── */
 :root {
   /* Element heights — same height = same affordance everywhere */
-  --el-pill: 32px;
   --el-input: 36px;
-  --el-avatar-sm: 24px;
-  --el-avatar-md: 32px;
 
   /* Spacing rhythm — 8px grid, strictly */
   --sp-xs: 4px;
@@ -505,7 +478,6 @@ html[data-density="comfortable"] {
   --weight-body: 400;      /* reading text, descriptions, cell values */
   --weight-ui: 500;        /* nav items, table headers, badges, buttons */
   --weight-heading: 600;   /* page titles, section headers, emphasis */
-  --weight-metric: 700;    /* dashboard hero numbers only */
 
   /* Contrast hierarchy — labels recede, values pop */
   /* Light mode: opacity values raised to meet WCAG AA 4.5:1 on white bg */
@@ -513,9 +485,7 @@ html[data-density="comfortable"] {
   --ink-label: 0.70;      /* WCAG AA light mode: ~5.6:1 on white — was 0.55 @ 3.94:1 */
   --ink-hint: 0.68;       /* WCAG AA light mode: ~5.4:1 on white — was 0.62 @ 4.35:1 (60+ notif/mobile-card hits). r7 2026-04-22 */
   --ink-muted: 0.7;       /* secondary text, metadata, inactive icons */
-  --ink-disabled: 0.3;    /* disabled controls, decorative elements */
   --label-weight: var(--weight-heading);
-  --value-weight: var(--weight-body);
   --label-size: var(--text-label);
   --value-size: var(--text-body);
 
@@ -553,9 +523,6 @@ html[data-density="comfortable"] {
 
   /* Row separator — structure felt not seen */
   --row-separator: rgba(0, 0, 0, 0.04);
-
-  /* Personal page two-column grid -- 3:2 ratio for Phase 31.5 command center */
-  --personal-grid-cols: 3fr 2fr;
 }
 
 .dark {
@@ -586,7 +553,6 @@ html[data-density="comfortable"] {
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --duration-instant: 0ms;
     --duration-fast: 0ms;
     --duration-normal: 0ms;
     --duration-moderate: 0ms;
@@ -635,8 +601,8 @@ html[data-density="comfortable"] {
 .col-numeric { text-align: right; }
 
 /* Heading letter-spacing — tighten at display sizes (Linear/Vercel/Stripe) */
-h1, .text-display { letter-spacing: var(--tracking-display); }
-h2, .text-heading { letter-spacing: var(--tracking-heading); }
+h1 { letter-spacing: var(--tracking-display); }
+h2 { letter-spacing: var(--tracking-heading); }
 h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 
 /* Large display text gets tighter tracking (24px+) */
@@ -663,47 +629,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 }
 .field-container:focus-within {
   border-color: var(--job-accent);
-}
-
-/* Description editor — border is now managed by the DescriptionField
-   component via inline style (borderless until interactive, Rule R4).
-   This class is retained as a no-op for backward compat. */
-.description-editor-wrapper {
-  border-radius: var(--radius-lg);
-  overflow-y: auto;
-  transition: border-color var(--transition-fast);
-}
-
-/* Dropdown/menu surface — luminance elevation on dark */
-.menu-surface {
-  background: var(--cream);
-}
-.dark .menu-surface {
-  background: color-mix(in oklch, var(--cream), white 4%);
-}
-
-/* Carried forward badge.
-   color: var(--gold) flips #6b5420 (light) ↔ #dcb355 (dark). On the
-   10% gold-tinted bg (= faint cream in light mode, faint gold-dark in
-   dark mode) light-mode was 4.3:1 on #f1ede4 — JUST under AA.
-   Darker #5a4518 in light mode gives 5.8:1, keeps visual gold family.
-   Dark-mode override keeps bright. 2026-04-22. */
-.carried-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--sk-t1) 6%, transparent);
-  color: var(--sk-t2);
-  white-space: nowrap;
-  vertical-align: middle;
-  margin-right: 6px;
-}
-.dark .carried-badge {
-  color: var(--sk-t2);
 }
 
 /* ── Tiptap rich text editor styles ── */
@@ -904,8 +829,7 @@ a:hover {
    (R4-02). A full-strength 2px outline on a row already bounded by
    top/bottom hairlines reads as three horizontal rules. Instead: dimmed
    inset outline + bg tint, matching the J/K `.task-row-focused` pattern.
-   Applied to Deadlines / Ideas / Decisions rows. */
-.deadline-row:focus-visible,
+   Applied to Ideas / Decisions rows. */
 .idea-row:focus-visible,
 .decision-list-row:focus-visible {
   outline: 2px solid color-mix(in oklch, var(--job-accent) 55%, transparent);
@@ -913,35 +837,10 @@ a:hover {
   background: color-mix(in srgb, var(--job-accent) 5%, transparent);
   border-radius: var(--radius-sm);
 }
-.dark .deadline-row:focus-visible,
 .dark .idea-row:focus-visible,
 .dark .decision-list-row:focus-visible {
   outline-color: color-mix(in oklch, var(--job-accent) 55%, transparent);
   background: color-mix(in srgb, var(--job-accent) 8%, transparent);
-}
-
-/* ── Scroll Animations ── */
-/* Elements start VISIBLE by default. The JS observer adds .will-animate
-   only when the element is below the viewport, then .visible on intersect.
-   This ensures content always shows even if observers fail (mobile, filters, SPA nav). */
-.fade-in-up {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Transform-only entry — opacity stays at 1 so axe doesn't catch
-   elements mid-transition with partial alpha (slate × 0.58 on dark
-   bg fails AA). CLAUDE.md Rule 1: content visible by default.
-   r7 2026-04-22. */
-.fade-in-up.will-animate {
-  opacity: 1;
-  transform: translateY(20px);
-  transition: transform 0.6s ease;
-}
-
-.fade-in-up.will-animate.visible {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* ── Reduced Motion ── */
@@ -951,11 +850,6 @@ a:hover {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .fade-in-up, .fade-in-up.will-animate {
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -1256,24 +1150,6 @@ a:hover {
 .sk-hd::after,.tk .tk-ctog::after,.sk-fade{content:"";display:block;flex:none;width:clamp(32px,12vw,120px);height:1px;background:linear-gradient(90deg,var(--sk-line2),transparent)}
 .sk-hd::after{order:1}
 
-/* ── Always-dark sections (ink bg) — don't flip in dark mode ── */
-/* Use on ImpactMetrics, CLIFMap, any section that must stay dark on both
-   themes. The hex literals here are INTENTIONAL — these sections render
-   white text on a dark surface in both light and dark mode, so the bg
-   must NOT theme-flip. Token --always-dark-section-bg pins the value so
-   downstream callers can reference it instead of duplicating the hex.
-   (Phase 7, 2026-05-27 — Codex caveat: do NOT theme-convert .section-ink.) */
-:root {
-  --always-dark-section-bg: #0f1923;       /* light-mode value (also default) */
-  --always-dark-section-bg-deep: #070b10;  /* slightly deeper in dark mode */
-}
-.section-ink {
-  background-color: var(--always-dark-section-bg);
-}
-.dark .section-ink {
-  background-color: var(--always-dark-section-bg-deep);
-}
-
 /* ── Theme-aware stage colors (AA on the matching bg in both modes) ── */
 :root {
   --stage-data-collection: #2d5c8f;  /* dark blue for light bg (7.3:1 on #fff) */
@@ -1286,34 +1162,8 @@ a:hover {
       in both modes. Must NOT use --slate/--teal/--gold etc. which flip to
       LIGHT dark-mode variants (white text on light teal fails). r7 2026-04-22. */
 :root {
-  --stage-fill-idea: #4b5563;          /* slate-600: 6.3:1 with #fff */
   --stage-fill-data-collection: #0d6f68; /* teal-solid: 5.4:1 with #fff */
   --stage-fill-analysis: #6b5420;       /* gold-dark: 7.5:1 with #fff */
-  --stage-fill-writing: #a23d08;        /* orange light-hex: 5.3:1 with #fff */
-  --stage-fill-review: #8a1f2e;         /* maroon-solid: 7.3:1 with #fff */
-  --stage-fill-submitted: #0d6f68;      /* same as data-collection */
-  --stage-fill-revisions: #5b4fa8;      /* blue-purple: 6.5:1 with #fff — GH #26 (2026-04-23) */
-  --stage-fill-published: #066e2f;      /* green light-hex: 5.9:1 with #fff */
-}
-
-/* ── Gold-on-emphasis text token — gold pill text on gold-emphasis bg.
-      --gold-emphasis is color-mix(in srgb, var(--task-accent-gold) 15%, transparent) = #efebdf on white light-bg
-      and #2a2618 on dark bg. --gold flips #6b5420 light / #dcb355 dark,
-      giving 4.25:1 light (fails AA) / ~8:1 dark. Token pins to darker
-      gold in light mode (5.8:1 on #efebdf). r7 2026-04-22. */
-:root {
-  --gold-on-emphasis: #5a4518;
-}
-.dark {
-  --gold-on-emphasis: #dcb355;
-}
-
-/* ── Cream section divider — slight tint in dark mode for visibility ── */
-.section-cream {
-  background-color: var(--cream);
-}
-.dark .section-cream {
-  background-color: #0e1319;
 }
 
 /* ── Task-surface semantic tokens (Phase 7, 2026-05-27) ─────────────────
@@ -1325,7 +1175,7 @@ a:hover {
    Light values are the app's existing light-mode equivalents (sourced
    from --ink / --slate / --muted / --gold / --teal / --maroon / --orange
    / --green pinned hexes in :root above). Accents share the solid AA-safe
-   hexes used by --teal-solid / --maroon-solid / --stage-fill-* so white
+   hexes used by --teal-solid / --stage-fill-* so white
    text and inverted (#0f1923) text both remain readable.
    --task-ink is also the BASE of every light-mode structural border and
    card shadow (--border-*, --shadow-card*; see the note at --border-subtle),
@@ -1341,7 +1191,7 @@ a:hover {
   /* Accents — pinned to the AA-safe hexes already used for solid bgs */
   --task-accent-gold:    #6b5420;   /* matches --gold light, AA on #fff */
   --task-accent-teal:    #006b66;   /* matches --teal light, AA on #fff */
-  --task-accent-coral:   #8a1f2e;   /* matches --maroon-solid */
+  --task-accent-coral:   #8a1f2e;   /* solid maroon, 7.1:1 with #fff */
   --task-accent-orange:  #a23d08;   /* matches --orange light */
   --task-accent-green:   #066e2f;   /* matches --green light */
 }
@@ -1359,14 +1209,6 @@ a:hover {
   --task-accent-orange:  #f08a5b;
   --task-accent-green:   #6ee89a;
 }
-
-/* ── Funding agency colors — brighter in dark mode ── */
-.funding-nih { color: #1a4480; }
-.funding-nhlbi { color: #b51d09; }
-.funding-nlm { color: #2e7d32; }
-.dark .funding-nih { color: #5b9bd5; }
-.dark .funding-nhlbi { color: #ef6c57; }
-.dark .funding-nlm { color: #66bb6a; }
 
 /* ── Micro-interaction Keyframes & Utilities ── */
 
@@ -1637,8 +1479,6 @@ a:hover {
 .task-row-focused .inline-select-chevron,
 .idea-row:hover .inline-select-chevron,
 .idea-row:focus-within .inline-select-chevron,
-.deadline-row:hover .inline-select-chevron,
-.deadline-row:focus-within .inline-select-chevron,
 tr:hover .inline-select-chevron,
 .inline-select-trigger:hover .inline-select-chevron,
 .inline-select-trigger:focus-visible .inline-select-chevron,
@@ -1823,7 +1663,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      already have mobile stacked-card variants; this sets the height
      on the remaining table rows that stay grid-based. */
   .task-grid-row,
-  .deadline-row,
   .idea-row {
     min-height: 44px;
   }
@@ -1840,14 +1679,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     grid-column: 1 / -1;
     justify-self: start;
   }
-  /* R4-P2-08: Quick-filter chips on MyTasks scroll horizontally below
-     420px. Pills keep full size; row overflows with momentum scroll. */
-  .quick-filter-row {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .quick-filter-row::-webkit-scrollbar { display: none; }
-  .quick-filter-row > * { flex-shrink: 0; }
 
   /* Table container — tighter border radius on mobile */
   .table-container {
@@ -1972,9 +1803,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
   .touch-tall,
   .btn-icon,
-  a.inline-link,
-  select,
-  .filter-chip {
+  select {
     min-height: 44px;
   }
   .touch-cue { pointer-events: none; }
@@ -2310,7 +2139,6 @@ button[aria-label="Deselect task"]::before {
 
   /* Portal "View all" + "Get started" footer links */
   a[class*="view-all"],
-  .dashboard-view-all,
   .portal-footer-link {
     min-height: 44px;
     display: inline-flex;
@@ -2326,25 +2154,6 @@ button[aria-label="Deselect task"]::before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-  }
-}
-
-/* Personal page — two-column grid, stacks on mobile (C-08) */
-.personal-grid {
-  display: grid;
-  grid-template-columns: var(--personal-grid-cols, 3fr 2fr);
-  gap: var(--sp-lg);
-  align-items: start;
-}
-
-/* Prevent grid children from overflowing viewport (min-width:auto gotcha — C-08) */
-.personal-grid > * {
-  min-width: 0;
-}
-
-@media (max-width: 768px) {
-  .personal-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -2403,8 +2212,7 @@ button[aria-label="Deselect task"]::before {
 
 /* ── 2. prefers-contrast: more ────────────────────────────────
    Flatten opacity tiers so muted/label/hint text matches full ink.
-   Strengthen border tokens. --ink-disabled stays slightly faded so
-   disabled controls remain distinguishable from active ones.           */
+   Strengthen border tokens.                                          */
 @media (prefers-contrast: more) {
   :root {
     --ink-muted: 1.0;
@@ -3425,14 +3233,6 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 /* Keyboard hints under a table */
 .sr-foot{display:flex;gap:14px;font-size:10.5px;color:var(--sk-t3)}
 .sr-foot kbd{font-family:var(--font-mono),'JetBrains Mono',monospace;font-size:9px;padding:1px 4px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--sk-line2);color:var(--sk-t2)}
-/* Grants list on the sleek row (the GrantSleekList, archived 2026-10-12; rules kept for any sleek-row progress bar): progress stays the accent at any percent */
-.gr-list .gr-prog{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.gr-list .gr-bar{width:36px;height:3px;border-radius:999px;background:var(--sk-bar-track);overflow:hidden;flex-shrink:0}
-.gr-list .gr-bar i{display:block;height:100%;border-radius:999px;background:var(--job-accent)}
-.gr-list .gr-prog .sr-m{font-variant-numeric:tabular-nums}
-.gr-list .gr-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;padding:10px 10px 16px 10px;font-size:13px;color:var(--sk-t1)}
-.gr-list .gr-dl{font-size:11px;color:var(--sk-t3);margin-bottom:3px}
-.gr-list .gr-pi{display:inline-flex;align-items:center;gap:6px}
 
 /* ══ Color back: moments (rules-ui-design 21, Nick's picks 2, 4, 5 and 10, 2026-10-11) ══
    Mock: Scratch/mockups/2026-10-11-color-back.html ("Strict + color back").

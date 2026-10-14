@@ -7,7 +7,7 @@
  *
  * Run: npx tsx scripts/pre-flight/persona-breaker.ts
  */
-import { openPersona, closePersona, section, pass, record, snap, goto, mk } from './shared'
+import { openPersona, closePersona, section, pass, record, snap, goto, mk, cleanupPost } from './shared'
 
 async function main() {
   const s = await openPersona({
@@ -161,7 +161,7 @@ async function main() {
   } catch (e) {
     record(s, { id: 'FATAL', severity: 'P0', scenario: 'Persona journey aborted', observed: (e as Error).message.slice(0, 200), expected: 'journey completes' })
   } finally {
-    for (const tid of cleanupTasks) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+    for (const tid of cleanupTasks) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
     const result = await closePersona(s)
     console.log(`\n[breaker] DONE — ${result.passCount} pass, ${result.findings.length} findings`)
   }

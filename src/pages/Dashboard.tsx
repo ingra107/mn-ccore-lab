@@ -4,7 +4,6 @@ import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin,
 import DashboardGrid from '../components/dashboard/DashboardGrid'
 import { Button } from '../components/ui/Button'
 import { resetLayouts } from '../lib/dashboardLayout'
-import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { useMeetingsApi, useRecentTasks, useExpiringRegulatory, usePublications } from '../hooks/useApiData'
@@ -191,7 +190,6 @@ export default function Dashboard() {
     [rawRegulatory],
   )
 
-  const headerRef = useScrollReveal<HTMLDivElement>()
   const [showMore, setShowMore] = useState(false)
   const [showCustomize, setShowCustomize] = useState(false)
   const [visibleCards, setVisibleCards] = useState<Set<string>>(() => getVisibleCards(roleCards))
@@ -357,7 +355,7 @@ export default function Dashboard() {
         {/* DD-#3: operational status chips replace the editorial greeting. */}
         {(() => {
           return (
-            <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.625rem', paddingTop: '0.25rem' }}>
+            <div style={{ marginBottom: '0.625rem', paddingTop: '0.25rem' }}>
               {/* One wrapping row. Desktop: stats, lab health, card filter, then
                   Customize pushed right. Phone: stats on their own row, then lab
                   health beside Customize, then the card filter. */}

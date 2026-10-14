@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import { useScrollReveal } from '../../hooks/useScrollReveal'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
@@ -75,10 +74,8 @@ export default function BentoCard({
   noLift = false,
   children,
 }: BentoCardProps) {
-  const ref = useScrollReveal<HTMLDivElement>()
-
   return (
-    <div ref={ref} className={`fade-in-up ${sizeClasses[size]} ${className}`}>
+    <div className={`${sizeClasses[size]} ${className}`}>
       <motion.div
         layoutId={`bento-${title.replace(/\s+/g, '-').toLowerCase()}`}
         // Leaf card: the shared card material (color back pick 1, 2026-10-11)

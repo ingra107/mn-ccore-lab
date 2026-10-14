@@ -21,31 +21,6 @@ const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'o
 // validation to reject values the system itself writes.
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
 
-// GET /api/regulatory?project_id=
-// Rows come through the caller's handle: only the caller's projects.
-export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-
-  // A project the caller cannot see is a 403, not an empty list.
-  if (projectId) {
-    const block = await assertProjectVisible(request, env, projectId);
-    if (block) return block;
-  }
-
-  let query = `SELECT r.* FROM regulatory_items r WHERE 1=1`;
-  const params: string[] = [];
-
-  if (projectId) {
-    query += ' AND r.project_id = ?';
-    params.push(projectId);
-  }
-
-  query += ' ORDER BY CASE r.status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, r.expiration_date ASC, r.created_at DESC';
-
-  const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
-}
-
 // GET /api/regulatory/expiring?days=30
 export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '30', 10);

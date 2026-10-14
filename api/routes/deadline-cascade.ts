@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, assertProjectVisible, resolveAndGuardProject } from '../helpers';
+import { json, error, assertProjectVisible } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -89,93 +89,6 @@ function computeImpact(
   }
 
   return results;
-}
-
-// ── GET /api/deadline-cascade?project_id= ──────────────────
-
-export async function handleGetCascade(url: URL, request: Request, env: Env): Promise<Response> {
-  const rawProjectId = url.searchParams.get('project_id');
-  if (!rawProjectId) return error('project_id required', 400);
-
-  // T2.4 (2026-05-28): resolveAndGuardProject combines canonicalize + visibility
-  // gate into one DB round-trip (was two SELECTs).
-  //
-  // P4-exemption (2026-05-28): withExistingRowProject is NOT used here because
-  // this is a GET read path that takes project_id from the URL (not an UPDATE
-  // on an existing row by row-id). resolveAndGuardProject is the correct primitive
-  // for this pattern — it canonicalizes the project_id slug and gates visibility
-  // in a single SELECT, which is exactly what withExistingRowProject does internally
-  // for its table lookup. The P4 codex flag referred to Update handlers that
-  // hand-roll SELECT + assertProjectVisible; this GET handler was already
-  // correctly structured and needs no further migration.
-  const { block, projectId } = await resolveAndGuardProject(request, env, rawProjectId);
-  if (block) return block;
-
-  // Get all milestones and tasks for this project
-  const milestones = await env.DB.prepare(
-    'SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug WHERE m.project_id = ? ORDER BY m.target_date ASC'
-  ).bind(projectId).all();
-
-  const tasks = await env.DB.prepare(
-    'SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug WHERE t.project_id = ? AND t.due_date IS NOT NULL ORDER BY t.due_date ASC'
-  ).bind(projectId).all();
-
-  const nodeIds = [
-    ...(milestones.results || []).map(r => r.id as string),
-    ...(tasks.results || []).map(r => r.id as string),
-  ];
-
-  if (nodeIds.length === 0) {
-    return json({ data: { nodes: [], dependencies: [] } as CascadeGraph });
-  }
-
-  // Get all dependencies where either upstream or downstream is one of these nodes
-  const placeholders = nodeIds.map(() => '?').join(',');
-  const deps = await env.DB.prepare(
-    `SELECT * FROM deadline_dependencies WHERE upstream_id IN (${placeholders}) OR downstream_id IN (${placeholders})`
-  ).bind(...nodeIds, ...nodeIds).all();
-
-  const nodes: DeadlineNode[] = [
-    ...(milestones.results || []).map(r => ({
-      id: r.id as string,
-      type: 'milestone' as const,
-      title: r.title as string,
-      due_date: r.due_date as string | null,
-      status: r.status as string,
-      project_id: r.project_id as string | null,
-      project_title: r.project_title as string | null,
-    })),
-    ...(tasks.results || []).map(r => ({
-      id: r.id as string,
-      type: 'task' as const,
-      title: r.title as string,
-      due_date: r.due_date as string | null,
-      status: r.status as string,
-      project_id: r.project_id as string | null,
-      project_title: r.project_title as string | null,
-    })),
-  ];
-
-  // deadline_dependencies is a lab table: an edge from this project's node to
-  // a node the caller cannot see would name that node's id. Keep an edge only
-  // when its other end is a node the caller can read (same rule as /all).
-  const edges = (deps.results || []) as DeadlineDep[];
-  const ends = [...new Set(edges.flatMap((d) => [d.upstream_id, d.downstream_id]))];
-  const visible = new Set<string>();
-  if (ends.length > 0) {
-    const ph = ends.map(() => '?').join(',');
-    const seen = await env.DB.prepare(
-      `SELECT id FROM milestones WHERE id IN (${ph}) UNION SELECT id FROM tasks WHERE id IN (${ph})`
-    ).bind(...ends, ...ends).all<{ id: string }>();
-    for (const r of seen.results ?? []) visible.add(r.id);
-  }
-
-  return json({
-    data: {
-      nodes,
-      dependencies: edges.filter((d) => visible.has(d.upstream_id) && visible.has(d.downstream_id)),
-    } as CascadeGraph,
-  });
 }
 
 // ── GET /api/deadline-cascade/impact?id=&type=&new_date= ───

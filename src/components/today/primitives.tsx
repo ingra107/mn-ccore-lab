@@ -1,16 +1,12 @@
-// Shared inline primitives for the Today landing component tree:
+// Shared inline primitive for the Today landing component tree:
 //   LinkRow   — horizontal cluster of functional key-link icon chips
-//   ProjectLink — small "(project name)" link with optional routing
-//   Pill      — clickable rounded count+label chip
 //
 // Extracted from src/pages/portal/TodayPage.tsx during the component split.
 // Per HANDOFF §2 these have no dedicated file in the spec; they sit alongside
-// the rest of the today/ tree because TaskRow / PlannedTaskRow / RightNow /
-// PillStrip all import them.
+// the rest of the today/ tree because TaskRow and PlannedTaskRow import it
+// (and MyTasks TableView).
 
-import { Link } from 'react-router-dom'
-import { PATHS } from '../../constants/paths'
-import { INK, INK_MUTED, withAlpha } from './constants'
+import { INK_MUTED } from './constants'
 import { classifyUrl } from '../../lib/urlClassify'
 import { normalizeLink } from '../../lib/pbLinks.generated'
 import { iconForType, linkTintForType } from '../../lib/linkIcon'
@@ -82,60 +78,5 @@ export function LinkRow({ links, slot = false }: { links: TaskLink[]; slot?: boo
         )
       })}
     </span>
-  )
-}
-
-export function ProjectLink({ name, slug }: { name: string | null; slug?: string | null }) {
-  if (!name) return null
-  const inner = (
-    <span
-      className="b2-proj-link"
-      style={{ fontSize: 11, color: INK_MUTED, opacity: 0.7, textDecoration: 'none', transition: 'all 150ms', cursor: slug ? 'pointer' : 'default' }}
-    >
-      ({name})
-    </span>
-  )
-  if (!slug) return inner
-  return (
-    <Link to={PATHS.project(slug)} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none' }}>
-      {inner}
-    </Link>
-  )
-}
-
-interface PillProps {
-  icon: string
-  label: string
-  count?: number
-  color?: string
-  onClick?: () => void
-  emphasis?: boolean
-  title?: string
-}
-
-export function Pill({ icon, label, count, color = INK_MUTED, onClick, emphasis = false, title }: PillProps) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="hov-bg hov-border"
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: emphasis ? '6px 12px' : '5px 10px',
-        background: emphasis ? withAlpha(color, 8) : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${emphasis ? withAlpha(color, 33) : withAlpha(color, 19)}`,
-        borderRadius: 999, cursor: onClick ? 'pointer' : 'default',
-        fontFamily: 'inherit', color: emphasis ? color : INK,
-        fontSize: 12, fontWeight: 500, transition: 'all 150ms', whiteSpace: 'nowrap',
-        '--hov-bg': withAlpha(color, 13),
-        '--hov-border': withAlpha(color, 44),
-      } as React.CSSProperties}
-    >
-      <span style={{ fontSize: 12, lineHeight: 1 }}>{icon}</span>
-      {count !== undefined && (
-        <span style={{ fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{count}</span>
-      )}
-      <span style={{ color: 'inherit' }}>{label}</span>
-    </button>
   )
 }

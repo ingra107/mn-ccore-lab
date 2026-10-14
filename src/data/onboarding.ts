@@ -139,8 +139,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ]
 
-export const DAY_MILESTONES = [1, 3, 7, 14, 30] as const
-
 export const DAY_LABELS: Record<number, string> = {
   1: 'Day 1 -- Get Started',
   3: 'Day 3 -- Explore the Lab',

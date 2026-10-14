@@ -35,7 +35,7 @@ import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, 
 import { joinQuestionMinter } from './lib/project-join';
 import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
-import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
+import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
 import { handleGetPublications, handleGetStats } from './routes/publications';
 import { handleGetGrants, handleGrantsTimeline } from './routes/grants';
@@ -89,9 +89,9 @@ import { handleLane3List } from './routes/lane3';
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleAttentionManuscripts } from './routes/revisions';
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
-import { handleGetCascade, handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
+import { handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
-import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
+import { handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
@@ -904,26 +904,6 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/projects/:slug/revisions',
-  auth: 'authed',
-  entity: 'projects',
-  handler: async (c) => {
-  const ref = c.req.param('slug');
-  const env = E(c);
-  const proj = await env.DB.prepare(
-    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(ref, ref).first<{ id: string }>();
-  if (!proj) return json({ data: [] });
-  // Post-P2: use proj.id (typed proj_ PK) so the filter matches rewritten rows.
-  // Pre-P2 this was `proj.slug || proj.id`; manuscript_revisions.project_id is
-  // a FK that will hold typed PKs after the P2 data migration.
-  const rewrittenUrl = new URL(c.req.url);
-  rewrittenUrl.searchParams.set('project_id', proj.id);
-  return handleGetRevisions(rewrittenUrl, R(c), env);
-},
 });
 defineRoute({
   method: 'GET',
@@ -1848,13 +1828,6 @@ defineRoute({
   entity: 'deadline-cascade',
   handler: (c) => handleGetImpact(U(c), R(c), E(c)),
 });
-defineRoute({
-  method: 'GET',
-  path: '/api/deadline-cascade',
-  auth: 'authed',
-  entity: 'deadline-cascade',
-  handler: (c) => handleGetCascade(U(c), R(c), E(c)),
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mentee milestones
@@ -1872,17 +1845,6 @@ defineRoute({
   auth: 'authed',
   entity: 'mentee-milestones',
   handler: (c) => handleGetMenteeMilestones(U(c), E(c)),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Milestones (project + grant share a handler for listing)
-// ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/milestones',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleGetMilestones(U(c), E(c)),
 });
 
 // Grant post-award milestones are kind='milestone' tasks on a grant product
@@ -1906,13 +1868,6 @@ defineRoute({
   auth: 'authed',
   entity: 'regulatory',
   handler: (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/regulatory',
-  auth: 'authed',
-  entity: 'regulatory',
-  handler: (c) => handleGetRegulatoryItems(U(c), R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2529,13 +2484,6 @@ defineRoute({
 });
 
 // Milestones
-defineRoute({
-  method: 'POST',
-  path: '/api/milestones/:id/note',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)),
-});
 defineRoute({
   method: 'POST',
   path: '/api/milestones/:id/complete',
@@ -3248,23 +3196,12 @@ export default withErrorLedger<Env>({
             + ' ORDER BY created_at DESC LIMIT 5'
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 
-          // Get milestones with Future Me notes due within 3 days
-          const futureNotes = await recipientDb.prepare(
-            `SELECT m.title, m.target_date, m.future_note, m.future_note_author
-             FROM milestones m
-             WHERE m.future_note IS NOT NULL
-               AND m.status != 'completed'
-               AND m.target_date BETWEEN date('now') AND date('now', '+3 days')
-             ORDER BY m.target_date ASC`
-          ).all<{ title: string; target_date: string; future_note: string; future_note_author: string }>();
-          const futureNoteItems = futureNotes.results || [];
-
           // Only send if there's something to report
           const pendingItems = actions.results || [];
           const unread = notifCount?.c ?? 0;
           const updates = recentUpdates.results || [];
 
-          if (pendingItems.length === 0 && unread === 0 && updates.length === 0 && futureNoteItems.length === 0) {
+          if (pendingItems.length === 0 && unread === 0 && updates.length === 0) {
             continue; // Nothing to report for this person
           }
 
@@ -3282,17 +3219,6 @@ export default withErrorLedger<Env>({
               itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${escapeHtml((item.description || item.title || '').replace(/^\[Carried forward\]\s*/i, ''))}${dueLabel}</li>`;
             }
             itemsHtml += '</ul>';
-          }
-
-          if (futureNoteItems.length > 0) {
-            itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
-            for (const fn of futureNoteItems) {
-              const label = escapeHtml(fn.title);
-              itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
-              itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${escapeHtml(fn.target_date)}</span></p>`;
-              itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${escapeHtml(fn.future_note)}</p>`;
-              itemsHtml += `</div>`;
-            }
           }
 
           if (unread > 0) {

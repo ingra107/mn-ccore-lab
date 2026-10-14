@@ -47,8 +47,6 @@ export interface DeadlineItem {
   priority?: string
   isOverdue: boolean
   daysUntil: number
-  future_note?: string | null
-  future_note_author?: string | null
   /** The task behind a task row; unset for a grant milestone. */
   task?: TaskRow
 }

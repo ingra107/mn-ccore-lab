@@ -3,7 +3,7 @@
  * `$env:KEY = "VALUE"` lines into process.env for any vars not already set.
  *
  * Why: scheduled PowerShell scripts source secrets.ps1 directly. Node/tsx
- * processes (audit scripts, seed scripts, e2e-validate) do not, so
+ * processes (audit scripts, seed scripts) do not, so
  * PB_API_KEY is missing → Hub returns 401. This gives any TS entry point
  * a single call (`loadSecrets()`) that makes Node behave like scheduled PS.
  *

@@ -63,9 +63,8 @@ hand-rolled initials discs (use `FaceDisc`); counts only go down.
 
 ---
 
-## Animation Timing (5 durations + 2 easings)
+## Animation Timing (4 durations + 2 easings)
 
-- `--duration-instant: 0ms` — state toggles, checkbox
 - `--duration-fast: 100ms` — tooltips, button press
 - `--duration-normal: 150ms` — hover, row highlight (alias: `--transition-fast`)
 - `--duration-moderate: 200ms` — dropdowns, panels (alias: `--transition-panel`)
@@ -108,8 +107,8 @@ hand-rolled initials discs (use `FaceDisc`); counts only go down.
 
 ## Semantic Hover/Overlay Tokens
 
-- Accent hovers: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--maroon-hover/emphasis`, `--orange-hover`, `--green-hover`
-- Neutral overlays: `--hover-subtle/light/medium`, `--overlay-light/medium/heavy` (dark mode overrides: light uses black-based, dark uses white-based)
+- Accent hovers: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--green-hover`
+- Neutral overlays: `--hover-subtle/light/medium`, `--overlay-medium` (dark mode overrides: light uses black-based, dark uses white-based)
 - Standardized opacity tiers: 0.03 / 0.06 / 0.10 / 0.15 / 0.40 / 0.70. Snap to nearest tier.
 
 ---
@@ -121,7 +120,7 @@ hand-rolled initials discs (use `FaceDisc`); counts only go down.
 - Light mode: `--page-bg: #f5f5f5` (off-white), cards `#ffffff` with 3-layer box-shadow (Vercel pattern)
 - Card borders: `box-shadow: 0 0 0 1px var(--border-subtle)` technique (not CSS border)
 - Dark cards: `inset 0 1px 0 rgba(255,255,255,0.03)` top-edge highlight
-- Shadows: `--shadow-flat/card/card-hover/elevated/menu`. All `boxShadow` MUST use tokens.
+- Shadows: `--shadow-card/card-hover/elevated/menu`. All `boxShadow` MUST use tokens.
 - `--muted`: derived from `--ink` via `color-mix(in oklch, var(--ink) 70%, transparent)` in dark mode
 
 ---
@@ -291,8 +290,7 @@ divergent active-toggle styles and converged them on the tint anatomy:
 DensityToggle (was `--teal-solid` + white) → `--teal-active` + `--teal`;
 IdeasPage view toggle (was `--surface-2` tray + `--cream`/shadow active) →
 hairline pill group; ActivityStream + ProjectDetail Note/Comment compose
-toggles → ghost pills (tray bg removed, active = tint, teal=note / gold=comment
-via `--gold-on-emphasis` for AA). KEPT as semantic (not toggles): DoneBox/
+toggles → ghost pills (tray bg removed, active = tint, teal=note / gold=comment). KEPT as semantic (not toggles): DoneBox/
 subtask-status fills, multi-select checkbox fills (MeetingDetail/Deadlines),
 progress bars, Digest status-tab segmented control (self-consistent gold idiom).
 When touching any toolbar control, converge it on the TableControls/ViewPicker

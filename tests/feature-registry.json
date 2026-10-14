@@ -246,15 +246,6 @@
       "covered": true
     },
     {
-      "id": "api-get-milestones",
-      "component": "api/routes/projects.ts",
-      "type": "api",
-      "description": "GET /api/milestones — project milestones",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Milestones",
-      "covered": true
-    },
-    {
       "id": "api-get-digest",
       "component": "api/routes/digest.ts",
       "type": "api",
@@ -2752,15 +2743,6 @@
       "component": "src/hooks/useCountUp.ts",
       "type": "animation",
       "description": "Count-up animation for metric numbers",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
-      "id": "animation-scroll-reveal",
-      "component": "src/hooks/useScrollReveal.ts",
-      "type": "animation",
-      "description": "Scroll reveal animation for page sections",
       "test_file": null,
       "test_name": null,
       "covered": false

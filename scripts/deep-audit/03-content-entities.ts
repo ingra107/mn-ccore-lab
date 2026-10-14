@@ -8,7 +8,7 @@
  *
  * Run: npx tsx scripts/deep-audit/03-content-entities.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGet, marker } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGet, marker, cleanupPost, leaveForResidueSweep } from './harness'
 
 async function main() {
   const s = await openSession('03-content-entities')
@@ -62,7 +62,7 @@ async function main() {
           if (filtered?.some((t) => t.id === ab?.data?.id)) pass(s, '3.B /api/tasks?meeting filter returns action item')
           else bug(s, 'MTG-TASK-FILTER', 'P1', '3.B tasks meeting filter', `${filtered?.length ?? 0} tasks for this meeting`, 'includes action task')
 
-          if (ab?.data?.id) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [ab.data!.id], action: 'delete' } }).catch(() => {}) })
+          if (ab?.data?.id) cleanupPost(s, '/api/tasks/batch', { ids: [ab.data!.id], action: 'delete' })
         }
       }
     }
@@ -104,7 +104,7 @@ async function main() {
     }
 
     // ═══════════════════ REVISIONS ═══════════════════
-    section(s, '3.H  Paper revision tracking — POST /api/revisions (not /api/projects/:slug/revisions)')
+    section(s, '3.H  Paper revision tracking — POST /api/revisions, then GET /api/revisions?project_id=')
     const projects = await apiGet<Array<{ slug: string; title: string; home_stage?: string | null }>>(s, '/api/projects')
     const writingProj = projects?.find((p) => p.home_stage === 'writing') || projects?.[0]
     if (!writingProj) {
@@ -122,8 +122,8 @@ async function main() {
         const rb = (await revResp.json()) as { data?: { id: string } }
         if (rb?.data?.id) {
           pass(s, `3.H Revision ${rb.data.id} created on ${writingProj.slug}`)
-          const all = await apiGet<Array<{ id: string; round: number }>>(s, `/api/projects/${writingProj.slug}/revisions`)
-          if (all?.some((r) => r.id === rb.data?.id)) pass(s, '3.H Revision in /projects/:slug/revisions list')
+          const all = await apiGet<Array<{ id: string; round: number }>>(s, `/api/revisions?project_id=${encodeURIComponent(writingProj.slug)}`)
+          if (all?.some((r) => r.id === rb.data?.id)) pass(s, '3.H Revision in /api/revisions list')
           else bug(s, 'REV-LIST-MISSING', 'P1', '3.H revision in list', `${all?.length ?? 0} revisions`, 'includes new')
         }
       } else {
@@ -165,8 +165,8 @@ async function main() {
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
-    for (const mid of cleanupMeetings) s.cleanup.push(async () => { await s.api.post(`/api/meetings/${mid}/delete`).catch(() => {}) })
-    for (const qid of cleanupQuestions) s.cleanup.push(async () => { await s.api.post(`/api/questions/${qid}/delete`).catch(() => {}) })
+    for (const mid of cleanupMeetings) leaveForResidueSweep(s, 'meetings', mid)
+    for (const qid of cleanupQuestions) leaveForResidueSweep(s, 'lab_questions', qid)
     await closeSession(s)
   }
 }

@@ -7,7 +7,7 @@
  *
  * Run: npx tsx scripts/deep-audit/10-misc-surfaces.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGet, apiGetProjectFromList, marker, UNIQ } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGet, apiGetProjectFromList, marker, UNIQ, cleanupPost, leaveForResidueSweep } from './harness'
 
 async function main() {
   const s = await openSession('10-misc-surfaces')
@@ -194,10 +194,10 @@ async function main() {
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
-    for (const t of cleanupTaskIds) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [t], action: 'delete' } }).catch(() => {}) })
-    for (const i of cleanupIdeaIds) s.cleanup.push(async () => { await s.api.post(`/api/ideas/${i}/delete`).catch(() => {}) })
-    for (const d of cleanupDecisionIds) s.cleanup.push(async () => { await s.api.post(`/api/decisions/${d}/delete`).catch(() => {}) })
-    for (const slug of cleanupProjectSlugs) s.cleanup.push(async () => { await s.api.post(`/api/projects/${slug}/delete`).catch(() => {}) })
+    for (const t of cleanupTaskIds) cleanupPost(s, '/api/tasks/batch', { ids: [t], action: 'delete' })
+    for (const i of cleanupIdeaIds) leaveForResidueSweep(s, 'ideas', i)
+    for (const d of cleanupDecisionIds) leaveForResidueSweep(s, 'hub_decisions', d)
+    for (const slug of cleanupProjectSlugs) cleanupPost(s, `/api/projects/${slug}/delete`)
     await closeSession(s)
   }
 }

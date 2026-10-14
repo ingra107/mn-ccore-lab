@@ -19,11 +19,11 @@
 // The hook now takes the task ROWS (it needs plan_slot/plan_rank to derive),
 // not just ids. Callers already hold the rows.
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type { PlannedSlot } from '../components/today/constants'
 import { useUpdateTaskStatus } from './mutations/useTaskMutations'
 import { useUndoToast } from '../components/UndoToast'
-import { useTodayPlan, useLegacyPlanMigration, derivePlanState } from '../lib/todayPlan'
+import { useTodayPlan, derivePlanState } from '../lib/todayPlan'
 import { todayKey } from '../lib/taskGrouping'
 import { statusToRestore } from '../lib/undoStatus'
 import type { TaskRow } from '../lib/api'
@@ -57,19 +57,10 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
   const updateStatus = useUpdateTaskStatus()
   const undoToast = useUndoToast()
   const plan = useTodayPlan()
-  const migrate = useLegacyPlanMigration()
 
   // `done` is the only LOCAL state now — optimistic completion feedback + undo.
   // (planned derives from the synced task columns below.)
   const [done, setDone] = useState<Record<string, boolean>>({})
-
-  // One-time LS→columns migration: once tasks have loaded, lift any legacy
-  // today_state_* plan onto the synced columns, then stop reading LS for plan.
-  // Idempotent (flagged per-day) — safe to call on every tasks change.
-  useEffect(() => {
-    if (tasks.length === 0) return
-    migrate(tasks)
-  }, [tasks, migrate])
 
   // Derive planned from today's synced task rows. Self-expiring:
   // only planned_for == today participates.

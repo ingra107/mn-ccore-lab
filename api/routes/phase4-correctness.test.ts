@@ -9,7 +9,7 @@
  *   Fix 3b: handleDeleteTask idempotency check BEFORE cascade
  *   Fix 4: handleUpdateProject non-accepted mutation returns HTTP 409 (not 200)
  *   Fix 5: regulatory VALID_STATUSES includes action_needed + expiring_soon
- *   Fix 6: project-ref resolver in submissions, conferences, regulatory, revisions, deadline-cascade
+ *   Fix 6: project-ref resolver in submissions, conferences, regulatory, revisions
  *   Fix 7: /api/mutations applyInsert resolves tasks.project_id slug → canonical
  *
  * #8875: runs on the migration-chain database (api/test-support/prod-schema-db.ts)
@@ -32,7 +32,6 @@ import { handleCreateRegulatoryItem, handleUpdateRegulatoryItem } from './regula
 import { handleCreateSubmission } from './submissions';
 import { handleCreateConference } from './conferences';
 import { handleCreateRevision } from './revisions';
-import { handleGetCascade } from './deadline-cascade';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 import { slugClaimCheck } from '../lib/project-slug';
 
@@ -57,12 +56,6 @@ function makeRequest(body: unknown, headers: Record<string, string> = {}): Reque
     },
     body: JSON.stringify(body),
   });
-}
-
-function makeUrl(params: Record<string, string> = {}): URL {
-  const u = new URL('https://example.com/api/test');
-  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
-  return u;
 }
 
 const PROJ_ID = 'proj_01hwtestphase4000000000001';
@@ -323,11 +316,6 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(/Unknown project/i);
     expect(count('manuscript_revisions')).toBe(before);
-  });
-
-  it('deadline-cascade: returns 400 when project_id resolves to unknown', async () => {
-    const res = await handleGetCascade(makeUrl({ project_id: 'ghost-project' }), makeRequest({}), env);
-    expect(res.status).toBe(400);
   });
 });
 

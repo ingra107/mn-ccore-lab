@@ -66,7 +66,8 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  * `cf_access_blocks_agent_playwright_prod_auth`).
  *
  * This is NOT a new auth mechanism. It is the exact recipe already proven in
- * `scripts/hub-audit.ts`'s `newDesktopCtx`/`authHeaders` (14 PASS / 0 INFO / 0
+ * the now-archived `scripts/hub-audit.ts`'s `newDesktopCtx`/`authHeaders`
+ * (Archive/2026-10-14-rotted-audit-scripts/; 14 PASS / 0 INFO / 0
  * FAIL reading + writing real prod task rows, commit `ed025704`, 2026-04-25)
  * and the archived massive-audit `browserHeaders` (Archive/2026-10-11-massive-audit/), extracted here
  * so `tests/*.spec.ts` specs (the `@playwright/test` suite, not the
@@ -80,8 +81,8 @@ export async function injectFakeAuth(context: BrowserContext, baseUrl: string) {
  *     `injectFakeAuth()` never reaches, because CF Access service-token JWTs
  *     carry no `email` claim for the JWKS path to read.
  *
- * Same env var names as `scripts/hub-audit.ts` so one env setup serves both
- * the standalone audit script and Playwright specs: `CF_ACCESS_CLIENT_ID`,
+ * Same env var names the standalone audit scripts used, so one env setup
+ * serves them and Playwright specs: `CF_ACCESS_CLIENT_ID`,
  * `CF_ACCESS_CLIENT_SECRET`, `HUB_TEST_MODE_KEY` (or `TEST_MODE_KEY`),
  * `TEST_USER_EMAIL` (defaults to Nick's UMN address, which the Worker
  * resolves from `team_members.email` to the canonical task-owning slug).
@@ -145,7 +146,7 @@ function realAuthHeaders(): Record<string, string> {
  * aborted before it leaves the browser (merely opening Today POSTs
  * `/api/seen`). The returned array lists what was blocked. A page-level
  * `page.route()` still runs first, so a spec can fulfil a request itself.
- * Deliberate prod writes belong in `scripts/hub-audit.ts`, not here.
+ * Deliberate prod writes belong in a standalone audit script (scripts/pre-flight/), not here.
  */
 export async function injectRealAuth(context: BrowserContext, baseUrl: string): Promise<string[]> {
   const missing = missingRealSessionEnv()

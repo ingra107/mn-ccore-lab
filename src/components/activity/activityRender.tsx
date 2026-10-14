@@ -217,7 +217,7 @@ export function EntryTime({ ts, className }: { ts: string; className?: string })
 
 // ── Shared ActivityEntryItem row shape ────────────────────────────────────────
 //
-// Superset of ActivityEntryRow (task feed) and UnifiedEntryRow (project feed).
+// Superset of the task feed row and UnifiedEntryRow (project feed).
 // All fields from both are included; task_title + _renderKind are project-only
 // additions — callers that don't have them simply leave them undefined.
 

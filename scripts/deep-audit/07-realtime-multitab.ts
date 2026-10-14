@@ -15,7 +15,7 @@
  * Run: npx tsx scripts/deep-audit/07-realtime-multitab.ts
  */
 import { chromium, type BrowserContext, type Page } from '@playwright/test'
-import { openSession, closeSession, section, log, pass, bug, snap, marker } from './harness'
+import { openSession, closeSession, section, log, pass, bug, snap, marker, cleanupPost } from './harness'
 
 const BASE = process.env.DEEP_AUDIT_BASE || 'https://mn-ccore-lab.pages.dev'
 
@@ -158,7 +158,7 @@ async function main() {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
     for (const tid of createdTaskIds) {
-      s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+      cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
     }
     await closeSession(s)
   }

@@ -7,7 +7,7 @@
  *
  * Run: npx tsx scripts/deep-audit/14-performance.ts
  */
-import { openSession, closeSession, section, log, pass, bug } from './harness'
+import { openSession, closeSession, section, log, pass, bug, cleanupPost } from './harness'
 
 interface Measurement {
   endpoint: string
@@ -129,7 +129,7 @@ async function main() {
     })
     if (cold.result.ok()) {
       const tid = ((await cold.result.json()) as { data?: { id: string } }).data?.id
-      if (tid) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+      if (tid) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
       // Warm request
       const warm = await time(async () => {
         return await s.api.post('/api/tasks', {
@@ -138,7 +138,7 @@ async function main() {
       })
       if (warm.result.ok()) {
         const tid2 = ((await warm.result.json()) as { data?: { id: string } }).data?.id
-        if (tid2) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid2], action: 'delete' } }).catch(() => {}) })
+        if (tid2) cleanupPost(s, '/api/tasks/batch', { ids: [tid2], action: 'delete' })
       }
       log(s, `  14.D task-create cold=${cold.ms}ms warm=${warm.ms}ms`)
       if (cold.ms < 2000 && warm.ms < 1500) pass(s, '14.D task create latency acceptable')

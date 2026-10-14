@@ -1,10 +1,9 @@
 {
   "src/hooks/useFavicon.ts": 1,
-  "src/index.css": 6,
   "src/lib/grantBar.ts": 1,
   "src/lib/projectHealthFills.ts": 2,
   "src/lib/statusColors.ts": 4,
-  "src/lib/taskConstants.ts": 18,
+  "src/lib/taskConstants.ts": 16,
   "src/lib/taskGrouping.ts": 10,
   "src/lib/tealRamp.ts": 1,
   "src/pages/Pulse.tsx": 8,

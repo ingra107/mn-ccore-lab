@@ -30,9 +30,6 @@ export interface TeamMember {
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD — primary publications source (#357)
   openalexId?: string // OpenAlex author id, e.g. "A5048294211" — fullest publications source (#905)
-  /** True if this row was provisioned automatically on first login.
-   *  Surfaces a "Pending review" badge in the Team UI until role is set. */
-  autoCreated?: boolean
   /** team_members.email, present only on rows fetched by an authed caller.
    *  The attendance picker resolves stored attendee emails with it (#551). */
   email?: string
@@ -54,30 +51,8 @@ export interface Publication {
   visibility?: 'public' | 'internal'
 }
 
-// R10: grant status now follows the funding-lifecycle taxonomy. Legacy
-// 'Active' / 'Pending' / 'Completed' are kept in the union so static
-// fallback data (src/data/grants.ts) still type-checks until it's migrated.
-export type GrantLifecycleStatus =
-  | 'planning'
-  | 'in_preparation'
-  | 'submitted'
-  | 'funded'
-  | 'resubmission'
-  | 'declined'
-  | 'closed'
-
 // Where a grant sits for every reader. The API derives it from status; nothing re-derives it.
 export type GrantBucket = 'active' | 'proposed' | 'ended'
-
-export interface Grant {
-  mechanism: string
-  title: string
-  agency: string
-  pi: string
-  bucket: GrantBucket // server-derived from status (GRANT_BUCKET_SQL); the only bucket source
-  end_date?: string // ISO date — grant period end, mapped from D1 GrantRow.end_date
-  visibility?: 'public' | 'internal' // default: 'public'
-}
 
 // Visibility: 'public' = show on website, 'internal' = team-only (future portal)
 // Default is 'public' — items only hidden when explicitly marked 'internal'

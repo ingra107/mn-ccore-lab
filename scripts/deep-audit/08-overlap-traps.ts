@@ -13,7 +13,7 @@
  *
  * Run: npx tsx scripts/deep-audit/08-overlap-traps.ts
  */
-import { openSession, closeSession, section, log, pass, bug, UNIQ, marker, apiGetProjectFromList } from './harness'
+import { openSession, closeSession, section, log, pass, bug, UNIQ, marker, apiGetProjectFromList, cleanupPost } from './harness'
 
 async function main() {
   const s = await openSession('08-overlap-traps')
@@ -225,8 +225,8 @@ async function main() {
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
-    for (const tid of cleanupTasks) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
-    for (const slug of cleanupProjects) s.cleanup.push(async () => { await s.api.post(`/api/projects/${slug}/delete`).catch(() => {}) })
+    for (const tid of cleanupTasks) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
+    for (const slug of cleanupProjects) cleanupPost(s, `/api/projects/${slug}/delete`)
     await closeSession(s)
   }
 }

@@ -16,24 +16,6 @@ import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/rout
 // dispatch + the placeholder. questions.ts keeps its own Ask-the-Lab copy
 // until that surface converges.)
 
-// GET /api/milestones?project_id=  (milestones.grant_id dropped, schema-v134)
-export async function handleGetMilestones(url: URL, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-
-  let query = 'SELECT * FROM milestones WHERE 1=1';
-  const params: string[] = [];
-
-  if (projectId) {
-    query += ' AND project_id = ?';
-    params.push(projectId);
-  }
-
-  query += ' ORDER BY target_date ASC';
-
-  const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results, count: result.results.length });
-}
-
 // POST /api/milestones/:id/complete — toggle milestone completion
 // 2026-04-20 Airtable Funeral P2-2: PWA syncMilestoneToAirtable flips
 // to this endpoint. Body: {completed: true|false}. Sets status +
@@ -63,36 +45,6 @@ export async function handleUpdateMilestoneCompletion(
   }
 
   await logActivity(env, 'milestone', `${body.completed ? 'Completed' : 'Reopened'} milestone`, user.email, id, 'milestone');
-
-  return json({ data: updated });
-}
-
-// POST /api/milestones/:id/note — add/update "Future Me" note
-export async function handleUpdateMilestoneNote(
-  id: string,
-  request: Request,
-  user: AuthUser,
-  env: Env,
-): Promise<Response> {
-  const body = await request.json() as { note: string };
-
-  if (typeof body.note !== 'string') {
-    return error('note field is required', 400);
-  }
-
-  // Allow clearing a note by setting to empty string
-  const noteValue = body.note.trim() || null;
-
-  await env.DB.prepare(
-    'UPDATE milestones SET future_note = ?, future_note_author = ? WHERE id = ?'
-  ).bind(noteValue, user.email, id).run();
-
-  const updated = await env.DB.prepare('SELECT * FROM milestones WHERE id = ?').bind(id).first();
-  if (!updated) {
-    return error('Milestone not found', 404);
-  }
-
-  await logActivity(env, 'milestone_note', `${noteValue ? 'Added' : 'Cleared'} Future Me note on milestone`, user.email, id, 'milestone');
 
   return json({ data: updated });
 }

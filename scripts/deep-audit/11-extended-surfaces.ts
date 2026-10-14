@@ -9,7 +9,7 @@
  *
  * Run: npx tsx scripts/deep-audit/11-extended-surfaces.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGet, marker } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGet, marker, leaveForResidueSweep } from './harness'
 
 async function main() {
   const s = await openSession('11-extended-surfaces')
@@ -130,14 +130,14 @@ async function main() {
 
     // ═══════════════════ TRAJECTORY ═══════════════════
     section(s, '11.O  Trainee trajectory endpoint')
-    const traj = await apiGet<unknown>(s, '/api/trajectory/nick')
-    if (traj) pass(s, '11.O /api/trajectory/:slug responds with data')
+    const traj = await apiGet<unknown>(s, '/api/team/nick-ingraham/trajectory')
+    if (traj) pass(s, '11.O /api/team/:slug/trajectory responds with data')
     else log(s, '  11.O INFO: no trajectory data for nick')
 
     // ═══════════════════ PI DASHBOARD ═══════════════════
     section(s, '11.P  PI dashboard endpoint')
-    const pi = await apiGet<unknown>(s, '/api/pi-dashboard')
-    if (pi) pass(s, '11.P /api/pi-dashboard responds with data')
+    const pi = await apiGet<unknown>(s, '/api/analytics/pi-dashboard')
+    if (pi) pass(s, '11.P /api/analytics/pi-dashboard responds with data')
     else log(s, '  11.P INFO: PI dashboard empty or 404')
 
     // ═══════════════════ PUBLICATIONS ═══════════════════
@@ -187,7 +187,7 @@ async function main() {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
     for (const iid of cleanupInboxIds) {
-      s.cleanup.push(async () => { await s.api.post(`/api/inbox/${iid}/delete`).catch(() => {}) })
+      leaveForResidueSweep(s, 'inbox', iid)
     }
     await closeSession(s)
   }

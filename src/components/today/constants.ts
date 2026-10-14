@@ -35,8 +35,6 @@ export interface GroupMeta {
   color: string
 }
 
-export type LinkKind = 'folder' | 'claude' | 'email' | 'draft' | 'brief' | 'doc'
-
 export interface TodayEvent {
   id: string
   time: string       // formatted "12:15 PM" or "—"
