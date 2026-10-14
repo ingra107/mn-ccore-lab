@@ -5,6 +5,7 @@ import {
   X, Clock, User, Scale, Upload, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Loader2,
 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
@@ -41,7 +42,8 @@ import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../hooks/usePresence'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { motion, useMotionValue, useTransform } from 'framer-motion'
+import { useBackToClose } from '../../hooks/useBackToClose'
+import { motion, useMotionValue, useTransform, useDragControls } from 'framer-motion'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
@@ -167,19 +169,31 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   //      the Android compositor and rendered as no-op. Fix: framer-motion
   //      owns the transform via MotionValue + RAF; no state round-trip.
   //  (2) iOS Safari edge-swipe-back — right-swipes starting near the left
-  //      edge conflict with the OS back gesture. Fix: `edgeGuardRef` blocks
-  //      drag activation when initial touch is within 32px of viewport left.
+  //      edge conflict with the OS back gesture. Fix: framer's own pointer
+  //      listener is OFF (dragListener={false}); the only way a drag starts is
+  //      startSwipe below, which refuses a pointer that lands within 32px of
+  //      the viewport's left edge. The old guard set a ref in onTouchStart and
+  //      read it as a render-time prop, but framer starts on pointerdown
+  //      (before touchstart) and the ref never re-rendered, so an edge swipe
+  //      still dismissed the panel (prod probe 2026-10-14). Same gate shape
+  //      as useSwipeAction.
   // `touch-action: pan-y` lets vertical scrolling through content still work;
   // framer-motion's own drag handler enforces the horizontal lock.
   const dragX = useMotionValue(0)
   const backdropOpacity = useTransform(dragX, [0, 320], [1, 0])
-  const edgeGuardRef = useRef<boolean>(false)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (typeof window === 'undefined' || window.innerWidth >= 768) { edgeGuardRef.current = true; return }
-    const t = e.touches[0]
-    // Within 32px of the left edge → let iOS Safari own the gesture.
-    edgeGuardRef.current = t.clientX < 32
+  const dragControls = useDragControls()
+  const startSwipe = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return
+    if (typeof window === 'undefined' || window.innerWidth >= 768) return
+    if (e.clientX < 32) return // the OS back gesture owns the left edge
+    dragControls.start(e)
   }
+
+  // Back closes the panel on a phone or tablet (Android back, iOS
+  // swipe-back), below the 1024 breakpoint useIsMobile uses (read off the
+  // window: useIsMobile is false on the first render). Every mount site gets
+  // it, since the panel owns it (Action Board, My Tasks, Today, ...).
+  useBackToClose(onClose, taskProp != null && typeof window !== 'undefined' && window.innerWidth < 1024)
 
   // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
   // checked only `activeElement === first/last`, which leaks when async-mounted
@@ -189,6 +203,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // An open menu inside the panel (GhostSelect, InlineSelect, the date
+        // picker) consumed this Escape to close itself: the panel stays. Same
+        // contract as Modal.tsx.
+        if (e.defaultPrevented) return
         const target = e.target as HTMLElement
         if (target.closest('input, textarea, [contenteditable="true"], .ProseMirror')) return
         onClose()
@@ -277,12 +295,16 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id: task.id, status: prev }))
   }
 
-  // Delete with a real 5s undo. The server has NO un-delete path
-  // (op:'delete' is a one-way tombstone, no restore/reopen endpoint), so undo
-  // is implemented as a delayed commit: optimistically drop the row from every
-  // ['tasks'] cache + close the panel now, then fire the actual server delete
-  // only after the 5s window elapses. Undo restores the snapshots and cancels
-  // the pending server call — nothing ever hits D1.
+  // Delete with a real 5s undo, as a delayed commit: optimistically drop the
+  // row from every ['tasks'] cache + close the panel now, then fire the actual
+  // server delete only after the 5s window elapses. Undo restores the
+  // snapshots and cancels the pending server call, so nothing ever hits D1.
+  // A restore route does exist now (useRestoreTask, used by MeetingActionList)
+  // but it is lossy: the server delete HARD-deletes the task's
+  // activity_entries, notifications and task_subtasks (the applyDelete
+  // dependents in api/routes/mutations.ts), and restore cannot bring them
+  // back. The delayed commit is the only undo here that keeps a task's
+  // comments and subtasks, so keep it.
   const handleDeleteTask = () => {
     const id = task.id
     const label = taskShortLabel(task) || 'task'
@@ -310,7 +332,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     onClose()
   }
 
-  return (
+  // Portalled to <body> HERE, not at each call site. A `position: fixed`
+  // element is laid out against its nearest transformed ancestor, and several
+  // mounts sit inside one: ListView's virtualizer rows (translateY), the
+  // DashboardGrid widgets (react-grid-layout transforms), PageTransition. The
+  // panel and its backdrop then drew inside a row card instead of covering the
+  // viewport (phone List "Full editor", 2026-10-14). Owning the portal here
+  // means no caller can mount the panel inside a transformed box.
+  return createPortal(
     <>
       {/* Backdrop — tap to dismiss + fades with swipe progress on mobile.
           onClick (not a document-level listener) is what makes this safe
@@ -333,16 +362,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         aria-modal="true"
         aria-labelledby="task-detail-title"
         className="fixed z-50 task-detail-panel"
-        onTouchStart={handleTouchStart}
+        onPointerDown={startSwipe}
         drag={typeof window !== 'undefined' && window.innerWidth < 768 ? 'x' : false}
+        dragControls={dragControls}
+        dragListener={false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0, right: 0.6 }}
         dragMomentum={false}
-        // eslint-disable-next-line react-hooks/refs -- deliberate imperative-ref read (see edgeGuardRef comment above): avoids a state round-trip per touchmove that caused a real Pixel-5 inert-drag bug (restored 2026-04-23).
-        dragListener={!edgeGuardRef.current}
-        onDragStart={() => {
-          if (edgeGuardRef.current) return false
-        }}
         onDragEnd={(_, info) => {
           const width = panelRef.current?.offsetWidth ?? 400
           if (info.offset.x > width * 0.3 || info.velocity.x > 500) onClose()
@@ -905,7 +931,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         </div>{/* end inner scroll container */}
       </motion.div>
-    </>
+    </>,
+    document.body,
   )
 }
 

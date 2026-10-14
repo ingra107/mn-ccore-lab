@@ -233,7 +233,12 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={contextValue}>
       {children}
 
-      {/* Toast container — fixed bottom-center */}
+      {/* Toast container — fixed bottom-center. It spans the viewport (left
+          and right 16px) and centers its toasts, instead of left:50% plus
+          translateX(-50%): that shrink-wrapped the stack to half the viewport,
+          so a phone squeezed "Deleted ..." into a 5-line column. bottom rides
+          --fab-base, which lifts above the MobileTabBar below lg, so a toast
+          never covers the nav. */}
       <style>{`
         @keyframes toast-in {
           from { opacity: 0; transform: translateY(16px) scale(0.95); }
@@ -251,9 +256,9 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
         aria-atomic="true"
         style={{
           position: 'fixed',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          bottom: 'var(--fab-base)',
+          left: 16,
+          right: 16,
           zIndex: 'var(--z-toast)',
           display: 'flex',
           flexDirection: 'column',
@@ -287,7 +292,8 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               fontSize: '13px',
               fontWeight: toast.type === 'undo' ? 500 : 400,
               boxShadow: 'var(--shadow-card-hover)',
-              minWidth: '240px',
+              minWidth: 'min(240px, 100%)',
+              maxWidth: 560,
               borderLeft: presentation.borderColor ? `3px solid ${presentation.borderColor}` : '1px solid var(--sk-line2)',
             }}
           >

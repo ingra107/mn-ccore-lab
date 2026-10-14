@@ -109,7 +109,8 @@ export default defineConfig([
   // page that imports it. Named imports (OverviewQuickAdd in a test) are fine.
   {
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/components/tasks/LazyTaskDetailPanel.tsx'],
+    // Tests render the panel directly; only product code has a critical path.
+    ignores: ['src/components/tasks/LazyTaskDetailPanel.tsx', 'src/**/__tests__/**', 'src/**/*.test.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{

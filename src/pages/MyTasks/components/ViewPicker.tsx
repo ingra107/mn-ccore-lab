@@ -17,5 +17,9 @@ export function ViewPicker({ view, setView, isPhone = false }: { view: ViewMode;
   // Columns and Board cannot render on a phone (index.tsx falls back to List for
   // deep links); do not offer choices that never show.
   const options = isPhone ? ALL_VIEWS.filter((v) => v.value !== 'columns' && v.value !== 'board') : ALL_VIEWS
-  return <SegmentedToggle ariaLabel="View" options={options} value={view} onChange={setView} />
+  // A stored desktop view (?view=columns on a phone) renders as List, so List
+  // is the segment that shows active. The stored value is untouched, so
+  // widening the window still restores it.
+  const shown = options.some((o) => o.value === view) ? view : 'list'
+  return <SegmentedToggle ariaLabel="View" options={options} value={shown} onChange={setView} />
 }

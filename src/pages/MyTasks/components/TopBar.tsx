@@ -35,9 +35,10 @@ interface TopBarProps {
 
 export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask }: TopBarProps) {
   // N1.10 — phones: the toolbar consumed ~60% of the viewport (7 wrapped
-  // control rows). Condensed: Create Task drops (the + FAB is the create
-  // path), quick-views become ONE swipeable row, the filter chips collapse
-  // behind a Filters pill with an active-count badge.
+  // control rows). Condensed: quick-views become ONE swipeable row, the filter
+  // chips collapse behind a Filters pill with an active-count badge. Create
+  // Task stays on every width: the + FAB it once deferred to is desktop-only
+  // (`hidden lg:flex` in PortalLayout), so a phone had no create control.
   const isPhone = useIsMobile(768)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
@@ -76,23 +77,24 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             full-width line in the wrapping title row. */}
         <PageHeartbeat className="pg-hb-row" />
         <div style={{ flex: 1, minWidth: 12 }} />
-        {/* N1.20 — phones drop this button: the teal + FAB is the create
-            affordance there (two create buttons crowded the layout). */}
-        {!isPhone && (
-          <button
-            onClick={onCreateTask}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
-              fontFamily: 'inherit', cursor: 'pointer', border: 'none',
-              backgroundColor: JOB_ACCENT, color: 'var(--sk-card)',
-              flexShrink: 0, whiteSpace: 'nowrap',
-            }}
-          >
-            <Plus {...ICON_PROPS} size={15} />
-            Create Task
-          </button>
-        )}
+        {/* The one create control on every width (2026-10-14). N1.20 dropped
+            it on phones for the teal + FAB, but that FAB only shows at lg+,
+            so phones were left with no create control on this page. It sits
+            beside the search field, which takes the rest of the line. */}
+        <button
+          type="button"
+          onClick={onCreateTask}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
+            fontFamily: 'inherit', cursor: 'pointer', border: 'none',
+            backgroundColor: JOB_ACCENT, color: 'var(--sk-card)',
+            flexShrink: 0, whiteSpace: 'nowrap',
+          }}
+        >
+          <Plus {...ICON_PROPS} size={15} />
+          Create Task
+        </button>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}

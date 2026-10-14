@@ -12,12 +12,14 @@
 // links). The skin is the `.tk` wrapper below: its --sk-* tokens are global, but
 // every card rule in index.css is scoped under `.tk`, exactly as TodayPage does.
 
-import { useEffect, useLayoutEffect, useRef, useMemo, useCallback, useState, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useMemo, useCallback, useState, type HTMLAttributes, type RefObject } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { TaskRow as CardTaskRow } from '../../../components/today/TaskRow'
 import { useTodayState } from '../../../hooks/useTodayState'
 import { useListKeyboard } from '../hooks/useListKeyboard'
 import { useSelectMode } from '../../../hooks/useSelectMode'
+import { useLongPress } from '../../../hooks/useLongPress'
+import { LONG_PRESS_MS } from '../../../lib/uiTiming'
 import { isTaskDone } from '../constants'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
@@ -129,11 +131,13 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                       ref={virtualizer.measureElement}
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${row.start - scrollMargin}px)`, paddingBottom: 8 }}
                     >
-                      <div
+                      <PressRow
                         className="tk-lrow"
                         data-cursor={isCur ? 'true' : undefined}
                         data-selected={isSel ? 'true' : undefined}
                         style={selectModeActive ? { cursor: 'cell' } : undefined}
+                        // Long-press = select: the touch path into the BulkBar.
+                        onLongPress={() => toggleSelect(t.id)}
                         // Capture phase: a modifier-click selects and never reaches
                         // the card (which would expand). Plain clicks fall through
                         // to the card and only move the cursor.
@@ -149,7 +153,10 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                         onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
                         onDoubleClick={(e) => {
                           // Not when the second click landed on a control (done box,
-                          // link, pin, folder): those act on their own.
+                          // link, pin, folder): those act on their own. Not from the
+                          // portalled full editor either: React bubbles its events
+                          // here though its DOM sits under <body>.
+                          if (!e.currentTarget.contains(e.target as Node)) return
                           if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return
                           setDrawer(t.id)
                         }}
@@ -166,7 +173,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
                           noDrag
                           onOpenEditor={() => setDrawer(t.id)}
                         />
-                      </div>
+                      </PressRow>
                     </div>
                   )
                 })}
@@ -185,6 +192,26 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
           <span><kbd style={kbdStyle}>esc</kbd> deselect</span>
         </div>
       </div>}
+    </div>
+  )
+}
+
+/** A List row wrapper that also selects on press-and-hold (touch included).
+ *  useLongPress swallows the click that ends a fired press before the row's
+ *  own capture handler sees it, so a hold never also expands the card. */
+function PressRow({ onLongPress, onClickCapture, children, ...rest }: HTMLAttributes<HTMLDivElement> & { onLongPress: () => void; 'data-cursor'?: string; 'data-selected'?: string }) {
+  const press = useLongPress(onLongPress, { thresholdMs: LONG_PRESS_MS, mouse: true })
+  return (
+    <div
+      {...rest}
+      {...press}
+      onMouseDown={(e) => { rest.onMouseDown?.(e); press.onMouseDown?.(e) }}
+      onClickCapture={(e) => {
+        press.onClickCapture(e)
+        if (!e.isPropagationStopped()) onClickCapture?.(e)
+      }}
+    >
+      {children}
     </div>
   )
 }

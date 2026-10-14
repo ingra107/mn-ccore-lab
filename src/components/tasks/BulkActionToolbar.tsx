@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock, ListChecks } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { DELETE_ARM_WINDOW_MS } from '../../lib/uiTiming'
 
 interface BulkActionToolbarProps {
   selectedIds: Set<string>
@@ -31,7 +32,16 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
   const [showAssign, setShowAssign] = useState(false)
   const [showPriority, setShowPriority] = useState(false)
   const [showStatus, setShowStatus] = useState(false)
+  // Bulk delete stays two-step: the server delete HARD-deletes each task's
+  // comments, notifications and subtasks, and restore cannot bring them back,
+  // so one-click + Undo would show an Undo that loses data. The armed state
+  // disarms itself after 5s (it used to hold forever) and says what it will do.
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  useEffect(() => {
+    if (!deleteConfirm) return
+    const t = setTimeout(() => setDeleteConfirm(false), DELETE_ARM_WINDOW_MS)
+    return () => clearTimeout(t)
+  }, [deleteConfirm])
 
   const count = selectedIds.size
   const allCompleted = selectedTasks.length > 0 && selectedTasks.every((t) => t.completed)
@@ -397,7 +407,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             }}
           >
             {deleteConfirm ? <AlertTriangle {...ICON_PROPS} size={14} /> : <Trash2 {...ICON_PROPS} size={14} />}
-            {deleteConfirm ? 'Confirm?' : 'Delete'}
+            {deleteConfirm ? `Delete ${count}?` : 'Delete'}
           </button>
     </div>
   )

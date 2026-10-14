@@ -1,5 +1,4 @@
 import { memo, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Video } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -66,10 +65,19 @@ function ActionBoardCard() {
                       showUndo(next === 'done' ? 'Completed task' : 'Reopened task', () => updateStatus.mutate({ id: item.id, status: prev }))
                     }}
                   />
-                  <span className="bento-row-t">
+                  {/* The title is the keyboard target that opens the editor
+                      (the row's onClick serves the mouse); a button here, not
+                      role=button on the row, so the DoneBox and meeting link
+                      are not nested inside another control. */}
+                  <button
+                    type="button"
+                    className="bento-row-t"
+                    onClick={(e) => { e.stopPropagation(); setDetailTask(item) }}
+                    style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer' }}
+                  >
                     {/* C2 short_title, C13 TaskTitle ([Carried forward] chip) */}
                     <TaskTitle title={taskShortLabel(item)} fallback={item.description} />
-                  </span>
+                  </button>
                   {item.meeting_id && item.meeting_title && (
                     <Link
                       to={PATHS.meeting(item.meeting_id)}
@@ -105,15 +113,9 @@ function ActionBoardCard() {
           </Link>
         </div>
       </div>
-      {/* Portalled to <body> on purpose: DashboardGrid renders every widget
-          inside a react-grid-layout item that carries a CSS transform
-          (useCSSTransforms), and a transformed ancestor becomes the containing
-          block for position:fixed — so the panel and its backdrop would be
-          clipped into this card instead of covering the viewport. */}
-      {detailTask && createPortal(
-        <TaskDetailPanel task={detailTask} onClose={() => setDetailTask(null)} />,
-        document.body,
-      )}
+      {/* TaskDetailPanel portals itself to <body>, so the DashboardGrid item's
+          CSS transform cannot capture its position:fixed (#114). */}
+      {detailTask && <TaskDetailPanel task={detailTask} onClose={() => setDetailTask(null)} />}
     </BentoCard>
   )
 }

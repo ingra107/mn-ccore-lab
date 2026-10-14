@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
-import { Outlet, useLocation, Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
@@ -319,9 +319,7 @@ export default function PortalLayout() {
           style={{ flex: 1 }}
         >
           <AnimatePresence mode="wait" initial={false}>
-            <PageTransition key={location.pathname} transitionKey={location.pathname}>
-              <Outlet />
-            </PageTransition>
+            <PageTransition key={location.pathname} transitionKey={location.pathname} />
           </AnimatePresence>
         </main>
 

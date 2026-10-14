@@ -10,7 +10,7 @@
 //     wash, one hairline) unless `header={false}`; on the phone layout the
 //     header becomes one "Sort" select over the same sortable columns.
 //   <SleekRow row cursor selected urgent done expanded selectMode onClick
-//             onDoubleClick onMouseDown onMouseUp onMouseLeave className data>
+//             onDoubleClick onMouseDown onLongPress className data>
 //     One 40px line (min-height 40, auto on the phone layout) with radius,
 //     hover tint, cursor ring, selected teal wash + 2px edge, urgent orange
 //     edge (selection wins). In a cell flagged `interactive`, clicks on a
@@ -35,6 +35,8 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 
 import { nextSleekSort, type SleekSort } from './sleekSort'
+import { useLongPress } from '../../hooks/useLongPress'
+import { LONG_PRESS_MS } from '../../lib/uiTiming'
 
 export type { SleekSort }
 
@@ -186,7 +188,7 @@ const keepControlClicks = (e: MouseEvent<HTMLDivElement>) => {
   if (control && cell.contains(control)) e.stopPropagation()
 }
 
-export function SleekRow<T>({ row, cursor = false, selected = false, urgent = false, done = false, expanded = false, selectMode = false, onClick, onDoubleClick, onMouseDown, onMouseUp, onMouseLeave, className, data, children }: {
+export function SleekRow<T>({ row, cursor = false, selected = false, urgent = false, done = false, expanded = false, selectMode = false, onClick, onDoubleClick, onMouseDown, onLongPress, className, data, children }: {
   row: T
   cursor?: boolean
   selected?: boolean
@@ -198,14 +200,17 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
   onClick?: (e: MouseEvent<HTMLDivElement>) => void
   onDoubleClick?: (e: MouseEvent<HTMLDivElement>) => void
   onMouseDown?: (e: MouseEvent<HTMLDivElement>) => void
-  onMouseUp?: (e: MouseEvent<HTMLDivElement>) => void
-  onMouseLeave?: (e: MouseEvent<HTMLDivElement>) => void
+  /** Press and hold (touch, or a held left mouse button) for 420ms, e.g. select.
+   *  The row owns the gesture (useLongPress), so it works on a phone, and the
+   *  click that ends the press is swallowed instead of reaching onClick. */
+  onLongPress?: () => void
   className?: string
   /** data-* attributes for the row line (e.g. { 'task-id': t.id }). */
   data?: Record<string, string>
   children?: ReactNode
 }) {
   const layout = useContext(LayoutCtx)
+  const longPress = useLongPress(() => onLongPress?.(), { thresholdMs: LONG_PRESS_MS, mouse: true })
   if (!layout) throw new Error('SleekRow must render inside a SleekTable')
   const { columns, narrow } = layout
   const dataAttrs = Object.fromEntries(Object.entries(data ?? {}).map(([k, v]) => [`data-${k}`, v]))
@@ -249,11 +254,10 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
         role="row"
         aria-selected={selected}
         className={cls}
+        {...(onLongPress ? longPress : {})}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseLeave}
+        onMouseDown={(e) => { onMouseDown?.(e); if (onLongPress) longPress.onMouseDown?.(e) }}
         {...dataAttrs}
       >
         {line}
