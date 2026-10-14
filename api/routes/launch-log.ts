@@ -281,7 +281,7 @@ export function composeLaunchSeed(seed: string, pageLine: string | null, taskLin
 // short-circuits true before ever touching CF Access. No browser caller hits
 // this endpoint directly — the browser only POSTs /api/launch-log to mint a
 // token; the OS protocol handler hands the opaque id to resolve_launch.py.
-// Returns { verb, seed, project_slug } on success. 410 if token invalid, expired, or already consumed.
+// Returns { verb, seed, raw_seed, project_slug } on success. 410 if token invalid, expired, or already consumed.
 // The returned seed is the RAW stored seed enriched with the launching page and
 // the source task's context (see composeLaunchSeed). Both PB claimants pass the
 // seed through opaquely, so the context reaches the session with no PB change. (#485, #8935)
@@ -321,5 +321,9 @@ export async function handleClaimLaunch(id: string, request: Request, _user: Aut
   }
   const pageLine = page ? pageHeaderLine(page, entity) : null;
   const seed = composeLaunchSeed(row!.seed, pageLine, taskContextLines(row!));
-  return json({ data: { verb: row!.tag, seed, project_slug: row!.project_slug } });
+  // raw_seed (#8943): Nick's own text exactly as stored, beside the composed
+  // seed. PB's Telegram previews show raw_seed, so a long page header or task
+  // block cannot eat the preview budget; the session still gets `seed`.
+  // Additive field: an older PB ignores it.
+  return json({ data: { verb: row!.tag, seed, raw_seed: row!.seed, project_slug: row!.project_slug } });
 }
