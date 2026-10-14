@@ -110,7 +110,8 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 data-tip="Remove document link"
                 aria-label={`Remove document link: ${doc.title}`}
                 className="tip opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-                style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+                size="icon"
+                style={{ color: 'var(--slate)' }}
               >
                 <X {...ICON_PROPS} size={12} />
               </Button>

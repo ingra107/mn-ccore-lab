@@ -882,11 +882,15 @@ function TaskGridRow({
       }
     },
     onSwipeLeft: () => {
+      // A swipe hands on no pointer position, so anchor the menu to the row:
+      // just under its bottom edge, near its left. The menu clamps itself into
+      // the viewport. (Before, it opened at 0,0 over the page header.)
+      const rect = rowRef.current?.getBoundingClientRect()
       const syntheticMouseEvent = {
         preventDefault: () => {},
         stopPropagation: () => {},
-        clientX: 0,
-        clientY: 0,
+        clientX: rect ? rect.left + 12 : 0,
+        clientY: rect ? rect.bottom : 0,
       } as unknown as React.MouseEvent
       onContextMenu?.(syntheticMouseEvent, task.id)
     },
