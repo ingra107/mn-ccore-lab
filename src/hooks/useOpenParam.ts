@@ -33,6 +33,12 @@ interface UseOpenParamOptions {
    * the collection that contains the target has resolved.
    */
   ready?: boolean
+  /**
+   * Companion params to strip together with `key` (e.g. `?create=1&projects=a,b`
+   * strips `projects` too). They must go in the SAME URL update: a second
+   * setSearchParams in the same tick is overwritten by this hook's.
+   */
+  alsoStrip?: readonly string[]
 }
 
 export function useOpenParam(
@@ -40,7 +46,8 @@ export function useOpenParam(
   onOpen: (id: string) => void,
   options: UseOpenParamOptions = {},
 ) {
-  const { ready = true } = options
+  const { ready = true, alsoStrip } = options
+  const alsoStripKey = (alsoStrip ?? []).join(',')
   const [searchParams, setSearchParams] = useSearchParams()
   // Track the last value we consumed so we only fire once per distinct id even
   // across re-renders before the strip lands.
@@ -62,6 +69,7 @@ export function useOpenParam(
     // Strip the consumed param; preserve every other param.
     const next = new URLSearchParams(searchParams)
     next.delete(key)
+    for (const extra of alsoStripKey ? alsoStripKey.split(',') : []) next.delete(extra)
     setSearchParams(next, { replace: true })
-  }, [ready, key, searchParams, setSearchParams])
+  }, [ready, key, alsoStripKey, searchParams, setSearchParams])
 }

@@ -349,7 +349,9 @@ export function ConnectionsBlock() {
       ) : (
         <div className="flex flex-col gap-1.5">
           {top5.map((edge, i) => {
-            const syncHref = `${PATHS.meetings}?compose=1&projects=${encodeURIComponent(edge.from)},${encodeURIComponent(edge.to)}`
+            // Opens Meetings' Record Meeting form, titled and tagged with both
+            // projects (Meetings.tsx, the `create` consumer reads `projects`).
+            const syncHref = `${PATHS.meetings}?create=1&projects=${encodeURIComponent(edge.from)},${encodeURIComponent(edge.to)}`
             return (
               <div
                 key={`${edge.from}-${edge.to}-${i}`}

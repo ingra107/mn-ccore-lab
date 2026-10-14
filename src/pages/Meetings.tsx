@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
@@ -13,7 +13,6 @@ import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
-import { projects as projectOptions } from '../data/projects'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import { FaceDisc } from '../components/today/skin'
 import { AttendeePeople } from '../components/meetings/Attendees'
@@ -131,15 +130,17 @@ interface ActionItemWithContext extends ActionItem {
 
 // ── Meeting Detail Panel ────────────────────────────────────
 
-interface MeetingDetailProps {
-  meeting: Meeting
-  /** #118: the parent-owned "Add Action Item" quick-add, rendered in the
-   *  action row under the header so it sits WITH View Full Meeting and Log
-   *  Decision instead of below Notes. */
-  addActionItem?: ReactNode
+// Static: the Record Meeting form and the Add Action Item form both use it.
+const inputStyle: React.CSSProperties = {
+  background: 'var(--ice)', border: `1px solid var(--sk-line2)`, color: 'var(--ink)',
+  fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
 }
 
-function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
+interface MeetingDetailProps {
+  meeting: Meeting
+}
+
+function MeetingDetail({ meeting }: MeetingDetailProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const updateTask = useUpdateTask()
@@ -184,6 +185,33 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
   }, [showDecisionForm])
   const createDecision = useCreateDecision()
   const { showSuccess } = useToast()
+
+  // Add Action Item (#2700): owned by the panel of the meeting it files
+  // against, like Log Decision above. It used to live in the page and reach in
+  // through a slot prop, filing against whatever `selectedMeeting` was at submit
+  // time, so a half-typed draft survived a meeting switch and landed on the NEW
+  // meeting. This panel remounts per meeting (keyed motion.div), so a switch
+  // now clears the draft, as it clears a Log Decision draft.
+  const createTaskMutation = useCreateTask()
+  const [showAddAction, setShowAddAction] = useState(false)
+  const [newActionDesc, setNewActionDesc] = useState('')
+  const [newActionAssignee, setNewActionAssignee] = useState('nick-ingraham')
+  const [newActionDueDate, setNewActionDueDate] = useState('')
+  const [newActionProject, setNewActionProject] = useState('')
+  function resetActionForm() {
+    setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('')
+  }
+  function handleAddActionItem() {
+    if (!newActionDesc.trim()) return
+    createTaskMutation.mutate({
+      meeting_id: meeting.id,
+      description: newActionDesc.trim(),
+      assignee: newActionAssignee,
+      ...(newActionDueDate ? { due_date: newActionDueDate } : {}),
+      ...(newActionProject ? { project_id: newActionProject } : {}),
+    })
+    resetActionForm()
+  }
 
   function handleLogDecision(e: React.FormEvent) {
     e.preventDefault()
@@ -268,7 +296,50 @@ function MeetingDetail({ meeting, addActionItem }: MeetingDetailProps) {
             active={showDecisionForm}
             ariaExpanded={showDecisionForm}
           />
-          {addActionItem}
+          {/* `basis-full` drops the OPEN form onto its own line so the inputs
+              are not squeezed into a flex cell next to the other two buttons. */}
+          <QuickAddForm
+            isOpen={showAddAction}
+            onToggle={() => setShowAddAction(true)}
+            onSubmit={handleAddActionItem}
+            onCancel={resetActionForm}
+            triggerLabel="Add Action Item"
+            submitLabel="Add Item"
+            className={showAddAction ? 'basis-full' : ''}
+          >
+            <div className="space-y-3">
+              <Field label="Description" htmlFor="meeting-action-desc" noContainer>
+                <input id="meeting-action-desc" type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Assignee" noContainer>
+                  <InlineAssigneePicker
+                    value={newActionAssignee}
+                    onChange={setNewActionAssignee}
+                  />
+                </Field>
+                <Field label="Due date (optional)" htmlFor="meeting-action-due" noContainer>
+                  <input id="meeting-action-due" type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
+                </Field>
+              </div>
+              <Field label="Project (optional)" noContainer>
+                {/* The live project list, valued by slug: the server resolves
+                    project_id by id or slug and stores NULL for anything else.
+                    The static marketing list this used to read sent its TITLE
+                    ("P1: Gender Disparities ..."), so every pick saved no link. */}
+                <InlineSelect
+                  value={newActionProject}
+                  options={[{ value: '', label: 'No project link' }, ...allProjects.map((p) => ({ value: p.slug, label: projectShortLabel(p) }))]}
+                  onChange={setNewActionProject}
+                  size="md"
+                  alwaysShowChevron
+                />
+              </Field>
+            </div>
+          </QuickAddForm>
         </div>
         <AnimatePresence>
           {showDecisionForm && (
@@ -426,9 +497,8 @@ export default function Meetings() {
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
-  const { data: projectList = [] } = useProjects()
+  const { data: projectList = [], isLoading: projectsLoading } = useProjects()
   const { data: cadence } = useMeetingCadence()
-  const createTaskMutation = useCreateTask()
   // T12: server-backed seen tracking (schema v81) replaces the per-device
   // localStorage hook — multi-device consistent, and the gold/teal split
   // (never_seen vs updated-since-seen) matches the app-wide attention canon.
@@ -472,18 +542,31 @@ export default function Meetings() {
     [allTasksData, meetingRows]
   )
 
-  const [showAddAction, setShowAddAction] = useState(false)
-  const [newActionDesc, setNewActionDesc] = useState('')
-  const [newActionAssignee, setNewActionAssignee] = useState('nick-ingraham')
-  const [newActionDueDate, setNewActionDueDate] = useState('')
-  const [newActionProject, setNewActionProject] = useState('')
-
   const [showAddMeeting, setShowAddMeeting] = useState(false)
-  // Consume `?create=true` deep-links (⌘K "Schedule Meeting") — open the Record
-  // Meeting form, then strip the param. Consumer half of the create=true class.
-  useOpenParam('create', () => setShowAddMeeting(true))
   const [newMeetingDate, setNewMeetingDate] = useState('')
   const [newMeetingTitle, setNewMeetingTitle] = useState('')
+  // Projects the new meeting is about (meetings.tags), set by a deep link.
+  const [newMeetingTags, setNewMeetingTags] = useState<string[]>([])
+  // Consume `?create=1` deep-links -- open the Record Meeting form, then strip
+  // the param. Two producers: the quick-add "Schedule Meeting", and the Lab
+  // Overview "Schedule sync" on a cross-project connection, which adds
+  // `&projects=a,b` (slugs). Those prefill the title and tag the meeting with
+  // both projects (G8-06, 2026-10-14: the sync link used `?compose=1`, which
+  // nothing read, so the tap landed on the plain list). Waits for the project
+  // list so the title can use short names.
+  const projectsParam = searchParams.get('projects')
+  useOpenParam('create', () => {
+    if (projectsParam) {
+      const slugs = projectsParam.split(',').map((x) => x.trim()).filter(Boolean)
+      const bySlug = new Map(projectList.map((pr) => [pr.slug, projectShortLabel(pr)]))
+      const known = slugs.filter((slug) => bySlug.has(slug))
+      if (known.length > 0) {
+        setNewMeetingTags(known)
+        setNewMeetingTitle(`Sync: ${known.map((slug) => bySlug.get(slug)).join(' + ')}`)
+      }
+    }
+    setShowAddMeeting(true)
+  }, { ready: !projectsLoading, alsoStrip: ['projects'] })
   const [newMeetingAttendees, setNewMeetingAttendees] = useState<string[]>(['nick-ingraham', 'nate-mesfin'])
   const [newMeetingAgenda, setNewMeetingAgenda] = useState<string[]>([''])
 
@@ -587,28 +670,6 @@ export default function Meetings() {
     { key: 'actions', label: 'Actions' },
   ]
 
-  function handleAddActionItem() {
-    if (!newActionDesc.trim()) return
-    // #101: file against the meeting on screen. This used to pick the most
-    // RECENT meeting by date, so an item added while reading a March meeting
-    // silently landed on last week's — the same "this panel isn't about the
-    // meeting you're looking at" defect as the cross-meeting lists above.
-    const targetMeetingId = selectedMeeting?.id
-    if (!targetMeetingId) return
-    createTaskMutation.mutate({
-      meeting_id: targetMeetingId,
-      description: newActionDesc.trim(),
-      assignee: newActionAssignee,
-      ...(newActionDueDate ? { due_date: newActionDueDate } : {}),
-      ...(newActionProject ? { project_id: newActionProject } : {}),
-    })
-    setNewActionDesc('')
-    setNewActionAssignee('nick-ingraham')
-    setNewActionDueDate('')
-    setNewActionProject('')
-    setShowAddAction(false)
-  }
-
   function handleAddMeeting() {
     if (!newMeetingDate || !newMeetingTitle.trim()) return
     fetch('/api/meetings', {
@@ -619,12 +680,14 @@ export default function Meetings() {
         title: newMeetingTitle.trim(),
         attendees: newMeetingAttendees,
         agenda: newMeetingAgenda.filter((a) => a.trim()),
+        ...(newMeetingTags.length > 0 ? { tags: newMeetingTags } : {}),
       }),
     }).then(() => { window.location.reload() })
     setNewMeetingDate('')
     setNewMeetingTitle('')
     setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin'])
     setNewMeetingAgenda([''])
+    setNewMeetingTags([])
     setShowAddMeeting(false)
   }
 
@@ -640,10 +703,6 @@ export default function Meetings() {
     setNewMeetingAgenda((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const inputStyle: React.CSSProperties = {
-    background: 'var(--ice)', border: `1px solid var(--sk-line2)`, color: 'var(--ink)',
-    fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
-  }
   function isNextMeeting(meeting: Meeting): boolean {
     return meeting.date.slice(0, 10) >= localDateKey() && meeting.date.slice(0, 10) === nextMeetingDateStr
   }
@@ -655,50 +714,6 @@ export default function Meetings() {
       : null,
     pendingActions.length > 0 ? `${pendingActions.length} pending` : null,
   ].filter(Boolean).join(' · ')
-
-  // #118: rendered inside MeetingDetail's top action row via its slot prop.
-  // `basis-full` drops the OPEN form onto its own line so the inputs are not
-  // squeezed into a flex cell next to the other two buttons.
-  const addActionItemForm = (
-    <QuickAddForm
-      isOpen={showAddAction}
-      onToggle={() => setShowAddAction(true)}
-      onSubmit={handleAddActionItem}
-      onCancel={() => { setShowAddAction(false); setNewActionDesc(''); setNewActionAssignee('nick-ingraham'); setNewActionDueDate(''); setNewActionProject('') }}
-      triggerLabel="Add Action Item"
-      submitLabel="Add Item"
-      className={showAddAction ? 'basis-full' : ''}
-    >
-      <div className="space-y-3">
-        <Field label="Description" htmlFor="meeting-action-desc" noContainer>
-          <input id="meeting-action-desc" type="text" value={newActionDesc} onChange={(e) => setNewActionDesc(e.target.value)} placeholder="What needs to be done?" style={inputStyle}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddActionItem() }} />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Assignee" noContainer>
-            <InlineAssigneePicker
-              value={newActionAssignee}
-              onChange={setNewActionAssignee}
-            />
-          </Field>
-          <Field label="Due date (optional)" htmlFor="meeting-action-due" noContainer>
-            <input id="meeting-action-due" type="date" value={newActionDueDate} onChange={(e) => setNewActionDueDate(e.target.value)} style={inputStyle} />
-          </Field>
-        </div>
-        <Field label="Project (optional)" noContainer>
-          <InlineSelect
-            value={newActionProject}
-            options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
-            onChange={setNewActionProject}
-            size="md"
-            alwaysShowChevron
-          />
-        </Field>
-      </div>
-    </QuickAddForm>
-  )
 
   return (
     // Desktop: the page is exactly the room below the shell chrome (pageH,
@@ -741,7 +756,7 @@ export default function Meetings() {
                   isOpen={showAddMeeting}
                   onToggle={() => setShowAddMeeting(true)}
                   onSubmit={handleAddMeeting}
-                  onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']) }}
+                  onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']); setNewMeetingTags([]) }}
                   triggerLabel="Record Meeting"
                   submitLabel="Save Meeting"
                 >
@@ -756,6 +771,11 @@ export default function Meetings() {
                           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }} />
                       </Field>
                     </div>
+                    {newMeetingTags.length > 0 && (
+                      <p className="text-xs" style={{ margin: 0, color: 'var(--sk-t3)' }}>
+                        About {newMeetingTags.map((slug) => projectShortLabel(projectList.find((pr) => pr.slug === slug) ?? { slug })).join(' and ')}
+                      </p>
+                    )}
                     <Field label="Attendees" noContainer>
                       <div className="flex flex-wrap gap-2">
                         {TEAM_OPTIONS.slice(0, 10).map((m) => {
@@ -952,12 +972,10 @@ export default function Meetings() {
                   EVERY meeting's items — items with nothing to do with the one
                   on screen, and a second copy of the ones that did (MeetingDetail
                   lists this meeting's action items from useMeetingDetail(id)).
-                  Both lists are gone; the add form stays and files against the
-                  SELECTED meeting. #118: it now renders INSIDE MeetingDetail's
-                  top action row (the slot prop); `basis-full` drops the open
-                  form onto its own line so the inputs are not squeezed into a
-                  flex cell next to the other two buttons. */}
-              <MeetingDetail meeting={selectedMeeting} addActionItem={addActionItemForm} />
+                  Both lists are gone. The key remounts the panel per meeting,
+                  so its Log Decision and Add Action Item drafts belong to the
+                  meeting on screen (#2700). */}
+              <MeetingDetail meeting={selectedMeeting} />
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
