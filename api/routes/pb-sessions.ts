@@ -49,12 +49,17 @@ export function sessionProjectName(raw: unknown): string | null {
 export const PROJECT_NAME_SQL =
   `(CASE WHEN project_name LIKE '[%' THEN NULLIF(TRIM(REPLACE(REPLACE(REPLACE(project_name, '[', ''), ']', ''), '"', '')), '') ELSE NULLIF(project_name, '') END)`
 
-/** The project's short name, when the session's name is a project title. */
-const PROJECT_SHORT_SQL =
-  `(SELECT p.short_name FROM projects p WHERE lower(p.title) = lower(${PROJECT_NAME_SQL}) AND p.short_name IS NOT NULL AND p.short_name != '' LIMIT 1)`
+/** Short names by lower(title), one row per title. Joined ONCE onto the
+ *  already-filtered, already-limited rows: a correlated subquery per session
+ *  row read 174k rows (141 ms) on a 13.8k-row table on every Session History
+ *  load (cold review, 2026-10-14). */
+const PROJECT_SHORT_JOIN =
+  `LEFT JOIN (SELECT lower(title) AS title_key, MAX(short_name) AS short_name FROM projects
+     WHERE short_name IS NOT NULL AND short_name != '' GROUP BY lower(title)) sp
+   ON sp.title_key = lower(s.project_name)`
 
 const SESSION_COLUMNS =
-  `id, started_at, ended_at, machine, ${PROJECT_NAME_SQL} AS project_name, ${PROJECT_SHORT_SQL} AS project_short_name, ` +
+  `id, started_at, ended_at, machine, ${PROJECT_NAME_SQL} AS project_name, ` +
   'summary, actions_count, commits_count, duration_minutes, created_at'
 
 // GET /api/pb/sessions?limit=50&project=&since=
@@ -82,6 +87,8 @@ export async function handlePBSessions(request: Request, env: Env): Promise<Resp
   }
   sql += ' ORDER BY started_at DESC LIMIT ?'
   binds.push(limit)
+  // Filter and limit first, then look up short names for the rows kept.
+  sql = `SELECT s.*, sp.short_name AS project_short_name FROM (${sql}) s ${PROJECT_SHORT_JOIN} ORDER BY s.started_at DESC`
 
   const result = await env.DB.prepare(sql).bind(...binds).all()
   return json({ data: result.results || [], count: (result.results || []).length })
@@ -128,13 +135,16 @@ export async function handlePBSessionStats(request: Request, env: Env): Promise<
 
     // Sessions per project (top 20)
     env.DB.prepare(`
-      SELECT ${PROJECT_NAME_SQL} AS project_name, MAX(${PROJECT_SHORT_SQL}) AS project_short_name,
-             COUNT(*) as count, SUM(duration_minutes) as total_minutes
-      FROM pb_sessions
-      WHERE ${PROJECT_NAME_SQL} IS NOT NULL
-      GROUP BY 1
-      ORDER BY count DESC
-      LIMIT 20
+      SELECT s.project_name, sp.short_name AS project_short_name, s.count, s.total_minutes
+      FROM (
+        SELECT ${PROJECT_NAME_SQL} AS project_name, COUNT(*) as count, SUM(duration_minutes) as total_minutes
+        FROM pb_sessions
+        WHERE ${PROJECT_NAME_SQL} IS NOT NULL
+        GROUP BY 1
+        ORDER BY count DESC
+        LIMIT 20
+      ) s ${PROJECT_SHORT_JOIN}
+      ORDER BY s.count DESC
     `).all(),
 
     // Sessions per day (last 30 days)

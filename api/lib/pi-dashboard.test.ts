@@ -15,9 +15,9 @@ import { describe, it, expect } from 'vitest'
  * quoted array element (i.e. `"slug"` appears literally in the string).
  */
 function slugMatchesAuthors(authorSlugs: string, slug: string): boolean {
-  // Mirrors: p.author_slugs LIKE '%"' || tm.slug || '"%'
-  // SQLite LIKE is case-insensitive for ASCII by default; we use includes()
-  // which is case-sensitive here — that's fine since slugs are lowercase.
+  // Mirrors: instr(p.author_slugs, '"' || tm.slug || '"') > 0 (a LIKE built
+  // from tm.slug hit D1's 50-byte pattern cap, O2B 2026-10-14). instr is
+  // case-sensitive, like includes(); slugs are lowercase.
   return authorSlugs.includes(`"${slug}"`)
 }
 

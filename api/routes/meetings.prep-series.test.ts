@@ -88,12 +88,15 @@ describe('meeting prep', () => {
     activity('a1', 'task', 'Created task: "Draft aims" → casey-eddington')
     activity('a2', 'pb_session', 'Bulk sync: 1 created, 0 updated')
     activity('a3', 'links', 'Deleted links record link_01M47SDF3Q53JFWK8486HW5QW2')
+    // A bulk action is a person acting (tasks.ts bulk complete/delete/assign):
+    // it stays. Only PB's 'Bulk sync' is machine text (ruling 2026-10-14).
     activity('a4', 'task', 'Bulk complete: 1 tasks')
     activity('a5', 'digest', 'Dismissed digest paper')
     activity('a6', 'stage_change', 'Stage: data_analysis → data_collection')
+    activity('a7', 'task', 'Bulk sync: 0 created, 1 updated')
     const body = await (await handleMeetingPrep('mtg-1on1-now', env, true)).json() as any
     const descs = body.data.recentActivity.map((r: any) => r.description).sort()
-    expect(descs).toEqual(['Created task: "Draft aims" → casey-eddington', 'Stage: data_analysis → data_collection'])
+    expect(descs).toEqual(['Bulk complete: 1 tasks', 'Created task: "Draft aims" → casey-eddington', 'Stage: data_analysis → data_collection'])
   })
 
   it('Recent activity keeps decisions, handoffs and milestones; drops PB captures', async () => {
@@ -108,15 +111,48 @@ describe('meeting prep', () => {
   })
 
   it('every activity type a Hub writer logs is either shown or deliberately excluded', () => {
-    // A new logActivity type must be placed in one list, or this fails.
+    // A new activity type must be placed in one list, or this fails. Every way
+    // a type reaches activity_log is read: a literal logActivity type, a
+    // `prefix_${x}` template, an idempotentDelete activityCategory, and a type
+    // passed as a variable. A template or variable call site must be named in
+    // NON_LITERAL with every value it can take, so a new one fails here until
+    // someone looks at it.
+    const NON_LITERAL: Record<string, string[]> = {
+      // subtasks.ts: `subtask_${action}`, action is 'completed' | 'uncompleted'
+      'subtasks.ts subtask_': ['subtask_completed', 'subtask_uncompleted'],
+      // pb-sector.ts: the capture type, refused unless 'task' or 'idea'
+      'pb-sector.ts type': ['task', 'idea'],
+      // mutations.ts: applyDelete logs the table name ("Deleted links record
+      // link_01M..."); those types are in no list on purpose, so no feed shows them
+      'mutations.ts mut.table': [],
+      // idempotentDelete logs its caller's activityCategory; the callers'
+      // literal `activityCategory: '...'` values are read by the scan below
+      'idempotent-delete.ts args.activityCategory': [],
+    }
     const files = (readdirSync('api', { recursive: true }) as string[])
       .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
     const types = new Set<string>()
+    const nonLiteralSeen = new Set<string>()
+    const unnamed: string[] = []
     for (const f of files) {
       const src = readFileSync(join('api', f), 'utf8')
-      for (const m of src.matchAll(/logActivity\(\s*[\w.]+,\s*['"]([a-z_]+)['"]/g)) types.add(m[1])
+      const base = f.split(/[\\/]/).pop()!
+      for (const m of src.matchAll(/logActivity\(\s*[\w.]+,\s*(['"`])([^'"`,)]*)/g)) {
+        const [, quote, arg] = m
+        if (quote !== '`' && /^[a-z_]+$/.test(arg)) { types.add(arg); continue }
+        const key = quote === '`' ? `${base} ${arg.split('${')[0]}` : `${base} ${arg}`
+        if (NON_LITERAL[key]) { nonLiteralSeen.add(key); NON_LITERAL[key].forEach((t) => types.add(t)) } else unnamed.push(key)
+      }
+      for (const m of src.matchAll(/logActivity\(\s*[\w.]+,\s*([A-Za-z_][\w.]*)\s*,/g)) {
+        const key = `${base} ${m[1]}`
+        if (NON_LITERAL[key]) { nonLiteralSeen.add(key); NON_LITERAL[key].forEach((t) => types.add(t)) } else unnamed.push(key)
+      }
+      for (const m of src.matchAll(/activityCategory:\s*['"]([a-z_]+)['"]/g)) types.add(m[1])
     }
+    expect(unnamed).toEqual([])
+    expect([...nonLiteralSeen].sort()).toEqual(Object.keys(NON_LITERAL).sort()) // no stale entry
     expect(types.size).toBeGreaterThan(20) // the scan is reading the writers
+    for (const t of ['inbox_event', 'subtask_completed', 'idea']) expect(types).toContain(t)
     const known = new Set([...PREP_ACTIVITY_TYPES, ...PREP_ACTIVITY_EXCLUDED])
     expect([...types].filter((t) => !known.has(t)).sort()).toEqual([])
     expect(PREP_ACTIVITY_TYPES.filter((t) => PREP_ACTIVITY_EXCLUDED.includes(t))).toEqual([])

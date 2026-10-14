@@ -6,13 +6,16 @@
 // record link_01M..."). The meeting prep page learned to keep only the first
 // (G5-5); the Overview card and /portal/activity read /api/activity, which had
 // no such rule, and kept printing table names and hex ids (O2B, 2026-10-14).
-// Both now read their WHERE from here, so the two feeds cannot drift.
+// Both build their WHERE from the one helper below.
 //
-// Every type a Hub writer logs is in exactly one of the three lists below;
-// meetings.prep-series.test.ts reads every logActivity call in api/ and fails on
-// a type in none, so a new writer forces the choice. A type logged from a
-// variable (mutations.ts logs `mut.table`) is in no list and stays out of every
-// feed by default, which is the safe side.
+// Every type a Hub writer logs is in exactly one of the three lists below.
+// meetings.prep-series.test.ts scans api/ for every way a type reaches
+// activity_log -- a literal logActivity type, a `prefix_${x}` template, an
+// idempotentDelete activityCategory, and a type passed as a variable (each
+// such call site is named in the test with the values it can take) -- and
+// fails on a type in no list, so a new writer forces the choice. mutations.ts
+// logs `mut.table`; those types are in no list and stay out of every feed,
+// which is the safe side.
 
 /** People's events the meeting prep shows (and every other feed with them). */
 export const PREP_ACTIVITY_TYPES = [
@@ -43,15 +46,25 @@ export const PREP_ACTIVITY_EXCLUDED = [...DETAIL_ACTIVITY_TYPES, ...MACHINE_ACTI
 
 const inList = (types: string[]) => types.map((t) => `'${t}'`).join(', ');
 
-/** Same-type machine rows, cut by their description: bulk sync and bulk
- *  complete ('Bulk '), Nick's raw captures ('PB capture:'), and the old
+/** `text` ends with `suffix`, without LIKE. D1 refuses a LIKE pattern over
+ *  50 bytes ("LIKE or GLOB pattern too complex", code 7500), so a pattern built
+ *  from row data ('% ' || related_id || ' deleted') turns a long id into a
+ *  500 on the whole feed. better-sqlite3's limit is 50,000 bytes, so no local
+ *  test can see it; activity-feed-types.test.ts bans the shape instead. */
+function endsWith(text: string, suffix: string): string {
+  return `substr(${text}, -length(${suffix})) = ${suffix}`;
+}
+
+/** Same-type machine rows, cut by their description: 'Bulk sync' (PB's
+ *  session push), Nick's raw captures ('PB capture:'), and the old
  *  idempotentDelete text '<table> <id> deleted' (it names the row by id; the
- *  writer says "Deleted <thing>" since 2026-10-14). */
+ *  writer says "Deleted <thing>" since 2026-10-14). 'Bulk complete/delete/
+ *  assign: N tasks' stays: a person did that (tasks.ts bulk actions). */
 function machineDescriptionExclude(col: string): string {
   const d = `${col}.description`;
   const r = `${col}.related_id`;
-  return `${d} NOT LIKE 'Bulk %' AND ${d} NOT LIKE 'PB capture:%'` +
-    ` AND NOT (${r} IS NOT NULL AND (${d} LIKE '% ' || ${r} || ' deleted' OR ${d} LIKE '% ' || ${r} || ' soft-deleted'))`;
+  return `${d} NOT LIKE 'Bulk sync%' AND ${d} NOT LIKE 'PB capture:%'` +
+    ` AND NOT (${r} IS NOT NULL AND (${endsWith(d, `' ' || ${r} || ' deleted'`)} OR ${endsWith(d, `' ' || ${r} || ' soft-deleted'`)}))`;
 }
 
 /** WHERE clause for the meeting prep's Recent activity (people's main events). */
