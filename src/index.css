@@ -369,7 +369,7 @@
   --lk-email: #dd6a5f;
 }
 /* Brand gold belongs to the public site only. Shared public/portal components
-   (LabPageLayout, PublicationCard, avatars) read --job-brand; inside the portal
+   (LabPageLayout, PubRow, avatars) read --job-brand; inside the portal
    shell it is the gray ramp, so brand gold cannot leak onto a portal page. */
 .portal-shell {
   --job-brand: var(--sk-t2);

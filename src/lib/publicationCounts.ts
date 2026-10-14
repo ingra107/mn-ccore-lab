@@ -105,12 +105,38 @@ function normaliseAuthor(s: string): string {
     .trim()
 }
 
-/** True when the byline lists `authorName` as a whole name. A substring test
- *  lets "Collins C" match "Collins CA", a different author. */
+/**
+ * Does one byline segment name the person whose PubMed-style `authorName` is
+ * given ("Ingraham NE")? The ONE name matcher: the author column, the lab
+ * first-author stat and a member's paper list all read it. D1 bylines come in
+ * two styles side by side:
+ *   - PubMed "Ingraham NE": the whole name must match. A substring test lets
+ *     "Collins C" match "Collins CA", a different author.
+ *   - full name "Nicholas E. Ingraham": the surname ends the segment and a
+ *     given name starts with the first initial. Matching only the PubMed form
+ *     left most lab first authors unmatched ("19 with a lab first author" of
+ *     579; G12-6, 2026-10-14).
+ */
+export function segmentNamesAuthor(segment: string, authorName: string): boolean {
+  const seg = normaliseAuthor(segment)
+  const want = normaliseAuthor(authorName)
+  if (!seg || !want) return false
+  if (seg === want) return true
+  const parts = want.split(' ')
+  if (parts.length < 2) return false
+  const surname = parts.slice(0, -1).join(' ').toLowerCase()
+  const firstInitial = parts[parts.length - 1].charAt(0).toLowerCase()
+  const words = seg.split(' ')
+  const n = parts.length - 1
+  if (words.length <= n) return false
+  if (words.slice(-n).join(' ').toLowerCase() !== surname) return false
+  return words.slice(0, -n).some((w) => w.charAt(0).toLowerCase() === firstInitial)
+}
+
+/** True when the byline lists `authorName` (either byline style). */
 export function bylineHasAuthor(authors: string | undefined, authorName: string): boolean {
   if (!authors) return false
-  const want = normaliseAuthor(authorName)
-  return authors.split(/[,;]/).some((a) => normaliseAuthor(a) === want)
+  return authors.split(/[,;]/).some((a) => segmentNamesAuthor(a, authorName))
 }
 
 export function isMemberPublication(

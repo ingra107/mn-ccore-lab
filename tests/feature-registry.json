@@ -1669,9 +1669,9 @@
     },
     {
       "id": "copy-publication-citation",
-      "component": "src/components/PublicationCard.tsx",
+      "component": "src/pages/PublicationDetail.tsx",
       "type": "copy",
-      "description": "Copy citation on publication card",
+      "description": "Copy citation on the publication detail page",
       "test_file": "tests/daily-superuser.spec.ts",
       "test_name": "Publications list: click publication",
       "covered": true

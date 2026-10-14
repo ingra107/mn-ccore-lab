@@ -5,7 +5,7 @@ const skeletonStyle: React.CSSProperties = {
   animation: 'skeleton-pulse 1.8s ease-in-out infinite',
 }
 
-function SkeletonBar({ width = '100%', height = 14 }: { width?: string | number; height?: number }) {
+export function SkeletonBar({ width = '100%', height = 14 }: { width?: string | number; height?: number }) {
   return (
     <div
       style={{

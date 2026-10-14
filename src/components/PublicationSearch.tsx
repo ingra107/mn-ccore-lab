@@ -73,7 +73,8 @@ export default function PublicationSearch({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-0.5 rounded"
+            // 34px hit area (WCAG 2.5.8) around the same 14px icon in the same spot.
+            className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer p-2.5 rounded"
             style={{
               color: 'var(--slate)',
               background: 'transparent',

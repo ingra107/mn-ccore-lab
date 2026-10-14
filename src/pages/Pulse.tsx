@@ -10,6 +10,7 @@ import {
   useProjectHealth,
   usePublications,
   useTeam,
+  useCitations,
 } from '../hooks/useApiData'
 import { useGrantProducts } from '../hooks/useGrantProducts'
 import { grantName, mechanismOf } from '../lib/grants'
@@ -19,6 +20,7 @@ import { isOverdue } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
 import { formatBrandName } from '../components/BrandName'
 import HeartbeatLine from '../components/HeartbeatLine'
+import LogoMark from '../components/LogoMark'
 import PulseScene from '../components/pulse/PulseScene'
 import PulseMetric from '../components/pulse/PulseMetric'
 import PulseSparkline from '../components/pulse/PulseSparkline'
@@ -99,6 +101,8 @@ export default function Pulse() {
   const grants = useMemo(() => grantData?.data ?? [], [grantData])
   const { data: publications = [] } = usePublications()
   const { data: team = [] } = useTeam()
+  const { data: citations } = useCitations({ enabled: isAuthenticated })
+  const citationTotal = isAuthenticated && citations && citations.members_with_data > 0 ? citations.total : null
 
   const pendingTasks = tasks.filter((t) => !t.completed)
   const overdueTasks = pendingTasks.filter((t) => isOverdue(t.due_date))
@@ -170,7 +174,6 @@ export default function Pulse() {
 
     // Scene 2 — Publications by year, chart-as-art.
     if (pubsByYear.length) {
-      const total = pubsByYear.reduce((a, b) => a + b.value, 0)
       const thisYear = pubsByYear[pubsByYear.length - 1]?.value || 0
       list.push({
         key: 'pubs',
@@ -182,20 +185,23 @@ export default function Pulse() {
             staticFrame
           >
             <PulseSparkline data={pubsByYear} height={420} />
-            <div className="mt-10 flex items-center gap-12">
+            {/* Wraps on a phone; the decorative heartbeat drops there. */}
+            <div className="mt-6 sm:mt-10 flex flex-wrap items-center gap-x-8 gap-y-6 sm:gap-x-12">
               <PulseMetric
                 value={publishedCount}
                 label="Total publications"
                 size="lg"
               />
-              <PulseMetric value="2,626+" label="Citations" size="lg" />
+              {/* Live Scholar total (members only, /api/citations); no tile
+                  until it has data, never a typed-in number. */}
+              {citationTotal !== null && (
+                <PulseMetric value={citationTotal.toLocaleString('en-US')} label="Citations" size="lg" />
+              )}
               <PulseMetric value={thisYear} label={`In ${new Date().getFullYear()}`} size="lg" />
-              <span className="ml-auto opacity-60">
+              <span className="hidden sm:inline ml-auto opacity-60">
                 <HeartbeatLine width={220} height={48} variant="slow" />
               </span>
             </div>
-            { }
-            {void total}
           </PulseScene>
         ),
       })
@@ -242,7 +248,8 @@ export default function Pulse() {
             subtitle="Live signal from the project-health algorithm — activity, velocity, overdue work, milestones."
             staticFrame
           >
-            <div className="grid grid-cols-4 gap-12">
+            {/* 2x2 on a phone: four orbs in a row overlap below ~600px. */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12">
               <HealthOrb color="#94a3b8" label="Healthy" count={health.healthy} />
               <HealthOrb color="#f08a5b" label="Attention" count={health.needs_attention} />
               <HealthOrb color="#f08a5b" label="At risk" count={health.at_risk} />
@@ -329,14 +336,16 @@ export default function Pulse() {
             title="What just happened."
             subtitle="The most recent moves across the lab."
           >
-            <ul className="flex flex-col gap-5 max-w-[1400px]">
+            <ul className="flex flex-col gap-4 sm:gap-5 max-w-[1400px]">
+              {/* Phone shows the first three, each held to three lines: six
+                  wrapped lines overrun the viewport and push the title off. */}
               {describedActivity.slice(0, 6).map((a, i) => (
                 <motion.li
                   key={a.id}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                  className="flex items-baseline gap-6"
+                  className={`${i >= 3 ? 'hidden md:flex' : 'flex'} items-baseline gap-4 sm:gap-6`}
                 >
                   <span
                     className="w-2 h-2 rounded-full mt-2"
@@ -344,10 +353,11 @@ export default function Pulse() {
                     aria-hidden
                   />
                   <span
+                    className="line-clamp-3 md:line-clamp-none"
                     style={{
                       fontFamily: 'var(--font-display)',
                       fontWeight: 400,
-                      fontSize: 'clamp(22px, 2vw, 32px)',
+                      fontSize: 'clamp(18px, 2vw, 32px)',
                       color: '#f5efe2',
                       letterSpacing: '-0.01em',
                       lineHeight: 1.3,
@@ -373,6 +383,7 @@ export default function Pulse() {
     completedThisWeek,
     team.length,
     publishedCount,
+    citationTotal,
     pubsByYear,
     health,
     grants,
@@ -380,13 +391,20 @@ export default function Pulse() {
   ])
 
   // Auto-rotate. Loop is essential — kiosk has no input. Pause halts.
+  // A tapped scene marker bumps pickEpoch, which restarts the interval so
+  // the picked scene gets a full ROTATE_INTERVAL on screen.
+  const [pickEpoch, setPickEpoch] = useState(0)
   useEffect(() => {
     if (scenes.length <= 1 || paused) return
     const t = setInterval(() => {
       setActiveIndex((i) => (i + 1) % scenes.length)
     }, ROTATE_INTERVAL)
     return () => clearInterval(t)
-  }, [scenes.length, paused])
+  }, [scenes.length, paused, pickEpoch])
+  const pickScene = (i: number) => {
+    setActiveIndex(i)
+    setPickEpoch((n) => n + 1)
+  }
 
   // Pin body + html bg to the kiosk deep-neutral while on /pulse. The kiosk
   // scene sets its own bg on a child div, but axe-core walks to body for
@@ -471,15 +489,9 @@ export default function Pulse() {
       />
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-16 py-10 z-10">
-        <div className="flex items-center gap-5">
-          <img
-            src="/logos/mnccore-logo-mark.svg"
-            alt=""
-            width={44}
-            height={44}
-            style={{ filter: 'invert(1) brightness(1.4)' }}
-          />
+      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-6 sm:px-16 sm:py-10 z-10">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <LogoMark dark alt="" width={44} height={44} className="w-8 h-8 sm:w-11 sm:h-11" />
           <div className="flex flex-col">
             <span
               style={{
@@ -551,25 +563,36 @@ export default function Pulse() {
 
       {/* ── Footer: scene markers + clock ───────────────────── */}
       <footer className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-3 px-6 py-6 sm:px-16 sm:py-10 z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
+          {/* The button is the 24px hit area; the 4px bar inside it is the look. */}
           {scenes.map((s, i) => (
             <button
               key={s.key}
-              onClick={() => setActiveIndex(i)}
+              onClick={() => pickScene(i)}
               aria-label={`Scene ${i + 1} of ${scenes.length}`}
               aria-current={i === activeIndex ? 'true' : undefined}
               style={{
-                width: i === activeIndex ? 36 : 8,
-                height: 4,
-                borderRadius: 2,
-                background:
-                  i === activeIndex ? '#5cbcb4' : 'rgba(226,232,240,0.22)',
+                background: 'transparent',
                 border: 'none',
-                padding: 0,
+                padding: '10px 8px',
                 cursor: 'pointer',
-                transition: 'all 600ms cubic-bezier(0.16, 1, 0.3, 1)',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
-            />
+            >
+              <span
+                aria-hidden
+                style={{
+                  display: 'block',
+                  width: i === activeIndex ? 36 : 8,
+                  height: 4,
+                  borderRadius: 2,
+                  background:
+                    i === activeIndex ? '#5cbcb4' : 'rgba(226,232,240,0.22)',
+                  transition: 'all 600ms cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              />
+            </button>
           ))}
         </div>
         <Clock />
@@ -592,12 +615,12 @@ export default function Pulse() {
 
 function HealthOrb({ color, label, count }: { color: string; label: string; count: number }) {
   return (
-    <div className="flex flex-col items-center gap-5 text-center">
+    <div className="flex flex-col items-center gap-3 sm:gap-5 text-center">
       <div
         className="rounded-full relative"
         style={{
-          width: 'clamp(96px, 9vw, 140px)',
-          height: 'clamp(96px, 9vw, 140px)',
+          width: 'clamp(64px, 9vw, 140px)',
+          height: 'clamp(64px, 9vw, 140px)',
           background: `radial-gradient(circle at 35% 35%, ${color}, ${color}55 60%, transparent 100%)`,
           boxShadow: `0 0 60px ${color}55`,
         }}
@@ -608,7 +631,7 @@ function HealthOrb({ color, label, count }: { color: string; label: string; coun
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 500,
-          fontSize: 'clamp(56px, 6vw, 84px)',
+          fontSize: 'clamp(40px, 6vw, 84px)',
           color: '#f5efe2',
           letterSpacing: '-0.03em',
           lineHeight: 1,

@@ -6,7 +6,8 @@ import CollaborationGraph from '../components/CollaborationGraph'
 import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
-import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
+import { GRAPH_PANEL_BG } from '../lib/graphCanvas'
 import { isPublished } from '../lib/publicationCounts'
 
 export default function Network() {
@@ -22,17 +23,9 @@ export default function Network() {
     [publications]
   )
 
-  const years = useMemo(() => {
-    if (publishedPubs.length === 0) {
-      const now = new Date().getFullYear()
-      return { min: now - 5, max: now }
-    }
-    const yrs = publishedPubs.map((p) => p.year)
-    return { min: Math.min(...yrs), max: Math.max(...yrs) }
-  }, [publishedPubs])
-
+  // yearRange starts null = the full published range, whenever the data lands.
   const [filters, setFilters] = useState<NetworkFilterState>({
-    yearRange: [years.min, years.max],
+    yearRange: null,
     activeTopics: [],
     mnccoreOnly: false,
   })
@@ -59,8 +52,9 @@ export default function Network() {
 
   // Filter publications based on current filter state
   const filteredPublications = useMemo(() => {
+    const range = filters.yearRange
     return publishedPubs.filter((pub) => {
-      if (pub.year < filters.yearRange[0] || pub.year > filters.yearRange[1]) {
+      if (range && (pub.year < range[0] || pub.year > range[1])) {
         return false
       }
       if (
@@ -144,7 +138,7 @@ export default function Network() {
             onClose={handleClose}
           />
           <div className="sm:hidden absolute top-2 left-0 right-0 text-center" style={{ zIndex: 'var(--z-sticky)' }}>
-            <span className="text-xs px-3 py-1 rounded-full" style={{ color: 'rgba(255, 255, 255, 0.6)', background: withAlpha(PANEL_BG, 60), fontSize: '11px' }}>
+            <span className="text-xs px-3 py-1 rounded-full" style={{ color: 'rgba(255, 255, 255, 0.75)', background: withAlpha(GRAPH_PANEL_BG, 80), fontSize: '11px' }}>
               Pinch to zoom &middot; Tap nodes to explore
             </span>
           </div>

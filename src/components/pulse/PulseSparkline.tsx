@@ -60,7 +60,9 @@ export default function PulseSparkline({
     <svg
       viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       width="100%"
-      height={height}
+      // Height follows the width (viewBox ratio), capped at `height`: a fixed
+      // 420px box on a phone drew a 120px chart in 420px of empty space.
+      style={{ height: 'auto', maxHeight: height, display: 'block' }}
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="Sparkline chart"

@@ -9,7 +9,6 @@ export const directors: Director[] = [
     role: 'Co-Director, MN-CCORE',
     initials: 'NI',
     slug: 'nick-ingraham',
-    path: '/nick-ingraham',
     bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
     fullBio: 'Physician-scientist at the University of Minnesota studying how provider-level variation in clinical practice impacts ICU outcomes. Founding member of the CLIF Consortium. Research interests include lung-protective ventilation adherence, clinical decision-making styles, and multi-center ICU data science.',
     links: [
@@ -29,7 +28,6 @@ export const directors: Director[] = [
     initials: 'NM',
     slug: 'nate-mesfin',
     orcidId: '0000-0001-8419-0339', // #905 OpenAlex backfill (Nathan Mesfin, UMN+MPLS VA)
-    path: '/nate-mesfin',
     bio: 'Critical care physician investigating in-hospital cardiac arrest survivability, DNR order variation, and chronic critical illness outcomes.',
     fullBio: 'Critical care physician at the University of Minnesota investigating how provider decision-making shapes outcomes for the most vulnerable ICU patients. His research program centers on three interconnected questions: How do providers vary in their approach to goals-of-care conversations? Can we predict survivability after in-hospital cardiac arrest to inform these conversations? And what defines the trajectory of patients who develop chronic critical illness? He uses multi-center CLIF data and electronic health record analytics to answer these questions at scale.',
     links: [

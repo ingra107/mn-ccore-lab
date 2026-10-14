@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
 import NotificationBell from './NotificationBell'
+import LogoMark from './LogoMark'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useAuth } from '../hooks/useAuth'
@@ -61,6 +62,14 @@ export default function Layout() {
     setPrevPathname(location.pathname)
     setMenuOpen(false)
   }
+
+  // Escape closes the open mobile menu.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   useEffect(() => {
     // Delay scroll to avoid conflict with IntersectionObserver initialization
@@ -126,13 +135,11 @@ export default function Layout() {
               }}
             />
             {/* Mobile: compact mark */}
-            <img
-              src="/logos/mnccore-logo-mark.svg"
-              alt="MN-CCORE"
+            <LogoMark
+              dark={isDark}
               className="block sm:hidden transition-all duration-300"
               style={{
                 height: scrolled ? '32px' : '36px',
-                filter: isDark ? 'invert(1) brightness(1.5)' : 'none',
               }}
             />
           </Link>
@@ -198,14 +205,19 @@ export default function Layout() {
               className="p-2 rounded-md cursor-pointer"
               style={{ color: barInk }}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="public-mobile-menu"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu. Closed = inert, so its links leave the tab order and
+            the accessibility tree instead of only collapsing to height 0. */}
         <div
+          id="public-mobile-menu"
+          inert={!menuOpen}
           className="lg:hidden overflow-hidden transition-all duration-300"
           style={{
             maxHeight: menuOpen ? '600px' : '0',
@@ -423,7 +435,6 @@ export default function Layout() {
                 {[
                   { label: 'Google Scholar', href: 'https://scholar.google.com/citations?user=ZKMVVHkAAAAJ&hl=en' },
                   { label: 'GitHub', href: 'https://github.com/ingra107' },
-                  { label: 'CLIF GitHub', href: 'https://github.com/Common-Longitudinal-ICU-data-Format' },
                 ].map((link) => (
                   <li key={link.href}>
                     <a

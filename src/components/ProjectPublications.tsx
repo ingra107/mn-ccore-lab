@@ -28,7 +28,7 @@ import SectionHead from './ui/SectionHead'
 
 const ROLE_OPTIONS: GhostSelectOption[] = PUBLICATION_ROLES.map((r) => ({ value: r, label: r[0].toUpperCase() + r.slice(1) }))
 
-/** Same byline split PublicationCard.formatAuthors / resolveBylineAuthors use:
+/** Same byline split resolveBylineAuthors uses:
  *  strip one trailing period, split on commas, trim, drop empties. */
 function splitAuthors(authors: string): string[] {
   return authors.replace(/\.$/, '').split(',').map((s) => s.trim()).filter(Boolean)

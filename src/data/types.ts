@@ -5,7 +5,6 @@ export interface Director {
   role: string
   initials: string
   slug: string
-  path: string
   bio: string
   fullBio?: string // the longer bio the member page shows; the card keeps `bio`
   links?: { label: string; href: string }[] // ORCID, GitHub, UMN Bio; Scholar comes from scholarId

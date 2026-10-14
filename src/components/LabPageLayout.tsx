@@ -2,7 +2,7 @@ import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { ExternalLink, FlaskConical } from 'lucide-react'
 import { SecHead } from './public/PublicParts'
 import { FaceDisc } from './today/skin'
-import PublicationCard from './PublicationCard'
+import PubRow from './public/PubRow'
 import PageHeartbeat from './moments/PageHeartbeat'
 import PageWithRail from './PageWithRail'
 import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
@@ -366,10 +366,8 @@ export function PublicationsSection({
       ) : (
         <SecHead title={title} />
       )}
-      <div className="space-y-4">
-        {visible.map((pub) => (
-          <PublicationCard key={pub.id} pub={pub} />
-        ))}
+      <div className="pub-card" style={{ padding: 8 }}>
+        {visible.map((pub) => <PubRow key={pub.id} pub={pub} />)}
       </div>
       {hasOverflow && (
         <div className="mt-4 text-center">
