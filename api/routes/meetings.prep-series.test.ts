@@ -11,7 +11,9 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
-import { handleMeetingPrep, handleGenerateAgenda } from './meetings'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { handleMeetingPrep, handleGenerateAgenda, PREP_ACTIVITY_TYPES, PREP_ACTIVITY_EXCLUDED } from './meetings'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { meetingSeriesKey } from '../../shared/meetingAudience'
 import { nowInstant } from '../lib/time'
@@ -52,6 +54,16 @@ describe('series key', () => {
     expect(meetingSeriesKey('Weekly Meeting with Daniel/Nick')).not.toBe(meetingSeriesKey('ADHERE-LPV meeting'))
     expect(meetingSeriesKey(null)).toBeNull()
   })
+
+  it('a non-lab series matches across the variants prod titles show', () => {
+    // Import prefix + punctuation (prod: May vs Jul-Sep titles of one 1:1).
+    expect(meetingSeriesKey('MN-CCORE: Nick Adams Meeting')).toBe(meetingSeriesKey('Nick/Adams Meeting'))
+    expect(meetingSeriesKey('Dudley NLP Updates -- April 07, 2026')).toBe(meetingSeriesKey('Dudley NLP Updates'))
+    // Different people stay different series; a bare "Meeting" keeps a key.
+    expect(meetingSeriesKey('Nick UMN Appt Schedule (30m slots) (Casey Eddington)'))
+      .not.toBe(meetingSeriesKey('Nick UMN Appt Schedule (30m slots) (Patrick Lyons)'))
+    expect(meetingSeriesKey('Meeting')).toBe('meeting')
+  })
 })
 
 describe('meeting prep', () => {
@@ -82,6 +94,32 @@ describe('meeting prep', () => {
     const body = await (await handleMeetingPrep('mtg-1on1-now', env, true)).json() as any
     const descs = body.data.recentActivity.map((r: any) => r.description).sort()
     expect(descs).toEqual(['Created task: "Draft aims" → casey-eddington', 'Stage: data_analysis → data_collection'])
+  })
+
+  it('Recent activity keeps decisions, handoffs and milestones; drops PB captures', async () => {
+    activity('b1', 'decision', 'Decision logged: "Use the 12-hospital cohort"')
+    activity('b2', 'task_handoff', 'Handed off "Draft aims" to casey-eddington')
+    activity('b3', 'milestone', 'Completed milestone')
+    activity('b5', 'task', 'PB capture: call the IRB about the amendment')
+    const body = await (await handleMeetingPrep('mtg-1on1-now', env, true)).json() as any
+    const descs = body.data.recentActivity.map((r: any) => r.description)
+    expect(descs).toHaveLength(3)
+    expect(descs.some((d: string) => d.startsWith('PB capture:'))).toBe(false)
+  })
+
+  it('every activity type a Hub writer logs is either shown or deliberately excluded', () => {
+    // A new logActivity type must be placed in one list, or this fails.
+    const files = (readdirSync('api', { recursive: true }) as string[])
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+    const types = new Set<string>()
+    for (const f of files) {
+      const src = readFileSync(join('api', f), 'utf8')
+      for (const m of src.matchAll(/logActivity\(\s*[\w.]+,\s*['"]([a-z_]+)['"]/g)) types.add(m[1])
+    }
+    expect(types.size).toBeGreaterThan(20) // the scan is reading the writers
+    const known = new Set([...PREP_ACTIVITY_TYPES, ...PREP_ACTIVITY_EXCLUDED])
+    expect([...types].filter((t) => !known.has(t)).sort()).toEqual([])
+    expect(PREP_ACTIVITY_TYPES.filter((t) => PREP_ACTIVITY_EXCLUDED.includes(t))).toEqual([])
   })
 })
 

@@ -6,6 +6,7 @@ import { validateApiKey } from '../middleware/api-key-auth';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { normalizeAttendees, attendeesColumnValue, type NormalizedAttendees } from '../lib/meeting-write';
 import { ctToday } from '../lib/ct-date';
+import { TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { nowInstant } from '../lib/time';
 import { initialAudience, isLabSeriesTitle, isMeetingAudience, meetingSeriesKey } from '../../shared/meetingAudience';
 import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/viewer-db';
@@ -472,7 +473,9 @@ export async function seriesMeetingsBefore(env: Env, date: string, title: string
   const key = meetingSeriesKey(title);
   if (!key) return [];
   const { results } = await env.DB.prepare(
-    'SELECT id, date, title, source_id FROM meetings WHERE date < ? ORDER BY date DESC'
+    // The series key is computed in JS, so this reads recent meetings and filters;
+    // the LIMIT bounds that read (76 meetings on prod 2026-10-14, all in range).
+    'SELECT id, date, title, source_id FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 500'
   ).bind(date).all<SeriesMeeting>();
   return (results ?? []).filter((m) => meetingSeriesKey(m.title) === key).slice(0, SERIES_LOOKBACK);
 }
@@ -488,9 +491,35 @@ function seriesTaskRefs(meetings: SeriesMeeting[]): string[] {
 // link_01M...", "Bulk complete: 1 tasks", digest dismissals), so this NAMES the
 // human event types instead of excluding machine ones: a new machine type stays
 // out by default (G5-5, 2026-10-14).
-const PREP_ACTIVITY_TYPES = ['task', 'project', 'meeting', 'stage_change', 'assignee_change', 'project_update'];
+//
+// Every type a Hub writer logs is in exactly one of the two lists below;
+// meetings.prep-series.test.ts reads every logActivity call in api/ and fails on
+// a type in neither, so a new writer forces the choice. stage_change and the
+// *_link types also come from PB or older writers (seen on prod, 30 days to
+// 2026-10-14). Comments and notes are not here: they come from activity_entries
+// via postedActivityRows, and their old activity_log echoes ('comment',
+// 'task_update') are cut by legacyEchoExclude. Same-type machine rows are cut by description: 'Bulk '
+// (bulk sync and bulk complete) and 'PB capture:' (Nick's raw captures).
+export const PREP_ACTIVITY_TYPES = [
+  // tasks
+  'task', 'assignee_change', 'task_handoff', 'task_restore',
+  // projects and their work
+  'project', 'project_update', 'project_rename', 'pi_change', 'stage_change', 'milestone',
+  'decision', 'decision_outcome', 'dependency_created', 'paper_link', 'document_link',
+  'revision', 'revision_comment', 'submission', 'regulatory', 'conference',
+  // people, meetings, ideas
+  'meeting', 'member_added', 'mentee_milestone', 'idea', 'question', 'answer', 'answer_accepted',
+];
+/** Logged by Hub writers, deliberately kept off the prep page: machine or per-click detail. */
+export const PREP_ACTIVITY_EXCLUDED = [
+  'pb_session', 'sync', 'digest', 'publication_link', 'publication_unlink', 'agenda', 'activity', 'inbox_event',
+  'task_delete', 'project_delete',
+  'task_file_attach', 'task_file_delete', 'subtask_created', 'subtask_completed', 'subtask_uncompleted',
+  'handoff_acknowledged', 'milestone_note', 'team_update', 'role_assignment',
+];
 const PREP_ACTIVITY_WHERE =
-  `a.type IN (${PREP_ACTIVITY_TYPES.map((t) => `'${t}'`).join(', ')}) AND a.description NOT LIKE 'Bulk %'`;
+  `a.type IN (${PREP_ACTIVITY_TYPES.map((t) => `'${t}'`).join(', ')})` +
+  ` AND a.description NOT LIKE 'Bulk %' AND a.description NOT LIKE 'PB capture:%'`;
 
 // GET /api/meetings/:id/prep — facilitator prep view data.
 // Auth-gated: prep data contains task details, prior action items, activity log.
@@ -617,8 +646,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
       ? Promise.resolve({ results: [] as { id: string; title: string; description: string; assignee: string; due_date: string; status: string }[] })
       : env.DB.prepare(
           `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
-           FROM tasks t
-           JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
+           FROM tasks t ${TASK_MEETING_JOIN}
            WHERE t.meeting_id IN (${seriesRefs.map(() => '?').join(', ')})
              AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
            ORDER BY m.date DESC, t.created_at

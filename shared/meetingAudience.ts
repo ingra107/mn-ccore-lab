@@ -62,10 +62,23 @@ export function isLabSeriesTitle(title: string | null | undefined): boolean {
  * carry-forward, generated agenda). A lab series by its pattern, so title
  * variants of one series match; any other meeting by its normalized title,
  * which a recurring calendar series keeps. Null for an untitled meeting.
+ *
+ * The non-lab key drops the three variants prod titles show within one series
+ * (checked against all 76 meetings, 2026-10-14): the "MN-CCORE: " prefix the
+ * March-May import added ("MN-CCORE: Nick Adams Meeting" vs "Nick/Adams
+ * Meeting"), a trailing "meeting", and a trailing "-- April 07, 2026" date.
+ * A renamed series beyond that still starts fresh.
  */
+const SERIES_NOISE = new RegExp(`^mnccore |( ${MONTH} \\d{1,2} \\d{4})$|( meeting)$`, 'g')
+
 export function meetingSeriesKey(title: string | null | undefined): string | null {
   if (!title) return null
-  return labSeriesKey(title) ?? (normalizeSeriesTitle(title) || null)
+  const lab = labSeriesKey(title)
+  if (lab) return lab
+  const t = normalizeSeriesTitle(title)
+  let key = t
+  for (let prev = ''; prev !== key; ) { prev = key; key = key.replace(SERIES_NOISE, '').trim() }
+  return key || t || null
 }
 
 /** The audience a NEW meeting row of this title starts with. */
