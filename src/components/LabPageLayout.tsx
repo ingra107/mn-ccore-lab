@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { ExternalLink, FlaskConical } from 'lucide-react'
 import { SecHead } from './public/PublicParts'
+import MemberHead from './MemberHead'
 import { FaceDisc } from './today/skin'
 import PublicationCard from './PublicationCard'
 import PageHeartbeat from './moments/PageHeartbeat'
@@ -356,16 +357,7 @@ export function PublicationsSection({
 
   return (
     <section className="mb-16" id={id}>
-      {portalChrome ? (
-        <h2
-          className="text-xl sm:text-2xl mb-6"
-          style={{ fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink)' }}
-        >
-          {title}
-        </h2>
-      ) : (
-        <SecHead title={title} />
-      )}
+      <MemberHead title={title} />
       <div className="space-y-4">
         {visible.map((pub) => (
           <PublicationCard key={pub.id} pub={pub} />

@@ -27,6 +27,8 @@ import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 import { compactStageLabel } from '../lib/projectStage'
+import { useShowMore } from '../hooks/useShowMore'
+import { ShowMoreButton } from '../components/ui/ShowMore'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -60,70 +62,48 @@ function PubDot(props: Record<string, unknown>) {
 }
 
 function PublicationCurve({ publications }: { publications: TrajectoryData['publications'] }) {
+  // A publication row carries only its year (the API's column since 4fbb3354;
+  // this chart read a pub_date nobody sends), so the curve is cumulative by
+  // year, from the first paper to this year.
   const { chartData, maxCount } = useMemo(() => {
-    if (publications.length === 0) return { chartData: [], maxCount: 0 }
-
-    // Sort chronologically
-    const sorted = [...publications]
-      .filter((p) => p.pub_date)
-      .sort((a, b) => a.pub_date.localeCompare(b.pub_date))
-
-    if (sorted.length === 0) return { chartData: [], maxCount: 0 }
-
-    // Build month buckets from first pub to now
-    const firstDate = new Date(sorted[0].pub_date + 'T12:00:00')
-    const now = new Date()
-    const monthList: string[] = []
-    const d = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1)
-    while (d <= now) {
-      monthList.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
-      d.setMonth(d.getMonth() + 1)
-    }
-
-    // Count cumulative pubs per month
+    const years = publications.map((p) => p.year).filter((y): y is number => typeof y === 'number' && y > 0)
+    if (years.length === 0) return { chartData: [], maxCount: 0 }
+    const first = Math.min(...years)
+    const last = Math.max(new Date().getFullYear(), ...years)
     let cumulative = 0
-    const data = monthList.map((month) => {
-      const count = sorted.filter((p) => p.pub_date.slice(0, 7) === month).length
+    const data: { label: string; cumulative: number; count: number }[] = []
+    for (let y = first; y <= last; y++) {
+      const count = years.filter((v) => v === y).length
       cumulative += count
-      // Format label: "24/01" style
-      const label = month.slice(2).replace('-', '/')
-      return { month, label, cumulative, count }
-    })
-
+      data.push({ label: String(y), cumulative, count })
+    }
     return { chartData: data, maxCount: cumulative }
   }, [publications])
 
   if (chartData.length === 0) {
+    // No "Link ORCID" here: no screen links an ORCID; the old link went to
+    // Settings, which has no such control (overnight audit 2026-10-14, G9-5).
     return (
       <div
         className="py-10 px-6 text-center rounded-xl"
         style={{ background: 'var(--ice)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
-        <p style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 500, marginBottom: 6 }}>
-          Connect publications
+        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
+          No indexed publications yet
         </p>
-        <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, marginBottom: 12 }}>
-          Need 3+ indexed publications to draw a cadence curve.
-        </p>
-        <Link
-          to={PATHS.settings}
-          style={{ fontSize: '12px', color: 'var(--job-accent)', textDecoration: 'underline' }}
-        >
-          Link ORCID →
-        </Link>
       </div>
     )
   }
 
-  // Thin the X-axis tick labels when there are many months
-  const tickInterval = chartData.length > 24 ? Math.floor(chartData.length / 6) - 1 : chartData.length > 12 ? 2 : 0
+  // Thin the X-axis tick labels when there are many years
+  const tickInterval = chartData.length > 12 ? Math.ceil(chartData.length / 6) - 1 : 0
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', }}>
-          Cumulative publications over time
+          Cumulative publications by year
         </span>
         <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--job-accent)' }}>
           {maxCount}
@@ -192,7 +172,12 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
     )
   }
 
+  return <ProjectVelocityList projectStages={projectStages} />
+}
+
+function ProjectVelocityList({ projectStages }: { projectStages: TrajectoryData['projectStages'] }) {
   const maxDays = Math.max(...projectStages.map((p) => p.total_days), 1)
+  const list = useShowMore(projectStages, 10)
 
   return (
     <div>
@@ -206,7 +191,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
       </div>
 
       <div className="flex flex-col gap-3">
-        {projectStages.map((project, i) => {
+        {list.visible.map((project, i) => {
           const stageColor = homeStageColor(project)
           const totalWidth = (project.total_days / maxDays) * 100
           const stageWidth = project.total_days > 0
@@ -220,7 +205,9 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.04, duration: 0.25 }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
+              {/* The title wraps and the stage chip drops under it on a narrow
+                  screen; an ellipsis cut titles to 126px on a phone (G9-4). */}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem 0.75rem', marginBottom: '0.35rem' }}>
                 <Link
                   to={PATHS.project(project.slug)}
                   style={{
@@ -228,11 +215,9 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                     fontWeight: 500,
                     color: 'var(--ink)',
                     textDecoration: 'none',
-                    flex: 1,
+                    flex: '1 1 14rem',
                     minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    overflowWrap: 'anywhere',
                   }}
                 >
                   {project.title}
@@ -310,6 +295,7 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
           )
         })}
       </div>
+      <ShowMoreButton list={list} noun="projects" />
     </div>
   )
 }
@@ -372,7 +358,6 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
             className="card"
             style={{
               padding: '1.25rem',
-              borderLeft: `3px solid ${card.color}`,
               textAlign: 'center',
             }}
           >
@@ -422,6 +407,7 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
 // ── Publication Timeline ───────────────────────────────────
 
 function PublicationTimeline({ publications }: { publications: TrajectoryData['publications'] }) {
+  const list = useShowMore(publications, 10)
   if (publications.length === 0) {
     return (
       <div
@@ -452,15 +438,15 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
         }}
       />
 
-      {publications.map((pub, i) => (
+      {list.visible.map((pub, i) => (
         <motion.div
           key={pub.id}
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.05, duration: 0.25 }}
+          initial={{ y: 6 }}
+          animate={{ y: 0 }}
+          transition={{ delay: Math.min(i * 0.05, 0.5), duration: 0.25 }}
           style={{
             position: 'relative',
-            paddingBottom: i < publications.length - 1 ? '1.5rem' : 0,
+            paddingBottom: i < list.visible.length - 1 ? '1.5rem' : 0,
           }}
         >
           {/* Timeline dot */}
@@ -482,7 +468,6 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
             className="card"
             style={{
               padding: '1rem 1.25rem',
-              borderLeft: '3px solid var(--sk-line2)',
             }}
           >
             <h4
@@ -516,10 +501,10 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                   {pub.journal}
                 </span>
               )}
-              {pub.journal && pub.pub_date && (
+              {pub.journal && pub.year && (
                 <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
               )}
-              {pub.pub_date && (
+              {pub.year && (
                 <span
                   style={{
                     fontSize: 'var(--label-size)',
@@ -527,7 +512,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                     opacity: 0.85,
                   }}
                 >
-                  {pub.pub_date}
+                  {pub.year}
                 </span>
               )}
             </div>
@@ -550,6 +535,7 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
           </div>
         </motion.div>
       ))}
+      <ShowMoreButton list={list} noun="papers" />
     </div>
   )
 }
@@ -661,6 +647,7 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
 // ── Active Projects Grid ───────────────────────────────────
 
 function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) {
+  const list = useShowMore(projects, 12)
   if (projects.length === 0) {
     return (
       <div
@@ -676,11 +663,12 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
   }
 
   return (
+    <div>
     <div
       className="grid gap-3"
-      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}
     >
-      {projects.map((project, i) => {
+      {list.visible.map((project, i) => {
         const stageColor = homeStageColor(project)
         return (
           <motion.div
@@ -695,7 +683,6 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
               style={{
                 padding: '1.25rem',
                 textDecoration: 'none',
-                borderLeft: `3px solid ${stageColor}`,
                 transition: 'border-color 0.2s, box-shadow 0.2s',
               } as React.CSSProperties}
             >
@@ -741,6 +728,8 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
           </motion.div>
         )
       })}
+    </div>
+    <ShowMoreButton list={list} noun="projects" />
     </div>
   )
 }
@@ -789,8 +778,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
             className="card"
             style={{
               padding: '0.875rem 1.25rem',
-              borderLeft: `3px solid ${dateColor}`,
-              opacity: isComplete ? 0.85 : 1,
+              borderLeft: isOverdue ? '3px solid var(--job-overdue)' : undefined,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
@@ -922,7 +910,6 @@ function ContribMetricCard({
       className="card"
       style={{
         padding: '1.25rem',
-        borderLeft: `3px solid ${color}`,
         textAlign: 'center',
       }}
     >
@@ -962,6 +949,8 @@ interface TimelineEntry {
   title: string
   subtitle?: string
   timestamp: string
+  /** Shown instead of a day when the source has only a year (publications). */
+  dateLabel?: string
 }
 
 const TYPE_CONFIG: Record<
@@ -1033,7 +1022,10 @@ function buildTimeline(data: ContributionsData): TimelineEntry[] {
       type: 'publication',
       title: p.title,
       subtitle: p.journal || undefined,
-      timestamp: (p.pub_date || '') + 'T12:00:00',
+      // A publication row carries only its year. Sort it at the start of that
+      // year and print the year; the old pub_date read gave "Invalid Date" (G9-2).
+      timestamp: `${p.year}-01-01T12:00:00`,
+      dateLabel: String(p.year),
     })
   }
 
@@ -1042,6 +1034,8 @@ function buildTimeline(data: ContributionsData): TimelineEntry[] {
 }
 
 function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
+  // 759 entries rendered at once made a 125,000px phone page (G9-3, G11-2).
+  const list = useShowMore(entries, 50)
   if (entries.length === 0) {
     return (
       <div
@@ -1072,25 +1066,25 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
         }}
       />
 
-      {entries.map((entry, i) => {
+      {list.visible.map((entry, i) => {
         const config = TYPE_CONFIG[entry.type]
         const Icon = config.icon
-        const dateStr = entry.timestamp
+        const dateStr = entry.dateLabel ?? (entry.timestamp
           ? parseDbUtc(entry.timestamp).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
             })
-          : ''
+          : '')
 
         return (
           <motion.div
             key={entry.id}
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ y: 6 }}
+            animate={{ y: 0 }}
             transition={{ delay: Math.min(i * 0.02, 0.5), duration: 0.25 }}
             style={{
               position: 'relative',
-              paddingBottom: i < entries.length - 1 ? '0.75rem' : 0,
+              paddingBottom: i < list.visible.length - 1 ? '0.75rem' : 0,
             }}
           >
             {/* Type dot */}
@@ -1115,7 +1109,6 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
               className="card"
               style={{
                 padding: '0.75rem 1rem',
-                borderLeft: `3px solid ${config.color}`,
               }}
             >
               <div
@@ -1145,6 +1138,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
                       color: 'var(--ink)',
                       margin: 0,
                       lineHeight: 1.4,
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     {entry.title}
@@ -1177,6 +1171,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
           </motion.div>
         )
       })}
+      <ShowMoreButton list={list} noun="entries" />
     </div>
   )
 }
@@ -1298,8 +1293,10 @@ export default function TrajectoryPage() {
   const member = slug ? getMemberBySlug(slug) : undefined
   const { data: trajectory, isLoading, refetch: refetchTrajectory } = useTrajectory(slug || '')
   const [activeTab, setActiveTab] = useState<TabId>('trajectory')
-  // Contributions are the member's and the PI's alone; the server refuses others.
+  // Contributions and the activity sections are the member's and the PI's
+  // alone; the server sends others the papers only (scope 'public').
   const canSeeContributions = useCanSeePerson(slug)
+  const canSeeActivity = canSeeContributions
 
   usePageMeta(
     member ? `${member.name} — Development Trajectory | MN-CCORE Lab` : 'Trajectory | MN-CCORE Lab',
@@ -1525,15 +1522,18 @@ export default function TrajectoryPage() {
                 )}
 
                 {/* Section 3: Task Velocity */}
-                <section id="task-velocity">
-                  <SectionHeader title="Task Velocity" />
-                  <TaskVelocity taskStats={trajectory.taskStats} />
-                </section>
-
-                <Divider />
+                {canSeeActivity && (
+                  <>
+                    <section id="task-velocity">
+                      <SectionHeader title="Task Velocity" />
+                      <TaskVelocity taskStats={trajectory.taskStats} />
+                    </section>
+                    <Divider />
+                  </>
+                )}
 
                 {/* Section 4: Activity Heatmap */}
-                {slug && (
+                {slug && canSeeActivity && (
                   <>
                     <section id="activity-heatmap">
                       <SectionHeader title="Activity" />
@@ -1545,13 +1545,16 @@ export default function TrajectoryPage() {
                   </>
                 )}
 
-                {/* Section 5: Active Projects */}
-                <section id="active-projects">
-                  <SectionHeader title="Active Projects" count={trajectory.projects.length} />
-                  <ActiveProjects projects={trajectory.projects} />
-                </section>
-
-                <Divider />
+                {/* Section 5: Active Projects (the API leaves out finished ones) */}
+                {canSeeActivity && (
+                  <>
+                    <section id="active-projects">
+                      <SectionHeader title="Active projects" count={trajectory.projects.length} />
+                      <ActiveProjects projects={trajectory.projects} />
+                    </section>
+                    <Divider />
+                  </>
+                )}
 
                 {/* Section 6: Publication Timeline */}
                 <section id="publication-timeline">
@@ -1559,13 +1562,16 @@ export default function TrajectoryPage() {
                   <PublicationTimeline publications={trajectory.publications} />
                 </section>
 
-                <Divider />
-
                 {/* Section 7: Milestones */}
-                <section id="milestones">
-                  <SectionHeader title="Milestones" count={trajectory.milestones.length} />
-                  <UpcomingMilestones milestones={trajectory.milestones} />
-                </section>
+                {canSeeActivity && (
+                  <>
+                    <Divider />
+                    <section id="milestones">
+                      <SectionHeader title="Milestones" count={trajectory.milestones.length} />
+                      <UpcomingMilestones milestones={trajectory.milestones} />
+                    </section>
+                  </>
+                )}
               </>
             )}
 

@@ -110,7 +110,7 @@ export default function CalendarFeedsPanel() {
             placeholder="Label (optional)"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            className="w-32 rounded-md px-2 py-1.5 text-xs outline-none"
+            className="w-full sm:w-32 rounded-md px-2 py-1.5 text-xs outline-none"
             style={FEED_INPUT_STYLE}
           />
           <button

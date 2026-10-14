@@ -11,7 +11,7 @@ import { PATHS } from '../../constants/paths'
 import { photoFor } from '../../lib/personLabel'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTeamRaw } from '../../hooks/useTeamRaw'
-import { Save, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
+import { Save, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useTeam } from '../../hooks/useApiData'
 import PageHeader from '../../components/PageHeader'
@@ -155,9 +155,9 @@ export default function ProfilePage() {
             <Link
               to={PATHS.teamMember(slug)}
               className="inline-flex items-center gap-1 text-[11px]"
-              style={{ color: 'var(--job-accent)' }}
+              style={{ color: 'var(--job-accent)', minHeight: 24 }}
             >
-              View public profile <ExternalLink {...ICON_PROPS} size={11} />
+              View my team page
             </Link>
           </div>
         </div>

@@ -2,13 +2,13 @@
  * MemberProjects -- the projects a team member is on (#145), for the Team
  * member page. The list is what the VIEWER may see: Casey looking at Nate's
  * page sees only the shared projects, so an empty list does not mean the
- * member has no projects. Signed-in portal pages only.
+ * member has no projects. Signed-in members only (portal or public route); a
+ * signed-out visitor gets the static list instead (MemberPage).
  */
 import { Link } from 'react-router-dom'
-import { FolderKanban } from 'lucide-react'
 import { Chip } from '../ui/Chip'
 import { useMemberProjects } from '../../hooks/useProjectMembers'
-import { ICON_PROPS } from '../../lib/iconProps'
+import MemberHead from '../MemberHead'
 import { PATHS } from '../../constants/paths'
 import { compactStageLabel } from '../../lib/projectStage'
 
@@ -17,15 +17,7 @@ export default function MemberProjects({ slug }: { slug: string }) {
   if (isError || (!isLoading && projects.length === 0)) return null
   return (
     <section className="mb-8" id="member-projects" aria-labelledby="member-projects-h" data-testid="member-projects">
-      <div className="flex items-center gap-3 mb-4">
-        <FolderKanban {...ICON_PROPS} size={20} style={{ color: 'var(--sk-t2)' }} aria-hidden="true" />
-        <h2 id="member-projects-h" className="text-xl sm:text-2xl" style={{ fontWeight: 500, color: 'var(--ink)' }}>
-          Projects
-        </h2>
-        {projects.length > 0 && (
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>{projects.length}</span>
-        )}
-      </div>
+      <MemberHead id="member-projects-h" title="Projects" count={projects.length > 0 ? projects.length : undefined} />
       {isLoading ? (
         <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', margin: 0 }}>Loading projects...</p>
       ) : (

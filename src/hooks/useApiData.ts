@@ -1296,7 +1296,8 @@ export function useProjectDependencies(slug: string) {
 // ── Trainee Trajectory ────────────────────────────────────
 
 export interface TrajectoryData {
-  publications: { id: string; title: string; journal: string; pub_date: string; doi: string }[]
+  // `year` is the only date a publication row carries (pub_date->year, 4fbb3354).
+  publications: { id: string; title: string; journal: string | null; year: number | null; doi: string | null; status?: string }[]
   taskStats: { month: string; completed: number }[]
   // Each project carries its home product's kind and stage (contract phase step 1).
   projects: ({ id: string; title: string; slug: string; status: string; category: string } & TrajectoryHome)[]
@@ -1374,7 +1375,7 @@ export interface ContributionPublication {
   id: string
   title: string
   journal: string | null
-  pub_date: string | null
+  year: number
 }
 
 export interface ContributionsData {

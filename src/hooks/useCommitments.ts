@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useAuth } from './useAuth'
 
 export interface CommitmentRow {
   id: string
@@ -15,8 +16,13 @@ export interface CommitmentRow {
   completed_at: string | null
 }
 
+// GET /api/commitments is signed-in only. The hook asks only for a signed-in
+// member, so no page (the public /team/:slug renders this too) sends a request
+// that can only 401 (overnight audit 2026-10-14, G11-11).
 export function useCommitments(slug?: string) {
+  const { user } = useAuth()
   return useQuery({
+    enabled: user.isAuthenticated && user.isMember,
     queryKey: ['commitments', slug],
     queryFn: async () => {
       try {

@@ -43,6 +43,14 @@
 //               fallback arm of a photo ternary). Faces are FaceDisc (photo
 //               when there is one, initials disc as the fallback).
 //               Counted from 2026-10-12 (wave 3).
+//   edge        a card drawn with an always-on 3px left stripe
+//               (`borderLeft: '3px solid ...'` or the template-literal form).
+//               The stripe was the old card's decoration: a neutral or
+//               per-type color on every card. A rail that appears only in one
+//               state (`borderLeft: overdue ? '3px solid var(--job-overdue)' :
+//               undefined`) is the urgency channel (Hub Rule 76) and does not
+//               match. Counted from 2026-10-14 (overnight audit: the member and
+//               trajectory pages, where it was the last old-look mark).
 //
 // The old PageHeader `icon` prop, the `Avatar` component, `MetricCard`, the
 // SectionHead `icon` prop, the bordered-pill SegmentedToggle skins and the
@@ -72,6 +80,9 @@ export const METRICS = {
     /\bborderBottom:[^\n]*2px solid[^\n]*transparent/g,
     // A class string pairing `border-b-2` with `border-transparent` (the Tailwind tab idiom).
     /(["'`])(?:(?!\1)[^\n])*?\bborder-b-2\b(?:(?!\1)[^\n])*?\bborder-transparent\b(?:(?!\1)[^\n])*?\1/g,
+  ],
+  edge: [
+    /\bborderLeft:\s*['"`]3px solid/g,
   ],
   initials: [
     // `{x.initials}` as a JSX child, inline or alone on its line.
