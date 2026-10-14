@@ -1,13 +1,12 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import Sidebar from './Sidebar'
 import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
-import PageTransition from './PageTransition'
+import RouteTransition from './RouteTransition'
 import GlobalQuickAddModal, { useQuickAddShortcut } from './GlobalQuickAddModal'
 import QuickCaptureInbox from './QuickCaptureInbox'
 import RouteProgressBar from './RouteProgressBar'
@@ -318,9 +317,7 @@ export default function PortalLayout() {
           className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(var(--fab-stack-2)+56px)] lg:pb-8"
           style={{ flex: 1 }}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <PageTransition key={location.pathname} transitionKey={location.pathname} />
-          </AnimatePresence>
+          <RouteTransition />
         </main>
 
         {/* Status bar */}

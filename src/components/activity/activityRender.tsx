@@ -23,8 +23,7 @@
 // bar colour are the only per-kind visual differentiators; the structure is
 // invariant so every entry reads as part of the same thread regardless of kind.
 
-import { type ReactNode, useEffect, useState } from 'react'
-import { DELETE_ARM_WINDOW_MS } from '../../lib/uiTiming'
+import { type ReactNode, useState } from 'react'
 import {
   TrendingUp,
   AlertTriangle,
@@ -53,6 +52,7 @@ import { LifecycleActivityLine } from './LifecycleActivityLine'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { withAlpha } from '../../lib/taskGrouping'
+import { useArmedConfirm } from '../../hooks/useArmedConfirm'
 // canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
 // burndown, #174) — this file's react-refresh contract is components-only;
 // that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
@@ -379,25 +379,15 @@ export interface ActivityEntryItemProps {
 // no-op. Now the armed state says so in words ("Delete?"), stays visible
 // off-hover (the inline `visibility` below outranks the .detail-card/.lc-row
 // hover-hide rules in index.css), and holds for 5s.
-
+// The arm/timeout state is the shared useArmedConfirm primitive.
 export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
-  const [armed, setArmed] = useState(false)
-  useEffect(() => {
-    if (!armed) return
-    const t = setTimeout(() => setArmed(false), DELETE_ARM_WINDOW_MS)
-    return () => clearTimeout(t)
-  }, [armed])
+  const { armed, trigger } = useArmedConfirm()
   return (
     <button
       type="button"
       onClick={(e) => {
         e.stopPropagation()
-        if (armed) {
-          setArmed(false)
-          onDelete()
-        } else {
-          setArmed(true)
-        }
+        trigger(onDelete)
       }}
       title={armed ? 'Click again to delete permanently' : 'Delete entry'}
       aria-label={armed ? 'Click again to delete permanently' : 'Delete entry'}

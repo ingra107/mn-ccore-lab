@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 
 /**
  * SegmentedToggle — the ONE segmented control: Today's tray (.tk-seg), the
@@ -39,8 +39,24 @@ export function SegmentedToggle<T extends string>({
   idPrefix,
 }: SegmentedToggleProps<T>) {
   const cls = ['tk-seg', scrollable ? 'tk-seg-scroll' : '', className ?? ''].filter(Boolean).join(' ')
+  // A scrolling strip keeps the selected segment on screen: on a deep link
+  // (/settings#danger) or a programmatic change, the active tab otherwise sat
+  // past the right edge with nothing visible saying which section was open.
+  // Only the strip scrolls; the page does not move.
+  const stripRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const strip = stripRef.current
+    if (!scrollable || !strip) return
+    const on = strip.querySelector<HTMLElement>('button.tk-on')
+    if (!on) return
+    const onBox = on.getBoundingClientRect()
+    const left = onBox.left - strip.getBoundingClientRect().left + strip.scrollLeft
+    const right = left + onBox.width
+    if (left < strip.scrollLeft) strip.scrollLeft = left
+    else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = right - strip.clientWidth
+  }, [scrollable, value])
   return (
-    <div role="tablist" aria-label={ariaLabel} className={cls}>
+    <div ref={stripRef} role="tablist" aria-label={ariaLabel} className={cls}>
       {options.map((opt, i) => (
         <button
           key={opt.value}

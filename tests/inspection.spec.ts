@@ -156,9 +156,13 @@ test.describe('API — Write Endpoints', () => {
     expect(res.status()).toBe(201)
   })
 
-  test('API POST: Update lab settings', async ({ request }) => {
+  // #8949: this used to POST { key, value }, which the route stored as two
+  // junk rows named 'key' and 'value' (BASE defaults to prod). The route now
+  // accepts only the Settings-page keys, so check that it refuses an unknown
+  // key: the check writes nothing wherever BASE points.
+  test('API POST: lab settings refuses an unknown key', async ({ request }) => {
     const res = await request.post(`${BASE}/api/settings`, { data: { key: '_inspection_test', value: 'delete_me' } })
-    expect(res.status()).toBe(200)
+    expect(res.status()).toBe(400)
   })
 
   test('API POST: Vote on idea', async ({ request }) => {

@@ -23,6 +23,8 @@ import LauncherSettingsPanel from '../../components/LauncherSettingsPanel'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { useDarkMode } from '../../hooks/useDarkMode'
+import ConfirmButton from '../../components/ui/ConfirmButton'
 
 interface WorkflowTemplate {
   id: string
@@ -53,7 +55,7 @@ function DensityControl() {
   const [density, setDensity] = useDensity()
   return (
     <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--sk-line)' }}>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Table density</div>
           <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -77,7 +79,7 @@ function TodayDefaultViewControl() {
   ]
   return (
     <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--sk-line)' }}>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Today default view</div>
           <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -180,19 +182,13 @@ export default function SettingsPage() {
     return window.localStorage.getItem('showDebugItems') === 'true'
   })
 
-  // P6-A6: drive theme selection from React state, not DOM attribute reads.
-  // DOM reads at render time produce stale values; React state stays in sync.
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'dark'
-    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') ?? 'dark'
-  })
-
-  const applyTheme = (theme: 'light' | 'dark') => {
-    document.documentElement.setAttribute('data-theme', theme)
-    // Per CLAUDE.md rule 14: theme localStorage key is 'mn-ccore-theme', NOT 'theme'
-    localStorage.setItem('mn-ccore-theme', theme)
-    setCurrentTheme(theme)
-  }
+  // The theme cards drive the one theme store (useDarkMode: html.dark plus the
+  // 'mn-ccore-theme' key), the same store Ctrl+. and the sidebar use. The old
+  // version wrote html[data-theme], which nothing reads, so a tap did nothing.
+  // The selected card is the theme on screen ('system' shows what it resolved to).
+  const { isDark, setTheme } = useDarkMode()
+  const currentTheme: 'light' | 'dark' = isDark ? 'dark' : 'light'
+  const applyTheme = (theme: 'light' | 'dark') => setTheme(theme)
 
   // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
   // P1-9: AI tab removed (Nick, 2026-06-09) — it was placeholder copy + a
@@ -215,7 +211,9 @@ export default function SettingsPage() {
   // than an effect — avoids both a ref-read-during-render and a
   // setState-in-effect cascading render for what's a one-time snapshot.
   const [initialSettings, setInitialSettings] = useState<Record<string, unknown> | null>(null)
-  if (settings && !initialSettings) {
+  // Snapshot only once the query has loaded: while loading, `settings` is the
+  // {} default, and snapshotting that marked Profile dirty with no edit.
+  if (!settingsLoading && !initialSettings) {
     setInitialSettings({ ...settings })
   }
   const dirtyTabs = useMemo(() => {
@@ -413,7 +411,7 @@ export default function SettingsPage() {
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
               aria-pressed={currentTheme === 'light' ? "true" : "false"}
               style={{
-                borderColor: currentTheme !== 'dark' ? 'var(--job-accent)' : 'var(--border-subtle)',
+                borderColor: currentTheme === 'light' ? 'var(--job-accent)' : 'var(--border-subtle)',
                 background: '#ffffff',
               }}
             >
@@ -448,7 +446,7 @@ export default function SettingsPage() {
               </div>
             </button>
           </div>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+          <p className="kbd-hint text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
             You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
           <DensityControl />
@@ -467,8 +465,10 @@ export default function SettingsPage() {
                   Clears pinned cards, card order, and view preferences
                 </p>
               </div>
-              <button
-                onClick={() => {
+              <ConfirmButton
+                confirmLabel="Reset?"
+                ariaLabel="Reset dashboard layout"
+                onConfirm={() => {
                   const keys = Object.keys(localStorage).filter(k =>
                     k.startsWith('dashboard-') || k.startsWith('mnccore-dashboard') || k === 'dashboardCards' || k === 'dashboardRole'
                   )
@@ -476,10 +476,9 @@ export default function SettingsPage() {
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="tk-btn tk-sm"
               >
                 Reset
-              </button>
+              </ConfirmButton>
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -488,16 +487,17 @@ export default function SettingsPage() {
                   Removes saved search history
                 </p>
               </div>
-              <button
-                onClick={() => {
+              <ConfirmButton
+                confirmLabel="Clear?"
+                ariaLabel="Clear recent searches"
+                onConfirm={() => {
                   localStorage.removeItem('mnccore-recent-searches')
                   setSaved(true)
                   setTimeout(() => setSaved(false), 2000)
                 }}
-                className="tk-btn tk-sm"
               >
                 Clear
-              </button>
+              </ConfirmButton>
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -644,14 +644,10 @@ function LabPrefsPanel() {
       </SettingsField>
 
       <div>
-        <button
-          type="button"
-          onClick={reset}
-          className="tk-btn tk-sm"
-        >
+        <ConfirmButton confirmLabel="Reset all thresholds?" onConfirm={reset}>
           <RotateCcw {...ICON_PROPS} size={11} />
           Reset to defaults
-        </button>
+        </ConfirmButton>
       </div>
     </div>
   )
@@ -766,7 +762,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
     <div className="sk-mat mt-2" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
-        <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
+        <button onClick={() => setOpen(false)} aria-label="Close" className="hit-area" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
           <X {...ICON_PROPS} size={16} />
         </button>
       </div>
@@ -796,7 +792,13 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
               />
               {stages.length > 1 && (
-                <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                <button
+                  type="button"
+                  onClick={() => removeStage(i)}
+                  aria-label={`Remove stage ${i + 1}`}
+                  title={`Remove stage ${i + 1}`}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 5, margin: -5 }}
+                >
                   <X {...ICON_PROPS} size={14} />
                 </button>
               )}

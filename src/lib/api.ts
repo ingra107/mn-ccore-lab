@@ -1254,7 +1254,11 @@ export function fetchPBSessions(params?: { limit?: number; project?: string; sin
   return fetchApi<PBSessionRow[]>(`/api/pb/sessions${query ? `?${query}` : ''}`)
 }
 
-export function fetchPBSessionStats() {
-  return fetchApi<PBSessionStats>('/api/pb/sessions/stats')
+export function fetchPBSessionStats(params?: { project?: string; since?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.project) qs.set('project', params.project)
+  if (params?.since) qs.set('since', params.since)
+  const query = qs.toString()
+  return fetchApi<PBSessionStats>(`/api/pb/sessions/stats${query ? `?${query}` : ''}`)
 }
 

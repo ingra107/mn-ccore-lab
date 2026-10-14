@@ -1994,12 +1994,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
-/* The status bar only carries the "? for shortcuts" hint; a touch screen has
-   no keyboard to press it with (G8-09). */
-@media (hover: none) and (pointer: coarse) {
-  .status-bar-kbd { display: none !important; }
-}
-
 /* N1.15 — section hints describing drag interactions hide on touch
    (they wrapped into the headers). Drop zones and .task-grip are NOT
    hidden: PointerSensor (dnd-kit, GH#150) handles touch drag natively. */
@@ -2012,6 +2006,45 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   .ctx-kbd {
     display: none;
   }
+}
+
+/* Session History table. Six columns on a wide screen; at phone width the
+   fixed 300px of columns left Project and Summary 0px wide and pushed the page
+   to ~465px, so each session stacks: time, duration and counts on one line,
+   then the project, then up to two lines of summary. */
+.sess-grid { display: grid; grid-template-columns: 100px 80px 1fr 2fr 60px 60px; gap: var(--sp-sm); align-items: center; }
+.sess-grid .sg-sum { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) {
+  .sess-grid {
+    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-areas: "time dur . act com" "proj proj proj proj proj" "sum sum sum sum sum";
+    row-gap: 2px;
+  }
+  .sess-head { display: none; }
+  .sess-grid .sg-time { grid-area: time; }
+  .sess-grid .sg-dur { grid-area: dur; }
+  .sess-grid .sg-act { grid-area: act; }
+  .sess-grid .sg-com { grid-area: com; }
+  .sess-grid .sg-proj { grid-area: proj; }
+  .sess-grid .sg-sum {
+    grid-area: sum;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+/* Keyboard-only hints ("Ctrl+.", "? for shortcuts", the palette's arrow/esc
+   footer) mean nothing on a touch screen: .kbd-hint hides them there.
+   .touch-only is the reverse, for the touch stand-in (a Close button where a
+   mouse user reads "esc"). Keyed on the input, not the width, so a narrow
+   desktop window keeps its hints. */
+@media (hover: none) and (pointer: coarse) {
+  .kbd-hint { display: none !important; }
+}
+@media (hover: hover), (pointer: fine) {
+  .touch-only { display: none !important; }
 }
 
 /* N1.16 — Timeline task-block resize strip: wider hit target on touch.

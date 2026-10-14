@@ -45,6 +45,10 @@ export default function ActivityPage() {
     })
   }
   const [filterPerson, setFilterPerson] = useState('')
+  // A row's description truncates to one line; tapping the row opens the full
+  // line in place (rules-ui-design principle 5: the rest one tap away). Before,
+  // the text past ~25 characters was unreachable on a phone.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   // S5: windowed load — render a bounded page, "Load more" reveals the next
   // chunk. The page previously rendered all 200 rows at ~14.7K px tall.
   const PAGE_SIZE = 50
@@ -214,14 +218,23 @@ export default function ActivityPage() {
                   {items.map((item) => {
                     const person = isRealActor(item.actor) ? getPersonInfo(item.actor) : null
                     const isFocused = focusedIndex === flatIndex
+                    const isExpanded = expandedId === item.id
+                    const toggleExpanded = () => setExpandedId(isExpanded ? null : item.id)
                     flatIndex++
                     return (
                       /* Single-row layout: 24px avatar + action text + type badge + relative time */
                       <motion.div
                         key={item.id}
                         variants={staggerItem}
-                        className={`flex items-center gap-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors${isFocused ? ' task-row-focused' : ''}`}
+                        className={`flex ${isExpanded ? 'items-start' : 'items-center'} gap-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer${isFocused ? ' task-row-focused' : ''}`}
                         style={{ minHeight: 36, paddingTop: 'var(--sp-xs)', paddingBottom: 'var(--sp-xs)' }}
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
+                        onClick={toggleExpanded}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpanded() }
+                        }}
                       >
                         {person ? (
                           <ActivityAvatar slug={item.actor!} />
@@ -230,7 +243,7 @@ export default function ActivityPage() {
                             <span style={{ fontSize: 'var(--text-micro)', color: 'var(--slate)' }}>SYS</span>
                           </div>
                         )}
-                        <p className="text-xs flex-1 min-w-0 truncate" style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
+                        <p className={`text-xs flex-1 min-w-0${isExpanded ? ' break-words' : ' truncate'}`} style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
                           {person && <span style={{ fontWeight: 500 }}>{firstNameFor(item.actor!)} </span>}
                           {item.description}
                         </p>

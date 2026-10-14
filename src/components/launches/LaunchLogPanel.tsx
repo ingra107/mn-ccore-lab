@@ -18,6 +18,7 @@ import { buildWorkOnUri } from '../../lib/urlClassify'
 import { useProjects } from '../../hooks/useApiData'
 import { formatDbLocal } from '../../lib/time'
 import { statusLabel } from './launchStatusLabel'
+import ConfirmButton from '../ui/ConfirmButton'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -113,52 +114,43 @@ export default function LaunchLogPanel() {
           No launches yet.
         </p>
       ) : (
+        // One anatomy per row: what was launched (the seed) is the bright line,
+        // the metadata sits under it in muted text, and re-fire holds the right
+        // slot. On one line the seed collapsed to nothing on a phone and the
+        // page overflowed. Re-fire starts a new launch, so it asks first.
         rows.map((r) => (
           <div
             key={r.id}
-            className="flex items-center gap-2"
+            className="flex items-start gap-2"
             style={{
               fontSize: 'var(--text-label)',
               borderBottom: '1px solid var(--border-subtle)',
-              padding: '4px 0',
-              minHeight: 28,
+              padding: '6px 0',
             }}
           >
-            <span style={{ fontFamily: 'monospace', color: 'var(--sk-t2)', flexShrink: 0 }}>
-              @{r.tag}
-            </span>
-            <span style={{ color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
-              {r.origin}
-            </span>
-            <span
-              className="flex-1 truncate"
-              title={r.seed}
-              style={{ color: 'var(--ink)', opacity: 0.85 }}
+            <div className="flex-1 min-w-0">
+              <div
+                className="line-clamp-2 break-words"
+                title={r.seed}
+                style={{ color: 'var(--ink)', opacity: 0.85 }}
+              >
+                {r.seed || '(no seed)'}
+              </div>
+              <div className="flex flex-wrap items-center" style={{ columnGap: 8, rowGap: 2, color: 'var(--slate)' }}>
+                <span style={{ fontFamily: 'monospace', color: 'var(--sk-t2)' }}>@{r.tag}</span>
+                <span style={{ opacity: 0.6 }}>{r.origin}</span>
+                <span style={{ opacity: 0.6 }}>{formatDbLocal(r.created_at, 'datetime')}</span>
+                <span style={{ opacity: 0.75 }}>{statusLabel(r.status)}</span>
+              </div>
+            </div>
+            <ConfirmButton
+              tone="accent"
+              confirmLabel="Re-fire?"
+              ariaLabel={`Re-fire @${r.tag}`}
+              onConfirm={() => { void refire(r) }}
             >
-              {r.seed || '(no seed)'}
-            </span>
-            <span style={{ color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
-              {formatDbLocal(r.created_at, 'datetime')}
-            </span>
-            <span style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
-              {statusLabel(r.status)}
-            </span>
-            <button
-              type="button"
-              onClick={() => refire(r)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--sk-t2)',
-                fontSize: 'var(--text-label)',
-                padding: '0 2px',
-                flexShrink: 0,
-                textDecoration: 'underline',
-              }}
-            >
-              re-fire
-            </button>
+              Re-fire
+            </ConfirmButton>
           </div>
         ))
       )}

@@ -6,7 +6,7 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
-  Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink,
+  Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink, X,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
@@ -22,6 +22,7 @@ import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { compactStageLabel } from '../lib/projectStage'
+import { projectShortLabel } from '../lib/displayNames'
 
 interface CommandItem {
   id: string
@@ -92,6 +93,15 @@ export default function CommandPalette() {
     try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(recentRoutes)) } catch { /* best-effort; sessionStorage can throw in private mode / on quota */ }
   }, [recentRoutes])
 
+  // Any navigation closes the palette. On a phone the Back gesture moved the
+  // page underneath and left the palette open over it; a palette item already
+  // closes itself after it navigates, so this only changes the Back case.
+  const [navKey, setNavKey] = useState(location.key)
+  if (navKey !== location.key) {
+    setNavKey(location.key)
+    if (open) setOpen(false)
+  }
+
   // Global Cmd+K listener
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -142,10 +152,20 @@ export default function CommandPalette() {
 
     // T-16 Recent routes (sessionStorage) — top of palette when empty query
     for (const path of recentRoutes) {
-      const slug = path.split('/').filter(Boolean).slice(-1)[0] || path
+      const segs = path.split('/').filter(Boolean)
+      const slug = segs.slice(-1)[0] || path
+      // A project page is named by the project's short name (rules-ui-design
+      // principle 8), never its URL segment: a page visited by id showed
+      // 'Proj_01KVWX...'. Unresolved (projects still loading) reads 'Project'.
+      const isProjectPage = segs.length === 3 && segs[1] === 'projects'
+      const project = isProjectPage ? projects.find((p) => p.slug === slug || p.id === slug) : undefined
       items.push({
         id: `recent:${path}`,
-        label: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        label: project
+          ? projectShortLabel(project)
+          : isProjectPage
+            ? 'Project'
+            : slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
         sublabel: path,
         icon: Clock,
         action: () => { navigate(path); setOpen(false) },
@@ -718,9 +738,19 @@ export default function CommandPalette() {
             aria-autocomplete="list"
             aria-activedescendant={selectedIndex >= 0 ? `cmd-result-${selectedIndex}` : undefined}
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', background: 'var(--sk-line)', opacity: 'var(--ink-label)' }}>
+          <kbd className="kbd-hint text-[10px] px-1.5 py-0.5 rounded" style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', background: 'var(--sk-line)', opacity: 'var(--ink-label)' }}>
             esc
           </kbd>
+          {/* Touch stand-in for "esc": a real Close button. */}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close command palette"
+            className="touch-only hit-area"
+            style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--slate)', display: 'inline-flex' }}
+          >
+            <X {...ICON_PROPS} size={18} />
+          </button>
         </div>
 
         {/* Results */}
@@ -782,10 +812,11 @@ export default function CommandPalette() {
 
         {/* Footer hint */}
         <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}>
-          <span style={{ opacity: 'var(--ink-label)' }}>↑↓ navigate</span>
-          <span style={{ opacity: 'var(--ink-label)' }}>↵ select</span>
-          <span style={{ opacity: 'var(--ink-label)' }}>esc close</span>
-          {!isProjectMode && <span style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
+          {/* Keyboard hints hide on touch (.kbd-hint) so the list keeps the sheet. */}
+          <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>↑↓ navigate</span>
+          <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>↵ select</span>
+          <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>esc close</span>
+          {!isProjectMode && <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
           <span style={{ opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !isTaskDone(t)).length} tasks · {projects.length} projects · {team.length} people · {meetings.length} meetings
           </span>
@@ -800,7 +831,7 @@ export default function CommandPalette() {
               View all <ArrowRight {...ICON_PROPS} size={9} />
             </button>
           )}
-          <span className="ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
+          <span className="kbd-hint ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
             <Command {...ICON_PROPS} size={9} />K to toggle
           </span>
         </div>

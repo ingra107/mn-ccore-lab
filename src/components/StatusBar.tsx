@@ -21,9 +21,9 @@ export default function StatusBar({ onOpenShortcuts }: StatusBarProps) {
     <div
       role="status"
       aria-label="Status bar"
-      // Hidden below lg (no sidebar) and on touch-only screens at any width: a
-      // keyboard-shortcut hint means nothing without a keyboard (G9-13, G8-09).
-      className="hidden lg:flex status-bar-kbd"
+      // Hidden below lg (no sidebar) and on touch screens at any width
+      // (.kbd-hint): a keyboard-shortcut hint means nothing without a keyboard.
+      className="hidden lg:flex kbd-hint"
       style={{
         height: '24px',
         alignItems: 'center',
