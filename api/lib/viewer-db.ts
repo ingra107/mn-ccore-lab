@@ -30,7 +30,7 @@
 //   - A view body reads the real tables. Every view is listed, with its exact
 //     columns, in table-scope.ts HUB_VIEWS (table-scope.test.ts pins that).
 //     The one view, project_directory (schema-v139), is the deliberate opening
-//     for "what a non-member may know about a project": five columns, read
+//     for "what a non-member may know about a project": six columns, read
 //     only by api/lib/project-join.ts for signed-in members.
 //   - exec / dump / withSession run SQL this module cannot rewrite. They throw.
 //

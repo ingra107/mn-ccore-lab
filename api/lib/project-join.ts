@@ -330,6 +330,7 @@ export type DecideOutcome =
   | { kind: 'not_found' }
   | { kind: 'already'; request: JoinRequestRow }
   | { kind: 'not_listed'; request: JoinRequestRow }
+  | { kind: 'still_listed'; request: JoinRequestRow }
 
 const NOW_ISO = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
 
@@ -337,7 +338,9 @@ const NOW_ISO = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
  * Approve, decline or close. `db` is the approver's own handle; approvers read
  * every request (table-scope), so nothing here depends on seeing the project.
  * Approve on a project that left the directory closes the request instead
- * ('expired'; the database refuses the approval anyway). Close always expires.
+ * ('expired'; the database refuses the approval anyway). Close is only for a
+ * project that left the directory: on a listed one it would act as a decline
+ * that skips the 7-day rule and tells the requester the project closed.
  */
 export async function decideJoinRequest(
   db: D1Database,
@@ -352,6 +355,7 @@ export async function decideJoinRequest(
   if (req.status !== 'pending') return { kind: 'already', request: req }
 
   const listed = (await readDirectoryRow(db, req.project_id)) !== null
+  if (decision === 'close' && listed) return { kind: 'still_listed', request: req }
   const expire = decision === 'close' || (decision === 'approve' && !listed)
   let res: D1Result
   try {

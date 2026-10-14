@@ -972,7 +972,7 @@ defineRoute({
 });
 // schema-v139: the project directory and requests to join (Nick, 2026-10-13:
 // "kind of like slack where it's a channel ... but Nate and I need to
-// approve that"). A non-member reads only the directory's five columns.
+// approve that"). A non-member reads only the directory's six columns.
 defineRoute({
   method: 'GET',
   path: '/api/project-directory',

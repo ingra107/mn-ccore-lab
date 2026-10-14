@@ -45,7 +45,11 @@
 --   project_join_notes      an approver's note on a pending request (a Telegram
 --                           'Other'). Read by Nick and Nate only (table-scope);
 --                           never shown or sent to the requester.
---   triggers                guards, and the decision's effects (member row,
+--   triggers                guards; the approvers' bell (each approver other
+--                           than the requester gets a notification linking to
+--                           Today, marked read once the request is closed; Nick
+--                           ruled "Bell notification too" for Nate, who has no
+--                           Telegram); and the decision's effects (member row,
 --                           notification, Nick's Telegram question closed with a
 --                           consumer receipt) in the same transaction.
 --
@@ -80,14 +84,14 @@
 -- APPLY (test first, then prod; sanctioned wrapper only):
 --   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v139-project-join-requests.sql
 --   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v139-project-join-requests.sql
--- READ-BACK (must return exactly these 20 rows: 3 tables, 1 view, 4 indexes,
--- 12 triggers):
+-- READ-BACK (must return exactly these 21 rows: 3 tables, 1 view, 4 indexes,
+-- 13 triggers):
 --   SELECT type, name FROM sqlite_master WHERE name IN (
 --     'project_listing', 'project_join_requests', 'project_join_notes',
 --     'project_directory',
 --     'idx_pjr_one_pending', 'idx_pjr_requester', 'idx_pjr_status', 'idx_tasks_project_join_request',
 --     'trg_project_listing_hide_ins', 'trg_project_listing_hide_upd', 'trg_pjn_approver_only',
---     'trg_pjr_guard_ins', 'trg_pjr_identity_frozen', 'trg_pjr_decided_once',
+--     'trg_pjr_guard_ins', 'trg_pjr_notify_approvers', 'trg_pjr_identity_frozen', 'trg_pjr_decided_once',
 --     'trg_pjr_approve_listed', 'trg_pjr_decided',
 --     'trg_tasks_project_join_ins', 'trg_tasks_project_join_upd',
 --     'trg_tasks_project_join_answer_frozen', 'trg_tasks_project_join_answered'
@@ -103,6 +107,7 @@
 --   DROP TRIGGER IF EXISTS trg_pjr_approve_listed;
 --   DROP TRIGGER IF EXISTS trg_pjr_decided_once;
 --   DROP TRIGGER IF EXISTS trg_pjr_identity_frozen;
+--   DROP TRIGGER IF EXISTS trg_pjr_notify_approvers;
 --   DROP TRIGGER IF EXISTS trg_pjr_guard_ins;
 --   DROP TRIGGER IF EXISTS trg_pjn_approver_only;
 --   DROP TRIGGER IF EXISTS trg_project_listing_hide_upd;
@@ -226,6 +231,26 @@ BEGIN
                     AND julianday(r.decided_at) > julianday('now', '-7 days'));
 END;
 
+-- The approvers' bell: one notification per approver other than the requester,
+-- linking to Today, where JoinRequestsCard holds the Approve and Decline
+-- buttons. Written here, like every other join notification, so no writer can
+-- create a request without it. trg_pjr_decided marks them read on close.
+CREATE TRIGGER IF NOT EXISTS trg_pjr_notify_approvers AFTER INSERT ON project_join_requests
+FOR EACH ROW
+BEGIN
+  INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link)
+  SELECT 'ntf_pjq_' || NEW.id || '_' || a.slug, a.slug, 'update', 'project_join', NEW.id,
+         COALESCE((SELECT COALESCE(NULLIF(trim(tm.preferred_name), ''), tm.name)
+                     FROM team_members tm WHERE tm.slug = NEW.requester_slug), NEW.requester_slug)
+         || ' asks to join ' || COALESCE(NULLIF(trim(p.short_name), ''), p.title),
+         NEW.note,
+         '/portal/dashboard'
+    FROM (SELECT 'nick-ingraham' AS slug UNION ALL SELECT 'nate-mesfin') a
+    JOIN projects p ON p.id = NEW.project_id
+   WHERE a.slug <> NEW.requester_slug
+     AND EXISTS (SELECT 1 FROM team_members tm WHERE tm.slug = a.slug);
+END;
+
 -- What was asked never changes. project_id and requester_slug are left out on
 -- purpose: their foreign keys cascade a renamed id or slug.
 CREATE TRIGGER IF NOT EXISTS trg_pjr_identity_frozen BEFORE UPDATE ON project_join_requests
@@ -260,6 +285,11 @@ CREATE TRIGGER IF NOT EXISTS trg_pjr_decided AFTER UPDATE OF status ON project_j
 FOR EACH ROW
 WHEN OLD.status = 'pending' AND NEW.status IN ('approved', 'declined', 'expired')
 BEGIN
+  UPDATE notifications
+     SET read = 1, read_at = COALESCE(read_at, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+   WHERE source_type = 'project_join' AND source_id = NEW.id
+     AND id LIKE 'ntf_pjq_%' AND read = 0;
+
   INSERT INTO project_members (project_id, member_slug, added_by)
   SELECT NEW.project_id, NEW.requester_slug, 'join:' || NEW.decided_by
    WHERE NEW.status = 'approved'
@@ -358,12 +388,26 @@ WHEN OLD.source IS 'project_join'
  AND OLD.question_answer_json IS NOT NULL
  AND (json_extract(OLD.question_answer_json, '$.choice') IN ('approve', 'decline') OR OLD.status IS 'done')
  AND NEW.question_answer_json IS NOT OLD.question_answer_json
+ -- The single exception: trg_tasks_project_join_answered rewriting a Telegram
+ -- Approve on a project that left the directory into the "Closed" answer, while
+ -- the request is still pending, so Nick's card says closed, not approved.
+ AND NOT (
+   json_extract(OLD.question_answer_json, '$.choice') = 'approve'
+   AND OLD.status IS NOT 'done'
+   AND json_extract(NEW.question_answer_json, '$.choice') = 'other'
+   AND json_extract(NEW.question_answer_json, '$.text') = 'Closed: the project is no longer open to requests'
+   AND EXISTS (SELECT 1 FROM project_join_requests r
+                WHERE r.id = json_extract(OLD.question_spec_json, '$.choices[0].payload.request_id')
+                  AND r.status = 'pending'
+                  AND NOT EXISTS (SELECT 1 FROM project_directory d WHERE d.project_id = r.project_id))
+ )
 BEGIN
   SELECT RAISE(ABORT, 'question_answer_frozen: this join request was already decided');
 END;
 
 -- An answer on the question (a Telegram tap, or Nick's own Hub write):
---   approve -> approved (expired if the project left the directory);
+--   approve -> approved; if the project left the directory, expired, and the
+--              answer is rewritten to "Closed" so Nick's card says so;
 --   decline -> declined, its text the note to the requester;
 --   other   -> the request stays pending; the text becomes the approvers' note
 --              and the answer is cleared, so the question stays open.
@@ -373,6 +417,18 @@ WHEN NEW.source IS 'project_join'
  AND OLD.question_answer_json IS NULL
  AND NEW.question_answer_json IS NOT NULL
 BEGIN
+  UPDATE tasks
+     SET question_answer_json = json_object('v', 1, 'choice', 'other',
+           'via', COALESCE(json_extract(NEW.question_answer_json, '$.via'), 'hub'),
+           'at', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+           'text', 'Closed: the project is no longer open to requests')
+   WHERE id = NEW.id
+     AND json_extract(NEW.question_answer_json, '$.choice') = 'approve'
+     AND EXISTS (SELECT 1 FROM project_join_requests r
+                  WHERE r.id = json_extract(NEW.question_spec_json, '$.choices[0].payload.request_id')
+                    AND r.status = 'pending'
+                    AND NOT EXISTS (SELECT 1 FROM project_directory d WHERE d.project_id = r.project_id));
+
   UPDATE project_join_requests
      SET status = CASE
                     WHEN json_extract(NEW.question_answer_json, '$.choice') = 'decline' THEN 'declined'

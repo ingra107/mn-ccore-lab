@@ -4,7 +4,7 @@
 //   GET  /api/project-directory               every listed project: name, blurb, PI, and MY state on it
 //   POST /api/projects/:id/join-request       { note? }  ask to join (one pending ask per project)
 //   GET  /api/join-requests                   Nick and Nate only: pending asks + the last 14 days
-//   POST /api/join-requests/:id/decision      { decision: 'approve'|'decline'|'close', note? }  Nick and Nate only
+//   POST /api/join-requests/:id/decision      { decision: 'approve'|'decline'|'close', note? }  Nick and Nate only; close only once the project left the directory
 //   GET  /api/projects/:id/listing            a project I can see: its blurb, whether Browse hides it, whether I may change that
 //   PUT  /api/projects/:id/listing            { blurb?: string|null, hidden?: boolean }  blurb: any member; hidden: Nick or the PI
 //
@@ -104,6 +104,8 @@ export async function handleDecideJoinRequest(id: string, request: Request, view
       return json({ error: `Already ${out.request.status}${out.request.decided_by ? ` by ${out.request.decided_by}` : ''}`, code: 'decided', data: out.request }, 409)
     case 'not_listed':
       return json({ error: 'The project is no longer open to requests; the request was closed', code: 'not_listed', data: out.request }, 409)
+    case 'still_listed':
+      return json({ error: 'The project is still open to requests: approve or decline it', code: 'listed', data: out.request }, 409)
     case 'decided': return json({ data: out.request })
   }
 }

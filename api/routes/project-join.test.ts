@@ -454,13 +454,33 @@ describe('a pending request whose project left the directory can only be closed'
     })
   }
 
-  it('a Telegram Approve on an unlisted project expires the request instead of failing the tap', async () => {
+  it('a Telegram Approve on an unlisted project expires the request, and the card answer says closed, not approved', async () => {
     const id = (await ask(CASEY, P_OPEN)).json.data.id
     db.exec(`UPDATE projects SET status = 'blocked' WHERE id = '${P_OPEN}'`)
-    const res = await telegramAnswer(question(id)!.id, { v: 1, choice: 'approve', via: 'telegram', at: '2026-10-13T15:00:00Z' })
+    const tapAt = '2026-10-13T15:00:00.000Z'
+    const res = await telegramAnswer(question(id)!.id, { v: 1, choice: 'approve', via: 'telegram', at: tapAt })
     expect(res.status).toBe('accepted')
     expect(request(id)).toMatchObject({ status: 'expired', decided_by: null })
     expect(isMember(P_OPEN, 'casey-eddington')).toBe(false)
+    const q = question(id)!
+    const answer = JSON.parse(q.question_answer_json)
+    expect(answer).toMatchObject({ v: 1, choice: 'other', via: 'telegram', text: 'Closed: the project is no longer open to requests' })
+    // Newer than the tap, so PB's reconciler re-renders the card the tap drew.
+    expect(Date.parse(answer.at)).toBeGreaterThan(Date.parse(tapAt))
+    expect(res.canonical_payload.question_answer_json).toBe(q.question_answer_json)
+    expect(q.status).toBe('done')
+    expect(JSON.parse(q.question_consumed_json)).toMatchObject({ consumer: 'project_join', answer_at: answer.at })
+    expect(questionConsumedError({ status: 'todo' }, q, { question_consumed_json: q.question_consumed_json }, 'home', true)).toBeNull()
+    expect(notes('casey-eddington')[0].title).toMatch(/was closed$/)
+  })
+
+  it('the rewrite to Closed is the only change the frozen rule lets through', async () => {
+    const id = (await ask(CASEY, P_OPEN)).json.data.id
+    const qid = question(id)!.id
+    expect((await telegramAnswer(qid, { v: 1, choice: 'approve', via: 'telegram', at: '2026-10-13T15:00:00Z' })).status).toBe('accepted')
+    // Listed project, approved: a raw writer cannot turn the approval into "Closed".
+    expect(() => db.prepare(`UPDATE tasks SET question_answer_json = json_object('v', 1, 'choice', 'other', 'via', 'hub', 'at', 'x', 'text', 'Closed: the project is no longer open to requests') WHERE id = ?`).run(qid))
+      .toThrow(/question_answer_frozen/)
   })
 
   it('the database refuses an approval for an unlisted project whatever the writer', async () => {
@@ -470,10 +490,63 @@ describe('a pending request whose project left the directory can only be closed'
       .toThrow(/join_not_listed/)
   })
 
-  it('Close is always available to an approver', async () => {
+  it('Close is only for a project that left the directory: on a listed one it is refused', async () => {
     const id = (await ask(CASEY, P_OPEN)).json.data.id
+    const r = await decide(NATE, id, 'close')
+    expect(r.status).toBe(409)
+    expect(r.json.code).toBe('listed')
+    expect(request(id).status).toBe('pending')
+    expect(notes('casey-eddington')).toHaveLength(0)
+    // Once it leaves, Close works.
+    db.exec(`UPDATE projects SET status = 'done' WHERE id = '${P_OPEN}'`)
     expect((await decide(NATE, id, 'close')).status).toBe(200)
     expect(request(id).status).toBe('expired')
+  })
+})
+
+describe("the approvers' bell (Nick: \"Bell notification too\")", () => {
+  const bell = (slug: string) => db.prepare(
+    "SELECT * FROM notifications WHERE recipient_slug = ? AND id LIKE 'ntf_pjq_%' ORDER BY id",
+  ).all(slug) as Record<string, any>[]
+
+  it('a new request rings each approver other than the requester, linking to Today', async () => {
+    const id = (await ask(CASEY, P_OPEN, 'I can help')).json.data.id
+    for (const slug of ['nate-mesfin', 'nick-ingraham']) {
+      const n = bell(slug)
+      expect(n, slug).toHaveLength(1)
+      expect(n[0]).toMatchObject({ source_type: 'project_join', source_id: id, title: 'Casey Eddington asks to join Open', body: 'I can help', link: '/portal/dashboard', read: 0 })
+    }
+    expect(bell('casey-eddington')).toHaveLength(0)
+    // It reaches Nate's bell through the ordinary route.
+    expect((await call('GET', '/api/notifications?unread=1', NATE)).text).toContain('Casey Eddington asks to join Open')
+    // A repeat ask returns the first request and rings nobody again.
+    await ask(CASEY, P_OPEN)
+    expect(bell('nate-mesfin')).toHaveLength(1)
+  })
+
+  it("an approver's own request rings only the other approver", async () => {
+    const nateAsks = (await ask(NATE, P_OPEN)).json.data.id
+    expect(bell('nate-mesfin')).toHaveLength(0)
+    expect(bell('nick-ingraham').map((n) => n.source_id)).toEqual([nateAsks])
+    db.prepare("DELETE FROM project_members WHERE project_id = ? AND member_slug = 'nick-ingraham'").run(P_WAIT)
+    const nickAsks = (await ask(NICK, P_WAIT)).json.data.id
+    expect(bell('nate-mesfin').map((n) => n.source_id)).toEqual([nickAsks])
+  })
+
+  it('the bell is marked read once the request leaves pending, whoever closed it', async () => {
+    const a = (await ask(CASEY, P_OPEN)).json.data.id
+    const b = (await ask(CASEY, P_WAIT)).json.data.id
+    expect((await decide(NATE, a, 'approve')).status).toBe(200)
+    const read = (slug: string, id: string) => bell(slug).find((n) => n.source_id === id)!
+    for (const slug of ['nate-mesfin', 'nick-ingraham']) {
+      expect(read(slug, a)).toMatchObject({ read: 1 })
+      expect(read(slug, a).read_at).toBeTruthy()
+      expect(read(slug, b)).toMatchObject({ read: 0 })
+    }
+    // A Telegram decline clears it too.
+    await telegramAnswer(question(b)!.id, { v: 1, choice: 'decline', via: 'telegram', at: '2026-10-13T15:00:00Z' })
+    expect(read('nate-mesfin', b)).toMatchObject({ read: 1 })
+    expect((await call('GET', '/api/notifications?unread=1', NATE)).text).not.toContain('asks to join')
   })
 })
 
