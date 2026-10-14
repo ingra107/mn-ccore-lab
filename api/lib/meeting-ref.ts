@@ -22,9 +22,25 @@
  * touching the data. This is a read-side bridge, deliberately conservative: it
  * returns null rather than guess, because a wrong link is worse than none.
  *
- * The durable fix is to make the writers mint the canonical id; this bridge is
- * what makes the link work for everything already written.
+ * Since #1593 (2026-10-14) the SQL join above resolves every source_id-keyed
+ * task, so this bridge only sees rows the join missed: on prod that is the 151
+ * `mtg_<stamp>` rows the meeting-approval and meeting-match lanes wrote (147
+ * approval tasks, 4 questions), which name no meetings row at all.
  */
+
+/**
+ * The ONE task -> meeting join for task reads (#1593). A task's meeting_id is
+ * the Hub id or, for everything the PB debrief writes, the meeting's calendar
+ * `source_id` (v95, UNIQUE): the debrief pushes the meeting first with
+ * source_id = the id it stamps on the tasks. Joining both resolves those rows
+ * exactly, with no inference. `meeting_ref` is the joined `m.id`, so a link
+ * never targets a source_id (handleGetMeeting looks up meetings.id only).
+ * Measured on prod 2026-10-14: 169 live tasks match by source_id, 0 by id, and
+ * no task matches two meetings rows (no meetings.id equals another row's
+ * source_id). Rows the join misses fall to resolveMeetingRef below.
+ */
+export const TASK_MEETING_JOIN = 'LEFT JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)';
+export const TASK_MEETING_COLS = 'm.id AS meeting_ref, m.title AS meeting_title, m.date AS meeting_date';
 
 export interface MeetingLike {
   id: string;
