@@ -28,6 +28,7 @@
 // show a skeleton or a dash; or mark the line empty-data-ok with the reason.
 
 import fs from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { codeOnly } from './check-raw-wrangler-d1.mjs'
@@ -64,32 +65,81 @@ export function findDefaultEmptyData(filePath, text) {
   return hits
 }
 
-function walk(dir, out = []) {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === 'node_modules' || e.name === '__tests__') continue
-    const p = path.join(dir, e.name)
-    if (e.isDirectory()) walk(p, out)
-    else if (/\.(ts|tsx)$/.test(e.name) && !/\.(test|spec)\.(ts|tsx)$/.test(e.name) && !e.name.endsWith('.d.ts')) out.push(p)
+const SRC_FILE = /^src\/.*\.(ts|tsx)$/
+const SKIP = /(^|\/)__tests__\/|\.(test|spec)\.(ts|tsx)$|\.d\.ts$/
+
+function git(args, input) {
+  return execFileSync('git', args, { cwd: ROOT, input, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'pipe'] })
+}
+
+/** The paths under src/ and their text: the working tree, or with `staged` the
+ *  INDEX blobs (what the commit will contain, not what is on disk). */
+function sourceFiles(staged) {
+  if (!staged) {
+    const out = []
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (e.name === 'node_modules') continue
+        const p = path.join(dir, e.name)
+        if (e.isDirectory()) walk(p)
+        else {
+          const rel = path.relative(ROOT, p).split(path.sep).join('/')
+          if (SRC_FILE.test(rel) && !SKIP.test(rel)) out.push([rel, fs.readFileSync(p, 'utf8')])
+        }
+      }
+    }
+    walk(path.join(ROOT, 'src'))
+    return out
   }
+  const paths = git(['ls-files', '--cached', '--', 'src']).split('\n').filter((f) => SRC_FILE.test(f) && !SKIP.test(f))
+  const out = []
+  for (const f of paths) out.push([f, git(['show', ':' + f])])
   return out
 }
 
-export function scan() {
+export function scan({ staged = false } = {}) {
   const files = {}
   const detail = {}
-  for (const abs of walk(path.join(ROOT, 'src'))) {
-    const rel = path.relative(ROOT, abs).split(path.sep).join('/')
-    const hits = findDefaultEmptyData(rel, fs.readFileSync(abs, 'utf8'))
+  for (const [rel, text] of sourceFiles(staged)) {
+    const hits = findDefaultEmptyData(rel, text)
     if (hits.length) { files[rel] = hits.length; detail[rel] = hits }
   }
   return { files, detail }
 }
 
+/** { newPath: oldPath } for files git sees as renamed in the index. */
+export function stagedRenames() {
+  const map = {}
+  try {
+    for (const line of git(['diff', '--cached', '-M', '--name-status', '--diff-filter=R']).split('\n')) {
+      const [, from, to] = line.split('\t')
+      if (from && to) map[to] = from
+    }
+  } catch { /* no repo: no renames */ }
+  return map
+}
+
+/** The baseline the CHECK compares against: HEAD's committed one, so a baseline
+ *  raised by hand in the working tree or the index cannot excuse its own rise.
+ *  Before the first commit of the baseline, the file on disk. */
+export function committedBaseline() {
+  try {
+    return JSON.parse(git(['show', 'HEAD:scripts/check-default-empty-data.baseline.json']))
+  } catch {
+    return JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
+  }
+}
+
 function main() {
-  const mode = process.argv[2]
-  const { files, detail } = scan()
+  const args = process.argv.slice(2)
+  const staged = args.includes('--staged')
+  const mode = args.find((a) => a === '--init' || a === '--update')
+  const { files, detail } = scan({ staged })
   const total = Object.values(files).reduce((a, b) => a + b, 0)
   const exists = fs.existsSync(BASELINE_PATH)
+  const renames = stagedRenames()
+  // A renamed file carries its old path's allowance.
+  const allowed = (base, f) => base[f] ?? base[renames[f]] ?? 0
 
   if (mode === '--init') {
     if (exists) { console.error('baseline exists; use --update'); process.exit(2) }
@@ -98,12 +148,12 @@ function main() {
     return
   }
   if (!exists) { console.error('no baseline; run with --init'); process.exit(2) }
-  const base = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
 
   if (mode === '--update') {
+    const base = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
     for (const [f, n] of Object.entries(files)) {
-      if (n > (base[f] ?? 0)) {
-        console.error(`refusing to raise ${f}: ${base[f] ?? 0} -> ${n}. Read isPending, or mark the line ${OK_MARKER} <why>.`)
+      if (n > allowed(base, f)) {
+        console.error(`refusing to raise ${f}: ${allowed(base, f)} -> ${n}. Read isPending, or mark the line ${OK_MARKER} <why>.`)
         process.exit(1)
       }
     }
@@ -112,11 +162,12 @@ function main() {
     return
   }
 
+  const base = committedBaseline()
   let failed = false
   for (const [f, n] of Object.entries(files)) {
-    if (n > (base[f] ?? 0)) {
+    if (n > allowed(base, f)) {
       failed = true
-      console.error(`\n${f}: ${base[f] ?? 0} -> ${n} default-[] on query data without a loading read`)
+      console.error(`\n${f}: ${allowed(base, f)} -> ${n} default-[] on query data without a loading read`)
       for (const h of detail[f]) console.error(`  ${f}:${h.line}: ${h.text}`)
     }
   }

@@ -140,11 +140,12 @@ fi
 # "not loaded yet" read as "empty": the page says "No open tasks" / "0 overdue"
 # until the request returns. A default [] on query data needs a loading read in
 # the same destructure (or an empty-data-ok: reason); the rest are counted per
-# file against scripts/check-default-empty-data.baseline.json. Fires when src/
+# file against HEAD's committed scripts/check-default-empty-data.baseline.json,
+# reading the STAGED blobs. Fires when src/
 # or the gate is staged; a full scan is well under a second.
 if git diff --cached --name-only --diff-filter=ACMR \
         | grep -qE "^src/|^scripts/check-default-empty-data(\.baseline\.json|\.mjs)$"; then
-    if ! node scripts/check-default-empty-data.mjs; then
+    if ! node scripts/check-default-empty-data.mjs --staged; then
         echo ""
         echo "BLOCKED: a default [] on query data was added (see the file:line list above)."
         echo "Read isPending from the same query and show a skeleton or a dash."
