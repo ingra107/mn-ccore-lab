@@ -41,6 +41,33 @@ function dotColorForType(type: string): string {
   return 'var(--slate)'
 }
 
+/**
+ * One feed row's text: the actor badge + name, then the description, collapsed
+ * to 3 lines. Exported so feed-entry-cap.test.tsx measures the real markup: the
+ * inline badge sits on line 1, and a badge taller than the line pushes line 3
+ * past CollapsibleBody's 3-line cap and clips it.
+ */
+export function FeedEntryText({ actorName, actorInitials, description }: Pick<FeedItem, 'actorName' | 'actorInitials' | 'description'>) {
+  return (
+    <CollapsibleBody maxLines={3} fontSize="12.5px" lineHeight={1.375} contentKey={description}>
+      <p style={{ color: 'var(--ink)', margin: 0 }}>
+        {actorName ? (
+          <>
+            {/* .tk scopes the shared Today initials badge (.tk-face, 16px at .tk-sm) */}
+            <span className="tk" style={{ display: 'inline-block', verticalAlign: 'middle', fontSize: 'inherit', color: 'inherit' }}>
+              <span className="tk-face tk-sm" aria-hidden="true">{actorInitials}</span>
+            </span>
+            {' '}
+            <span style={{ fontWeight: 500 }}>{actorName}</span>
+          </>
+        ) : null}
+        {actorName ? ' ' : ''}
+        {description}
+      </p>
+    </CollapsibleBody>
+  )
+}
+
 function ActivityFeedCard() {
   const mounted = useDashboardMounted()
   // Over-fetch a bit so the post-filter feed still has 5 items.
@@ -133,22 +160,7 @@ function ActivityFeedCard() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <CollapsibleBody maxLines={3} fontSize="12.5px" lineHeight={1.375} contentKey={item.description}>
-                      <p style={{ color: 'var(--ink)', margin: 0 }}>
-                        {item.actorName ? (
-                          <>
-                            {/* .tk scopes the shared Today initials badge (.tk-face) */}
-                            <span className="tk" style={{ display: 'inline-block', verticalAlign: 'middle', fontSize: 'inherit', color: 'inherit' }}>
-                              <span className="tk-face tk-sm" aria-hidden="true">{item.actorInitials}</span>
-                            </span>
-                            {' '}
-                            <span style={{ fontWeight: 500 }}>{item.actorName}</span>
-                          </>
-                        ) : null}
-                        {item.actorName ? ' ' : ''}
-                        {item.description}
-                      </p>
-                    </CollapsibleBody>
+                    <FeedEntryText actorName={item.actorName} actorInitials={item.actorInitials} description={item.description} />
                   </div>
 
                   {/* Time */}

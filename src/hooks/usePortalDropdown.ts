@@ -1,7 +1,7 @@
 // usePortalDropdown — shared machinery for portal-to-body dropdown menus
 // (GhostSelect, FilterChip): fixed positioning off the trigger's bounding
 // rect, viewport clamping, rAF-throttled scroll/resize repositioning,
-// close-when-trigger-scrolls-out, and outside-click close.
+// close-when-trigger-scrolls-out, and outside-press close (via useDismissable).
 //
 // Callers own everything else: open/closed state, keyboard navigation,
 // focus management, filtering. This hook only answers "where does the
@@ -18,6 +18,7 @@
 // not part of #90, which was clamp math only.
 
 import { useState, useRef, useEffect, useCallback, type RefObject } from 'react'
+import { useDismissable } from './useDismissable'
 
 export interface PortalDropdownPosition {
   top: number
@@ -79,22 +80,18 @@ export function usePortalDropdown<T extends HTMLElement = HTMLElement>({
     })
   }, [getPosition, onClose])
 
+  // Outside press closes through the shared dismiss chokepoint. Escape stays
+  // with the callers, which own their keyboard handling.
+  useDismissable(open, onClose, [triggerRef, menuRef], { escape: false })
+
   useEffect(() => {
     if (!open) return
     computePosition()
 
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node
-      const inTrigger = triggerRef.current?.contains(target)
-      const inMenu = menuRef.current?.contains(target)
-      if (!inTrigger && !inMenu) onClose()
-    }
-    document.addEventListener('mousedown', onMouseDown)
     // Track scroll/resize to REPOSITION (not close) the menu.
     window.addEventListener('scroll', scheduleReposition, { capture: true, passive: true })
     window.addEventListener('resize', scheduleReposition, { passive: true })
     return () => {
-      document.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('scroll', scheduleReposition, true)
       window.removeEventListener('resize', scheduleReposition)
       if (rafRef.current !== null) {

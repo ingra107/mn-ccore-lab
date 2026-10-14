@@ -3383,6 +3383,10 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
   .desk-frame { height: calc(100dvh - var(--portal-header-h, 56px) - 56px - env(safe-area-inset-bottom, 0px) - 1rem); }
 }
 
+/* Project description click-to-edit: the dashed rule lives on the wrapper,
+   outside CollapsibleBody's measured box, and lights only on text hover. */
+.desc-edit:has([data-desc-text]:hover) { border-bottom-color: var(--sk-line2) !important; }
+
 /* SmartCompose action row on touch (overnight 2026-10-14, G7-7): its 22px attach /
    mention / emoji / lock / Hermes / Post controls measured 22px tall, under the
    WCAG 2.5.8 24px floor and far from a thumb. One rule for every composer that

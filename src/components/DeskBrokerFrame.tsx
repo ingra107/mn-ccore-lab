@@ -1,7 +1,7 @@
 // DeskBrokerFrame — renders a content_type='html' artifact for
 // /portal/artifacts/:id back on the Hub's own opaque-origin blob iframe
-// (the HtmlArtifactFrame pattern: `sandbox="allow-scripts allow-popups
-// allow-popups-to-escape-sandbox"`, NEVER allow-same-origin), with the Hub
+// (`sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"`,
+// NEVER allow-same-origin), with the Hub
 // itself brokering the working-desk kit's localStorage.
 //
 // ═══ WHY (2026-09-23 decision, Context/Decisions/2026-09-23-team-desks-hub-brokered-opaque-frame.md) ═══

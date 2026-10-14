@@ -1,5 +1,5 @@
 // One place that turns artifact HTML plus the Hub's shims into the blob an
-// opaque-origin iframe loads (HtmlArtifactFrame, DeskBrokerFrame).
+// opaque-origin iframe loads (DeskBrokerFrame).
 //
 // Two properties of that blob used to be wrong, and both are fixed here by
 // construction rather than by each caller remembering them:

@@ -1352,27 +1352,32 @@ recentActivity.length === 0 ? (
                 // CollapsibleBody wraps the click-to-edit <p> from outside, so its
                 // more/less control is not part of the edit target, and shows only
                 // when the text measurably overflows 3 lines (#8635; was length > 200).
-                // The top padding sits on the wrapper: inside the cap it would eat
-                // part of the third line.
-                <div style={{ paddingTop: 'var(--sp-xs)' }}>
+                // The padding and the dashed hover rule sit on the wrapper, outside
+                // the measured box: inside it they add 5px to a 3-line body, which
+                // then shows a "more" that reveals nothing and clips the rule.
+                // .desc-edit lights the rule only while the TEXT is hovered.
+                <div
+                  className="desc-edit"
+                  style={{
+                    padding: 'var(--sp-xs) 0',
+                    borderBottom: '1px dashed transparent',
+                    transition: 'border-color 0.2s',
+                  }}
+                >
                   <CollapsibleBody maxLines={3} fontSize="14px" lineHeight={1.6} contentKey={project.description ?? ''}>
                     <p
                       onClick={() => {
                         setDescDraft(project.description ?? '')
                         setEditingDescription(true)
                       }}
-                      className="hov-border"
+                      data-desc-text=""
                       style={{
                         color: project.description ? 'var(--ink)' : 'var(--slate)',
                         margin: 0,
                         cursor: 'pointer',
-                        padding: '0 0 var(--sp-xs)',
                         opacity: project.description ? 1 : 0.85,
-                        borderBottom: '1px dashed transparent',
-                        transition: 'border-color 0.2s',
                         whiteSpace: 'pre-wrap',
-                        '--hov-border': 'var(--sk-line2)',
-                      } as React.CSSProperties}
+                      }}
                       title="Click to edit"
                     >
                       {project.description

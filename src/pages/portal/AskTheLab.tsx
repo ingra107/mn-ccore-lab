@@ -25,7 +25,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import type { QuestionRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { projectShortLabel, projectShortLabelMap } from '../../lib/displayNames'
+import { projectFullTitleHint, projectShortLabel, projectShortLabelMap } from '../../lib/displayNames'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   open: { label: 'Open', color: 'var(--sk-t1)', bg: 'var(--sk-line)' },
@@ -37,6 +37,8 @@ export default function AskTheLab() {
   const [showCreate, setShowCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const { data: projects = [] } = useProjects()
+  const projectLabel = useMemo(() => projectShortLabelMap(projects), [projects])
   const [searchQuery, setSearchQuery] = useState('')
 
   // Auto-open create modal from URL params. Kept as an effect (not moved to
@@ -129,6 +131,7 @@ export default function AskTheLab() {
               question={q}
               expanded={expandedId === q.id}
               onToggle={() => setExpandedId(expandedId === q.id ? null : q.id)}
+              projectLabel={projectLabel}
             />
           ))
         )}
@@ -146,15 +149,15 @@ function QuestionCard({
   question,
   expanded,
   onToggle,
+  projectLabel,
 }: {
   question: QuestionRow
   expanded: boolean
   onToggle: () => void
+  /** slug -> short label, built once by the page (principle 8: never the raw slug). */
+  projectLabel: ReadonlyMap<string, string>
 }) {
   const person = getPersonInfo(question.asked_by)
-  // Principle 8: the project chip shows the short name, never the raw slug.
-  const { data: projects = [] } = useProjects()
-  const projectLabel = useMemo(() => projectShortLabelMap(projects), [projects])
   const status = statusConfig[question.status] || statusConfig.open
   const answerCount = question.answer_count ?? 0
 
@@ -505,7 +508,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             value={projectSlug}
             options={[
               { value: '', label: 'None (general question)' },
-              ...projects.map((p) => ({ value: p.slug, label: projectShortLabel(p) })),
+              ...projects.map((p) => ({ value: p.slug, label: projectShortLabel(p), hint: projectFullTitleHint(p) })),
             ]}
             onChange={setProjectSlug}
             size="md"
