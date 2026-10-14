@@ -31,7 +31,7 @@ describe('normalizeLink fallback → iconForType', () => {
   })
 
   it('Gmail thread URL → Mail icon', () => {
-    const type = normalizeLink('https://mail.google.com/mail/u/1/#inbox/thread001')?.type
+    const type = normalizeLink('https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235')?.type
     expect(type).toBe('gmail_thread')
     const { Icon, color } = iconForType(type)
     expect(Icon).toBe(Mail)
@@ -99,7 +99,7 @@ describe('stored type takes precedence over normalizer fallback', () => {
     // A Gmail URL would normally resolve to gmail_thread, but the stored type
     // says google_doc (hypothetical enrichment/override scenario).
     const storedType = 'google_doc'
-    const url = 'https://mail.google.com/mail/u/1/#inbox/thread001'
+    const url = 'https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235'
     const resolvedType = storedType || normalizeLink(url)?.type
     expect(resolvedType).toBe('google_doc')
     const { Icon } = iconForType(resolvedType)
@@ -108,7 +108,7 @@ describe('stored type takes precedence over normalizer fallback', () => {
 
   it('normalizer runs when stored type is null', () => {
     const storedType: string | null = null
-    const url = 'https://mail.google.com/mail/u/1/#inbox/thread001'
+    const url = 'https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235'
     const resolvedType = storedType || normalizeLink(url)?.type
     expect(resolvedType).toBe('gmail_thread')
   })

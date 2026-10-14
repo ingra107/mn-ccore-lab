@@ -80,10 +80,10 @@
     }
   },
   {
-    "raw": "https://mail.google.com/mail/u/1/#inbox/FMfcgz123456",
+    "raw": "https://mail.google.com/mail/u/1/#inbox/FMfcgzQbgRnJxHqPwMsLcKtVfZdNwXbj",
     "expected": {
       "type": "gmail_thread",
-      "canonical_url": "https://mail.google.com/mail/u/1/#inbox/FMfcgz123456",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/FMfcgzQbgRnJxHqPwMsLcKtVfZdNwXbj",
       "short_title": "Gmail thread"
     }
   },
@@ -339,7 +339,7 @@
     "raw": "https://mail.google.com/mail/u/0/#inbox/1a0e5f718220a235",
     "expected": {
       "type": "gmail_thread",
-      "canonical_url": "https://mail.google.com/mail/u/0/#inbox/1a0e5f718220a235",
+      "canonical_url": "https://mail.google.com/mail/u/0/#all/1a0e5f718220a235",
       "short_title": "Gmail thread"
     }
   },
@@ -347,7 +347,7 @@
     "raw": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235",
     "expected": {
       "type": "gmail_thread",
-      "canonical_url": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235",
       "short_title": "Gmail thread"
     }
   },
@@ -429,6 +429,70 @@
       "type": "local_folder",
       "canonical_url": "~/Box/Research/folder/",
       "short_title": "~/Box/Research/folder/"
+    }
+  },
+  {
+    "raw": "https://claude.ai/artifact/11GXnE6unKd3HjMJKC5Jwy",
+    "expected": {
+      "type": "artifact",
+      "canonical_url": "https://claude.ai/artifact/11GXnE6unKd3HjMJKC5Jwy",
+      "short_title": "Claude Artifact"
+    }
+  },
+  {
+    "raw": "https://claude.ai/artifact/11GXnE6unKd3HjMJKC5Jwy?x=1#f",
+    "expected": {
+      "type": "artifact",
+      "canonical_url": "https://claude.ai/artifact/11GXnE6unKd3HjMJKC5Jwy",
+      "short_title": "Claude Artifact"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/0/#sent/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/0/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#label/Foo/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#label/Foo",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/u/1/#label/Foo",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/?authuser=umn#all/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/?authuser=umn#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
     }
   }
 ]

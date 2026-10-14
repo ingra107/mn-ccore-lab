@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=e0666c37d7f73ce4cc744932f94e86a085dc02c93b2a978e828e149001f88846
+// rules_hash=9679b1338d20ff9c2f2208cb5e461a96134748d40c4b4e87b5d01df66d5d84b7
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // The one TS link normalizer. The Worker's key-link mirror (api/lib/key-link.ts)
@@ -18,7 +18,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = 'e0666c37d7f73ce4cc744932f94e86a085dc02c93b2a978e828e149001f88846'
+export const PB_LINK_RULES_HASH = '9679b1338d20ff9c2f2208cb5e461a96134748d40c4b4e87b5d01df66d5d84b7'
 
 interface PbLinkRule {
   type: string
@@ -100,9 +100,9 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "type": "gmail_draft"
   },
   {
-    "canonical": "\\0",
-    "id_group": 1,
-    "match": "https?://mail\\.google\\.com/mail/[^\\s]*#[\\w-]+/([\\w-]+)",
+    "canonical": "https://mail.google.com/mail/\\1#all/\\2",
+    "id_group": 2,
+    "match": "https?://mail\\.google\\.com/mail/(u/\\d+/|\\?authuser=[\\w.@%+-]+|)[^#\\s]*#[^\\s]*/([0-9a-fA-F]{16}|[A-Za-z0-9]{20,})",
     "title": "Gmail thread",
     "type": "gmail_thread"
   },
@@ -159,6 +159,13 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "canonical": "https://claude.ai/code/artifact/\\1",
     "id_group": 1,
     "match": "https?://claude\\.ai/code/artifact/([0-9a-fA-F-]{8,})",
+    "title": "Claude Artifact",
+    "type": "artifact"
+  },
+  {
+    "canonical": "https://claude.ai/artifact/\\1",
+    "id_group": 1,
+    "match": "https?://claude\\.ai/artifact/([A-Za-z0-9]{16,})",
     "title": "Claude Artifact",
     "type": "artifact"
   },

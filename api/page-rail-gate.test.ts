@@ -75,5 +75,5 @@ describe('the ratchet', () => {
     expect(compare(scan(), baseline).rises).toEqual([])
     const r = spawnSync(process.execPath, ['scripts/check-page-rail.mjs'], { encoding: 'utf8' })
     expect(r.status).toBe(0)
-  })
+  }, 30_000) // scans src/ and spawns the CLI; the 5 s default fails under load
 })

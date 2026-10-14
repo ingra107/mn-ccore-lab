@@ -139,11 +139,11 @@ describe('the baseline is a ratchet', () => {
     expect(r.status).toBe(1)
     expect(r.stderr).toContain('--init refuses')
     expect(fs.readFileSync(BASELINE_PATH, 'utf8')).toBe(before)
-  })
+  }, 30_000) // spawns a node process; the 5 s default fails under load
 
   it('the real tree is at or under the committed baseline', () => {
     const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
     const { counts } = scan()
     expect(compare(counts, baseline).rose).toEqual([])
-  })
+  }, 30_000) // scans all of src/; the 5 s default fails under load
 })

@@ -158,6 +158,27 @@ describe('links: a constraint failure is decided by the live row, not the engine
     expect(r.current_payload?.id).toBe('link_a');
   });
 
+  // #8897: PB's renormalize_link patches canonical_url (and type) in place,
+  // keeping the row's id and created_at, after a link-contract rule change.
+  it('an update that re-keys canonical_url onto a free key is accepted; id and created_at kept', async () => {
+    seedLink('link_rekey', { canonical_url: 'https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235', type: 'gmail_thread' });
+    const before = db.prepare("SELECT seq, created_at FROM links WHERE id='link_rekey'").get() as { seq: number; created_at: string };
+    const to = 'https://mail.google.com/mail/u/1/#all/1a0e5f718220a235';
+    const r = await send(mut({ table: 'links', record_id: 'link_rekey', op: 'update', base_seq: before.seq, patch: { canonical_url: to } }));
+    expect(r.status).toBe('accepted');
+    const after = db.prepare("SELECT canonical_url, created_at FROM links WHERE id='link_rekey'").get() as { canonical_url: string; created_at: string };
+    expect(after).toEqual({ canonical_url: to, created_at: before.created_at });
+  });
+
+  it('an update that re-keys canonical_url onto a taken key -> link_natural_key, row unchanged', async () => {
+    seedLink('link_a');
+    seedLink('link_b', { canonical_url: 'https://docs.google.com/document/d/lq23-other' });
+    const seq = (db.prepare("SELECT seq FROM links WHERE id='link_b'").get() as { seq: number }).seq;
+    const r = refused(await send(mut({ table: 'links', record_id: 'link_b', op: 'update', base_seq: seq, patch: { canonical_url: LINK.canonical_url } })), 'link_natural_key');
+    expect(r.current_payload?.id).toBe('link_a');
+    expect((db.prepare("SELECT canonical_url FROM links WHERE id='link_b'").get() as { canonical_url: string }).canonical_url).toBe('https://docs.google.com/document/d/lq23-other');
+  });
+
   it('a replayed refusal returns the same code (the receipt stores it)', async () => {
     seedLink('link_holder');
     const m = mut({ table: 'links', record_id: 'link_second', payload: { ...LINK } });

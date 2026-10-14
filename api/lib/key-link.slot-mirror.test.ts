@@ -152,6 +152,18 @@ describe('update path (PB key-link writers, KeyLinksEditor)', () => {
     expect(liveLinks(id).map((l) => l.canonical_url)).toEqual([canon(DOC)])
   })
 
+  it('#8897: a thread slot (#inbox) and its reply-draft slot (#all) make ONE row; clearing one keeps it', async () => {
+    const id = 'task_01SLOTMIRROR0000000000014'
+    seedTask(id)
+    const ALL = 'https://mail.google.com/mail/u/1/#all/1a0e5f718220a235'
+    expect(canon(GMAIL)).toBe(canon(ALL))
+    const r = await pbUpdate(id, { key_link_1: GMAIL, key_link_2: ALL }, 'mut_slotmirror_thread_pair')
+    expect(r.status).toBe('accepted')
+    expect(liveLinks(id).map((l) => l.canonical_url)).toEqual([ALL])
+    await pbUpdate(id, { key_link_2: null }, 'mut_slotmirror_thread_pair_clear')
+    expect(liveLinks(id).map((l) => l.canonical_url)).toEqual([ALL])
+  })
+
   it('a live row PB already wrote for the canonical is kept; no duplicate, slot write still lands', async () => {
     const id = 'task_01SLOTMIRROR0000000000007'
     seedTask(id)
