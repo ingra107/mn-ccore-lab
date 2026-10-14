@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  addYearsIso, barGesture, barOf, dayToIso, defaultTermYears, formatUsd, ganttSpan, grantName, isoToDay, mechanismOf, movedTerms,
+  addYearsIso, barGesture, barOf, dayToIso, defaultTermYears, dragDays, formatUsd, ganttSpan, grantName, isoToDay, mechanismOf, movedTerms,
 } from '../grants'
 
 describe('mechanism and default term (the reconciled plan: R01 5y, R21 2y, K 5y, R03 2y, else 3y)', () => {
@@ -84,5 +84,17 @@ describe('barGesture: a bar drag that writes dates never starts by accident', ()
   it('touch: jitter under 5px before the hold keeps waiting; a 250ms hold arms the drag', () => {
     expect(barGesture({ pointerType: 'touch', dx: 2, dy: 3, heldMs: 100 })).toBe('wait')
     expect(barGesture({ pointerType: 'touch', dx: 0, dy: 0, heldMs: 250 })).toBe('drag')
+  })
+})
+
+describe('dragDays: an armed drag needs 5px of travel before it moves the bar', () => {
+  // ~11.5 days/px: the K23 alone on a 390px phone (2022-2028 over a 190px track).
+  const dpp = 11.5
+  it('a wobble under 5px is no move, either way', () => {
+    for (const dx of [0, 1, 2, 3, 4, 4.9, -3, -4.9]) expect(dragDays(dx, dpp)).toBe(0)
+  })
+  it('at 5px and past it the bar follows the finger', () => {
+    expect(dragDays(5, dpp)).toBe(58)
+    expect(dragDays(-30, dpp)).toBe(-345)
   })
 })

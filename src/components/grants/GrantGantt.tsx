@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import {
-  barGesture, barOf, BAR_DRAG, dayToIso, ganttSpan, grantName, isoToDay, milestoneDate, movedTerms,
+  barGesture, barOf, BAR_DRAG, dayToIso, dragDays, ganttSpan, grantName, isoToDay, milestoneDate, movedTerms,
   type GanttBar, type GrantProduct,
 } from '../../lib/grants'
 import { GRANT_BAR_LIT, GRANT_BAR_STROKE } from '../../lib/grantBar'
@@ -100,7 +100,9 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
   const [armed, setArmed] = useState(false)
   // A pointer on the bar: `active` once barGesture says it is a deliberate
   // drag; until then it is a click, a scroll or a hold in progress.
-  const drag = useRef<{ x: number; y: number; t0: number; pointer: number; type: string; active: boolean; offset: number; hold?: number } | null>(null)
+  // `x`/`y` is the gesture origin; `ax` is where the offset is measured from
+  // (for a hold, where the finger sat when it armed, so hold drift is not a move).
+  const drag = useRef<{ x: number; y: number; ax: number; lx: number; t0: number; pointer: number; type: string; active: boolean; offset: number; hold?: number } | null>(null)
   const barRef = useRef<HTMLButtonElement>(null)
   const letGo = () => { if (drag.current?.hold) window.clearTimeout(drag.current.hold); drag.current = null; setArmed(false) }
   // The bar lets vertical panning through (touch-action: pan-y) so a scroll
@@ -143,12 +145,12 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
           onPointerDown={(e) => {
             if (e.button !== 0) return
             letGo()
-            const d = { x: e.clientX, y: e.clientY, t0: e.timeStamp, pointer: e.pointerId, type: e.pointerType, active: false, offset: 0, hold: undefined as number | undefined }
+            const d = { x: e.clientX, y: e.clientY, ax: e.clientX, lx: e.clientX, t0: e.timeStamp, pointer: e.pointerId, type: e.pointerType, active: false, offset: 0, hold: undefined as number | undefined }
             drag.current = d
             if (e.pointerType === 'touch') {
               // A touch pointer is captured to the bar implicitly (Pointer Events
               // spec). Arm on the hold itself: a still finger sends no pointermove.
-              d.hold = window.setTimeout(() => { if (drag.current === d) { d.active = true; setArmed(true) } }, BAR_DRAG.holdMs)
+              d.hold = window.setTimeout(() => { if (drag.current === d) { d.active = true; d.ax = d.lx; setArmed(true) } }, BAR_DRAG.holdMs)
             } else {
               e.currentTarget.setPointerCapture(e.pointerId)
             }
@@ -159,10 +161,11 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
             if (!d.active) {
               const g = barGesture({ pointerType: d.type, dx: e.clientX - d.x, dy: e.clientY - d.y, heldMs: e.timeStamp - d.t0 })
               if (g === 'release') { letGo(); return }
-              if (g === 'wait') return
+              if (g === 'wait') { d.lx = e.clientX; return }
               d.active = true
+              if (d.type === 'touch') d.ax = d.lx
             }
-            d.offset = Math.round((e.clientX - d.x) * dayPerPx)
+            d.offset = dragDays(e.clientX - d.ax, dayPerPx)
             setOffset(d.offset)
           }}
           onPointerUp={(e) => {

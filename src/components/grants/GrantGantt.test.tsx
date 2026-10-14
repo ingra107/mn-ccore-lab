@@ -1,8 +1,10 @@
+/// <reference types="@vitest/browser-playwright" />
 // A Gantt bar drag writes grant dates, so it must never start by accident
 // (overnight mobile audit 2026-10-14: on a 390px phone a scroll that started
 // on the K23 bar, 40px down and 4px right, posted new award dates). Runs the
 // real component in Chromium and drives it with dispatched PointerEvents.
 import { describe, it, expect, vi } from 'vitest'
+import { cdp } from 'vitest/browser'
 import { MemoryRouter } from 'react-router-dom'
 import GrantGantt, { type GanttMove } from './GrantGantt'
 import type { GrantProduct } from '../../lib/grants'
@@ -73,6 +75,17 @@ describe('GrantGantt drag gesture', () => {
     expect(fields.period_end! > '2027-11-30').toBe(true)
   })
 
+  it('touch: drift during the hold and a wobble on lift write nothing (long-press to read)', async () => {
+    const { onMove, fire } = await setup()
+    await fire('pointerdown', 'touch', 0, 0)
+    await fire('pointermove', 'touch', 4, 1)          // drift inside the 5px hold tolerance
+    await wait(320)                                   // the hold arms here, at x+4
+    await fire('pointermove', 'touch', 7, 1)          // 3px wobble after arming
+    await fire('pointerup', 'touch', 7, 1)
+    await wait(50)
+    expect(onMove).not.toHaveBeenCalled()
+  })
+
   it('mouse: 4px of travel is a click; a 60px drag moves the bar', async () => {
     const { onMove, fire } = await setup()
     await fire('pointerdown', 'mouse', 0, 0)
@@ -83,5 +96,66 @@ describe('GrantGantt drag gesture', () => {
     for (let i = 1; i <= 6; i++) await fire('pointermove', 'mouse', i * 10, 0)
     await fire('pointerup', 'mouse', 60, 0)
     await expect.poll(() => onMove.mock.calls.length).toBe(1)
+  })
+})
+
+// The tests above dispatch PointerEvents straight at the bar, so they cannot see
+// touch-action, the native touchmove preventDefault, or a page scroll. These
+// drive real touches through Chromium's input pipeline (CDP), so the browser
+// itself decides whether the page pans, as it does on a phone.
+describe('GrantGantt drag gesture, real touch input', () => {
+  type Pt = { x: number; y: number }
+  async function touchSetup() {
+    const spacer = document.createElement('div')
+    spacer.style.height = '3000px'                    // something to scroll
+    const { onMove } = await setup().then(async (s) => { document.body.appendChild(spacer); return s })
+    const session = cdp()
+    await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 })
+    const scroller = document.scrollingElement!
+    scroller.scrollTop = 0
+    const bar = document.querySelector<HTMLElement>('[data-testid="gantt-bar-p-k23"]')!
+    // The test page sits in an iframe the runner may scale; map to top-level CSS px.
+    const frame = (window.frameElement as HTMLElement).getBoundingClientRect()
+    const scale = frame.width / window.innerWidth
+    const at = (dx: number, dy: number): Pt => {
+      const r = bar.getBoundingClientRect()
+      return { x: frame.left + (r.left + r.width / 2 + dx) * scale, y: frame.top + (r.top + r.height / 2 + dy) * scale }
+    }
+    const touch = async (type: 'touchStart' | 'touchMove' | 'touchEnd', p?: Pt) => {
+      await session.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p.x, y: p.y }] : [] })
+      await new Promise((r) => requestAnimationFrame(() => r(null)))
+    }
+    const done = async () => {
+      spacer.remove()
+      await session.send('Emulation.setTouchEmulationEnabled', { enabled: false })
+    }
+    return { onMove, scroller, at, touch, done }
+  }
+
+  it('a swipe up that starts on a bar scrolls the page and writes nothing', async () => {
+    const { onMove, scroller, at, touch, done } = await touchSetup()
+    try {
+      const o = at(0, 0)
+      await touch('touchStart', o)
+      for (let i = 1; i <= 10; i++) await touch('touchMove', { x: o.x + i * 0.4, y: o.y - i * 8 })
+      await touch('touchEnd')
+      await wait(350)
+      expect(scroller.scrollTop).toBeGreaterThan(0)
+      expect(onMove).not.toHaveBeenCalled()
+    } finally { await done() }
+  })
+
+  it('press and hold, then drag: the bar moves and the page does not pan', async () => {
+    const { onMove, scroller, at, touch, done } = await touchSetup()
+    try {
+      const o = at(0, 0)
+      await touch('touchStart', o)
+      await wait(320)
+      for (let i = 1; i <= 6; i++) await touch('touchMove', { x: o.x + i * 5, y: o.y - i * 8 })
+      await touch('touchEnd')
+      await expect.poll(() => onMove.mock.calls.length).toBe(1)
+      expect(onMove.mock.calls[0][0].fields.period_start! > '2022-12-15').toBe(true)
+      expect(scroller.scrollTop).toBe(0)
+    } finally { await done() }
   })
 })

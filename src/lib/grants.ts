@@ -145,6 +145,13 @@ export function barGesture(p: { pointerType: string; dx: number; dy: number; hel
   return moved > BAR_DRAG.tolerance ? 'release' : 'wait'
 }
 
+/** Days a live drag has moved, measured from where it started (for a hold,
+ *  where the finger sat when the hold armed). Under BAR_DRAG.distance of travel
+ *  it is 0, so a press-and-hold that wobbles as the finger lifts writes nothing. */
+export function dragDays(dx: number, dayPerPx: number): number {
+  return Math.abs(dx) < BAR_DRAG.distance ? 0 : Math.round(dx * dayPerPx) || 0
+}
+
 /** The terms a drag writes. An award moves both ends and keeps its length;
  *  an application moves its proposed start (its end is not stored). */
 export function movedTerms(
