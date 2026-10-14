@@ -191,7 +191,11 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // blocks, so the detail panel stops downloading every task for it.
     // Research Digest notes (net 0): GET /api/digest/comment-counts retired
     // (each paper carries note_count), POST /api/digest/comments/:id/task added.
-    expect(ROUTE_REGISTRY).toHaveLength(266)
+    // 272 as of 2026-10-13 -- requests to join a project (schema-v139, +6):
+    // GET /api/project-directory, POST /api/projects/:id/join-request,
+    // GET /api/join-requests, POST /api/join-requests/:id/decision, and
+    // GET + PUT /api/projects/:id/listing (description and Browse switch).
+    expect(ROUTE_REGISTRY).toHaveLength(272)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

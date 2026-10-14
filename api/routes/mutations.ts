@@ -31,7 +31,7 @@ import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
-import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError, questionAnswerFrozenError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
 
@@ -1738,6 +1738,10 @@ async function applyPatch(
   // way to retire a moot question without fabricating an answer.
   if (mut.table === 'tasks' && effectivePatch) {
     effectivePatch = normalizeQuestionJsonFields(effectivePatch);
+    // schema-v139: a decided join request's answer never changes (quiet code,
+    // checked first so an Undo is not reported as question_unanswered).
+    const frozenErr = questionAnswerFrozenError(current, effectivePatch);
+    if (frozenErr) throw new RefusalError(questionRefusalCode(frozenErr), frozenErr);
     const qErr = questionRowError({ ...current, ...effectivePatch });
     if (qErr) throw new RefusalError(questionRefusalCode(qErr), qErr);
     // L-Q23: what this write carries -- a changed spec, an unknown choice.

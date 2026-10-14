@@ -1,11 +1,12 @@
 // table-scope.test.ts -- every table the migration chain builds has exactly
-// one access rule, and the chain defines no view (a view body reads the real
-// tables, past the viewer-bound handle; the first view must be classified
-// on purpose, see api/lib/viewer-db.ts).
+// one access rule, and every view the chain defines is listed in HUB_VIEWS
+// with its exact columns (a view body reads the real tables, past the
+// viewer-bound handle, so each view is a deliberate opening; see
+// api/lib/viewer-db.ts).
 
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb } from '../test-support/prod-schema-db'
-import { HUB_TABLES, TABLE_SCOPE } from './table-scope'
+import { HUB_TABLES, HUB_VIEWS, TABLE_SCOPE } from './table-scope'
 
 describe('TABLE_SCOPE covers the migrated schema', () => {
   const db = prodSchemaDb()
@@ -18,8 +19,19 @@ describe('TABLE_SCOPE covers the migrated schema', () => {
     expect(Object.keys(TABLE_SCOPE).sort()).toEqual(tables)
   })
 
-  it('the chain defines no view', () => {
-    expect(db.prepare("SELECT name FROM sqlite_master WHERE type = 'view'").all()).toEqual([])
+  it('every view the chain defines is listed in HUB_VIEWS, with exactly its columns', () => {
+    const views = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' ORDER BY name").all() as { name: string }[]).map((r) => r.name)
+    expect(views).toEqual(Object.keys(HUB_VIEWS).sort())
+    for (const [v, cols] of Object.entries(HUB_VIEWS)) {
+      const live = (db.prepare(`PRAGMA table_info(${v})`).all() as { name: string }[]).map((c) => c.name)
+      expect(live, `${v}: the view's columns are its contract`).toEqual([...cols])
+    }
+  })
+
+  it('project_directory carries no column a non-member may not see', () => {
+    // Nick, 2026-10-13: before joining, a member sees the project's name, a
+    // one-line description and its PI (with the PI's photo). Nothing else.
+    expect([...HUB_VIEWS.project_directory]).toEqual(['project_id', 'name', 'blurb', 'pi_slug', 'pi_name', 'pi_photo'])
   })
 
   it('every scoped table has the key column its DML restriction names, and its dependencies are scoped', () => {

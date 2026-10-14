@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GitBranch, Plus, List, LayoutGrid } from 'lucide-react'
+import { GitBranch, Plus, List, LayoutGrid, Compass } from 'lucide-react'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useUrlEnumFilter } from '../hooks/useUrlEnumFilter'
@@ -28,6 +28,7 @@ import { mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/proje
 import { useAllProjectProducts } from '../hooks/useProjectProducts'
 import { homeOf, type ProductRow, type ProductsByProject } from '../lib/products'
 import ProjectSleekList from '../components/project/ProjectSleekList'
+import ProjectDirectory from '../components/project/ProjectDirectory'
 import type { SleekSort } from '../components/table/SleekRows'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
@@ -232,6 +233,19 @@ export default function Projects() {
     }, { replace: true })
   }, [setSearchParams])
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
+  // schema-v139: "Browse" lists every lab project (name, one-line description,
+  // PI) so a member can ask to join one. URL-backed (?view=browse): the
+  // decline notification links here.
+  const browsing = searchParams.get('view') === 'browse'
+  const onViewChange = useCallback((v: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (v === 'browse') out.set('view', 'browse')
+      else out.delete('view')
+      return out
+    }, { replace: true })
+    if (v === 'list' || v === 'pipeline') setViewMode(v)
+  }, [setSearchParams])
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -336,10 +350,12 @@ export default function Projects() {
   return (
     <>
     <DataPage
-      title={allProjectsOn ? 'All projects' : 'My projects'}
+      // Browse lists every lab project, not mine, so the title and the hero
+      // count (which counts mine) would mislabel it.
+      title={browsing ? 'Browse projects' : allProjectsOn ? 'All projects' : 'My projects'}
       // The page's one telling number (color-back pick 2): how many projects
       // this list holds. Static: the list it counts is right below.
-      hero={projectsLoading && projects.length === 0 ? undefined : { value: totalCount, label: totalCount === 1 ? 'project' : 'projects' }}
+      hero={browsing || (projectsLoading && projects.length === 0) ? undefined : { value: totalCount, label: totalCount === 1 ? 'project' : 'projects' }}
       actions={
         <>
         <AllProjectsSwitch />
@@ -357,16 +373,17 @@ export default function Projects() {
       views={[
         { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
         { key: 'pipeline', icon: <LayoutGrid {...ICON_PROPS} size={14} />, label: 'Pipeline' },
+        { key: 'browse', icon: <Compass {...ICON_PROPS} size={14} />, label: 'Browse' },
       ]}
-      activeView={viewMode}
-      onViewChange={(v) => setViewMode(v as 'list' | 'pipeline')}
+      activeView={browsing ? 'browse' : viewMode}
+      onViewChange={onViewChange}
       /* 2026-06-10b (Nick): the Pipeline kanban is WIDE multi-column content —
          let it grow rightward to fit (anchored left edge, fluid right) instead
          of cramming 7 stages into --col-main and h-scrolling inside the band.
          #91 (Nick 2026-06-24): the List/table now also grows wide ("the whole
          width can likely be longer") — the 3fr Title column absorbs the room. */
       wideBody={true}
-      filters={
+      filters={browsing ? undefined :
         <>
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
               inline in the toolbar and occluded the Pipeline toggle mid-word.
@@ -406,7 +423,7 @@ export default function Projects() {
           </div>
         </>
       }
-      rightExtra={
+      rightExtra={browsing ? undefined :
         <>
           {/* "0 projects" while the list is still loading is a false claim. */}
           {!(projectsLoading && projects.length === 0) && <span
@@ -459,13 +476,16 @@ export default function Projects() {
         </>
       }
     >
+        {/* ─── BROWSE VIEW (schema-v139) ─── */}
+        {browsing && <ProjectDirectory />}
+
         {/* ─── LIST VIEW ─── */}
-        {projectsLoading && projects.length === 0 && (
+        {!browsing && projectsLoading && projects.length === 0 && (
           <div role="status" aria-label="Loading projects" className="tk">
             <TableSkeleton rows={10} cols={6} />
           </div>
         )}
-        {!(projectsLoading && projects.length === 0) && viewMode === 'list' && (
+        {!browsing && !(projectsLoading && projects.length === 0) && viewMode === 'list' && (
           <ProjectSleekList
             projects={filtered}
             sort={sort}
@@ -488,7 +508,7 @@ export default function Projects() {
         )}
 
         {/* ─── PIPELINE VIEW ─── */}
-        {!(projectsLoading && projects.length === 0) && viewMode === 'pipeline' && (
+        {!browsing && !(projectsLoading && projects.length === 0) && viewMode === 'pipeline' && (
           <>
             {/* Stage progression line (desktop) */}
             <div

@@ -34,7 +34,11 @@ interface QuestionsCardProps {
   band?: boolean
 }
 
-export function QuestionsCard({ tasks, band = true }: QuestionsCardProps) {
+export function QuestionsCard({ tasks: all, band = true }: QuestionsCardProps) {
+  // A request to join (source 'project_join', schema-v139) is answered on
+  // JoinRequestsCard, where Nate decides too; its question row exists for
+  // Nick's Telegram card alone, so it is not shown here a second time.
+  const tasks = all.filter((t) => t.source !== 'project_join')
   if (tasks.length === 0) return null
 
   const card = (

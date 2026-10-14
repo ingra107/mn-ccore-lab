@@ -178,6 +178,16 @@ async function call(method: string, path: string, who: 'apikey' | string, body?:
   return { status: res.status, text: await res.text() }
 }
 
+/** The directory body with each row's `name` removed (the sweep's one allowed opening). */
+function directoryWithoutNames(text: string): string {
+  try {
+    const body = JSON.parse(text) as { data?: Record<string, unknown>[] }
+    return JSON.stringify({ ...body, data: (body.data ?? []).map(({ name: _name, ...rest }) => rest) })
+  } catch {
+    return text
+  }
+}
+
 function fill(path: string, id: string): string {
   return path.replace(':rest{.+}', id === HIDDEN ? FILE_KEY : id).replace(/:[A-Za-z_]+/g, encodeURIComponent(id))
 }
@@ -239,7 +249,12 @@ describe('read sweep: a member who is not on a meeting reads nothing of it, on a
         const path = fill(route.path, id) + QUERY(id || HIDDEN)
         const r = await call('GET', path, CASEY_EMAIL)
         if (r.status === 200) answered++
-        if (r.text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} [${id}] ${r.status}: ${r.text.slice(0, 160)}`)
+        // The one deliberate opening (schema-v139, Nick 2026-10-13): the
+        // directory shows a project's name to a non-member. Its name field is
+        // the only place the marker may appear; the dedicated test below pins
+        // the row to exactly the allowed fields.
+        const text = route.path === '/api/project-directory' ? directoryWithoutNames(r.text) : r.text
+        if (text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} [${id}] ${r.status}: ${r.text.slice(0, 160)}`)
       }
     }
     expect(leaks).toEqual([])
@@ -260,6 +275,18 @@ describe('read sweep: a member who is not on a meeting reads nothing of it, on a
       const act = await call('GET', '/api/activity?limit=500&include_fixtures=1', who)
       expect(act.text, who).toContain(`${MARK} PB session`)
     }
+  })
+
+  it('the project directory shows Casey the hidden project by name, PI and blurb only', async () => {
+    const r = await call('GET', '/api/project-directory', CASEY_EMAIL)
+    expect(r.status).toBe(200)
+    const row = (JSON.parse(r.text).data as Record<string, unknown>[]).find((e) => e.project_id === PROJ)
+    expect(row, 'the hidden project is listed: that is the feature').toBeDefined()
+    expect(Object.keys(row!).sort()).toEqual(['blurb', 'decided_at', 'decided_note', 'name', 'pi_name', 'pi_photo', 'pi_slug', 'project_id', 'request_id', 'retry_after', 'state'])
+    expect(row!.name).toBe(`${MARK} project`)
+    expect(row!.state).toBe('none')
+    expect(r.text).not.toContain(`${MARK} next`)
+    expect(r.text).not.toContain(`${MARK} task`)
   })
 
   it('an anonymous caller and a signed-in non-member read no marker from any public GET (the nobody viewer)', async () => {
@@ -363,7 +390,8 @@ describe('slug spoof: renaming your own project\'s slug to a hidden project id g
     for (const route of ROUTE_REGISTRY.filter((x) => x.method === 'GET')) {
       for (const id of route.path.includes(':') ? [PROJ, TASK, REVISION] : ['']) {
         const res = await call('GET', fill(route.path, id) + QUERY(id || PROJ), CASEY_EMAIL)
-        if (res.text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} [${id}] ${res.status}: ${res.text.slice(0, 160)}`)
+        const text = route.path === '/api/project-directory' ? directoryWithoutNames(res.text) : res.text
+        if (text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} [${id}] ${res.status}: ${res.text.slice(0, 160)}`)
       }
     }
     expect(leaks).toEqual([])
@@ -407,7 +435,8 @@ describe('slug claims: a person cannot take a slug a deleted project used or a c
     const leaks: string[] = []
     for (const route of ROUTE_REGISTRY.filter((x) => x.method === 'GET' && !x.path.includes(':'))) {
       const res = await call('GET', route.path + QUERY(GONE), CASEY_EMAIL)
-      if (res.text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} ${res.status}`)
+      const text = route.path === '/api/project-directory' ? directoryWithoutNames(res.text) : res.text
+      if (text.toUpperCase().includes(MARK)) leaks.push(`GET ${route.path} ${res.status}`)
     }
     expect(leaks).toEqual([])
   }, 60_000)

@@ -40,6 +40,8 @@
 // not reach meetings ("No, never").
 
 import type { ScopedViewer } from './viewer-db'
+import { isJoinApprover } from '../../shared/joinApprovers'
+import { DIRECTORY_COLUMNS } from './project-join-columns'
 
 export const HUB_TABLES = [
   '_meta', 'activity_entries', 'activity_log', 'activity_thread_seen', 'agenda_items', 'agent_knowledge', 'ai_requests',
@@ -53,7 +55,7 @@ export const HUB_TABLES = [
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
   'product_funding', 'product_kinds', 'product_stages', 'products', 'project_dependencies', 'project_home_seed',
-  'project_documents', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
+  'project_documents', 'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
@@ -284,6 +286,22 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
     },
   },
 
+  // Requests to join a project (schema-v139): the requester reads their own;
+  // Nick and Nate (JOIN_APPROVER_SLUGS, a named list mirrored by a CHECK in
+  // the migration) read them all, because they decide them. Nobody reads none.
+  project_join_requests: {
+    kind: 'scoped', key: 'id', dependsOn: [],
+    where: (v) => (v.kind !== 'person'
+      ? '0'
+      : isJoinApprover(v.slug) ? null : `project_join_requests.requester_slug = ${sqlList([v.slug])}`),
+  },
+  // An approver's note on a request (a Telegram 'Other'): Nick and Nate only.
+  // The requester never reads it, on any route.
+  project_join_notes: {
+    kind: 'scoped', key: 'request_id', dependsOn: [],
+    where: (v) => (v.kind === 'person' && isJoinApprover(v.slug) ? null : '0'),
+  },
+
   // A person's own Research Digest reading state (schema-v136): Save and
   // Dismiss are per person, so a member reads only their own rows. No PI arm:
   // what Nick saved is nobody else's state, and his is not theirs. Nobody
@@ -395,6 +413,10 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   regulatory_items: byProject('regulatory_items', 'project_id', 'id', false),
   submission_events: byProject('submission_events', 'project_id', 'id', false),
   project_documents: byProject('project_documents', 'project_id', 'id', false),
+  // The Browse listing (schema-v139: one-line description, hidden switch)
+  // follows its project for direct reads and writes. A non-member reads the
+  // description only through the project_directory view (HUB_VIEWS below).
+  project_listing: byProject('project_listing', 'project_id', 'project_id', false),
   project_publications: byProject('project_publications', 'project_id', ['project_id', 'publication_id'], false),
   project_state_log: byProject('project_state_log', 'project_id', 'id', false),
   file_activity_daily: byProject('file_activity_daily', 'project_id'),
@@ -470,3 +492,18 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   sessions: LAB, team_members: LAB, trainee_milestones: LAB, trajectories: LAB, user_calendar_events: LAB,
   user_calendar_feeds: LAB, workflow_templates: LAB,
 }
+
+// ── views ────────────────────────────────────────────────────────────────────
+//
+// A view's body reads the REAL tables, past the viewer's filtered copies
+// (viewer-db.ts), so every view is a deliberate opening and is listed here
+// with its exact columns. table-scope.test.ts fails on a view the chain
+// defines that is not listed, or whose columns differ.
+//
+//   project_directory (schema-v139): what a member who is NOT on a project may
+//     know about it: its name, one-line description and PI, with the PI's
+//     photo (Nick, 2026-10-13).
+//     Read only by api/lib/project-join.ts, only for signed-in members.
+export const HUB_VIEWS = {
+  project_directory: DIRECTORY_COLUMNS,
+} as const satisfies Record<string, readonly string[]>

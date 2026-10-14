@@ -16,7 +16,9 @@
 //           "show all projects" on (a project he is not on is invisible to him
 //           otherwise, so a PI who can see it is one of those).
 //   remove  a PI (that can see it), the PB key, or the member themself.
-// There is no self-join from a directory in this issue: you are added.
+// There is still no self-join: a member who is not on a project ASKS to join
+// it from the directory (api/routes/project-join.ts, schema-v139) and Nick or
+// Nate approves; the approval adds the row by trigger, not through this route.
 
 import type { AuthUser, Env } from '../helpers'
 import { homeProductCols, homeProductJoin } from '../lib/project-home'

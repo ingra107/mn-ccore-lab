@@ -58,6 +58,7 @@ import { NewActivityCard } from '../../components/today/rail/NewActivityCard'
 import { CommitmentsCard } from '../../components/today/rail/CommitmentsCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
+import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
 import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays } from '../../lib/taskGrouping'
@@ -615,6 +616,10 @@ export default function TodayPage() {
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
         <QuestionsCard tasks={questionTasks} band={false} />
+
+        {/* Asks to join a project (schema-v139): Nick and Nate only; renders
+            nothing for anyone else or when none is pending. */}
+        <JoinRequestsCard />
 
         {/* Pending meetings triage card. Disappears automatically once all
             pending meetings are accepted or declined. */}
