@@ -272,7 +272,7 @@ export default function CreateTaskModal({ open, onClose, onCreate, defaultProjec
               {submitting ? 'Creating…' : 'Create Task'}
             </Button>
             <kbd
-              className="text-[10px] px-1.5 py-0.5 rounded select-none"
+              className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded select-none"
               style={{
                 fontFamily: 'var(--font-mono)',
                 color: 'var(--slate)',

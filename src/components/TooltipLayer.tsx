@@ -34,7 +34,13 @@ export function TooltipLayer() {
       setTip(null)
       setPos(null)
     }
-    const onOver = (e: MouseEvent) => {
+    // Pointer events, not mouse events: a touch tap fires a compatibility
+    // mouseover and no mouseout, so the chip stuck on screen after every tap
+    // ('Mark done' over the card, 'Mention' over the tab; overnight 2026-10-14
+    // audit, G1-8 / G2-10). A hover tooltip is for a pointer that can hover;
+    // touch gets the aria-label, and a touch press clears any open chip.
+    const onOver = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return
       const el = (e.target as Element | null)?.closest?.('[data-tip]') ?? null
       if (!el) return
       // Already showing for this element — keep it stationary (native behavior).
@@ -45,7 +51,7 @@ export function TooltipLayer() {
       setPos(null)                       // hide until re-measured against the viewport
       setTip({ text, cx: e.clientX, cy: e.clientY })
     }
-    const onOut = (e: MouseEvent) => {
+    const onOut = (e: PointerEvent) => {
       if (!activeEl.current) return
       const related = e.relatedTarget as Node | null
       if (related && activeEl.current.contains(related)) return  // moved to a child — stay
@@ -53,13 +59,16 @@ export function TooltipLayer() {
     }
     // The chip is anchored to a captured pointer position; once the page scrolls
     // that position is stale, so dismiss rather than let it float detached.
-    document.addEventListener('mouseover', onOver)
-    document.addEventListener('mouseout', onOut)
+    const onDown = (e: PointerEvent) => { if (e.pointerType === 'touch') clear() }
+    document.addEventListener('pointerover', onOver)
+    document.addEventListener('pointerout', onOut)
+    document.addEventListener('pointerdown', onDown)
     window.addEventListener('scroll', clear, true)
     window.addEventListener('blur', clear)
     return () => {
-      document.removeEventListener('mouseover', onOver)
-      document.removeEventListener('mouseout', onOut)
+      document.removeEventListener('pointerover', onOver)
+      document.removeEventListener('pointerout', onOut)
+      document.removeEventListener('pointerdown', onDown)
       window.removeEventListener('scroll', clear, true)
       window.removeEventListener('blur', clear)
     }

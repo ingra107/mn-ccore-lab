@@ -9,15 +9,21 @@ interface StatusBarProps {
 // ethos (a control that can't be made truthful is removed, not faked — the same
 // "never a comforting fake" principle behind the prior P1-13 change), the dead
 // indicator is gone. The bar now just hosts the keyboard-shortcuts hint.
+//
+// Desktop only (lg+, where the sidebar lives). Below lg the fixed MobileTabBar
+// covers the page foot, so the bar sat entirely under it, and a keyboard hint
+// with an 11px-tall target is dead weight on a phone (overnight 2026-10-14
+// audit, G9-13 / G4-7 / G1-11). `hidden lg:flex` owns `display`, so the inline
+// style must not set it.
 
 export default function StatusBar({ onOpenShortcuts }: StatusBarProps) {
   return (
     <div
       role="status"
       aria-label="Status bar"
+      className="hidden lg:flex"
       style={{
         height: '24px',
-        display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
         padding: '0 var(--sp-lg)',

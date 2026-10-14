@@ -52,13 +52,27 @@ describe('version bump', () => {
     expect(version()).toBe('1')
   })
 
+  it('marking notifications read does not bump it (a per-user read receipt)', async () => {
+    insertRow(db, 'notifications', { id: 'n-1', recipient_slug: 'casey-eddington', type: 'mention', source_type: 'task', source_id: 't-1', title: 'hi', read: 0 })
+    expect(await post('/api/notifications/n-1/read', {})).toBe(200)
+    expect(await post('/api/notifications/read-all', {})).toBe(200)
+    expect((db.prepare("SELECT read FROM notifications WHERE id = 'n-1'").get() as { read: number }).read).toBe(1)
+    expect(version()).toBe('1')
+  })
+
   it('a data write still bumps it (the control)', async () => {
-    expect(await post('/api/notifications/read-all', {})).toBeLessThan(300)
+    expect(await post('/api/commitments', { id: 'c-1', commitment: 'send the draft', to_whom: 'Nick' })).toBeLessThan(300)
     expect(version()).not.toBe('1')
   })
 
   it('only the read-receipt and error-report routes opt out', () => {
     const optOut = ROUTE_REGISTRY.filter((r) => r.noVersionBump).map((r) => `${r.method} ${r.path}`).sort()
-    expect(optOut).toEqual(['POST /api/client-errors', 'POST /api/seen', 'POST /api/thread-seen'])
+    expect(optOut).toEqual([
+      'POST /api/client-errors',
+      'POST /api/notifications/:id/read',
+      'POST /api/notifications/read-all',
+      'POST /api/seen',
+      'POST /api/thread-seen',
+    ])
   })
 })

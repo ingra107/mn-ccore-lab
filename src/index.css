@@ -1847,9 +1847,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     border-radius: 8px;
   }
 
-  /* Portal content — tighter padding on mobile */
+  /* Portal content — tighter padding on mobile. Top and sides only: the
+     bottom keeps PortalLayout's tab-bar clearance (pb-[calc(var(--fab-stack-2)+56px)]).
+     A bare `padding: 12px !important` here cut it to 12px and left every
+     page's last row under the fixed MobileTabBar at <=420px (overnight
+     2026-10-14 audit: Meetings footer, Team/Pipeline disclosures). */
   .portal-content {
-    padding: 12px !important;
+    padding-top: 12px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 
   /* New project / action buttons — WCAG 2.5.5 44px touch target floor */
@@ -2017,10 +2023,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .tk .tk-hov,
 button.tk-btn,
 .tk button.tk-pill,
-.tk button.tk-join,
-.tk button.tk-joinq,
+.tk .tk-join,
+.tk .tk-joinq,
 .tk button.tk-ck,
 .tk button.tk-wo,
+.tk button.tk-x,
 .tk button.tk-si,
 .tk button.tk-rmore,
 .tk button.tk-prio,
@@ -2035,10 +2042,11 @@ button[aria-label="Deselect task"] {
 .tk .tk-hov::before,
 button.tk-btn::before,
 .tk button.tk-pill::before,
-.tk button.tk-join::before,
-.tk button.tk-joinq::before,
+.tk .tk-join::before,
+.tk .tk-joinq::before,
 .tk button.tk-ck::before,
 .tk button.tk-wo::before,
+.tk button.tk-x::before,
 .tk button.tk-si::before,
 .tk button.tk-rmore::before,
 .tk button.tk-prio::before,
@@ -2057,16 +2065,43 @@ button[aria-label="Deselect task"]::before {
   .tk .tk-hov::before,
   button.tk-btn::before,
   .tk button.tk-pill::before,
-  .tk button.tk-join::before,
-  .tk button.tk-joinq::before,
+  .tk .tk-join::before,
+  .tk .tk-joinq::before,
   .tk button.tk-ck::before,
   .tk button.tk-wo::before,
+  .tk button.tk-x::before,
   .tk button.tk-si::before,
   .tk button.tk-rmore::before,
   button[aria-label="Select task"]::before,
   button[aria-label="Deselect task"]::before {
     inset: -13px;
   }
+}
+
+/* A widened hit area never covers a neighbouring control (rules-ui-design #14,
+   each action owns its slot). Two hit-area controls side by side give up the
+   bleed on their shared edge, so a tap lands on the control under the finger.
+   Without this the later sibling's ::before, painted on top, covered the
+   earlier one's centre: on touch (-13px) a tap on the Today card's 24px
+   "Open project folder" fired "Work on this in Claude" (overnight 2026-10-14
+   audit, G1-1). Specificity (0,4,3) beats every inset rule above. */
+:is(.done-box, .stage-dot, .pill-btn, .tk .tk-hov, button.tk-btn, .tk button.tk-pill,
+  .tk .tk-join, .tk .tk-joinq, .tk button.tk-ck, .tk button.tk-wo, .tk button.tk-x,
+  .tk button.tk-si, .tk button.tk-rmore, .tk button.tk-prio,
+  button[aria-label="Select task"], button[aria-label="Deselect task"]) + :is(.done-box, .stage-dot, .pill-btn, .tk .tk-hov, button.tk-btn, .tk button.tk-pill,
+  .tk .tk-join, .tk .tk-joinq, .tk button.tk-ck, .tk button.tk-wo, .tk button.tk-x,
+  .tk button.tk-si, .tk button.tk-rmore, .tk button.tk-prio,
+  button[aria-label="Select task"], button[aria-label="Deselect task"])::before {
+  left: 0;
+}
+:is(.done-box, .stage-dot, .pill-btn, .tk .tk-hov, button.tk-btn, .tk button.tk-pill,
+  .tk .tk-join, .tk .tk-joinq, .tk button.tk-ck, .tk button.tk-wo, .tk button.tk-x,
+  .tk button.tk-si, .tk button.tk-rmore, .tk button.tk-prio,
+  button[aria-label="Select task"], button[aria-label="Deselect task"]):has(+ :is(.done-box, .stage-dot, .pill-btn, .tk .tk-hov, button.tk-btn, .tk button.tk-pill,
+  .tk .tk-join, .tk .tk-joinq, .tk button.tk-ck, .tk button.tk-wo, .tk button.tk-x,
+  .tk button.tk-si, .tk button.tk-rmore, .tk button.tk-prio,
+  button[aria-label="Select task"], button[aria-label="Deselect task"]))::before {
+  right: 0;
 }
 
 /* Touch devices have no hover, so hover-revealed row actions are unreachable.
@@ -2536,7 +2571,6 @@ button[aria-label="Deselect task"]::before {
 .tk-btn.tk-pri,.tk-btn.tk-ac,.tk .tk-join,.tk .tk-ck.tk-on{background:linear-gradient(180deg,color-mix(in srgb,var(--job-accent) 82%,#fff) 0%,var(--job-accent) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px rgba(0,0,0,.18)}
 .tk-face{background:linear-gradient(180deg,color-mix(in srgb,var(--sk-face) 82%,#fff) 0%,var(--sk-face) 100%)}
 .tk{color:var(--sk-t1);font-size:13px}
-.tk aside{border-left:1px solid var(--sk-line)}
 .tk-titlerow{display:flex;align-items:flex-end;gap:10px 14px;flex-wrap:wrap}
 .tk-h1,.tk h1{font:600 28px var(--font-display);letter-spacing:-.02em;margin:0}
 .tk-date{font-size:13px;color:var(--sk-t3);white-space:nowrap;padding-bottom:4px}

@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { useLauncherInstalled } from '../../hooks/useLauncherInstalled'
 import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { Button } from '../../components/ui/Button'
@@ -78,6 +79,10 @@ export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
   const { user } = useAuth()
   const { launch: launchProcess } = useProtocolLaunch()
+  // The PI's local-machine buttons (Pomodoro, Quick Chat, Process) show only
+  // where a launcher can run: the same per-browser switch WorkOnActions uses,
+  // whose unset default is off on a phone (useLauncherInstalled).
+  const [launcherInstalled] = useLauncherInstalled()
   const userSlug = user?.slug ?? ''
   const { prefs } = useLabPrefs()
   // autoScroll handled by dnd-kit DndContext (enabled by default via PointerSensor)
@@ -572,7 +577,7 @@ export default function TodayPage() {
           {/* PI-only: run /process on THIS machine via the mnccore:// local
               protocol (fire-and-forget). No server route — purely a
               local-protocol trigger. */}
-          {user.isPi && (
+          {user.isPi && launcherInstalled && (
             <>
               {/* PomodoroControl: calls localhost:5555 directly from the browser.
                   Laptop-only by design — phone can't reach localhost. CORS is

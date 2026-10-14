@@ -476,8 +476,9 @@ app.use('/api/*', async (c, next) => {
 // A route that changes no data a client renders declares `noVersionBump: true`
 // in its defineRoute() (route-dsl.ts) and is skipped here. POST /api/client-errors:
 // bumping on it would make every open tab refetch, and a render-loop crash would
-// then feed itself (each report -> refetch -> crash -> report). POST /api/seen and
-// /api/thread-seen: a read receipt would refetch every query in every member's tab.
+// then feed itself (each report -> refetch -> crash -> report). POST /api/seen,
+// /api/thread-seen and the two notification read routes: a read receipt would
+// refetch every query in every member's tab.
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   await next();
@@ -2542,11 +2543,17 @@ defineRoute({
 
 // Notifications — read-all derives recipient from the authenticated caller slug,
 // not from a user-supplied ?recipient= or body field (prevents cross-user spoofing).
+// Both read routes are per-user read receipts, so they skip the version bump like
+// /api/seen: a bump made every open tab of every member refetch every query.
+// The reader's own views still converge: same-device tabs through the
+// 'mnccore-sync' BroadcastChannel (App.tsx mutation onSettled), other devices
+// through the bell's refetch on window focus (useNotifications.ts).
 defineRoute({
   method: 'POST',
   path: '/api/notifications/read-all',
   auth: 'authed',
   entity: 'notifications',
+  noVersionBump: true,
   handler: async (c) => {
   const env = E(c);
   const callerSlug = await actorSlugFromRequest(R(c), env);
@@ -2559,6 +2566,7 @@ defineRoute({
   path: '/api/notifications/:id/read',
   auth: 'authed',
   entity: 'notifications',
+  noVersionBump: true,
   handler: (c) => handleMarkNotificationRead(c.req.param('id'), R(c), E(c)),
 });
 

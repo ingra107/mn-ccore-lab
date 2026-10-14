@@ -640,6 +640,8 @@ export default function SmartCompose(props: SmartComposeProps) {
 function ToolbarBtn({ children, onClick, label, active, disabled }: { children: React.ReactNode; onClick: () => void; label: string; active?: boolean; disabled?: boolean }) {
   // N5 — CSS hover via the hov-* utilities. Hover color/border equal the
   // active values, so hovering an active button is a visual no-op.
+  // 24x24: the WCAG 2.5.8 floor (22x22 measured on a phone, overnight
+  // 2026-10-14 audit, G1-6).
   return (
     <button
       type="button"
@@ -651,7 +653,7 @@ function ToolbarBtn({ children, onClick, label, active, disabled }: { children: 
       disabled={disabled}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 22, height: 22, borderRadius: 'var(--radius-sm)',
+        width: 24, height: 24, borderRadius: 'var(--radius-sm)',
         background: active ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
         border: active ? '1px solid var(--job-accent)' : '1px solid var(--border-subtle)',
         color: active ? 'var(--job-accent)' : 'var(--slate)',
