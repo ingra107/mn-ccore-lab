@@ -18,7 +18,14 @@ import {
 // tab-switch. A fresh subscribe inside the grace window reuses the live
 // connection.
 
-const WS_HOST = import.meta.env.VITE_WS_HOST || 'hub-realtime.nicholas-ingraham.workers.dev'
+// Where the socket goes. A production build talks to the deployed worker. A dev
+// server (vite, vitest) gets no realtime unless VITE_WS_HOST names a host: the
+// local API (wrangler.local.toml) has no NOTIFICATION_HUB binding, so its ticket
+// route answers 503 and PartySocket retried against the PROD worker forever,
+// and the prod worker would refuse a ticket minted anywhere else anyway. With
+// no host the bus is inert; useRealtimeSync's /api/version poll still syncs.
+const WS_HOST: string | null =
+  import.meta.env.VITE_WS_HOST || (import.meta.env.PROD ? 'hub-realtime.nicholas-ingraham.workers.dev' : null)
 const CLOSE_GRACE_MS = 2_000
 
 type Listener = (data: unknown) => void
@@ -49,7 +56,7 @@ function busKey(room: string, party: string): string {
   return `${WS_HOST}::${room}::${party}`
 }
 
-function ensureBus(room: string, party: string): BusEntry {
+function ensureBus(host: string, room: string, party: string): BusEntry {
   const key = busKey(room, party)
   const existing = buses.get(key)
   if (existing) {
@@ -59,7 +66,7 @@ function ensureBus(room: string, party: string): BusEntry {
     }
     return existing
   }
-  const socket = new PartySocket({ host: WS_HOST, room, party, query: ticketQuery })
+  const socket = new PartySocket({ host, room, party, query: ticketQuery })
   const entry: BusEntry = {
     socket,
     listeners: new Set(),
@@ -110,9 +117,18 @@ export interface RealtimeBus {
   isOpen(): boolean
 }
 
+// No host configured: never opens, never fires onOpen, drops sends.
+const INERT_BUS: RealtimeBus = {
+  subscribe: () => () => {},
+  send: () => {},
+  onOpen: () => () => {},
+  isOpen: () => false,
+}
+
 export function getRealtimeBus(room = REALTIME_ROOM, party = REALTIME_PARTY): RealtimeBus {
+  if (WS_HOST === null) return INERT_BUS
   const key = busKey(room, party)
-  const entry = ensureBus(room, party)
+  const entry = ensureBus(WS_HOST, room, party)
 
   return {
     subscribe(listener) {

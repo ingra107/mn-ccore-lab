@@ -1,16 +1,10 @@
-// Milestone placement golden vectors — Hub side of the PB<->Hub contract.
+// Milestone placement golden vectors.
 //
-// Loads the LOCAL committed copy of ./milestone_vectors.json (generated
-// byte-identical to PB tests/fixtures/milestone_vectors.json by PB
-// scripts/today/gen_milestone_vectors.py, which records what PB's
-// place_milestones does) and asserts the Today page's own pipeline —
-// getGroupForTask, then interleaveMilestones per group — produces the same
-// ordered rows. TODAY.md and the Today page implement one rule twice; this is
-// what stops them drifting silently. Companion: PB
-// tests/today/test_milestone_vectors.py.
-//
-// Never hand-edit the JSON: change the cases in the PB generator and
-// regenerate (`python -X utf8 -m scripts.today.gen_milestone_vectors`).
+// Loads ./milestone_vectors.json and asserts the Today page's pipeline —
+// getGroupForTask, then interleaveMilestones per group — produces the expected
+// ordered rows. The cases began as a PB<->Hub parity contract with PB's
+// TODAY.md renderer; that renderer and its generator retired on 2026-10-11
+// (archived in PB), so the JSON is now a Hub-owned fixture: edit it by hand.
 //
 // Run: npx vitest run --config vitest.config.lib.ts src/lib/__tests__/milestoneVectors.test.ts
 import { describe, it, expect } from 'vitest'

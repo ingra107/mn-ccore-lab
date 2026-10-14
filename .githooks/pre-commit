@@ -407,6 +407,32 @@ if [ -n "$vt_scripts" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# hub-realtime worker gate (2026-10-14). `npm run test:realtime` runs the real
+# worker (wrangler.toml entry + DO binding) in workerd, 12 tests on the ticket
+# auth model shipped 2026-10-08 (23c92ad1). Until now no hook or CI workflow
+# ran it, so an edit to the worker or to shared/realtime.ts (which it imports)
+# could break socket auth with nothing red. Fires only when those paths are
+# staged: ~20s wall on the home laptop (vitest itself ~6s, the rest is workerd
+# start-up). The worker has its own package.json; partyserver is not in the
+# root node_modules, so a fresh checkout or worktree installs it first.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^workers/hub-realtime/|^shared/realtime\.ts$"; then
+    if [ ! -d workers/hub-realtime/node_modules/partyserver ]; then
+        echo "[hub-precommit] installing workers/hub-realtime deps (npm ci)..."
+        if ! npm ci --prefix workers/hub-realtime --no-audit --no-fund >/dev/null; then
+            echo "BLOCKED: npm ci --prefix workers/hub-realtime failed; cannot run test:realtime."
+            exit 1
+        fi
+    fi
+    echo "[hub-precommit] hub-realtime staged -- running test:realtime..."
+    if ! npm run --silent test:realtime; then
+        echo ""
+        echo "BLOCKED: workers/hub-realtime tests failed (npm run test:realtime)."
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # api/routes custom lints (PB backlog #1354, 2026-09-24). `npm run lint`
 # chains these, but no hook or workflow ran it, so a correctly-exiting lint
 # enforced nothing unless a human typed the command. check-no-optional-request

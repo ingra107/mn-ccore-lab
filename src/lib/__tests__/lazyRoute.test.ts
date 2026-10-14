@@ -23,6 +23,8 @@ describe('isStaleChunkError', () => {
     expect(isStaleChunkError(new Error('error loading dynamically imported module'))).toBe(true)
     // Safari
     expect(isStaleChunkError(new Error('Importing a module script failed.'))).toBe(true)
+    // Vite's preload helper when a lazy chunk's CSS is gone (modulePreload on)
+    expect(isStaleChunkError(new Error('Unable to preload CSS for /assets/ProjectDetail-CtV-H_BT.css'))).toBe(true)
   })
 
   it('does not swallow unrelated page errors', () => {

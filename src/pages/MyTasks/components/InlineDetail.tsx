@@ -33,7 +33,7 @@ import { todayKey } from '../../../lib/taskGrouping'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
 import { TaskInlineFieldRow } from '../../../components/tasks/detail/FieldControls'
-import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
+import TaskDetailPanel from '../../../components/tasks/LazyTaskDetailPanel'
 import WorkOnActions from '../../../components/WorkOnActions'
 
 // Muted color for feed items (not in the re-exported constants set).

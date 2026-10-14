@@ -209,7 +209,7 @@ export interface TaskRow {
   email_link?: string | null
   /** User-set group override for /portal/my-tasks bucketing (Hub feature, schema v50).
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
-   *  via getGroupForTask. Syncs to brain.db so TODAY.md generation honors it. */
+   *  via getGroupForTask. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
   /** schema-v109 (2026-09-16): 'task' | 'milestone'. A milestone is a task row
    *  rendered as a half-height dated rule (TaskRow variant), never a fork.
