@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { useParams, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
+import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { GrantsSection, MenteesSection, PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
@@ -16,6 +16,7 @@ import { useCommitments } from '../hooks/useCommitments'
 import { usePublicGrants } from '../hooks/usePublicGrants'
 import { grantsForPi, realGrants } from '../lib/publicGrants'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
+import { useUndoToast } from '../components/UndoToast'
 import { useAuth } from '../hooks/useAuth'
 import { useCanSeePerson } from '../hooks/useCanSeePerson'
 import type { CommitmentRow } from '../hooks/useCommitments'
@@ -31,20 +32,11 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { topicLabel } from '../lib/topics'
-import SectionHead from '../components/ui/SectionHead'
-import { SecHead } from '../components/public/PublicParts'
+import MemberHead from '../components/MemberHead'
 import { statusLabel } from '../lib/textUtils'
 import { formatContributionScore } from '../lib/contributionScore'
 
 // isOverdue imported from dateUtils
-
-/** The same page serves the public site and the portal: the public gets the
- *  serif section head, the portal keeps its own (ui/SectionHead). */
-function MemberHead(props: React.ComponentProps<typeof SectionHead>) {
-  const { pathname } = useLocation()
-  if (pathname.startsWith('/portal/')) return <SectionHead {...props} />
-  return <SecHead title={props.title} count={props.count} right={props.right} id={props.id} />
-}
 
 /** The public look draws its own rule under each head; only the portal keeps dividers. */
 function MemberDivider() {
@@ -55,8 +47,8 @@ function MemberDivider() {
 function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
   const overdue = !isDone && isOverdue(item.due_date)
-  // Color jobs (rules-ui-design 21): only overdue earns a color edge (red).
-  const borderColor = overdue ? 'var(--job-overdue)' : 'var(--border-subtle)'
+  // Color jobs (rules-ui-design 21): only overdue earns an edge (the red rail);
+  // every other card is the plain material, no neutral stripe.
   // to_slug is authoritative when present (WS2.4); falls back to to_whom text
   const toPersonInfo = item.to_slug ? getPersonInfo(item.to_slug) : null
 
@@ -71,7 +63,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
       style={{
         padding: '1rem 1.25rem',
         marginBottom: '0.5rem',
-        borderLeft: `3px solid ${borderColor}`,
+        borderLeft: overdue ? '3px solid var(--job-overdue)' : undefined,
         cursor: 'default',
       }}
     >
@@ -166,17 +158,20 @@ export default function MemberPage() {
   // Same component renders at /team/:slug (public chrome) and
   // /portal/team/:slug (portal chrome). Trajectory link should preserve context.
   const location = useLocation()
-  const navigate = useNavigate()
   const isPortalRoute = location.pathname.startsWith('/portal/')
   const teamBase = isPortalRoute ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
 
   // Check if this member is also a mentee (trainee)
   const mentee = slug ? getMenteeBySlug(slug) : undefined
-  // The static list is the PUBLIC page's only project source. In the portal the
-  // live list (MemberProjects, #145) is the one list, so it is empty there and
-  // the two can never disagree on one screen (site audit F86).
-  const menteeProjects = isPortalRoute ? [] : (mentee?.projectSlugs
+  const { user, isAuthenticated } = useAuth()
+  // A signed-in viewer gets the live list (MemberProjects, #145: what the viewer
+  // may see) on either route. The static src/data/projects.ts list is only the
+  // signed-out fallback: the projects API publishes no title to an anonymous
+  // caller (api/index.ts /api/projects anonShape), so the public page has no
+  // live source. The two never show on one screen (site audit F86).
+  const signedInMember = isAuthenticated && user.isMember
+  const menteeProjects = signedInMember ? [] : (mentee?.projectSlugs
     ?.map((s) => projects.find((p) => p.slug === s))
     .filter(Boolean) ?? [])
 
@@ -190,23 +185,34 @@ export default function MemberPage() {
   useEffect(() => {
     if (showAddTag) newTagInputRef.current?.focus({ preventScroll: true })
   }, [showAddTag])
-  const { user, isAuthenticated } = useAuth()
   // The weighted score is the member's and the PI's alone; the server refuses others.
   const canSeeScore = useCanSeePerson(slug)
-  // #906 — who may edit this member's featured list. Portal route only (the
-  // public /team/:slug page stays read-only chrome), and only the member
-  // themselves or a PI. The server re-checks this; the flag just decides
+  // Who may edit this member's profile parts (#906 featured list, expertise
+  // tags). Portal route only (the public /team/:slug page stays read-only
+  // chrome), and only the member themselves or a PI. The server re-checks this
+  // (member-featured-publications.ts, expertise.ts); the flag just decides
   // whether the affordance is offered. `user.isPi` is authoritative only after
   // /api/auth/me hydrates — a cookie-only first paint reports false, which
-  // fails CLOSED (no edit button for a beat), never open.
-  const canEditFeatured =
+  // fails CLOSED (no edit button for a beat), never open. Expertise used to
+  // offer add and delete to any signed-in viewer on any page (audit G11-9).
+  const canEditProfile =
     isPortalRoute
     && isAuthenticated
     && Boolean(slug)
     && (user.slug === slug || user.isPi)
+  const { showUndo } = useUndoToast()
+  const removeTag = (t: { id: string; tag: string; source: string; confidence: number }) => {
+    // One tap hard-deletes, so the toast offers Undo (re-adds the same tag).
+    removeExpertiseMut.mutate(t.id)
+    showUndo(`Removed "${t.tag}"`, () => addExpertiseMut.mutate({ tag: t.tag, source: t.source, confidence: t.confidence }))
+  }
   const { data: allCommitments = [] } = useCommitments(slug)
-  // Live funded awards (public) plus, for a signed-in member, their applications.
-  // Rows are matched by PI, so only a PI's page ever shows a Funding section.
+  // Funding and Trainees render on the PUBLIC /team/:slug page only; the portal
+  // member page leaves them out (the !isPortalRoute gates, 870d6872). On that
+  // public page a signed-out visitor gets live funded awards, and a signed-in
+  // member also gets the PI's applications (/api/grants answers anonymous
+  // callers with funded awards only). Rows are matched by PI, so only a PI's
+  // page ever shows a Funding section.
   const { data: liveGrants = [] } = usePublicGrants()
   const grants = slug && !isPortalRoute ? realGrants(grantsForPi(liveGrants, slug)) : []
   // A director's page lists their trainees, built live from data/mentees.ts.
@@ -336,7 +342,7 @@ export default function MemberPage() {
         ...(menteeProjects.length > 0
           ? [{ id: 'active-projects', label: 'Active Projects' }]
           : []),
-        ...(expertiseTags.length > 0 || isAuthenticated
+        ...(expertiseTags.length > 0 || canEditProfile
           ? [{ id: 'expertise', label: `Expertise${expertiseTags.length > 0 ? ` (${expertiseTags.length})` : ''}` }]
           : []),
         ...(slug && canSeeScore
@@ -409,9 +415,6 @@ export default function MemberPage() {
                 <div
                   key={project.slug}
                   className="card p-5 sm:p-6"
-                  style={{
-                    borderLeft: '3px solid var(--border-subtle)',
-                  }}
                 >
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3
@@ -446,59 +449,76 @@ export default function MemberPage() {
       )}
 
       {/* Expertise tags */}
-      {(expertiseTags.length > 0 || isAuthenticated) && (
+      {(expertiseTags.length > 0 || canEditProfile) && (
         <>
           <section className="mb-8" id="expertise">
             <MemberHead title="Expertise" />
 
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <div className="flex flex-wrap items-center gap-1.5 mb-4">
               <AnimatePresence mode="popLayout">
                 {expertiseTags.map((t) => (
+                  // The chip holds two controls side by side: the tag (opens the
+                  // Team filter) and, for an editor, remove. Remove used to sit
+                  // INSIDE a role=link span with no stopPropagation, so one tap
+                  // deleted the tag and navigated away (audit G11-1).
                   <motion.span
                     key={t.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.8 }}
                     transition={{ duration: 0.15 }}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] cursor-pointer transition-opacity hover:opacity-80"
+                    className="inline-flex items-center rounded-full text-[11px]"
                     style={{
                       fontWeight: 400,
                       background: 'var(--sk-panel)',
                       color: 'var(--ink)',
                     }}
-                    onClick={() => navigate(`${teamBase}?expertise=${encodeURIComponent(t.tag)}`)}
-                    role="link"
-                    tabIndex={0}
                   >
-                    {t.tag}
-                    {t.source !== 'manual' && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          opacity: 0.85,
-                          marginLeft: '2px',
-                        }}
-                        title={`Source: ${t.source}, confidence: ${t.confidence}`}
-                      >
-                        {t.source === 'publication' ? 'pub' : t.source}
-                      </span>
-                    )}
-                    {isAuthenticated && (
+                    <Link
+                      to={`${teamBase}?expertise=${encodeURIComponent(t.tag)}`}
+                      className="inline-flex items-center gap-1 py-0.5 transition-opacity hover:opacity-80"
+                      style={{ color: 'inherit', textDecoration: 'none', paddingLeft: '0.625rem', paddingRight: canEditProfile ? 0 : '0.625rem', minHeight: 24 }}
+                    >
+                      {t.tag}
+                      {t.source !== 'manual' && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            opacity: 0.85,
+                            marginLeft: '2px',
+                          }}
+                          title={`Source: ${t.source}, confidence: ${t.confidence}`}
+                        >
+                          {t.source === 'publication' ? 'pub' : t.source}
+                        </span>
+                      )}
+                    </Link>
+                    {canEditProfile && (
                       <button
-                        onClick={() => removeExpertiseMut.mutate(t.id)}
-                        className="ml-0.5 hover:opacity-100 opacity-40 transition-opacity"
-                        style={{ lineHeight: 1 }}
+                        type="button"
+                        onClick={() => removeTag(t)}
+                        className="inline-flex items-center justify-center rounded-full hov-color"
+                        style={{
+                          minWidth: 24,
+                          minHeight: 24,
+                          color: 'var(--slate)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          '--hov-color': 'var(--ink)',
+                        } as React.CSSProperties}
+                        aria-label={`Remove ${t.tag}`}
                         title="Remove tag"
                       >
-                        <X {...ICON_PROPS} size={10} />
+                        <X {...ICON_PROPS} size={12} />
                       </button>
                     )}
                   </motion.span>
                 ))}
               </AnimatePresence>
 
-              {isAuthenticated && !showAddTag && (
+              {canEditProfile && !showAddTag && (
                 <button
                   onClick={() => setShowAddTag(true)}
                   className="tk-btn tk-sm hov-color"
@@ -588,7 +608,7 @@ export default function MemberPage() {
               <QueryErrorNote label="expertise tags" onRetry={() => refetchExpertise()} />
             ) : expertiseTags.length === 0 && !showAddTag && (
               <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                No expertise tags yet.{isAuthenticated ? ' Click + Add to tag areas of expertise.' : ''}
+                No expertise tags yet.{canEditProfile ? ' Click + Add to tag areas of expertise.' : ''}
               </p>
             )}
           </section>
@@ -664,8 +684,8 @@ export default function MemberPage() {
           (/api/projects shows a visitor status only; tasks need sign-in). */}
       {slug && isAuthenticated && <MenteeDashboard slug={slug} name={member.name} />}
 
-      {/* Projects this person is on (#145): what the viewer may see, signed-in portal only. */}
-      {slug && isAuthenticated && isPortalRoute && <MemberProjects slug={slug} />}
+      {/* Projects this person is on (#145): what the viewer may see, any signed-in viewer. */}
+      {slug && signedInMember && <MemberProjects slug={slug} />}
 
       {/* Milestones — for fellows and research team members */}
       {slug && (mentee || member.role?.includes('Fellow') || member.role?.includes('Researcher')) && (
@@ -707,7 +727,7 @@ export default function MemberPage() {
         <MemberFeaturedPublications
           slug={slug}
           memberPubs={memberPubs}
-          canEdit={canEditFeatured}
+          canEdit={canEditProfile}
         />
       )}
 
@@ -780,7 +800,6 @@ function ContributionScoreCard({ slug }: { slug: string }) {
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '0.75rem 1.25rem',
-        borderLeft: '3px solid var(--border-subtle)',
       }}
     >
       {/* Score */}
@@ -912,7 +931,6 @@ function MilestoneMiniCard({
   isOverdue: boolean
 }) {
   const isDone = milestone.status === 'completed'
-  const borderColor = isOverdue ? 'var(--job-overdue)' : 'var(--border-subtle)'
 
   return (
     <motion.div
@@ -923,8 +941,7 @@ function MilestoneMiniCard({
       className="card"
       style={{
         padding: '0.75rem 1rem',
-        borderLeft: `3px solid ${borderColor}`,
-        opacity: isDone ? 0.85 : 1,
+        borderLeft: isOverdue ? '3px solid var(--job-overdue)' : undefined,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

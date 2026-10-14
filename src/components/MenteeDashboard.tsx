@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import MemberHead from './MemberHead'
 import {
   ListChecks,
   BookOpen,
@@ -42,12 +42,8 @@ export default function MenteeDashboard({ slug, name }: Props) {
   const firstName = name.split(' ')[0]
 
   return (
-    <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-      <div style={{ height: '1px', background: 'linear-gradient(to right, var(--sk-t2), transparent)', opacity: 0.85, marginBottom: '1.5rem' }} />
-
-      <h2 style={{ fontWeight: 500, fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', color: 'var(--ink)', marginBottom: '1rem' }}>
-        {firstName}'s Dashboard
-      </h2>
+    <div style={{ marginBottom: '2rem' }}>
+      <MemberHead title={`${firstName}'s dashboard`} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Action Items card */}
@@ -118,11 +114,14 @@ export default function MenteeDashboard({ slug, name }: Props) {
               plus {inProgress} in progress
             </p>
           )}
+          {/* The member's own papers are listed on this page (#publications).
+              /publications was the public site's whole-lab list, outside the
+              portal chrome (overnight audit 2026-10-14, G9-7). */}
           {myPubs.length > 0 && (
-            <Link to="/publications" className="inline-flex items-center gap-1 mt-2"
-              style={{ fontSize: '10px', color: 'var(--sk-t2)', textDecoration: 'none' }}>
-              View all <ArrowRight {...ICON_PROPS} size={9} />
-            </Link>
+            <a href="#publications" className="inline-flex items-center gap-1 mt-2"
+              style={{ fontSize: '11px', color: 'var(--sk-t2)', textDecoration: 'none', minHeight: 24 }}>
+              View all <ArrowRight {...ICON_PROPS} size={10} />
+            </a>
           )}
         </div>
 

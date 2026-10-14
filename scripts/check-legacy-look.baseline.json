@@ -8,6 +8,9 @@
   "src/components/InsightPanel.tsx": {
     "box": 2
   },
+  "src/components/MarkdownView.tsx": {
+    "edge": 1
+  },
   "src/components/NetworkSidebar.tsx": {
     "box": 2
   },
@@ -15,8 +18,20 @@
     "uppercase": 1,
     "box": 1
   },
+  "src/components/ReleaseRibbon.tsx": {
+    "edge": 1
+  },
+  "src/components/WelcomeBanner.tsx": {
+    "edge": 1
+  },
+  "src/components/activity/activityRender.tsx": {
+    "edge": 2
+  },
   "src/components/dashboard/TeamPulseCard.tsx": {
     "initials": 1
+  },
+  "src/components/labops/PipelineBlocks.tsx": {
+    "edge": 1
   },
   "src/components/pulse/PulseMetric.tsx": {
     "uppercase": 1
@@ -27,17 +42,30 @@
   "src/components/tasks/BulkActionToolbar.tsx": {
     "initials": 1
   },
+  "src/components/tasks/TaskGridView.tsx": {
+    "edge": 1
+  },
+  "src/components/tasks/detail/HandoffSection.tsx": {
+    "edge": 1
+  },
   "src/components/today/TaskDetailDrawer.tsx": {
     "box": 1
+  },
+  "src/components/today/TimelineGrid.tsx": {
+    "edge": 1
   },
   "src/index.css": {
     "uppercase": 1
   },
   "src/pages/Dashboard.tsx": {
-    "box": 4
+    "box": 4,
+    "edge": 1
   },
   "src/pages/MemberPage.tsx": {
     "initials": 1
+  },
+  "src/pages/MyTasks/views/OverdueBanner.tsx": {
+    "edge": 1
   },
   "src/pages/Pulse.tsx": {
     "uppercase": 5
@@ -45,5 +73,11 @@
   "src/pages/TrajectoryPage.tsx": {
     "tabstrip": 1,
     "initials": 1
+  },
+  "src/pages/portal/DeadlinesPage.tsx": {
+    "edge": 1
+  },
+  "src/pages/portal/DecisionsPage.tsx": {
+    "edge": 2
   }
 }

@@ -41,14 +41,18 @@ import { useSetMemberFeaturedPublications } from '../hooks/useMutations'
  *  eleventh pick it knows will be rejected. */
 const MAX_FEATURED = 10
 
+// 24px is the smallest tap target (WCAG 2.5.8); these were 20px (audit G9-9).
 const iconBtn: React.CSSProperties = {
   background: 'none',
   border: 'none',
   padding: 2,
+  minWidth: 24,
+  minHeight: 24,
   cursor: 'pointer',
   color: 'var(--slate)',
   display: 'inline-flex',
   alignItems: 'center',
+  justifyContent: 'center',
   lineHeight: 0,
 }
 

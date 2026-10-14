@@ -2,6 +2,7 @@ import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
+import { MEMBER_PUBLICATIONS_WHERE, memberSlugParam } from '../lib/member-publications';
 
 // GET /api/team/:slug/contributions?period=90
 // A member's contribution list is theirs and the PI's alone (Nick, 2026-10-11).
@@ -38,10 +39,14 @@ export async function handleGetContributions(slug: string, url: URL, env: Env, v
       "SELECT DISTINCT m.id, m.title, m.date FROM meetings m INNER JOIN agenda_items ai ON m.id = ai.meeting_id WHERE ai.added_by LIKE ? AND m.date > ? ORDER BY m.date DESC"
     ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
 
-    // Publications in period
+    // Publications in period. A publication row carries only its year, so a
+    // paper counts only when its WHOLE year falls inside the window (year
+    // after the cutoff's year). `year >= cutoff year` counted every paper of
+    // the calendar year under "last 90 days" (overnight audit 2026-10-14,
+    // G9-2): undercount at the edge rather than claim papers outside it.
     env.DB.prepare(
-      "SELECT id, title, journal, year FROM publications WHERE author_slugs LIKE ? AND year >= CAST(substr(?, 1, 4) AS INTEGER) ORDER BY year DESC"
-    ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
+      `SELECT id, title, journal, year FROM publications WHERE ${MEMBER_PUBLICATIONS_WHERE} AND year > CAST(substr(?, 1, 4) AS INTEGER) ORDER BY year DESC, title`
+    ).bind(memberSlugParam(slug), cutoff.split('T')[0]).all(),
   ]);
 
   return json({

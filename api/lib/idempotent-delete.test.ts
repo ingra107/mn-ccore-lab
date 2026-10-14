@@ -158,3 +158,35 @@ describe('idempotentDelete() — hard mode', () => {
     expect(body).toMatchObject({ data: { id: 'r1', deleted: true, idempotent: true } });
   });
 });
+
+// Real migrated schema, no stubbed DB: the stubs above answered any SQL, so a
+// SELECT naming a column the table lacks passed here and 500'd in prod
+// (expertise tags, calendar feeds, subtasks; overnight audit 2026-10-14).
+describe('idempotentDelete() on the real schema', () => {
+  it('hard-deletes rows of tables with and without a project column', async () => {
+    const { prodSchemaDb, d1Adapter, insertRow } = await import('../test-support/prod-schema-db')
+    const db = prodSchemaDb()
+    const env = { DB: d1Adapter(db) } as unknown as Env
+    insertRow(db, 'expertise_tags', { id: 'e1', member_slug: 'nate-mesfin', tag: 'Sepsis' })
+    const tables = ['expertise_tags']
+    for (const table of tables) {
+      const res = await idempotentDelete({ table, id: 'e1', mode: 'hard', request: new Request('https://x'), env })
+      expect(res.status, table).toBe(200)
+      expect((await res.json() as { data: { idempotent: boolean } }).data.idempotent, table).toBe(false)
+    }
+    for (const table of ['user_calendar_feeds', 'task_subtasks', 'conference_submissions', 'paper_project_links']) {
+      const projectColumn = table === 'paper_project_links' ? 'project_slug' : undefined
+      const res = await idempotentDelete({ table, id: 'absent', mode: 'hard', request: new Request('https://x'), env, projectColumn })
+      expect(res.status, table).toBe(200)
+    }
+  })
+
+  it('throws when a named project column does not exist, rather than skipping the gate', async () => {
+    const { prodSchemaDb, d1Adapter, insertRow } = await import('../test-support/prod-schema-db')
+    const db = prodSchemaDb()
+    const env = { DB: d1Adapter(db) } as unknown as Env
+    insertRow(db, 'expertise_tags', { id: 'e2', member_slug: 'nate-mesfin', tag: 'ARDS' })
+    await expect(idempotentDelete({ table: 'expertise_tags', id: 'e2', mode: 'hard', request: new Request('https://x'), env, projectColumn: 'project_slug' }))
+      .rejects.toThrow(/no column project_slug/)
+  })
+})

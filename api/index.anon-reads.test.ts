@@ -130,6 +130,7 @@ const PUBLIC_GETS: Record<string, string> = {
   '/api/team': '/api/team',
   '/api/stats': '/api/stats',
   '/api/team/:slug/featured-publications': '/api/team/nick-ingraham/featured-publications',
+  '/api/team/:slug/trajectory': '/api/team/nick-ingraham/trajectory',
 }
 
 // Routes that were readable anonymously in prod and are now signed-in only.
@@ -176,6 +177,10 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
     const featured = JSON.parse((await get('/api/team/nick-ingraham/featured-publications')).text)
     expect(featured.data.map((p: { id: string }) => p.id)).toEqual(['pub1'])
     expect(featured.count).toBe(1)
+    // The public trajectory page: published papers only, no activity.
+    const traj = JSON.parse((await get('/api/team/nick-ingraham/trajectory')).text)
+    expect(traj.data.publications.map((p: { id: string }) => p.id)).toEqual(['pub1'])
+    expect(traj.data.taskMetrics.total).toBe(0)
     // Asking for the unpublished status by name returns nothing, not the rows.
     const review = JSON.parse((await get('/api/publications?status=In%20Review')).text)
     expect(review).toEqual({ data: [], count: 0 })
