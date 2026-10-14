@@ -125,7 +125,7 @@ describe('handleClaimLaunch', () => {
     const res = await handleClaimLaunch('lnch_abc', claimReq('lnch_abc'), USER, env);
     expect(res.status).toBe(200);
     const body = await res.json() as any;
-    expect(body.data).toEqual({ verb: 'quickchat', seed: 'fix the figure', project_slug: 'pb-sector' });
+    expect(body.data).toEqual({ verb: 'quickchat', seed: 'fix the figure', raw_seed: 'fix the figure', project_slug: 'pb-sector' });
     expect(row('lnch_abc')).toMatchObject({ status: 'launched' });
     expect(row('lnch_abc')!.consumed_at).toBeTruthy();
   });
@@ -293,6 +293,21 @@ describe('launch page context (PB #8935)', () => {
     expect(lines[1]).toMatch(/^\[Task context/);
     expect(lines[2]).toBe('Task: Email Tom about biologics');
     expect(lines.at(-1)).toBe('draft it');
+  });
+
+  // #8943: the Telegram previews read raw_seed, so a header must never leak into it.
+  it('raw_seed is the stored text exactly, with a header present and with none', async () => {
+    const text = 'can you draft the email to tom\n\nthat this task needs';
+    insertRow(db, 'tasks', { id: 'task_8', title: 'Email Tom', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', project_id: 'proj_clif' });
+    launch('lnch_hdr', { seed: text, task_id: 'task_8', page_route: `/portal/meetings/${MTG}` });
+    launch('lnch_bare', { seed: text });
+    const hdr = await claim('lnch_hdr') as { seed: string; raw_seed?: string };
+    expect(hdr.seed.startsWith('[Launched from the Hub meeting page')).toBe(true);
+    expect(hdr.seed).toContain('[Task context');
+    expect(hdr.raw_seed).toBe(text);
+    const bare = await claim('lnch_bare') as { seed: string; raw_seed?: string };
+    expect(bare.seed).toBe(text);
+    expect(bare.raw_seed).toBe(text);
   });
 });
 
