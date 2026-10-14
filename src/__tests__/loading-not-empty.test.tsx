@@ -41,6 +41,22 @@ describe('StatLine pending', () => {
   })
 })
 
+describe('StatLine failed and day progress', () => {
+  it('an errored query reads "unavailable", not a false 0, and progress is not "0 of 0" while unknown', async () => {
+    const host = await mount(
+      <MemoryRouter>
+        <StatLine counts={zero} doneThisWeek={0} pending={{ planned: true, done: true }} failed={{ meetings: true }} />
+      </MemoryRouter>,
+      { ready: (h) => h.querySelector('.tk-stats'), label: 'StatLine' },
+    )
+    const stat = (k: string) => [...host.querySelectorAll('.tk-st')].find((e) => (e.getAttribute('aria-label') ?? '').includes(k))!
+    expect(stat('meeting').getAttribute('aria-label')).toBe('meetings: unavailable')
+    expect(stat('meeting').getAttribute('aria-busy')).toBeNull()
+    expect(stat('meeting').querySelector('.tk-v')!.textContent).toBe('–')
+    expect(host.querySelector('.tk-stats')!.getAttribute('title')).toBe('Day progress: not loaded')
+  })
+})
+
 describe('project picker shares the list cache', () => {
   it('one /api/projects request serves the list and the picker', async () => {
     let calls = 0

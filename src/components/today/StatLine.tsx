@@ -53,11 +53,13 @@ interface Stat {
 
 export type StatKey = 'overdue' | 'stalled' | 'planned' | 'meetings' | 'done' | 'done-week'
 
-export function StatLine({ counts, doneThisWeek, pending }: {
+export function StatLine({ counts, doneThisWeek, pending, failed }: {
   counts: DailyCounts
   doneThisWeek?: number
   /** Stats whose source query has not answered yet; each renders a dash, not a number. */
   pending?: Partial<Record<StatKey, boolean>>
+  /** Stats whose source query errored: a dash that says unavailable, never a false 0. */
+  failed?: Partial<Record<StatKey, boolean>>
 }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
@@ -71,17 +73,21 @@ export function StatLine({ counts, doneThisWeek, pending }: {
     stats.push({ key: 'done-week', value: week.display, label: 'done this week', rule: 'n', beat: week.beat })
   }
   const total = counts.doneToday + counts.planned
-  const pct = total > 0 ? Math.round((counts.doneToday / total) * 100) : 0
+  // Progress is a ratio of two task counts: unknown while either is not in.
+  const dayUnknown = !!(pending?.done || pending?.planned || failed?.done || failed?.planned)
+  const pct = !dayUnknown && total > 0 ? Math.round((counts.doneToday / total) * 100) : 0
 
   return (
     <div
       className="tk-stats"
       style={{ '--prog': `${pct}%` } as React.CSSProperties}
       data-b2-stats
-      title={`Day progress: ${counts.doneToday} done of ${total} (done plus still planned)`}
+      title={dayUnknown ? 'Day progress: not loaded' : `Day progress: ${counts.doneToday} done of ${total} (done plus still planned)`}
     >
       {stats.map((raw) => {
-        const loading = !!pending?.[raw.key as StatKey]
+        const isFailed = !!failed?.[raw.key as StatKey]
+        const loading = !!pending?.[raw.key as StatKey] || isFailed
+        const state = isFailed ? 'unavailable' : 'loading'
         // A pending stat reads as a quiet zero in every way except its text.
         const s = loading ? { ...raw, value: 0, beat: false } : raw
         const inner = (
@@ -93,12 +99,12 @@ export function StatLine({ counts, doneThisWeek, pending }: {
             </span>
           </>
         )
-        const busy = loading ? { 'aria-busy': true as const } : {}
+        const busy = loading && !isFailed ? { 'aria-busy': true as const } : {}
         if (!s.to) {
-          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={loading ? `${s.label}: loading` : `${s.value} ${s.label}`} data-stat={s.key} {...busy}>{inner}</div>
+          return <div key={s.key} className={`tk-st${s.value === 0 ? ' tk-zero' : ''}`} aria-label={loading ? `${s.label}: ${state}` : `${s.value} ${s.label}`} data-stat={s.key} {...busy}>{inner}</div>
         }
         return s.value === 0 ? (
-          <div key={s.key} className="tk-st tk-zero" aria-label={loading ? `${s.label}: loading` : `0 ${s.label}`} {...busy}>{inner}</div>
+          <div key={s.key} className="tk-st tk-zero" aria-label={loading ? `${s.label}: ${state}` : `0 ${s.label}`} {...busy}>{inner}</div>
         ) : (
           <Link key={s.key} to={s.to} className="tk-st" aria-label={`${s.value} ${s.label}: open ${s.dest}`} title={s.dest}>{inner}</Link>
         )

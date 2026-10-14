@@ -1,5 +1,6 @@
 import { Suspense, Component, useEffect } from 'react'
 import { lazyRoute, isStaleChunkError } from './lib/lazyRoute'
+import { shouldRetryQuery } from './lib/queryRetry'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -129,6 +130,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
+      // A 4xx will not change on retry (bad slug, no access): fail at once.
+      retry: shouldRetryQuery,
     },
     mutations: {
       onSettled: () => {

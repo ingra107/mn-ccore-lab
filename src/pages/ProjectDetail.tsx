@@ -88,6 +88,7 @@ import { useProjectProducts } from '../hooks/useProjectProducts'
 import { useProjectFiles } from '../hooks/useProjectFiles'
 import { useProjectDetailQueries } from '../hooks/useProjectDetailQueries'
 import { TextSkeleton } from '../components/LoadingSkeleton'
+import { QueryErrorNote } from '../components/QueryErrorNote'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 import PageWithRail from '../components/PageWithRail'
 
@@ -98,10 +99,11 @@ type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
   const { data: projects = [], isLoading, isError } = useProjects()
-  // The project's own queries start with the list, not after it (the slug is in the URL).
-  useProjectDetailQueries(slug)
-
   const project = projects.find((p) => p.slug === slug)
+  // The project's own queries start with the list, not after it (the slug is in
+  // the URL). Once the list has answered and does not hold the slug (bad URL, no
+  // access), they stop: the page is the not-found screen.
+  useProjectDetailQueries(!isLoading && !isError && !project ? undefined : slug)
 
   // New-activity signal (entity_seen v81): visiting the project page IS the
   // "seen" mark — project activity newer than this visit re-flags as ● new.
@@ -199,8 +201,8 @@ function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
   const { showUndo, showSuccess, showError } = useUndoToast()
-  const { data: projectUpdates = [], isPending: updatesPending } = useProjectUpdates(project.slug)
-  const { data: projectComments = [], isPending: commentsPending } = useComments(project.slug)
+  const { data: projectUpdates = [], isPending: updatesPending, isError: updatesError, refetch: refetchUpdates } = useProjectUpdates(project.slug)
+  const { data: projectComments = [], isPending: commentsPending, isError: commentsError, refetch: refetchComments } = useComments(project.slug)
   const activityPending = updatesPending || commentsPending
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
@@ -255,7 +257,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Tasks for this project
   // isPending, not the empty array: "No open tasks" must wait for the tasks.
-  const { data: projectTasks = [], isPending: tasksPending } = useTasks({ project: project.slug })
+  const { data: projectTasks = [], isPending: tasksPending, isError: tasksError, refetch: refetchTasks } = useTasks({ project: project.slug })
   const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
@@ -938,7 +940,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   )
 
   const openListEl = (
-tasksPending ? (
+tasksError ? (
+              <QueryErrorNote label="tasks" onRetry={() => refetchTasks()} />
+            ) : tasksPending ? (
               <div aria-busy="true" aria-label="Loading tasks" style={{ padding: '8px 0' }}><TextSkeleton lines={3} widths={['90%', '75%', '60%']} /></div>
             ) : pendingTasks.length === 0 ? (
               <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, padding: '12px 0' }}>
@@ -1011,7 +1015,9 @@ isAuthenticated && (project.slug ?? project.id) && (
   )
 
   const recentListEl = (
-activityPending && recentActivity.length === 0 ? (
+(updatesError || commentsError) && recentActivity.length === 0 ? (
+                <QueryErrorNote label="activity" onRetry={() => { refetchUpdates(); refetchComments() }} />
+              ) : activityPending && recentActivity.length === 0 ? (
                 <div aria-busy="true" aria-label="Loading activity" style={{ padding: '4px 0' }}><TextSkeleton lines={2} widths={['85%', '65%']} /></div>
               ) : recentActivity.length === 0 ? (
                 <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '4px 0' }}>
@@ -1610,7 +1616,9 @@ activityPending && recentActivity.length === 0 ? (
                 </button>
               </div>
             </div>
-            {filtered.length === 0 && !tasksPending ? (
+            {tasksError ? (
+              <QueryErrorNote label="tasks" onRetry={() => refetchTasks()} />
+            ) : filtered.length === 0 && !tasksPending ? (
               <EmptyState
                 icon={<CheckCircle2 size={32} />}
                 title={taskFilter === 'active' ? 'No active tasks' : taskFilter === 'done' ? 'No completed tasks' : taskFilter === 'blocked' ? 'No blocked tasks' : 'No tasks for this project'}

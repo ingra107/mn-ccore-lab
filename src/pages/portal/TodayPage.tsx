@@ -647,6 +647,14 @@ export default function TodayPage() {
             stalled: projectsQuery.isPending,
             meetings: meetingsQuery.isPending,
           }}
+          failed={{
+            overdue: tasksQuery.isError,
+            planned: tasksQuery.isError,
+            done: tasksQuery.isError,
+            'done-week': tasksQuery.isError,
+            stalled: projectsQuery.isError,
+            meetings: meetingsQuery.isError,
+          }}
         />
 
         {/* PI only: the Lab pulse line, one gray line that opens PI Analytics. */}
