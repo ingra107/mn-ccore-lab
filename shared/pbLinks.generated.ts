@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=9679b1338d20ff9c2f2208cb5e461a96134748d40c4b4e87b5d01df66d5d84b7
+// rules_hash=ff6e871863edc9e505b1e5bd01a0762592305a5371e241f86093c2d674f7424b
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // The one TS link normalizer. The Worker's key-link mirror (api/lib/key-link.ts)
@@ -18,7 +18,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '9679b1338d20ff9c2f2208cb5e461a96134748d40c4b4e87b5d01df66d5d84b7'
+export const PB_LINK_RULES_HASH = 'ff6e871863edc9e505b1e5bd01a0762592305a5371e241f86093c2d674f7424b'
 
 interface PbLinkRule {
   type: string
@@ -100,9 +100,9 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "type": "gmail_draft"
   },
   {
-    "canonical": "https://mail.google.com/mail/\\1#all/\\2",
-    "id_group": 2,
-    "match": "https?://mail\\.google\\.com/mail/(u/\\d+/|\\?authuser=[\\w.@%+-]+|)[^#\\s]*#[^\\s]*/([0-9a-fA-F]{16}|[A-Za-z0-9]{20,})",
+    "canonical": "https://mail.google.com/mail/\\1\\2#all/\\3",
+    "id_group": 3,
+    "match": "https?://mail\\.google\\.com/mail/((?:ca/)?(?:u/\\d+/)?)(\\?authuser=[\\w.@%+-]+)?(?![^#\\s]*authuser=)[^#\\s]*#(?:(?:label|search|category)/[^\\s#]+/|(?!(?:label|search|category)/)[\\w-]+/)([A-Za-z0-9]{20,}|[0-9a-fA-F]{16})(?=$|[/?&#\\s])",
     "title": "Gmail thread",
     "type": "gmail_thread"
   },

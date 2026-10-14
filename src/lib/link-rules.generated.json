@@ -71,9 +71,9 @@
       "type": "gmail_draft"
     },
     {
-      "canonical": "https://mail.google.com/mail/\\1#all/\\2",
-      "id_group": 2,
-      "match": "https?://mail\\.google\\.com/mail/(u/\\d+/|\\?authuser=[\\w.@%+-]+|)[^#\\s]*#[^\\s]*/([0-9a-fA-F]{16}|[A-Za-z0-9]{20,})",
+      "canonical": "https://mail.google.com/mail/\\1\\2#all/\\3",
+      "id_group": 3,
+      "match": "https?://mail\\.google\\.com/mail/((?:ca/)?(?:u/\\d+/)?)(\\?authuser=[\\w.@%+-]+)?(?![^#\\s]*authuser=)[^#\\s]*#(?:(?:label|search|category)/[^\\s#]+/|(?!(?:label|search|category)/)[\\w-]+/)([A-Za-z0-9]{20,}|[0-9a-fA-F]{16})(?=$|[/?&#\\s])",
       "title": "Gmail thread",
       "type": "gmail_thread"
     },

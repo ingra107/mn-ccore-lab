@@ -494,5 +494,77 @@
       "canonical_url": "https://mail.google.com/mail/#all/1a0e5f718220a235",
       "short_title": "Gmail thread"
     }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235abcdef12",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235abcdef12",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a235ffff",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235ffff",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a2351",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/u/1/#inbox/1a0e5f718220a2351",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/ca/u/0/#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/ca/u/0/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/ca/u/1/#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/ca/u/1/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/?zx=1&authuser=umn#inbox/1a0e5f718220a235",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/?zx=1&authuser=umn#inbox/1a0e5f718220a235",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#label/ProjectUpdatesFor2026Things",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/u/1/#label/ProjectUpdatesFor2026Things",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#search/fromcaseyabout2026things",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://mail.google.com/mail/u/1/#search/fromcaseyabout2026things",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#label/Foo/Bar/1a0e5f718220a235",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#all/1a0e5f718220a235",
+      "short_title": "Gmail thread"
+    }
   }
 ]
