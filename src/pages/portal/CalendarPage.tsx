@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, type ElementType } from 'react'
+import { Fragment, useState, useMemo, useEffect, type ElementType } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, ChevronLeft, ChevronRight, Users, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -17,8 +17,8 @@ import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/S
 import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
 import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
+import { agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
 
-type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 // Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
 // and milestone chips are neutral (maroon read as overdue; teal is the accent,
@@ -112,35 +112,24 @@ export default function CalendarPage() {
 
   // Day label
   const dayLabel = formatLongDate(localDateKey(currentDate))
+  const agenda = agendaWindow(currentDate)
 
   // Count only what the current view shows (the fetch window spans 3 months).
   const monthPrefix = localDateKey(currentDate).slice(0, 7)
   const visibleEvents = events.filter((e) => {
     if (view === 'week') return e.date >= localDateKey(weekStart) && e.date <= localDateKey(weekEnd)
     if (view === 'day') return e.date === localDateKey(currentDate)
-    // Same filter as AgendaView: from today forward across the fetch window.
-    if (view === 'agenda') return e.date >= localDateKey()
+    // Same window as AgendaView.
+    if (view === 'agenda') return e.date >= agenda.from && e.date <= agenda.to
     return e.date.startsWith(monthPrefix)
   })
   const visibleCount = visibleEvents.length
   const isCurrentMonth = monthPrefix === localDateKey().slice(0, 7)
   const monthPhrase = isCurrentMonth ? 'this month' : `in ${currentDate.toLocaleDateString('en-US', { month: 'long' })}`
-  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : view === 'agenda' ? 'upcoming' : monthPhrase}`
+  const visibleLabel = `event${visibleCount === 1 ? '' : 's'} ${view === 'week' ? 'this week' : view === 'day' ? 'this day' : view === 'agenda' ? (isCurrentMonth ? 'upcoming' : `from ${currentDate.toLocaleDateString('en-US', { month: 'long' })}`) : monthPhrase}`
 
-  const goToPrev = () => {
-    const d = new Date(currentDate)
-    if (view === 'month') d.setMonth(d.getMonth() - 1)
-    else if (view === 'week') d.setDate(d.getDate() - 7)
-    else d.setDate(d.getDate() - 1)
-    setCurrentDate(d)
-  }
-  const goToNext = () => {
-    const d = new Date(currentDate)
-    if (view === 'month') d.setMonth(d.getMonth() + 1)
-    else if (view === 'week') d.setDate(d.getDate() + 7)
-    else d.setDate(d.getDate() + 1)
-    setCurrentDate(d)
-  }
+  const goToPrev = () => setCurrentDate(stepDate(view, currentDate, -1))
+  const goToNext = () => setCurrentDate(stepDate(view, currentDate, 1))
   const goToToday = () => setCurrentDate(new Date())
   const openDay = (dateStr: string) => {
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -223,7 +212,7 @@ export default function CalendarPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={goToPrev}
-              aria-label="Previous month"
+              aria-label={stepLabel(view, -1)}
               className="tk-btn"
             >
               <ChevronLeft {...ICON_PROPS} size={16} />
@@ -237,13 +226,13 @@ export default function CalendarPage() {
             </button>
             <button
               onClick={goToNext}
-              aria-label="Next month"
+              aria-label={stepLabel(view, 1)}
               className="tk-btn"
             >
               <ChevronRight {...ICON_PROPS} size={16} />
             </button>
 
-            {currentDate.toDateString() !== new Date().toDateString() && (
+            {!showsToday(view, currentDate) && (
               <button
                 onClick={goToToday}
                 className="tk-btn"
@@ -269,7 +258,7 @@ export default function CalendarPage() {
             {view === 'month' && <MonthView currentDate={currentDate} events={events} denseWeek={denseWeek} onOpenDay={openDay} />}
             {view === 'week' && <WeekView weekStart={weekStart} events={events} />}
             {view === 'day' && <DayView date={currentDate} events={events} />}
-            {view === 'agenda' && <AgendaView events={events} />}
+            {view === 'agenda' && <AgendaView events={events} from={agenda.from} to={agenda.to} />}
           </>
         )}
       </div>
@@ -397,25 +386,36 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
     // pick 4). The edge line over the cell was a second marker beside the
     // disc (prod check 2026-10-11). A date grid marks today with the disc;
     // the lists and timelines (Day, Agenda, Today) draw the NowMarker line.
+    //
+    // The date button is the cell's tap target: `.cal-day-open::before` stretches
+    // it over the whole cell (G4-2, 2026-10-14: the bare number was a 4x16 target
+    // on a phone). On a phone the ~48px cell shows a dot per event instead of
+    // chips cut to 3 letters; the tap opens Day view, which reads in full.
     <div className="cal-cell min-h-[56px] md:min-h-[80px] p-1.5 relative" data-today={isToday ? 'true' : undefined}>
-      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}`} className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
+      <button type="button" onClick={() => onOpenDay(dateStr)} aria-label={`Open ${formatLongDate(dateStr)}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ''}`} className={`cal-day-open inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full now-halo' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent', cursor: 'pointer', border: 'none', padding: 0 }}>
         {dayNum}
       </button>
       {isToday && <span className="cal-today-lbl">Today</span>}
-      <div className="flex flex-col gap-0.5 mt-0.5">
+      {dayEvents.length > 0 && (
+        <div className="cal-dots" aria-hidden="true">
+          {dayEvents.slice(0, 4).map((e) => <span key={e.id} className="cal-dot" data-type={e.type} />)}
+          {dayEvents.length > 4 && <span className="cal-dot-more">+{dayEvents.length - 4}</span>}
+        </div>
+      )}
+      <div className="cal-chips">
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
           const to = eventLinkTo(e)
           const Wrapper: ElementType = to ? Link : 'div'
           const wrapperProps = to ? { to } : {}
           return (
-            <Wrapper key={e.id} {...wrapperProps} className="text-[11px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+            <Wrapper key={e.id} {...wrapperProps} className="cal-chip text-[11px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
               <EventMark e={e} />{eventLabel(e)}
             </Wrapper>
           )
         })}
         {dayEvents.length > 3 && (
-          <button type="button" onClick={() => onOpenDay(dateStr)} className="text-[11px] px-1 text-left hover:underline" style={{ color: 'var(--sk-t3)', background: 'none', border: 'none', cursor: 'pointer' }}>+{dayEvents.length - 3} more</button>
+          <button type="button" onClick={() => onOpenDay(dateStr)} className="cal-chip text-[11px] px-1 text-left hover:underline" style={{ color: 'var(--sk-t3)', background: 'none', border: 'none', cursor: 'pointer' }}>+{dayEvents.length - 3} more</button>
         )}
       </div>
     </div>
@@ -450,16 +450,19 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   return (
-    <div className="sk-mat rounded-xl overflow-hidden grid grid-cols-7">
+    // Below 768px the seven days stack as rows: date on the left, one-line
+    // events on the right (G4-3, 2026-10-14: seven ~48px columns broke titles
+    // mid-word, "Pulmonar/y"). From md up, the seven-column week.
+    <div className="cal-week sk-mat rounded-xl overflow-hidden">
       {days.map((dateStr, i) => {
         const isToday = dateStr === today
         const dayNum = parseInt(dateStr.split('-')[2])
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="md:min-h-[300px] relative border-r last:border-r-0 min-w-0" style={{ borderColor: 'var(--sk-line)' }}>
+          <div key={dateStr} className="cal-week-day relative min-w-0">
             {/* Today: the date disc below is the one now marker (pick 4), as in Month. */}
-            <div className="px-2 py-2 text-center">
+            <div className="cal-week-date px-2 py-2 text-center">
               <div className="text-[12px]" style={{ color: 'var(--sk-t3)' }}>{dayNames[i]}</div>
               <div className={`text-lg font-semibold mt-0.5 ${isToday ? 'rounded-full inline-flex items-center justify-center w-8 h-8 now-halo' : ''}`} style={{ color: isToday ? 'var(--sk-card)' : 'var(--ink)', backgroundColor: isToday ? 'var(--job-accent)' : 'transparent' }}>
                 {dayNum}
@@ -467,20 +470,20 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
               {isToday && <div className="cal-today-lbl" style={{ marginLeft: 0, marginTop: 2 }}>Today</div>}
             </div>
 
-            <div className="p-1.5 flex flex-col gap-0.5">
+            <div className="cal-week-events p-1.5">
               {dayEvents.map((e) => {
                 const config = eventColors[e.type] || eventColors.task
                 const to = eventLinkTo(e)
                 const Wrapper: ElementType = to ? Link : 'div'
                 const wrapperProps = to ? { to } : {}
                 return (
-                  <Wrapper key={e.id} {...wrapperProps} className="text-[11px] leading-tight px-1 py-1 rounded block min-w-0 break-words"  style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+                  <Wrapper key={e.id} {...wrapperProps} className="cal-week-chip leading-tight px-1 py-1 rounded block min-w-0" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
                     <EventMark e={e} />{(() => { const t = eventLabel(e); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                   </Wrapper>
                 )
               })}
               {dayEvents.length === 0 && (
-                <div className="text-center py-4 text-[11px]" style={{ color: 'var(--sk-t3)' }}>—</div>
+                <div className="cal-week-none text-[11px]" style={{ color: 'var(--sk-t3)' }}>—</div>
               )}
             </div>
           </div>
@@ -595,33 +598,40 @@ const agendaRestColumns = (withKind: boolean): SleekColumn<CalendarEvent>[] => [
 const agendaColumnsWithKind = [kindColumn, ...agendaRestColumns(true)]
 const agendaColumnsNoKind = agendaRestColumns(false)
 
-export function AgendaView({ events }: { events: CalendarEvent[] }) {
+/** Agenda lists the days with events in [from, to] (default: today onward).
+ *  The page pages it by month (G4-1); `from` is today in the current month. */
+export function AgendaView({ events, from, to }: { events: CalendarEvent[]; from?: string; to?: string }) {
   const today = localDateKey()
   const navigate = useNavigate()
+  const lo = from ?? today
 
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
     for (const e of events) {
-      if (e.date < today) continue
+      if (e.date < lo || (to && e.date > to)) continue
       const list = map.get(e.date) || []
       list.push(e)
       map.set(e.date, list)
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  }, [events, today])
+  }, [events, lo, to])
+
+  // Agenda lists only days with events. When today is inside the window but
+  // has no events, the labelled now marker still sits where today falls (before
+  // the first later day), so the list always shows where now is.
+  const todayInWindow = today >= lo && (!to || today <= to)
+  const markBefore = todayInWindow && !grouped.some(([d]) => d === today)
+    ? grouped.findIndex(([d]) => d > today)
+    : -2
 
   return (
     <div className="cal-agenda">
-      {/* Agenda lists only days with events (all today or later). With nothing
-          today the now marker still opens the list, labelled, so the phone
-          default view always shows where now is. */}
-      {grouped.length > 0 && grouped[0][0] !== today && (
-        <NowMarker style={{ margin: '2px 10px 10px' }} />
-      )}
-      {grouped.map(([date, dayEvents]) => {
+      {grouped.map(([date, dayEvents], i) => {
         const isToday = date === today
         return (
-          <section key={date} aria-label={isToday ? 'Today' : formatLongDate(date)}>
+          <Fragment key={date}>
+          {markBefore === i && <NowMarker style={{ margin: '2px 10px 10px' }} />}
+          <section aria-label={isToday ? 'Today' : formatLongDate(date)}>
             {isToday && <NowMarker showLabel={false} style={{ margin: '2px 10px 10px' }} />}
             <div className={`sr-grp-h sr-grp-static${isToday ? ' sr-grp-now' : ''}`}>
               <h3>{isToday ? 'Today' : formatLongDate(date)}</h3>
@@ -643,8 +653,10 @@ export function AgendaView({ events }: { events: CalendarEvent[] }) {
               })}
             </SleekTable>
           </section>
+          </Fragment>
         )
       })}
+      {markBefore === -1 && grouped.length > 0 && <NowMarker style={{ margin: '10px 10px 2px' }} />}
       {grouped.length === 0 && (
         <EmptyState
           icon={<Calendar size={40} />}

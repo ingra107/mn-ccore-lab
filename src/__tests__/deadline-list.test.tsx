@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { DeadlineList, sortDeadlines, type DeadlineGroup, type DeadlineItem } from '../pages/portal/DeadlineList'
+import { DeadlineList, newestDoneFirst, sortDeadlines, type DeadlineGroup, type DeadlineItem } from '../pages/portal/DeadlineList'
 import type { TaskRow } from '../lib/api'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
@@ -176,5 +176,14 @@ describe('sortDeadlines', () => {
     expect(sortDeadlines(items, null, new Map())).toBe(items)
     expect(sortDeadlines(items, { key: 'owner', dir: 'asc' }, new Map()).at(-1)!.id).toBe('g1')
     expect(sortDeadlines(items, { key: 'owner', dir: 'desc' }, new Map()).at(-1)!.id).toBe('g1')
+  })
+})
+
+describe('newestDoneFirst (G4-4)', () => {
+  it('orders Completed by finish time, newest first, falling back to the due date', () => {
+    const old = fromTask(task('a', 'Old', '2026-01-06', { status: 'done', completed_at: '2026-01-06T10:00:00Z' }))
+    const recent = fromTask(task('b', 'Recent', '2026-01-02', { status: 'done', completed_at: '2026-10-12T10:00:00Z' }))
+    const noStamp = fromTask(task('c', 'No stamp', '2026-05-01', { status: 'done' }))
+    expect(newestDoneFirst([old, noStamp, recent]).map((d) => d.id)).toEqual(['b', 'c', 'a'])
   })
 })

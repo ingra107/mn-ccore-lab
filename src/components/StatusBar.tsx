@@ -15,6 +15,9 @@ export default function StatusBar({ onOpenShortcuts }: StatusBarProps) {
     <div
       role="status"
       aria-label="Status bar"
+      // A keyboard-shortcut hint means nothing on a touch screen with no
+      // keyboard (G8-09, 2026-10-14): the bar hides there.
+      className="status-bar-kbd"
       style={{
         height: '24px',
         display: 'flex',

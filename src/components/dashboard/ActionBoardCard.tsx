@@ -75,7 +75,7 @@ function ActionBoardCard() {
                       to={PATHS.meeting(item.meeting_id)}
                       title={`Meeting: ${item.meeting_title}`}
                       aria-label={`Open meeting: ${item.meeting_title}`}
-                      className="flex-shrink-0 inline-flex items-center"
+                      className="hit-area flex-shrink-0 inline-flex items-center"
                       style={{ color: 'var(--sk-t3)' }}
                       onClick={(e) => e.stopPropagation()}
                     >

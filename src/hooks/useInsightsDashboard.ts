@@ -19,8 +19,9 @@ export interface InsightsDashboardData {
   }
   workloadHeatmap: { slug: string; days: { mon: number; tue: number; wed: number; thu: number; fri: number } }[]
   pipelineFunnel: ProductStageCount[]
-  velocityScatter: { slug: string; title: string; daysSinceUpdate: number; openTasks: number; isOutlier: boolean }[]
-  stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
+  /** null = the project has never had an update (G8-05). */
+  velocityScatter: { slug: string; title: string; daysSinceUpdate: number | null; openTasks: number; isOutlier: boolean }[]
+  stalledRegistry: { slug: string; title: string; daysIdle: number | null; openTasks: number }[]
 }
 
 /** The query key the Refresh action invalidates. */

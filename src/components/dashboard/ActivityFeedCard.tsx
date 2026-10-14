@@ -82,17 +82,16 @@ function ActivityFeedCard() {
   return (
     <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity} drillDown>
       <div className="flex flex-col h-full">
-        {/* Feed list */}
+        {/* Feed list. No inner scroll box: the feed is at most five entries
+            clamped to 3 lines, so it is already bounded, and the card's fit
+            height follows it. The old 340px cap with its own scroll cut the
+            last entry through a line, and the last entry is the NEWEST one
+            (G8-13, 2026-10-14). */}
         <div
-          className="flex-1 overflow-y-auto -mx-1 px-1"
-          tabIndex={0}
+          className="flex-1 -mx-1 px-1"
           role="region"
           aria-label="Activity feed"
-          style={{
-            maxHeight: '340px',
-            minHeight: '72px',
-            scrollbarWidth: 'thin',
-          }}
+          style={{ minHeight: '72px' }}
         >
           <div className="relative">
             {/* Vertical line: only beside entries, never on the empty state */}
@@ -170,7 +169,9 @@ function ActivityFeedCard() {
                     </p>
                     {item.description.length > 120 && (
                       <button
+                        type="button"
                         onClick={() => toggle(item.id)}
+                        className="hit-area"
                         style={{
                           fontSize: '10px',
                           color: 'var(--sk-t2)',

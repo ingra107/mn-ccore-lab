@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
@@ -57,7 +57,11 @@ function getTypeLabel(type: string): string {
 
 // ── Main Page ──────────────────────────────────────────────
 
-export default function MenteeMilestonesPage() {
+/** The Lab overview > Mentees tab body. `lead` (the PI's trainee blocks) sits
+ *  under the one "Lab overview" header, as every other tab has it (G8-12,
+ *  principle 11: the tab used to open on the PI blocks and then draw a second
+ *  page title, "Mentee Milestones", halfway down). */
+export default function MenteeMilestonesPage({ lead }: { lead?: ReactNode } = {}) {
   const [filterMentee, setFilterMentee] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -192,8 +196,8 @@ export default function MenteeMilestonesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Mentee Milestones"
-        subtitle={(() => {
+        title="Lab overview"
+        subtitle={'Mentee milestones: ' + (() => {
           // R4-P2-05: reconcile subtitle with the table. When a filter is
           // active and the table is narrower than the overall upcoming
           // count, surface `Showing N of M` so the mismatch is explained.
@@ -204,7 +208,7 @@ export default function MenteeMilestonesPage() {
           }
           return overdueTotal > 0
             ? `${overdueTotal} overdue, ${upcomingTotal} upcoming`
-            : `${upcomingTotal} upcoming milestones`
+            : `${upcomingTotal} upcoming`
         })()}
       >
         <div className="flex items-center gap-3 flex-wrap">
@@ -250,6 +254,8 @@ export default function MenteeMilestonesPage() {
           </Button>
         </div>
       </PageHeader>
+
+      {lead}
 
       {/* #507 follow-up: the overview cards below claim a specific "N
           upcoming"/"N overdue" count per mentee -- on a fetch failure that
@@ -605,6 +611,9 @@ function MilestoneRow({
   const isDone = item.status === 'completed'
   const dueStr = item.due_date ? formatShortDate(item.due_date) : '--'
   const daysLate = (item._isOverdue && item.due_date) ? getDaysAgo(item.due_date) : 0
+  // A past-due row stored as Upcoming reads Overdue in its status too, so it
+  // does not say "151d overdue · Upcoming" (G8-12, 2026-10-14).
+  const shownStatus = item._isOverdue && item.status === 'upcoming' ? 'overdue' : item.status
 
   return (
     <div
@@ -697,7 +706,7 @@ function MilestoneRow({
         {/* Status */}
         <div onClick={(e) => e.stopPropagation()}>
           <InlineSelect
-            value={item.status}
+            value={shownStatus}
             options={STATUS_OPTIONS}
             onChange={(val) => onStatusChange(item.id, val, item.status)}
             size="sm"
@@ -743,7 +752,7 @@ function MilestoneRow({
               stopPropagation so tapping the control doesn't toggle row expand. */}
           <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
             <InlineSelect
-              value={item.status}
+              value={shownStatus}
               options={STATUS_OPTIONS}
               onChange={(val) => onStatusChange(item.id, val, item.status)}
               size="sm"

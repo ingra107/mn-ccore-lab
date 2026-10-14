@@ -24,7 +24,7 @@ import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
 import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
-import { DeadlineList, type DeadlineItem, type DeadlineProject } from './DeadlineList'
+import { DeadlineList, newestDoneFirst, type DeadlineItem, type DeadlineProject } from './DeadlineList'
 import { NowMarker } from '../../components/moments/NowMarker'
 
 type ViewMode = 'list' | 'timeline'
@@ -146,7 +146,7 @@ export default function DeadlinesPage() {
       thisWeek: open.filter((d) => !d.isOverdue && d.daysUntil >= 0 && d.daysUntil <= 7),
       nextWeek: open.filter((d) => d.daysUntil > 7 && d.daysUntil <= 14),
       later: open.filter((d) => d.daysUntil > 14),
-      completed: deadlines.filter((d) => isDoneStatus(d.status)),
+      completed: newestDoneFirst(deadlines.filter((d) => isDoneStatus(d.status))),
     }
   }, [deadlines])
   const listGroups = useMemo(() => [

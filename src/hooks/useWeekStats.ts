@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTasks, useActivity } from './useApiData'
-import { isOverdue } from '../lib/dateUtils'
+import { localDateKey } from '../lib/dateUtils'
+import { countOverdue, countOverdueBefore } from '../lib/taskStats'
 import { addDays, trailingMondays } from '../lib/isoWeek'
 
 // The Pipeline tab's weekly numbers, on ISO Monday weeks throughout: the stat
@@ -27,12 +28,12 @@ export function useWeekStats(monday: Date) {
 
     const completed = tasks.filter((t) => t.completed_at && t.completed_at >= startStr && t.completed_at < endStr).length
     const created = tasks.filter((t) => t.created_at >= startStr && t.created_at < endStr).length
-    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date, t.status)).length
+    const overdue = countOverdue(tasks)
     const activityCount = activity.filter((a) => a.timestamp >= startStr && a.timestamp < endStr).length
 
     const completedPrior = tasks.filter((t) => t.completed_at && t.completed_at >= priorStartStr && t.completed_at < startStr).length
     const createdPrior = tasks.filter((t) => t.created_at >= priorStartStr && t.created_at < startStr).length
-    const overduePrior = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < start).length
+    const overduePrior = countOverdueBefore(tasks, localDateKey(start))
     const activityPrior = activity.filter((a) => a.timestamp >= priorStartStr && a.timestamp < startStr).length
 
     return { completed, created, overdue, activityCount, completedPrior, createdPrior, overduePrior, activityPrior }
@@ -54,7 +55,7 @@ export function useWeekStats(monday: Date) {
   const sparkCreated = useMemo(() => spark8.map((w) => w.created), [spark8])
   const sparkOverdue = useMemo(() => trailingMondays(8).map((m) => {
     const wEnd = addDays(m, 7)
-    return tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < wEnd).length
+    return countOverdueBefore(tasks, localDateKey(wEnd))
   }), [tasks])
   const sparkActivity = useMemo(() => trailingMondays(8).map((m) => {
     const s = m.toISOString()

@@ -59,8 +59,17 @@ const insights = {
   },
   workloadHeatmap: [],
   pipelineFunnel: [],
-  velocityScatter: [],
-  stalledRegistry: [{ slug: 'proj-a', title: 'Stalled study', daysIdle: 21, openTasks: 2 }],
+  velocityScatter: [
+    { slug: 'proj-a', title: 'Stalled study', daysSinceUpdate: 21, openTasks: 2, isOutlier: false },
+    { slug: 'proj-new', title: 'Never touched', daysSinceUpdate: null, openTasks: 0, isOutlier: true },
+  ],
+  // Seven rows: five show, the rest sit behind "Show all 7" (G8-05). A
+  // never-updated project reads "no updates yet", never a 999 sentinel.
+  stalledRegistry: [
+    { slug: 'proj-a', title: 'Stalled study', daysIdle: 21, openTasks: 2 },
+    ...[20, 19, 18, 17, 16].map((d) => ({ slug: `proj-${d}`, title: `Idle ${d}`, daysIdle: d, openTasks: 1 })),
+    { slug: 'proj-new', title: 'Never touched', daysIdle: null, openTasks: 0 },
+  ],
 }
 
 let calls: string[] = []
@@ -160,6 +169,12 @@ describe('Pipeline tab', () => {
       ready: (h) => h.textContent?.includes('Stalled study') && h.textContent?.includes('Products by stage'),
     })
     expect(host.textContent).toContain('+ Set follow-up')
+    const registry = host.querySelector('[data-testid="stalled-registry"]') as HTMLElement
+    expect(registry.textContent).not.toContain('Never touched')
+    const more = Array.from(registry.querySelectorAll('button')).find((b) => b.textContent === 'Show all 7') as HTMLButtonElement
+    more.click()
+    await waitFor(() => registry.textContent?.includes('no updates yet'), 'never-updated row after Show all')
+    expect(host.textContent).not.toContain('999')
     expect(host.textContent).toContain('Active projects')
     expect(host.textContent).toContain('Task velocity')
     // The one scope: products come from pi-dashboard's active-project rollup.

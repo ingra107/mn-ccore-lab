@@ -11,7 +11,8 @@ import { withAlpha } from '../lib/taskGrouping'
 
 type NodeStatus = 'on-track' | 'at-risk' | 'overdue' | 'completed'
 
-function getNodeStatus(node: DeadlineNode): NodeStatus {
+// eslint-disable-next-line react-refresh/only-export-components -- the cascade page counts with it
+export function getNodeStatus(node: DeadlineNode): NodeStatus {
   if (node.status === 'done' || node.status === 'completed') return 'completed'
   if (!node.due_date) return 'on-track'
   if (isOverdue(node.due_date, node.status)) return 'overdue'
@@ -139,7 +140,16 @@ function CascadeRow({
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.15 }}
         onClick={() => onSelect(node)}
-        className="group"
+        // A row is a real button (G4-6, 2026-10-14): it selects the node for
+        // the What-if panel, so Tab + Enter/Space must reach it too.
+        role="button"
+        tabIndex={0}
+        aria-pressed={isSelected}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(node) }
+        }}
+        className="group cascade-row"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -148,7 +158,9 @@ function CascadeRow({
           paddingLeft: `${12 + node.depth * 24}px`,
           cursor: 'pointer',
           borderRadius: 'var(--radius-md)',
-          border: isSelected ? `1px solid ${color}` : '1px solid transparent',
+          // Selection is the accent's job (principle 21, G4-5): an overdue
+          // row selected in its status red read as a second alarm.
+          border: isSelected ? '1px solid var(--job-accent)' : '1px solid transparent',
           background: isImpacted
             ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)'
             : isSelected
@@ -160,7 +172,11 @@ function CascadeRow({
         {/* Expand/collapse */}
         {hasChildren ? (
           <button
+            type="button"
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+            aria-label={expanded ? `Collapse ${node.title}` : `Expand ${node.title}`}
+            aria-expanded={expanded}
+            className="hit-area"
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
           >
             {expanded
@@ -249,8 +265,10 @@ function CascadeRow({
           </motion.span>
         )}
 
-        {/* Status badge */}
-        <span style={{
+        {/* Status word. The dot and the date color already say it, so below
+            md it is screen-reader text only and the title gets the room
+            (G8-11, principles 2 and 19). */}
+        <span className="cascade-meta-md" style={{
           fontSize: '10px',
           fontWeight: 500,
           color,
@@ -262,7 +280,7 @@ function CascadeRow({
 
         {/* Type badge — no opacity: var(--teal/--gold) at 0.55 opacity
             drops to ~2.1:1 on white. Full opacity passes AA (5.8:1). */}
-        <span style={{
+        <span className={node.type === 'milestone' ? undefined : 'cascade-meta-md'} style={{
           fontSize: '10px',
           fontWeight: 500,
           color: node.type === 'milestone' ? 'var(--job-milestone)' : 'var(--sk-t2)',
@@ -364,11 +382,15 @@ function WhatIfPanel({
           </span>
         </div>
         <button
+          type="button"
           onClick={onClose}
+          className="hit-area"
           style={{
             background: 'none',
             border: 'none',
             cursor: 'pointer',
+            minHeight: 24,
+            padding: '4px 8px',
             fontSize: 'var(--label-size)',
             color: 'var(--slate)',
             opacity: 'var(--ink-label)',
@@ -391,13 +413,15 @@ function WhatIfPanel({
             fontSize: '12px',
             padding: 'var(--sp-xs) var(--sp-sm)',
             borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${withAlpha('var(--job-stale)', 30)}`,
+            border: `1px solid ${withAlpha('var(--job-accent)', 30)}`,
             background: 'var(--cream)',
             color: 'var(--ink)',
             outline: 'none',
           }}
         />
         <button
+          type="button"
+          className="hit-area"
           onClick={() => { if (newDate) onSimulate(newDate) }}
           disabled={!newDate || isLoading}
           style={{
@@ -405,9 +429,11 @@ function WhatIfPanel({
             fontWeight: 'var(--label-weight)',
             padding: 'var(--sp-xs) var(--sp-md)',
             borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${withAlpha('var(--job-stale)', 30)}`,
-            background: 'color-mix(in srgb, var(--job-stale) 10%, transparent)',
-            color: 'var(--job-stale)',
+            // Simulate is the panel's primary action: the accent, not the
+            // going-stale orange (principle 21, G4-5).
+            border: `1px solid ${withAlpha('var(--job-accent)', 30)}`,
+            background: 'color-mix(in srgb, var(--job-accent) 10%, transparent)',
+            color: 'var(--job-accent)',
             cursor: !newDate || isLoading ? 'not-allowed' : 'pointer',
             opacity: !newDate || isLoading ? 0.85 : 1,
           }}

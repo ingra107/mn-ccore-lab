@@ -655,7 +655,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={resetLayout}
-                className="dashboard-reset-layout"
+                className="dashboard-reset-layout hit-area"
                 title="Reset all dashboard layouts to defaults"
               >
                 <RotateCcw size={11} strokeWidth={1.5} absoluteStrokeWidth /> Reset layout
@@ -808,6 +808,14 @@ export default function Dashboard() {
           opacity: 0;
         }
         .dark .dashboard-pin-btn { background: rgba(255, 255, 255, 0.08); }
+        /* Touch has no hover, so the pin stayed invisible yet still took taps:
+           on a phone its 44px box sat over Project Health's Heatmap tab and
+           ate every tap (G8-01, 2026-10-14). A hover-only overlay does not
+           exist on touch (the N1.07 rule in index.css); Customize carries the
+           pin toggle there, at 44px. */
+        @media (hover: none) {
+          .dashboard-pin-btn { display: none; }
+        }
 
         /* "Reset layout" link in section header */
         .dashboard-reset-layout {
