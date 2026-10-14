@@ -10,7 +10,7 @@
 //
 // Design ref: docs/superpowers/plans/2026-06-11-hermes-artifacts-design.md.
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -29,6 +29,7 @@ import { useDismissThread } from '../../hooks/useMutations'
 import { useArtifactTags, useArtifactTagMutations } from '../../hooks/useArtifacts'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../hooks/useToast'
+import { useDismissable } from '../../hooks/useDismissable'
 import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
@@ -72,6 +73,12 @@ export default function ArtifactPage() {
   const { showSuccess, showError } = useToast()
 
   const [showHistory, setShowHistory] = useState(false)
+  // Version history closes on Escape and on a press outside it, like every
+  // other Hub menu (G7-5, 2026-10-14), not only through its own trigger.
+  const historyTriggerRef = useRef<HTMLButtonElement>(null)
+  const historyMenuRef = useRef<HTMLDivElement>(null)
+  const closeHistory = useCallback(() => setShowHistory(false), [])
+  useDismissable(showHistory, closeHistory, [historyTriggerRef, historyMenuRef])
   const [comment, setComment] = useState('')
   const [authorOnly, setAuthorOnly] = useState(false)
 
@@ -230,6 +237,7 @@ export default function ArtifactPage() {
           {/* Version badge + history dropdown */}
           <div style={{ position: 'relative' }}>
             <button
+              ref={historyTriggerRef}
               type="button"
               onClick={() => setShowHistory((v) => !v)}
               className="inline-flex items-center gap-1 cursor-pointer"
@@ -245,9 +253,11 @@ export default function ArtifactPage() {
             </button>
             {showHistory && (
               <div
+                ref={historyMenuRef}
                 role="menu"
                 style={{
-                  position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 20, minWidth: 280,
+                  position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 20,
+                  minWidth: 'min(280px, calc(100vw - 2 * var(--band-pad, 12px)))',
                   background: 'var(--cream)', border: '1px solid var(--sk-line2)',
                   borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.15))',
                   padding: '8px', maxHeight: 320, overflowY: 'auto',
@@ -347,8 +357,11 @@ export default function ArtifactPage() {
                       type="button"
                       onClick={() => removeTag.mutate(t, { onError: () => showError('Could not remove tag') })}
                       aria-label={`Remove tag ${t}`}
-                      className="inline-flex items-center cursor-pointer"
-                      style={{ background: 'none', border: 'none', color: 'var(--job-accent)', padding: 0, opacity: 0.8 }}
+                      // A 24px box on every pointer (WCAG 2.5.8; was the bare 11px
+                      // glyph), pulled into the chip's padding by the negative margin
+                      // so the chip keeps its size; .hit-area takes it to 44px on touch.
+                      className="hit-area inline-flex items-center justify-center cursor-pointer"
+                      style={{ background: 'none', border: 'none', color: 'var(--job-accent)', padding: 0, opacity: 0.8, width: 24, height: 24, margin: '-6px -8px -6px -4px', flexShrink: 0 }}
                     >
                       <X {...ICON_PROPS} size={11} />
                     </button>
@@ -407,16 +420,20 @@ export default function ArtifactPage() {
             this frame rather than crashing). Markdown artifacts (default,
             including missing/undefined content_type) render exactly as
             before via MarkdownView — no regression there. */}
-        <div
-          className="detail-card"
-          style={{ borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
-        >
-          {artifact.content_type === 'html' ? (
+        {/* An HTML artifact is a whole page with its own cards, so the frame IS
+            the card: wrapping it in .detail-card was a box in a box (principle 9)
+            and, with the card's padding, left a 284px frame on a 390px phone
+            (G7-2, 2026-10-14). Markdown keeps the card; .artifact-body trims its
+            padding on phones so the text gets the width. */}
+        {artifact.content_type === 'html' ? (
+          <div style={{ marginBottom: '2rem' }}>
             <DeskBrokerFrame id={artifact.id} title={artifact.title} html={artifact.body_md} />
-          ) : (
+          </div>
+        ) : (
+          <div className="detail-card artifact-body" style={{ marginBottom: '2rem' }}>
             <MarkdownView source={artifact.body_md} />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ── Activity feed + composer ── */}
         <h2 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--ink)', margin: '0 0 0.75rem' }}>

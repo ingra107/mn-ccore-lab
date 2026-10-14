@@ -3363,6 +3363,35 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
   .tk-seg button { min-width: 44px; justify-content: center; }
 }
 
+/* Artifact page body (G7-2, 2026-10-14). The markdown card's padding steps down
+   on phones so a 390px screen does not lose 56px of text width to it. */
+.artifact-body { border-radius: var(--radius-xl); padding: 1.5rem 1.75rem; }
+@media (max-width: 639px) { .artifact-body { padding: 14px 12px; } }
+
+/* An HTML artifact frame fills the screen between the portal header and the
+   bottom tab bar, so once scrolled into place it is a full-screen reader.
+   It does not grow to its content: working desks size panes in vh
+   (.todo 45vh, .editor 62vh) and pin a sticky jump bar and a fixed toast,
+   all of which would grow with, or fall off, a frame as tall as the page. */
+.desk-frame {
+  display: block; width: 100%;
+  height: calc(100dvh - var(--portal-header-h, 56px) - 1.5rem);
+  min-height: 420px;
+  border: 1px solid var(--sk-line); border-radius: var(--radius-lg); background: #fff;
+}
+@media (max-width: 1023px) {
+  .desk-frame { height: calc(100dvh - var(--portal-header-h, 56px) - 56px - env(safe-area-inset-bottom, 0px) - 1rem); }
+}
+
+/* SmartCompose action row on touch (overnight 2026-10-14, G7-7): its 22px attach /
+   mention / emoji / lock / Hermes / Post controls measured 22px tall, under the
+   WCAG 2.5.8 24px floor and far from a thumb. One rule for every composer that
+   renders the shared row; the inline height: 22 keeps the dense desktop row. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  .sc-bar { gap: 6px !important; }
+  .sc-bar .sc-tool { height: 36px !important; min-width: 36px; justify-content: center; }
+}
+
 /* Ideas board: the "..." move menu is the only way to change status on touch and
    keyboard (drag is mouse only), so give it a 28px target and keep the glyph centered. */
 .sr.idea-move .sr-trig{min-width:28px;min-height:28px;margin-left:0;padding:0;justify-content:center}

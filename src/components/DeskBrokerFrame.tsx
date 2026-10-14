@@ -214,13 +214,9 @@ export default function DeskBrokerFrame({ id, title, html }: { id: string; title
       sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
       allow="clipboard-write"
       src={url}
-      style={{
-        width: '100%',
-        minHeight: '70vh',
-        border: '1px solid var(--sk-line)',
-        borderRadius: 'var(--radius-lg)',
-        background: '#fff',
-      }}
+      // Sizing lives in index.css .desk-frame: the visible screen between the
+      // portal header and the tab bar, and why it does not grow to content.
+      className="desk-frame"
     />
   )
 }

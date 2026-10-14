@@ -25,6 +25,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import type { QuestionRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { projectShortLabel, projectShortLabelMap } from '../../lib/displayNames'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   open: { label: 'Open', color: 'var(--sk-t1)', bg: 'var(--sk-line)' },
@@ -151,6 +152,9 @@ function QuestionCard({
   onToggle: () => void
 }) {
   const person = getPersonInfo(question.asked_by)
+  // Principle 8: the project chip shows the short name, never the raw slug.
+  const { data: projects = [] } = useProjects()
+  const projectLabel = useMemo(() => projectShortLabelMap(projects), [projects])
   const status = statusConfig[question.status] || statusConfig.open
   const answerCount = question.answer_count ?? 0
 
@@ -162,6 +166,7 @@ function QuestionCard({
       {/* Clickable header */}
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
         className="w-full text-left px-5 py-4 flex items-start gap-3 transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]"
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
@@ -204,7 +209,7 @@ function QuestionCard({
                 className="text-[10px] px-1.5 py-0.5 rounded-full"
                 style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}
               >
-                {question.project_slug}
+                {projectLabel.get(question.project_slug) ?? question.project_slug}
               </span>
             )}
           </div>
@@ -500,7 +505,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             value={projectSlug}
             options={[
               { value: '', label: 'None (general question)' },
-              ...projects.map((p) => ({ value: p.slug, label: p.title })),
+              ...projects.map((p) => ({ value: p.slug, label: projectShortLabel(p) })),
             ]}
             onChange={setProjectSlug}
             size="md"
