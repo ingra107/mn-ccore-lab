@@ -127,9 +127,12 @@ export function Button<E extends ElementType = 'button'>({
 
   // Touch target (index.css): a stand-alone md/lg <button> gets the 44px
   // minimum height; everything else (sm, or an anchor/Link) gets a hit area
-  // that grows the tap zone without changing the layout.
+  // that grows the tap zone without changing the layout. md/lg buttons carry
+  // the hit area too: min-height fixes only the height, so an icon-only md
+  // button with padding 0 (link Archive/Restore, KeyLinksEditor, documents)
+  // was a 12x44 bar. The hit area adds nothing to a button already 44 wide.
   const { className: extraClass, ...restProps } = rest as { className?: string }
-  const touchClass = Component === 'button' && size !== 'sm' ? 'touch-tall' : 'hit-area'
+  const touchClass = Component === 'button' && size !== 'sm' ? 'touch-tall hit-area' : 'hit-area'
   const className = extraClass ? `${touchClass} ${extraClass}` : touchClass
 
   return createElement(

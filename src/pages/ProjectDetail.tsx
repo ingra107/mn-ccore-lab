@@ -1810,13 +1810,13 @@ recentActivity.length === 0 ? (
           bottom: 8px;
           width: 32px;
           pointer-events: none;
-          background: linear-gradient(to right, transparent, var(--cream));
+          background: linear-gradient(to right, transparent, var(--page-bg));
           z-index: 1;
         }
-        /* N1.17 — the .dark override used var(--ink) (the light TEXT token in
-           dark mode), rendering the fade as an opaque white smear over the
-           last tabs. var(--cream) in the base rule is a bg token that flips
-           with the theme, so no dark override is needed. */
+        /* The fade ends in the colour actually behind the strip: the page
+           canvas (--page-bg, flips with the theme). --cream is the card/field
+           well, #fff in light, and painted a white block over the last tab on
+           the cream page (N1.17 fixed the dark half of the same smear). */
       `}</style>
 </>
   )
@@ -1911,9 +1911,9 @@ recentActivity.length === 0 ? (
         count={pendingTasks.length > 0 ? pendingTasks.length : undefined}
         right={
           <span className="pj-head-links">
-            <button type="button" onClick={() => setShowCreateTask(true)} className="pj-link">+ Add task</button>
+            <button type="button" onClick={() => setShowCreateTask(true)} className="pj-link hit-area">+ Add task</button>
             {pendingTasks.length > 3 && (
-              <button type="button" onClick={() => setActiveTab('tasks')} className="pj-link">View all →</button>
+              <button type="button" onClick={() => setActiveTab('tasks')} className="pj-link hit-area">View all →</button>
             )}
           </span>
         }
@@ -1927,7 +1927,7 @@ recentActivity.length === 0 ? (
       <SectionHead
         title="Recent"
         right={recentActivity.length > 0 ? (
-          <button type="button" onClick={() => goToStream('all')} className="pj-link">All →</button>
+          <button type="button" onClick={() => goToStream('all')} className="pj-link hit-area">All →</button>
         ) : undefined}
       />
       {recentListEl}
@@ -2019,7 +2019,7 @@ const PJ_CSS = `
 .pj-head .pg-hb { margin-top: 2px; height: 10px; }
 .pj-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .pj-metarow { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
-.pj-title { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 2px 12px; }
+.pj-title { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .pj-h1 { margin: 0; min-width: 0; font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink); }
 .pj-edit-btn { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .pj-edit-btn:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 2px; border-radius: var(--radius-sm); }

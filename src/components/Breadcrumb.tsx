@@ -21,7 +21,7 @@ export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 
       <nav className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--slate)' }}>
         <Link
           to={backTo}
-          className="inline-flex items-center gap-1 hover:!opacity-100 transition-opacity"
+          className="hit-area inline-flex items-center gap-1 hover:!opacity-100 transition-opacity"
           style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}
         >
           <ArrowLeft {...ICON_PROPS} size={12} />

@@ -31,9 +31,20 @@ import ProjectSleekList from '../components/project/ProjectSleekList'
 import ProjectDirectory from '../components/project/ProjectDirectory'
 import type { SleekSort } from '../components/table/SleekRows'
 
-// Values are D1 lowercase canonical; labels are Title Case for display.
+// Values are the lowercase canonical strip; STAGE_LABEL is what the board
+// prints (sentence case, as the product ladder labels read). A Record over
+// Stage, so a stage added without a label does not compile.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
 type Stage = (typeof STAGES)[number]
+const STAGE_LABEL: Record<Stage, string> = {
+  idea: 'Idea',
+  data_collection: 'Data collection',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  revisions: 'Revisions',
+  published: 'Published',
+}
 
 // Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
 // 'stale' is a pseudo-filter (P2-9: stale-by-shared-threshold OR health < 50),
@@ -377,12 +388,13 @@ export default function Projects() {
       ]}
       activeView={browsing ? 'browse' : viewMode}
       onViewChange={onViewChange}
-      /* 2026-06-10b (Nick): the Pipeline kanban is WIDE multi-column content —
-         let it grow rightward to fit (anchored left edge, fluid right) instead
-         of cramming 7 stages into --col-main and h-scrolling inside the band.
-         #91 (Nick 2026-06-24): the List/table now also grows wide ("the whole
-         width can likely be longer") — the 3fr Title column absorbs the room. */
-      wideBody={true}
+      /* Only Pipeline is wide. Nick 2026-10-13, asked "Should List go back to
+         the standard band and only Pipeline stay wide?", picked "List in band,
+         Pipeline wide". The kanban's seven stage columns take the anchored-wide
+         body (Today's full width, principle 17; a wider board scrolls inside
+         it). List and Browse sit in --col-main like every other data page.
+         This replaces #91 (2026-06-24), which had widened the List too. */
+      wideBody={!browsing && viewMode === 'pipeline'}
       filters={browsing ? undefined :
         <>
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
@@ -390,7 +402,8 @@ export default function Projects() {
               The Pipeline view toggle (above) is already visible chrome. */}
           {/* Phone: one nowrap row that scrolls sideways (.tk-flt-scroll), so the
               status axis never splits across wrapped lines. From md up the
-              links wrap as before. TableControls (shared) is untouched. */}
+              links wrap as before. The scroller engages only because
+              TableControls caps each of its groups at the row's width. */}
           <div className="tk-flt tk-flt-scroll">
           {categoryFilters.map((f) => (
             <FilterPill
@@ -595,7 +608,7 @@ export default function Projects() {
                             margin: 0,
                           }}
                         >
-                          {stage}
+                          {STAGE_LABEL[stage]}
                         </h3>
                         <span
                           style={{

@@ -403,7 +403,7 @@ export default function TaskContextMenu({
             <ArrowRight {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
             Open detail panel
           </span>
-          <span style={shortcutStyles}>Enter</span>
+          <span className="ctx-kbd" style={shortcutStyles}>Enter</span>
         </MenuItem>
       )}
 
@@ -414,7 +414,7 @@ export default function TaskContextMenu({
             <Eye {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
             Peek
           </span>
-          <span style={shortcutStyles}>Space</span>
+          <span className="ctx-kbd" style={shortcutStyles}>Space</span>
         </MenuItem>
       )}
 

@@ -46,6 +46,18 @@ const researchAreas = [
   'Other',
 ]
 
+/** The research areas a picker offers: the starter list, then every area the
+ *  lab's ideas already carry (prod holds tool / culture / ops, none of them in
+ *  the starter list), then the value being edited. A stored value is always an
+ *  option, so a select never falls back to "none" and misstates it. */
+function areaChoices(ideas: readonly { research_area?: string | null }[], current = ''): string[] {
+  const out = [...researchAreas]
+  for (const a of [...ideas.map((i) => i.research_area ?? ''), current]) {
+    if (a && !out.includes(a)) out.push(a)
+  }
+  return out
+}
+
 const GRID_COLS = 'minmax(200px, 3fr) 120px 100px 80px 80px 80px'
 
 export default function IdeasPage() {
@@ -218,8 +230,7 @@ export default function IdeasPage() {
     <div className="content-container flex flex-col gap-4">
       <PageHeader
         title="Ideas Board"
-        subtitle={`${activeCount} active ideas`}
-        count={activeCount}
+        hero={isLoading ? undefined : { value: activeCount, label: activeCount === 1 ? 'active idea' : 'active ideas' }}
         actions={
           <Button variant="primary" onClick={() => setShowCreate(true)}>
             <Plus {...ICON_PROPS} size={16} />
@@ -374,6 +385,7 @@ export default function IdeasPage() {
                 <IdeaRowView
                   key={idea.id}
                   idea={idea}
+                  areas={areaChoices(ideas, idea.research_area ?? '')}
                   isFocused={focusedIndex === idx}
                   isExpanded={expandedId === idea.id || editingId === idea.id}
                   isEditing={editingId === idea.id}
@@ -448,7 +460,7 @@ export default function IdeasPage() {
       </div>
 
       {/* Create modal */}
-      <CreateIdeaModal open={showCreate} onClose={() => setShowCreate(false)} />
+      <CreateIdeaModal open={showCreate} onClose={() => setShowCreate(false)} areas={areaChoices(ideas)} />
 
       {/* S15: promote-an-idea → prefilled project create */}
       <CreateProjectModal
@@ -548,6 +560,7 @@ function IdeaBoardCard({
 // IdeaRowView
 function IdeaRowView({
   idea,
+  areas,
   isFocused,
   isExpanded,
   isEditing,
@@ -560,6 +573,7 @@ function IdeaRowView({
   onPromote,
 }: {
   idea: IdeaRow
+  areas: string[]
   isFocused: boolean
   isExpanded: boolean
   isEditing: boolean
@@ -1003,7 +1017,7 @@ function IdeaRowView({
                   style={{ padding: '6px 8px', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)' }}
                 >
                   <option value="">— none —</option>
-                  {researchAreas.map((a) => <option key={a} value={a}>{a}</option>)}
+                  {areas.map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
               </Field>
               <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
@@ -1055,7 +1069,7 @@ function IdeaRowView({
 }
 
 // CreateIdeaModal
-function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CreateIdeaModal({ open, onClose, areas }: { open: boolean; onClose: () => void; areas: string[] }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [researchArea, setResearchArea] = useState('')
@@ -1091,7 +1105,6 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
       onClose={onClose}
       title="New idea"
       maxWidth="sm"
-      variant="modal"
       onExtraKeyDown={(e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault()
@@ -1151,14 +1164,21 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
           />
         </Field>
 
+        {/* A field with an edge, like Title and Description above it (an input
+            must look like an input, rules-ui-design 20); the borderless
+            InlineSelect read as plain text. Native select: the phone's own
+            picker. */}
         <Field label="Research area" htmlFor="idea-area" noContainer>
-          <InlineSelect id="idea-area"
+          <select
+            id="idea-area"
             value={researchArea}
-            options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
-            onChange={setResearchArea}
-            size="md"
-            alwaysShowChevron
-          />
+            onChange={(e) => setResearchArea(e.target.value)}
+            className="w-full rounded-md outline-none"
+            style={{ ...fieldStyle, background: 'var(--cream)', color: researchArea ? 'var(--ink)' : 'var(--slate)' }}
+          >
+            <option value="">Select area (optional)</option>
+            {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
         </Field>
       </form>
     </Modal>

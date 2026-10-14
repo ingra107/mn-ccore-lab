@@ -48,8 +48,15 @@ export default function TableControls({
   rightExtra,
 }: TableControlsProps) {
   return (
+    // Every group in this row is capped at the row's width ([&>*]): a flex
+    // item's default min-width is its content, so a group wider than a phone
+    // (the Projects filter links, 701px in a 342px column) never shrank, its
+    // own sideways scroller (.tk-flt-scroll) never engaged, and the rest of
+    // the row was clipped off screen. Wrapping is unchanged: a flex-wrap row
+    // breaks lines on content size first and only shrinks a group that is
+    // wider than the row on its own line.
     <div
-      className="flex items-center flex-wrap gap-3"
+      className="flex items-center flex-wrap gap-3 [&>*]:min-w-0 [&>*]:max-w-full"
       style={{ minHeight: 40 }}
     >
       {/* Left side ------------------------------------------------- */}
@@ -88,7 +95,7 @@ export default function TableControls({
 
       {/* Extra right content (export buttons, links, etc.) */}
       {rightExtra && (
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center flex-wrap gap-2">
           {rightExtra}
         </div>
       )}
