@@ -281,14 +281,19 @@
   border-radius: var(--radius-md, 6px);
   color: var(--slate, #64748b);
   opacity: 0;
+  /* Hidden means untouchable: no pointer events until revealed, so an unseen
+     handle never eats a tap on the card's top-left corner (G8-01 class). */
+  pointer-events: none;
   cursor: grab;
   transition: opacity 120ms ease, background 120ms ease;
   z-index: 2;
 }
 
 .dashboard-grid-item:hover .rgl-drag-handle,
-.dashboard-grid-item:focus-within .rgl-drag-handle {
+.dashboard-grid-item:focus-within .rgl-drag-handle,
+.rgl-drag-handle:focus-visible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .rgl-drag-handle:hover {
