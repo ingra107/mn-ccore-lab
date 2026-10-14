@@ -116,8 +116,10 @@ export default function NarrativesPage() {
                 )}
               </div>
 
-              {/* Stage pipeline — labeled so each dot's meaning is obvious */}
-              <div className="flex items-center gap-2 mb-4">
+              {/* Stage pipeline — labeled so each dot's meaning is obvious.
+                  Wraps: an arc can carry 16 rungs, about 1,080px, and a phone
+                  must never scroll sideways. */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-4">
                 <span style={{ fontSize: '12px', color: 'var(--slate)', marginRight: 4 }}>
                   Pipeline
                 </span>
@@ -151,10 +153,16 @@ export default function NarrativesPage() {
                     style={{ textDecoration: 'none' }}
                   >
                     <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: rungColor(p.home_kind, p.home_stage), flexShrink: 0 }} />
-                    <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
+                    {/* The title keeps most of the row; the stage label gives way
+                        (truncates, full text on hover) so a long title is not
+                        squeezed to one word per line on a phone. */}
+                    <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1, minWidth: 0 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: 'var(--sk-t3)' }}>
+                    <span
+                      title={p.stage_label}
+                      style={{ fontSize: '10px', color: 'var(--sk-t3)', maxWidth: '40%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    >
                       {p.stage_label}
                     </span>
                   </Link>

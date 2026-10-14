@@ -80,9 +80,12 @@ function DecisionTimeline({
   })()
 
   return (
-    <div className="relative pl-8" style={{ paddingTop: '4px' }}>
+    // md and up: the date gutter (110px left of each card) lives INSIDE this
+    // container (pl-[118px]), so the dates cannot hang past the page band at
+    // any width. Only the line moves with it; dot and card keep their offsets.
+    <div className="relative pl-8 md:pl-[118px]" style={{ paddingTop: '4px' }}>
       <div
-        className="absolute left-3 top-0 bottom-0"
+        className="absolute left-3 md:left-[98px] top-0 bottom-0"
         style={{ width: '2px', backgroundColor: 'var(--sk-line)' }}
       />
       {grouped.map((group) => (
@@ -132,12 +135,13 @@ function DecisionTimeline({
                 boxShadow: `0 0 0 2px ${config.bg}`,
               }}
             />
+            {/* md and up: the date sits in the container's own gutter left of
+                the line (x=8). A phone has no gutter (pl-8), so there it sits
+                above the card, in flow; in a gutter it started at x=-54 and
+                read 'or 16'. */}
             <div
-              className="absolute text-right"
+              className="mb-1 md:mb-0 md:absolute md:left-[-110px] md:top-[2px] md:w-[75px] md:text-right"
               style={{
-                left: '-110px',
-                top: '2px',
-                width: '75px',
                 fontSize: 'var(--text-micro)',
                 color: 'var(--slate)',
                 opacity: 'var(--ink-label)',

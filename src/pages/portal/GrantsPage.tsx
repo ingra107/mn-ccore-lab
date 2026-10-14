@@ -263,16 +263,25 @@ function PostAward({ rows, today, onAdd }: { rows: GrantProduct[]; today: string
       ) : items.map(({ m, g, date }) => (
         <div key={m.id} className="flex items-center gap-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: 13, opacity: m.completed ? 0.6 : 1 }}
           data-testid={`milestone-${m.id}`}>
-          <input type="checkbox" aria-label={`${m.title} done`} checked={!!m.completed}
-            onChange={(e) => setStatus.mutate({ id: m.id, status: e.target.checked ? 'done' : 'todo' }, {
-              onSettled: () => qc.invalidateQueries({ queryKey: GRANTS_KEY }),
-            })} />
+          {/* The label carries .hit-area: a 44px tap zone on touch around the 13px native box. */}
+          <label className="hit-area inline-flex items-center" style={{ flexShrink: 0 }}>
+            <input type="checkbox" aria-label={`${m.title} done`} checked={!!m.completed}
+              onChange={(e) => setStatus.mutate({ id: m.id, status: e.target.checked ? 'done' : 'todo' }, {
+                onSettled: () => qc.invalidateQueries({ queryKey: GRANTS_KEY }),
+              })} />
+          </label>
           <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--job-milestone)', flexShrink: 0 }} />
-          <span style={{ flex: 1, minWidth: 0, color: 'var(--ink)' }}>{m.title}</span>
-          <Link to={PATHS.project(g.project_slug)} style={{ color: 'var(--slate)', fontSize: 12 }}>{grantName(g)}</Link>
-          <span style={{ width: 96, textAlign: 'right', color: !m.completed && date && date < today ? 'var(--job-overdue)' : 'var(--slate)', fontSize: 12 }}>
-            {date ?? '—'}{m.deadline && m.due_date && m.deadline !== m.due_date ? ` (hard ${m.deadline})` : ''}
-          </span>
+          {/* Phone: the title gets its own line, grant and date under it (it was
+              squeezed to one word per line beside them). md and up: one line. */}
+          <div className="flex flex-col gap-0.5 md:flex-row md:items-center md:gap-3" style={{ flex: 1, minWidth: 0 }}>
+            <span className="md:flex-1" style={{ minWidth: 0, color: 'var(--ink)' }}>{m.title}</span>
+            <div className="flex items-center gap-3">
+              <Link to={PATHS.project(g.project_slug)} style={{ color: 'var(--slate)', fontSize: 12 }}>{grantName(g)}</Link>
+              <span className="md:w-24 md:text-right" style={{ color: !m.completed && date && date < today ? 'var(--job-overdue)' : 'var(--slate)', fontSize: 12 }}>
+                {date ?? '—'}{m.deadline && m.due_date && m.deadline !== m.due_date ? ` (hard ${m.deadline})` : ''}
+              </span>
+            </div>
+          </div>
         </div>
       ))}
     </div>

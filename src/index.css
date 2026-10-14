@@ -1658,6 +1658,13 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   margin-left: 2px;
   opacity: 0.85;
 }
+/* Touch has no hover, so the reveal above never fires and a picker reads as
+   plain text ('MN-CCORE', 'Idea' in the New Project sheet). On touch every
+   picker shows its chevron: an input must look like an input (design
+   principle 20), and hover-only affordances are always visible on touch (13). */
+@media (hover: none) {
+  .inline-select-chevron { opacity: 0.7; }
+}
 
 /* J/K-focused task row — keyboard cursor.
    3px inset left edge + 6% bg tint. WCAG: non-color signal via the edge.
