@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, actorSlugFromRequest, isPiRequest } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
 interface ExpertiseRow {
@@ -43,6 +43,18 @@ export async function handleGetExpertise(url: URL, env: Env): Promise<Response> 
   return json({ data: result.results });
 }
 
+/**
+ * A member's expertise tags are theirs to edit, and the PI's (a valid service
+ * key counts as PI: isPiRequest). Until 2026-10-14 any signed-in member could
+ * add or hard-delete a tag on anyone's page (overnight audit G11-9). Same rule
+ * as the featured-publications PUT (member-featured-publications.ts).
+ */
+async function mayEditMemberTags(request: Request, env: Env, memberSlug: string): Promise<boolean> {
+  if (await isPiRequest(request, env)) return true;
+  const caller = await actorSlugFromRequest(request, env);
+  return Boolean(caller) && caller!.toLowerCase() === memberSlug.toLowerCase();
+}
+
 // POST /api/expertise — { member_slug, tag, source? }
 export async function handleAddExpertise(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
@@ -54,6 +66,9 @@ export async function handleAddExpertise(request: Request, user: AuthUser, env: 
 
   if (!body.member_slug || !body.tag) {
     return error('member_slug and tag required', 400);
+  }
+  if (!(await mayEditMemberTags(request, env, body.member_slug))) {
+    return error(`Not authorized to edit expertise for "${body.member_slug}"`, 403);
   }
 
   const id = generateId();
@@ -78,5 +93,10 @@ export async function handleAddExpertise(request: Request, user: AuthUser, env: 
 
 // POST /api/expertise/:id/delete
 export async function handleRemoveExpertise(id: string, request: Request, env: Env): Promise<Response> {
+  const row = await env.DB.prepare('SELECT member_slug FROM expertise_tags WHERE id = ?').bind(id).first<{ member_slug: string }>();
+  // Absent row: the hard delete is already done (idempotent, see idempotentDelete).
+  if (row && !(await mayEditMemberTags(request, env, row.member_slug))) {
+    return error(`Not authorized to edit expertise for "${row.member_slug}"`, 403);
+  }
   return idempotentDelete({ table: 'expertise_tags', id, mode: 'hard', request, env });
 }

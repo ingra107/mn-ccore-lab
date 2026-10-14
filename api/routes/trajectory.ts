@@ -3,18 +3,25 @@ import { homeProductCols, homeProductJoin, projectDoneSql } from '../lib/project
 import { json } from '../helpers';
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
+import { MEMBER_PUBLICATIONS_WHERE, memberSlugParam } from '../lib/member-publications';
+
+// The member's papers, newest first. `year` is the only date a publication row
+// carries; the client buckets on it.
+const MEMBER_PUBS_SQL =
+  `SELECT id, title, journal, year, doi, status FROM publications WHERE ${MEMBER_PUBLICATIONS_WHERE} ORDER BY year DESC, title`;
 
 // GET /api/team/:slug/trajectory
 export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, isPi: boolean): Promise<Response> {
   // Publications are public. Completions, task metrics and assignments are one
-  // person's activity: theirs and the PI's alone (Nick, 2026-10-11).
+  // person's activity: theirs and the PI's alone (Nick, 2026-10-11). The route
+  // is a public GET, so a signed-out visitor lands here too and reads the
+  // published papers only, the same rows /api/publications gives them.
   if (!mayReadPerson(viewer, isPi, slug)) {
-    const pubs = await env.DB.prepare(
-      "SELECT id, title, journal, year, doi FROM publications WHERE authors LIKE ? ORDER BY year DESC"
-    ).bind(`%${slug}%`).all();
+    const pubs = await env.DB.prepare(MEMBER_PUBS_SQL).bind(memberSlugParam(slug)).all();
+    const rows = (pubs.results || []) as Array<Record<string, unknown>>;
     return json({
       data: {
-        publications: pubs.results || [],
+        publications: viewer.kind === 'person' ? rows : rows.filter((r) => r.status === 'Published'),
         taskStats: [],
         projects: [],
         milestones: [],
@@ -28,9 +35,7 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
   // Parallel queries for all trajectory data
   const [publications, taskStats, projectHistory, milestones, taskMetrics, projectStages] = await Promise.all([
     // Publications where this person is an author
-    env.DB.prepare(
-      "SELECT id, title, journal, year, doi FROM publications WHERE authors LIKE ? ORDER BY year DESC"
-    ).bind(`%${slug}%`).all(),
+    env.DB.prepare(MEMBER_PUBS_SQL).bind(memberSlugParam(slug)).all(),
 
     // Task completion stats by month (last 12 months)
     env.DB.prepare(`
@@ -39,13 +44,17 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       GROUP BY month ORDER BY month
     `).bind(`%${slug}%`).all(),
 
-    // Projects this person is involved in (as assignee on tasks)
-    // Each with its home product's kind and stage (contract phase step 1).
+    // Active projects this person is involved in (as assignee on tasks), each
+    // with its home product's kind and stage (contract phase step 1). Finished
+    // projects are left out: the page heads this list "Active projects", and
+    // it listed 16 done ones (overnight audit 2026-10-14, G9-4). Same
+    // finished rule as the velocity query below.
     env.DB.prepare(`
       SELECT DISTINCT p.id, p.title, p.slug, p.status, p.category, ${homeProductCols('p')}
       FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE t.assignee LIKE ?
+      WHERE t.assignee LIKE ? AND NOT ${projectDoneSql('p')}
+      ORDER BY p.title
     `).bind(`%${slug}%`).all(),
 
     // Milestones on their projects: milestone tasks on a project they have a

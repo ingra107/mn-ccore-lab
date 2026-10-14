@@ -31,18 +31,11 @@ export interface IdempotentDeleteArgs {
   /** Activity-log entity-type label. Defaults to the table name. */
   activityEntityType?: string;
   /**
-   * Set false for tables with NO project_id column (e.g. inbox_events). The
-   * project-ACL SELECT hard-codes `project_id`, which 500s ("no such column:
-   * project_id") on tables that lack it. Default true preserves the
-   * project-scoped SELECT+gate for tasks/projects and every existing caller.
-   */
-  gateProject?: boolean;
-  /**
    * Name of the column holding the project FK when it is not `project_id`
    * (paper_project_links keeps it in `project_slug` — a typed id since Z3.2
-   * despite the name). The gate still runs; only the column differs.
-   * 2026-09-16: without this the Literature tab's unlink 500'd on
-   * "no such column: project_id" for every row it ever tried to remove.
+   * despite the name). When named, the row MUST carry it (a typo throws
+   * rather than skipping the gate). When omitted, the gate runs on
+   * `project_id` if the table has one and is skipped if it does not.
    */
   projectColumn?: string;
 }
@@ -73,23 +66,35 @@ export interface IdempotentDeleteArgs {
  *   - file_attachments: has an R2 side-effect (env.FILES.delete(r2_key)) that
  *     this wrapper does not model; keep hand-rolled with an exemption comment.
  */
+/** The row's project reference, or null when the table has none. */
+function projectRefOf(row: Record<string, unknown>, table: string, projectColumn: string | undefined): string | null {
+  const column = projectColumn ?? 'project_id';
+  if (projectColumn && !Object.prototype.hasOwnProperty.call(row, column)) {
+    throw new Error(`idempotentDelete: ${table} has no column ${column}`);
+  }
+  const v = row[column];
+  return typeof v === 'string' && v !== '' ? v : null;
+}
+
 export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Response> {
   const { table, id, mode, request, env } = args;
-  // Tables without a project_id column (e.g. inbox_events) opt out of the
-  // project-ACL SELECT+gate, which otherwise 500s on the hard-coded project_id.
-  const gateProject = args.gateProject !== false;
-  const projectColumn = args.projectColumn ?? 'project_id';
+
+  // `SELECT *`, then read the project column off the row. Naming a column in
+  // the SELECT 500'd ("no such column: project_id") on every table without
+  // one: the Literature unlink until 2026-09-16, and expertise tags, calendar
+  // feeds and subtasks until 2026-10-14 (overnight audit G11-9). A table either
+  // carries the column (gate runs) or it does not (nothing to gate); there is
+  // no flag to get wrong.
+  const row = await env.DB.prepare(
+    `SELECT * FROM ${table} WHERE id = ?`,
+  ).bind(id).first<Record<string, unknown>>();
+  const projectRef = row ? projectRefOf(row, table, args.projectColumn) : null;
 
   if (mode === 'soft') {
-    const cols = gateProject ? `id, deleted_at, ${projectColumn} AS project_id` : 'id, deleted_at';
-    const row = await env.DB.prepare(
-      `SELECT ${cols} FROM ${table} WHERE id = ?`,
-    ).bind(id).first<{ id: string; deleted_at: string | null; project_id?: string | null }>();
-
     if (!row) return hiddenResource();
 
-    if (gateProject && row.project_id) {
-      const block = await assertProjectVisible(request, env, row.project_id);
+    if (projectRef) {
+      const block = await assertProjectVisible(request, env, projectRef);
       if (block) return block;
     }
 
@@ -123,17 +128,10 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
   }
 
   // hard mode
-  // Pre-flight SELECT to gate on PB visibility if the row has a project_id.
-  // The SELECT result is discarded after the gate check — the DELETE is the
+  // The pre-flight SELECT above only gates on PB visibility; the DELETE is the
   // source of truth for whether a row existed (meta.changes).
-  const row = gateProject
-    ? await env.DB.prepare(
-        `SELECT id, ${projectColumn} AS project_id FROM ${table} WHERE id = ?`,
-      ).bind(id).first<{ id: string; project_id: string | null }>()
-    : null;
-
-  if (row?.project_id) {
-    const block = await assertProjectVisible(request, env, row.project_id);
+  if (projectRef) {
+    const block = await assertProjectVisible(request, env, projectRef);
     if (block) return block;
   }
 

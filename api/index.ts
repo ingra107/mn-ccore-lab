@@ -1783,11 +1783,23 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // Team subroutes
 // ─────────────────────────────────────────────────────────────────────────────
+// Public GET: /team/:slug/trajectory is a public page, and the handler's public
+// branch (published papers only) is what a signed-out visitor gets. While this
+// was 'authed' the page retried a 401 four times and then offered a Retry that
+// could never work (overnight audit 2026-10-14, G11-8). The activity half stays
+// the member's and the PI's alone (mayReadPerson inside the handler).
 defineRoute({
   method: 'GET',
   path: '/api/team/:slug/trajectory',
-  auth: 'authed',
-  entity: 'team',
+  auth: 'public',
+  anonShape: {
+    data: {
+      publications: [{ id: true, title: true, journal: true, year: true, doi: true, status: true }],
+      taskStats: [{}], projects: [{}], milestones: [{}], projectStages: [{}],
+      taskMetrics: { total: true, completed: true, overdue: true, avg_days: true },
+    },
+    scope: true,
+  },
   handler: (c) => handleTrajectory(c.req.param('slug'), E(c), c.get('viewer'), PI(c)),
 });
 defineRoute({

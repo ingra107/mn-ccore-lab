@@ -41,9 +41,10 @@ beforeEach(() => {
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
 })
 
-async function get(path: string, who: 'apikey' | string) {
+async function get(path: string, who: 'apikey' | 'anonymous' | string) {
   const headers: Record<string, string> = {}
   if (who === 'apikey') headers.Authorization = `Bearer ${API_KEY}`
+  else if (who === 'anonymous') { /* no credentials */ }
   else { headers['X-Test-Mode-Key'] = TEST_KEY; headers['X-Test-User'] = who }
   const res = await worker.fetch(new Request(`https://hub.test${path}`, { headers }), env, CTX)
   return { status: res.status, text: await res.text(), cache: res.headers.get('Cache-Control') }
@@ -103,5 +104,73 @@ describe('a member sees only their own per-person activity', () => {
       expect(r.cache, who).toBe('private, no-store')
     }
     expect((await get('/api/team/pulse?hours=48', CASEY)).cache).toBe('private, no-store')
+  })
+})
+
+// Overnight audit 2026-10-14 (G9-1, G9-2, G9-4, G11-8, G11-9). Real worker,
+// migrated schema: who reads a member's trajectory, which papers are theirs,
+// and who may edit their expertise tags.
+describe('trajectory and expertise (2026-10-14)', () => {
+  beforeEach(() => {
+    // `authors` holds names, never slugs; author_slugs is what names the member.
+    insertRow(db, 'publications', { id: 'pub-nate-1', title: 'Nate published', authors: 'Mesfin N, Ingraham NE', journal: 'Chest', year: 2021, status: 'Published', author_slugs: '["nate-mesfin","nick-ingraham"]' })
+    insertRow(db, 'publications', { id: 'pub-nate-2', title: 'Nate in review', authors: 'Mesfin N', journal: 'CCM', year: 2025, status: 'In Review', author_slugs: '["nate-mesfin"]' })
+    insertRow(db, 'publications', { id: 'pub-casey', title: 'Casey only', authors: 'Eddington C', journal: 'JAMA', year: 2023, status: 'Published', author_slugs: '["casey-eddington"]' })
+  })
+
+  it('a signed-out visitor reads the published papers on a public trajectory, not a 401', async () => {
+    const r = await get('/api/team/nate-mesfin/trajectory', 'anonymous')
+    expect(r.status).toBe(200)
+    const d = JSON.parse(r.text).data
+    expect(d.publications.map((p: { id: string }) => p.id)).toEqual(['pub-nate-1'])
+    expect(d.publications[0].year).toBe(2021)
+    expect(d.taskStats).toEqual([])
+    expect(d.taskMetrics.total).toBe(0)
+  })
+
+  it('a member reading their own trajectory gets every paper whose author_slugs names them, with its year', async () => {
+    const d = JSON.parse((await get('/api/team/nate-mesfin/trajectory', 'nate@umn.edu')).text).data
+    expect(d.publications.map((p: { id: string }) => p.id).sort()).toEqual(['pub-nate-1', 'pub-nate-2'])
+    expect(d.publications.every((p: { year: number }) => typeof p.year === 'number')).toBe(true)
+  })
+
+  it('the trajectory "projects" list leaves out finished projects', async () => {
+    insertRow(db, 'projects', { id: 'proj_done', slug: 'done-one', title: 'Done one', category: 'MNCCORE', status: 'done' })
+    insertRow(db, 'project_members', { project_id: 'proj_done', member_slug: 'nate-mesfin', added_by: 'nate-mesfin' })
+    insertRow(db, 'tasks', { id: 'task-d', project_id: 'proj_done', title: 'old', assignee: 'nate-mesfin', status: 'done', completed: 1, completed_at: daysAgo(400), kind: 'task' })
+    const d = JSON.parse((await get('/api/team/nate-mesfin/trajectory', 'nate@umn.edu')).text).data
+    expect(d.projects.map((p: { id: string }) => p.id)).toEqual(['proj_shared'])
+  })
+
+  it('contributions count a paper only when its whole year is inside the window', async () => {
+    const thisYear = new Date().getUTCFullYear()
+    insertRow(db, 'publications', { id: 'pub-nate-now', title: 'This year', authors: 'Mesfin N', journal: 'Chest', year: thisYear, status: 'Published', author_slugs: '["nate-mesfin"]' })
+    const d90 = JSON.parse((await get('/api/team/nate-mesfin/contributions?period=90', 'nate@umn.edu')).text).data
+    // A paper dated only "this year" may be older than 90 days, so it is not claimed.
+    if (new Date().getUTCMonth() >= 3) expect(d90.publications).toEqual([])
+    const d1y = JSON.parse((await get('/api/team/nate-mesfin/contributions?period=365', 'nate@umn.edu')).text).data
+    expect(d1y.publications.map((p: { id: string }) => p.id)).toEqual(['pub-nate-now'])
+  })
+
+  async function post(path: string, who: string, body?: unknown) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (who === 'apikey') headers.Authorization = `Bearer ${API_KEY}`
+    else { headers['X-Test-Mode-Key'] = TEST_KEY; headers['X-Test-User'] = who }
+    const res = await worker.fetch(new Request(`https://hub.test${path}`, { method: 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body) }), env, CTX)
+    return res.status
+  }
+  const tagCount = (id: string) => (db.prepare('SELECT COUNT(*) AS n FROM expertise_tags WHERE id = ?').get(id) as { n: number }).n
+
+  it('another member cannot delete or add a member\'s expertise tag; the member and the PI can', async () => {
+    insertRow(db, 'expertise_tags', { id: 'tag-1', member_slug: 'nate-mesfin', tag: 'Sepsis', source: 'manual', confidence: 1 })
+    insertRow(db, 'expertise_tags', { id: 'tag-2', member_slug: 'nate-mesfin', tag: 'ARDS', source: 'manual', confidence: 1 })
+    expect(await post('/api/expertise/tag-1/delete', CASEY)).toBe(403)
+    expect(tagCount('tag-1')).toBe(1)
+    expect(await post('/api/expertise', CASEY, { member_slug: 'nate-mesfin', tag: 'Vandal' })).toBe(403)
+    expect(await post('/api/expertise/tag-1/delete', 'nate@umn.edu')).toBe(200)
+    expect(tagCount('tag-1')).toBe(0)
+    expect(await post('/api/expertise/tag-2/delete', PI_EMAIL)).toBe(200)
+    expect(tagCount('tag-2')).toBe(0)
+    expect(await post('/api/expertise', 'nate@umn.edu', { member_slug: 'nate-mesfin', tag: 'Ventilation' })).toBe(201)
   })
 })
