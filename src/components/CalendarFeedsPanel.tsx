@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Info, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import { INLINE_ERROR_META, reason } from '../lib/writeFailures'
 
 interface CalendarFeed {
   id: string
@@ -45,6 +46,8 @@ export default function CalendarFeedsPanel() {
   const [submitErr, setSubmitErr] = useState<string | null>(null)
 
   const addFeed = useMutation({
+    // The error shows under the Add feed form (submitErr).
+    meta: INLINE_ERROR_META,
     mutationFn: async (input: { url: string; label: string }) => {
       const res = await fetch('/api/integrations/calendar/feeds', {
         method: 'POST',
@@ -65,6 +68,8 @@ export default function CalendarFeedsPanel() {
   })
 
   const removeFeed = useMutation({
+    // The error shows on the feed's own row.
+    meta: INLINE_ERROR_META,
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/integrations/calendar/feeds/${id}/delete`, { method: 'POST' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -78,7 +83,13 @@ export default function CalendarFeedsPanel() {
       {feeds.length > 0 && (
         <div className="flex flex-col gap-2">
           {feeds.map((f) => (
-            <CalendarFeedRow key={f.id} feed={f} onRemove={() => removeFeed.mutate(f.id)} />
+            <CalendarFeedRow
+              key={f.id}
+              feed={f}
+              removing={removeFeed.isPending && removeFeed.variables === f.id}
+              removeError={removeFeed.isError && removeFeed.variables === f.id ? reason(removeFeed.error) : null}
+              onRemove={() => removeFeed.mutate(f.id)}
+            />
           ))}
         </div>
       )}
@@ -142,7 +153,15 @@ export default function CalendarFeedsPanel() {
   )
 }
 
-function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () => void }) {
+// Remove asks once, in place: the feed URL is a secret the Hub never shows
+// again, so a mis-tap would mean digging the iCal URL out of the calendar app.
+function CalendarFeedRow({ feed, removing, removeError, onRemove }: {
+  feed: CalendarFeed
+  removing: boolean
+  removeError: string | null
+  onRemove: () => void
+}) {
+  const [confirming, setConfirming] = useState(false)
   const lastPolled = feed.lastPolledAt
     ? new Date(feed.lastPolledAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : 'never'
@@ -179,15 +198,47 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
         <p className="text-[10px] mt-0.5" style={{ color: 'var(--slate)', opacity: 0.6 }}>
           {feed.lastError ? `Last error: ${feed.lastError}` : `Last poll: ${lastPolled}`}
         </p>
+        {confirming && (
+          <p className="text-[11px] mt-1" style={{ color: 'var(--sk-t2)', lineHeight: 1.4 }}>
+            Remove this feed? Adding it back needs the iCal URL again.
+          </p>
+        )}
+        {removeError && (
+          <p role="alert" className="text-[11px] mt-1" style={{ color: 'var(--job-danger)', lineHeight: 1.4 }}>
+            Not removed: {removeError}
+          </p>
+        )}
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label="Remove feed"
-        className="tk-btn tk-sm"
-      >
-        <X {...ICON_PROPS} size={12} /> Remove
-      </button>
+      {confirming ? (
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="tk-btn tk-sm"
+          >
+            Keep
+          </button>
+          <button
+            type="button"
+            onClick={() => { setConfirming(false); onRemove() }}
+            aria-label="Confirm remove feed"
+            className="tk-btn tk-sm"
+            style={{ color: 'var(--job-danger)' }}
+          >
+            Remove
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          disabled={removing}
+          aria-label="Remove feed"
+          className="tk-btn tk-sm"
+        >
+          <X {...ICON_PROPS} size={12} /> {removing ? 'Removing…' : 'Remove'}
+        </button>
+      )}
     </div>
   )
 }

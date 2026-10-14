@@ -243,8 +243,11 @@ function ReviewCard({
       outcome: outcome.trim(),
       outcome_status: 'recorded',
       outcome_sentiment: sentiment,
+    }, {
+      // Keep the typed outcome until the Hub has it; a failed save is toasted
+      // by the failed-write floor (lib/writeFailures) and the text stays.
+      onSuccess: () => setOutcome(''),
     })
-    setOutcome('')
   }
 
   return (

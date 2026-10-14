@@ -492,9 +492,14 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
   }
 
   function handleSaveResponse(commentId: string) {
-    updateComment.mutate({ id: commentId, fields: { response_text: responseDraft.trim() || '' } })
-    setEditingResponse(null)
-    setResponseDraft('')
+    // Close the editor only once the Hub has the response; a failed save keeps
+    // the draft open and the failed-write toast says so (lib/writeFailures).
+    updateComment.mutate({ id: commentId, fields: { response_text: responseDraft.trim() || '' } }, {
+      onSuccess: () => {
+        setEditingResponse(null)
+        setResponseDraft('')
+      },
+    })
   }
 
   if (isLoading) return <TableSkeleton rows={3} cols={3} />

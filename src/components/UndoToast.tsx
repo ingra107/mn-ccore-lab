@@ -1,6 +1,10 @@
 import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react'
 import { Undo2, X, Check, AlertCircle, Info } from 'lucide-react'
+import { QueryClientContext } from '@tanstack/react-query'
 import { ICON_PROPS } from '../lib/iconProps'
+import {
+  failureMessage, linkedMutationIds, showsItsOwnError, specificErrorShown, GENERIC_ERROR_DELAY_MS,
+} from '../lib/writeFailures'
 
 interface ToastAction {
   label: string
@@ -75,13 +79,23 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
   const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set())
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  // Failed-write floor (lib/writeFailures): which mutations each Undo toast
+  // speaks for, when a specific error toast last showed, and the pending
+  // generic-toast timers.
+  const queryClient = useContext(QueryClientContext)
+  const undoLinks = useRef<Map<string, { message: string; mutationIds: Set<number> }>>(new Map())
+  const lastSpecificErrorAt = useRef(0)
+  const failureTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
 
   // Clear all timeouts on unmount
   useEffect(() => {
     const currentTimers = timers.current
+    const currentFailureTimers = failureTimers.current
     return () => {
       currentTimers.forEach((timer) => clearTimeout(timer))
       currentTimers.clear()
+      currentFailureTimers.forEach((timer) => clearTimeout(timer))
+      currentFailureTimers.clear()
     }
   }, [])
 
@@ -93,17 +107,50 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const dismiss = useCallback((id: string) => {
+    clearTimer(id)
+    setDismissingIds((prev) => { const s = new Set(prev); s.add(id); return s })
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+      setDismissingIds((prev) => { const s = new Set(prev); s.delete(id); return s })
+    }, 160)
+  }, [clearTimer])
+
+  // Take back an Undo toast whose write failed: there is nothing to undo.
+  const withdrawUndo = useCallback((id: string) => {
+    undoLinks.current.delete(id)
+    dismiss(id)
+  }, [dismiss])
+
   const showUndo = useCallback((message: string, onUndo: () => void) => {
-    const id = Date.now().toString()
+    const shownAt = Date.now()
+    const id = shownAt.toString()
     setToasts((prev) => [...prev, { id, type: 'undo', message, onUndo }])
 
     // Auto-dismiss after 5 seconds
     const timer = setTimeout(() => {
       timers.current.delete(id)
+      undoLinks.current.delete(id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 5000)
     timers.current.set(id, timer)
-  }, [])
+
+    // Tie this Undo to the write it offers to reverse. Callers run mutate()
+    // and showUndo() back to back, in either order, so look one tick later.
+    if (queryClient) {
+      setTimeout(() => {
+        const cache = queryClient.getMutationCache()
+        const ids = linkedMutationIds(cache.getAll(), shownAt)
+        if (ids.length === 0 || !timers.current.has(id)) return
+        undoLinks.current.set(id, { message, mutationIds: new Set(ids) })
+        // A write that already failed before the link was made: withdraw now.
+        // Its failure toast has already gone out without the Undo's words.
+        if (cache.getAll().some((m) => ids.includes(m.mutationId) && m.state.status === 'error')) {
+          withdrawUndo(id)
+        }
+      }, 0)
+    }
+  }, [queryClient, withdrawUndo])
 
   const showSuccess = useCallback((message: string, action?: ToastAction) => {
     const id = Date.now().toString() + '-s'
@@ -118,6 +165,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const showError = useCallback((message: string, action?: ToastAction) => {
+    lastSpecificErrorAt.current = Date.now()
     const id = Date.now().toString() + '-e'
     setToasts((prev) => [...prev, { id, type: 'error', message, action }])
 
@@ -141,19 +189,39 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     timers.current.set(id, timer)
   }, [])
 
-  const dismiss = useCallback((id: string) => {
-    clearTimer(id)
-    setDismissingIds((prev) => { const s = new Set(prev); s.add(id); return s })
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-      setDismissingIds((prev) => { const s = new Set(prev); s.delete(id); return s })
-    }, 160)
-  }, [clearTimer])
-
   const handleUndo = useCallback((toast: UndoToast) => {
+    undoLinks.current.delete(toast.id)
     toast.onUndo()
     dismiss(toast.id)
   }, [dismiss])
+
+  // The failed-write floor: every failed mutation withdraws its Undo toast
+  // and reaches the person, once (lib/writeFailures has the rules).
+  useEffect(() => {
+    if (!queryClient) return
+    return queryClient.getMutationCache().subscribe((event) => {
+      if (event.type !== 'updated' || event.action.type !== 'error') return
+      const { mutation } = event
+      const failedAt = Date.now()
+      let undoMessage: string | undefined
+      for (const [toastId, link] of undoLinks.current) {
+        if (!link.mutationIds.has(mutation.mutationId)) continue
+        undoMessage = link.message
+        withdrawUndo(toastId)
+      }
+      if (showsItsOwnError(mutation.meta)) return
+      const error = event.action.error
+      const timer = setTimeout(() => {
+        failureTimers.current.delete(timer)
+        // The code that ran the write already said what failed: its words win.
+        // A burst of failures (a bulk edit) also collapses to one toast here,
+        // because the first generic toast counts as the specific one.
+        if (specificErrorShown(lastSpecificErrorAt.current, failedAt)) return
+        showError(failureMessage(error, undoMessage))
+      }, GENERIC_ERROR_DELAY_MS)
+      failureTimers.current.add(timer)
+    })
+  }, [queryClient, showError, withdrawUndo])
 
   // Stable context value — all show* callbacks are useCallback'd so the
   // memo key never changes. Without this, every state-driven re-render of

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createConference, updateConference, deleteConference } from '../../lib/api'
 import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
+import { INLINE_ERROR_META } from '../../lib/writeFailures'
 import { nowInstant } from '../../lib/time'
 import { activityQueryKey, meetingActivityQueryKey } from '../../lib/askHermes'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
@@ -399,6 +400,8 @@ export function useSetMemberFeaturedPublications(memberSlug: string) {
   return useMutation({
     mutationFn: (publicationIds: string[]) =>
       setMemberFeaturedPublications(memberSlug, publicationIds),
+    // The editor renders save.error under the list.
+    meta: INLINE_ERROR_META,
 
     onSuccess: (res) => {
       queryClient.setQueryData(

@@ -1777,18 +1777,17 @@ recentActivity.length === 0 ? (
         onCreate={(task) => {
           // A task made while a product chip is selected lands on that product
           // (the modal preselects the pair); the picker may still move it.
-          createTask.mutate({ ...task, project_id: task.project_id ?? project.slug }, {
+          // The modal closes itself once this resolves; a failed create keeps
+          // it open with the text intact.
+          return createTask.mutateAsync({ ...task, project_id: task.project_id ?? project.slug }).then((resp) => {
             // S16: confirm the create + offer a working "Open →" into the new
             // task's detail panel instead of dead-ending in silence.
-            onSuccess: (resp) => {
-              const created = resp?.data
-              showSuccess(
-                'Task created',
-                created ? { label: 'Open →', onClick: () => setSelectedTask(created) } : undefined,
-              )
-            },
+            const created = resp?.data
+            showSuccess(
+              'Task created',
+              created ? { label: 'Open →', onClick: () => setSelectedTask(created) } : undefined,
+            )
           })
-          setShowCreateTask(false)
         }}
       />
 

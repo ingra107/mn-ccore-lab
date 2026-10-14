@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchApi } from '../lib/api'
+import { reason } from '../lib/writeFailures'
 import { useUndoToast } from '../components/UndoToast'
 import { suggestPaperLink } from './mutations/useProjectMutations'
 import {
@@ -49,15 +50,6 @@ export function useProjectProducts(slug: string | null) {
     staleTime: 30 * 1000,
     enabled: !!slug,
   })
-}
-
-/** The words a refusal toast shows. The product route answers a 4xx in plain
- *  words (api/routes/products.ts plainRefusal); anything else (a 5xx, a
- *  dropped connection) has no sentence for a person, so it gets one. */
-export function reason(err: unknown): string {
-  const status = (err as { status?: unknown } | null)?.status
-  if (err instanceof Error && err.message && typeof status === 'number' && status < 500) return err.message
-  return 'the Hub did not answer; try again.'
 }
 
 /** Refresh everything a product edit can change: its own list, the project

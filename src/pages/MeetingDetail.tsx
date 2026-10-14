@@ -1072,7 +1072,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
 function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: string[]; updateMeta: ReturnType<typeof useUpdateMeetingMeta>; canEdit: boolean }) {
   const [expanded, setExpanded] = useState(false)
   const [localAttendees, setLocalAttendees] = useState<string[]>(attendees)
-  const { showUndo } = useUndoToast()
+  const { showError } = useUndoToast()
 
   const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
   const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
@@ -1100,7 +1100,7 @@ function AttendanceSection({ attendees, updateMeta, canEdit }: { attendees: stri
     updateMeta.mutate({ attendees: newList }, {
       onError: () => {
         setLocalAttendees(prevList)
-        showUndo('Attendance save failed — undone', () => {})
+        showError('Attendance not saved. Your change was undone; try again.')
       },
     })
   }
