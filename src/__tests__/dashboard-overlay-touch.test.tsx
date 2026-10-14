@@ -38,7 +38,7 @@ describe('Overview card overlays on touch', () => {
   function setup(strip = false, customizing = false) {
     const cut = (s: string) => (strip ? s.replace(/pointer-events: none;/g, '') : s)
     styleEl = document.createElement('style')
-    styleEl.textContent = '*,::before,::after{box-sizing:border-box}\n' + unwrap(css) + '\n' + cut(gridCss) + '\n' + cut(pinCss)
+    styleEl.textContent = '*,::before,::after{box-sizing:border-box}\n' + unwrap(css) + '\n' + unwrap(cut(gridCss)) + '\n' + cut(pinCss)
     document.head.appendChild(styleEl)
     const root = document.createElement('div')
     if (customizing) root.setAttribute('data-customizing', 'true')
@@ -84,6 +84,9 @@ describe('Overview card overlays on touch', () => {
     expect(cs.pointerEvents).toBe('auto')
     expect(cs.touchAction).toBe('none')
     const r = h.getBoundingClientRect()
+    // the 44px touch floor (WCAG 2.5.5), as a real box
+    expect(r.width).toBeGreaterThanOrEqual(44)
+    expect(r.height).toBeGreaterThanOrEqual(44)
     expect(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)).toBe(h)
   })
 

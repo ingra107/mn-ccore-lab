@@ -8,6 +8,10 @@
 
 import { describe, it, expect, afterEach } from 'vitest'
 import css from '../index.css?raw'
+import profileSrc from '../pages/portal/ProfilePage.tsx?raw'
+import settingsSrc from '../pages/portal/SettingsPage.tsx?raw'
+import trajectorySrc from '../pages/TrajectoryPage.tsx?raw'
+import memberProjectsSrc from '../components/project/MemberProjects.tsx?raw'
 
 const touch = css.replace(/@media \(max-width: 768px\), \(hover: none\) and \(pointer: coarse\) and \(min-width: 769px\)/g, '@media all')
 
@@ -25,6 +29,26 @@ function setup(html: string) {
   document.body.appendChild(fixture)
   return (id: string) => fixture!.querySelector<HTMLElement>(`#${id}`)!
 }
+
+// The CSS tests below build their own markup, so they cannot tell whether the
+// real pages use the classes. These read the real components' source.
+describe('the real links carry the touch classes', () => {
+  it('Profile, Settings and Trajectory standalone links are inline-link rows', () => {
+    expect(profileSrc).toContain('className="inline-link inline-flex items-center gap-2 text-xs"')
+    expect(settingsSrc).toContain('className="inline-link inline-flex items-center gap-1.5 mb-4 text-[13px] hover:underline"')
+    expect(trajectorySrc).toContain('className="inline-link inline-flex items-center gap-1.5 mb-6 no-print')
+  })
+
+  it('Trajectory DOI and Velocity project links carry hit-area', () => {
+    expect(trajectorySrc).toMatch(/<a\s+className="hit-area"\s+href=\{pub\.doi/)
+    expect(trajectorySrc).toMatch(/to=\{PATHS\.project\(project\.slug\)\}\s+className="hit-area"/)
+  })
+
+  it('stacked member Projects links are real rows, never hit-area overhangs', () => {
+    expect(memberProjectsSrc).toContain('className="inline-link inline-flex items-center"')
+    expect(memberProjectsSrc).not.toContain('hit-area')
+  })
+})
 
 describe('small text links on touch', () => {
   it('a standalone inline-link is a 44px row', () => {

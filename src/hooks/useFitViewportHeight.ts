@@ -29,8 +29,11 @@ interface FitViewportOptions {
  *
  * It refits on window resize, on a resize of the first child, <body> or
  * #portal-main (record forms, focus mode collapsing the top bar, the shell
- * reflowing), and once after the page transition has settled. fit() reads but
- * never changes those sizes, so it cannot feed back into the observer.
+ * reflowing), and once after the page transition has settled. fit() writes the
+ * element's own height and, while the phone tab bar shows, main's bottom
+ * padding (a fixed 0, the same value every run). The padding write does change
+ * #portal-main's size, but only on the first fit after the bar appears; the
+ * refit it triggers writes the same values, so the observer settles in one pass.
  */
 export function useFitViewportHeight(
   ref: RefObject<HTMLElement | null>,

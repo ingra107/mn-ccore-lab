@@ -17,6 +17,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { usePortalDropdown, type PortalDropdownPosition } from '../../../hooks/usePortalDropdown'
+import { viewportBottom } from '../../../lib/viewportBottom'
 import { JOB_ACCENT, INK, INK_DIM, PANEL_BG, withAlpha, type FilterOption } from '../constants'
 
 export function FilterChip({ label, value, options, onChange }: { label: string; value: string | null; options: FilterOption[]; onChange: (v: string | null) => void }) {
@@ -37,7 +38,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
     top: rect.bottom + 4,
     left: Math.min(rect.left, window.innerWidth - 220),
     minWidth: rect.width,
-    maxHeight: Math.max(Math.min(320, window.innerHeight - rect.bottom - 12), 120),
+    maxHeight: Math.max(Math.min(320, viewportBottom() - rect.bottom - 12), 120),
   }), [])
   const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLDivElement>({ open, onClose: closeMenu, getPosition })
 

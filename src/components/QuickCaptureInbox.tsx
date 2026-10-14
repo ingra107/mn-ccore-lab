@@ -376,7 +376,7 @@ export default function QuickCaptureInbox() {
           >
             Ctrl+Enter to save · Esc to cancel
           </span>
-          <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
+          <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginLeft: 'auto' }}>
             <Button
               variant="secondary"
               type="button"

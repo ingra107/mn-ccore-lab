@@ -13,3 +13,13 @@ export function viewportBottom(): number {
   const r = bar?.getBoundingClientRect()
   return r && r.height > 0 ? Math.min(vh, r.top) : vh
 }
+
+/**
+ * Top for a fixed dropdown that opens under `rect`: 4px below the trigger,
+ * pulled up when `reserve` px of menu would run past usable screen, which
+ * ends at the phone tab bar (viewportBottom), not the window edge. One clamp
+ * for InlineSelect, InlineDatePicker and GhostSelect.
+ */
+export function dropdownTop(rect: { bottom: number }, reserve: number): number {
+  return Math.min(rect.bottom + 4, viewportBottom() - reserve)
+}

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
+import { dropdownTop } from '../lib/viewportBottom'
 
 interface InlineSelectProps {
   value: string
@@ -48,7 +49,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   // and fixed as a bug there (aba74719, "GhostSelect scroll bug: replace
   // onScroll-close with rAF-throttled reposition"). Same fix applies here.
   const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
-    top: Math.min(rect.bottom + 4, window.innerHeight - 332),
+    top: dropdownTop(rect, 332),
     left: Math.min(rect.left, window.innerWidth - 140),
     minWidth: 120,
     maxHeight: 300,
