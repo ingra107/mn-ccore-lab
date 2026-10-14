@@ -26,13 +26,27 @@ describe('icon/icon-button', () => {
   })
 
   it('refuses a raw glyph button and a conditional icon pair', () => {
-    expect(ids('const a = <button onClick={f}>x</button>')).toEqual(['raw'])
+    expect(ids('const a = <button onClick={f}>×</button>')).toEqual(['raw'])
     expect(ids('const a = <button>{open ? <X /> : <Trash2 />}</button>')).toEqual(['raw'])
     expect(ids('const a = <button><svg width="12" /></button>')).toEqual(['raw'])
   })
 
   it('refuses an icon-only <Button> at a text size', () => {
     expect(ids('const a = <Button variant="ghost" aria-label="Close"><X /></Button>')).toEqual(['size'])
+  })
+
+  it('treats 1-2 letter or digit text as text, not an icon', () => {
+    expect(ids('const a = <button>OK</button>')).toEqual([])
+    expect(ids('const a = <button>Go</button>')).toEqual([])
+    expect(ids('const a = <button>12</button>')).toEqual([])
+    expect(ids('const a = <button>NI</button>')).toEqual([])
+    expect(ids('const a = <button>{"OK"}</button>')).toEqual([])
+    expect(ids('const a = <Button variant="ghost">OK</Button>')).toEqual([])
+  })
+
+  it('still refuses a symbol glyph button', () => {
+    expect(ids('const a = <button>+</button>')).toEqual(['raw'])
+    expect(ids('const a = <button>{"×"}</button>')).toEqual(['raw'])
   })
 
   it('accepts Button size="icon" and any button with words', () => {

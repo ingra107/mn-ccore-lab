@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
+import tailwindcss from '@tailwindcss/vite'
 
 // #513: `src/**/*.test.{ts,tsx}` also sweeps up src/lib/__tests__/** --
 // node-mode tests (node:fs / node:crypto / global.fetch mocking) exclusively
@@ -10,7 +11,9 @@ import { playwright } from '@vitest/browser-playwright'
 // (useMeetingNotesSeen.logic.test.ts's own exclude entry retired with the
 // hook it tested — T12, 2026-07-07 — server-backed seen tracking replaced it.)
 export default defineConfig({
-  plugins: [react()],
+  // tailwindcss(): a browser test that imports src/index.css gets the real
+  // layer cascade (button-icon-touch.test.tsx), not a hand-sliced copy of it.
+  plugins: [react(), tailwindcss()],
   test: {
     browser: {
       enabled: true,

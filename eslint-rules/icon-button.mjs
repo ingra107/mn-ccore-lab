@@ -1,24 +1,31 @@
-// local/icon-button -- an icon-only button is built with the shared Button at
+// icon/icon-button -- an icon-only button is built with the shared Button at
 // size="icon", never by hand (PB backlog #1366, 2026-10-14).
 //
 // Why: every hand-rolled icon button re-derived its own size, so the WCAG
 // 2.5.8 24x24 floor drifted per site (the Today dismiss tip measured 21x20
 // live), and 28 of 108 had no accessible name at all. Button size="icon"
-// carries both: a real 24x24 box (44x44 on touch, .btn-icon in index.css) and
+// carries both: a 24px target (44px on touch, .btn-icon in index.css) and
 // an `aria-label` the type REQUIRES. This rule refuses the two shapes that
 // bypass it:
 //   raw    a lowercase <button> whose content is only icons or a 1-2 character
-//          glyph (x, +, a chevron);
+//          glyph with no letter or digit (x, +, a chevron); "OK", "Go", "12" and
+//          "NI" are text;
 //   size   a <Button> with icon-only content at a text size (sm/md/lg).
 // "Icon" means an <svg>, a lucide-react import, or a component named *Icon /
 // *Mark. Anything the rule cannot read as an icon (a {variable}, a call) is
 // treated as text, so a false positive needs real icon-only markup.
-// A reasoned exception: `// eslint-disable-next-line local/icon-button -- <why>`.
+// A reasoned exception: `// eslint-disable-next-line icon/icon-button -- <why>`.
 
 const MSG_RAW =
   'Icon-only <button>: use <Button size="icon" aria-label="..."> from components/ui/Button, which carries the 24px target and the accessible name.'
 const MSG_SIZE =
-  'Icon-only <Button> at a text size: use size="icon" so it gets the 24px box (44px on touch).'
+  'Icon-only <Button> at a text size: use size="icon" so it gets the 24px target (44px on touch).'
+
+// A 1-2 character string with no letter or digit is a glyph (an icon);
+// anything else is text.
+function glyphKind(t) {
+  return [...t].length <= 2 && !/[\p{L}\p{N}]/u.test(t) ? 'icon' : 'text'
+}
 
 function elementName(node) {
   const n = node.openingElement ? node.openingElement.name : node.name
@@ -47,7 +54,7 @@ export default {
       if (child.type === 'JSXText') {
         const t = child.value.trim()
         if (t === '') return 'empty'
-        return [...t].length <= 2 ? 'icon' : 'text'
+        return glyphKind(t)
       }
       if (child.type === 'JSXElement') return isIconElement(child) ? 'icon' : 'text'
       if (child.type === 'JSXExpressionContainer') return kindOfExpr(child.expression)
@@ -58,7 +65,7 @@ export default {
       if (e.type === 'Literal' && (e.value === null || e.value === false)) return 'empty'
       if (e.type === 'Literal' && typeof e.value === 'string') {
         const t = e.value.trim()
-        return t === '' ? 'empty' : [...t].length <= 2 ? 'icon' : 'text'
+        return t === '' ? 'empty' : glyphKind(t)
       }
       if (e.type === 'JSXElement') return isIconElement(e) ? 'icon' : 'text'
       if (e.type === 'ConditionalExpression') return merge([kindOfExpr(e.consequent), kindOfExpr(e.alternate)])

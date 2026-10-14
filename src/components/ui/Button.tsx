@@ -100,8 +100,8 @@ const SIZE_STYLES: Record<NonNullable<ButtonProps['size']>, CSSProperties> = {
     borderRadius: 'var(--radius-lg)',
   },
   // icon: an icon-only button in a row of other controls. No padding; the box
-  // itself is sized by .btn-icon in index.css (24x24, 44x44 on touch), so the
-  // tap zone is real layout space and can never cover a neighbour. Used only
+  // itself is sized by .btn-icon-box in index.css (24x24, 44x44 on touch), so
+  // the tap zone is real layout space and can never cover a neighbour. Used only
   // with an explicit variant; a bare icon button takes no inline style at all
   // (see Button below).
   icon: {
@@ -148,8 +148,11 @@ export function Button<E extends ElementType = 'button'>({
   }
 
   // `disabled` is a native <button> attribute; on an anchor / Link it would be
-  // an invalid DOM prop. Only forward it when we actually render a <button>.
-  const disabledProp = Component === 'button' ? { disabled } : {}
+  // an invalid DOM prop. Forward it when the rendered element is a button: the
+  // native one, or a button-like component (as={motion.button}), which is
+  // everything that is not an anchor / Link (a router Link has a `to`).
+  const isButtonLike = Component === 'button' || (typeof Component !== 'string' && !('to' in rest) && !('href' in rest))
+  const disabledProp = isButtonLike ? { disabled } : {}
 
   // Touch target (index.css): a stand-alone md/lg <button> gets the 44px
   // minimum height; an icon button gets a real 24x24 box (44x44 on touch);
@@ -159,7 +162,7 @@ export function Button<E extends ElementType = 'button'>({
   // buttons the later one covers the earlier (Remove over Edit, 6px apart).
   const { className: extraClass, ...restProps } = rest as { className?: string }
   const touchClass =
-    size === 'icon' ? 'btn-icon'
+    size === 'icon' ? (bareIcon ? 'btn-icon' : 'btn-icon btn-icon-box')
     : Component === 'button' && size !== 'sm' ? 'touch-tall'
     : 'hit-area'
   const className = extraClass ? `${touchClass} ${extraClass}` : touchClass
