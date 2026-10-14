@@ -647,14 +647,10 @@ export default function TodayPage() {
             stalled: projectsQuery.isPending,
             meetings: meetingsQuery.isPending,
           }}
-          failed={{
-            overdue: tasksQuery.isError,
-            planned: tasksQuery.isError,
-            done: tasksQuery.isError,
-            'done-week': tasksQuery.isError,
-            stalled: projectsQuery.isError,
-            meetings: meetingsQuery.isError,
-          }}
+          // Tasks and projects errors return the full error screen above, so only
+          // meetings can fail here. isLoadingError: a refetch that fails after data
+          // loaded keeps the cached data, and the number stays.
+          failed={{ meetings: meetingsQuery.isLoadingError }}
         />
 
         {/* PI only: the Lab pulse line, one gray line that opens PI Analytics. */}

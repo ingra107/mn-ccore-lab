@@ -201,8 +201,8 @@ function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
   const { showUndo, showSuccess, showError } = useUndoToast()
-  const { data: projectUpdates = [], isPending: updatesPending, isError: updatesError, refetch: refetchUpdates } = useProjectUpdates(project.slug)
-  const { data: projectComments = [], isPending: commentsPending, isError: commentsError, refetch: refetchComments } = useComments(project.slug)
+  const { data: projectUpdates = [], isPending: updatesPending, isLoadingError: updatesError, refetch: refetchUpdates } = useProjectUpdates(project.slug)
+  const { data: projectComments = [], isPending: commentsPending, isLoadingError: commentsError, refetch: refetchComments } = useComments(project.slug)
   const activityPending = updatesPending || commentsPending
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
@@ -257,7 +257,9 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Tasks for this project
   // isPending, not the empty array: "No open tasks" must wait for the tasks.
-  const { data: projectTasks = [], isPending: tasksPending, isError: tasksError, refetch: refetchTasks } = useTasks({ project: project.slug })
+  // isLoadingError, not isError: react-query keeps the cached tasks when a REFETCH
+  // fails, and those must stay on screen. The note is for "never loaded".
+  const { data: projectTasks = [], isPending: tasksPending, isLoadingError: tasksError, refetch: refetchTasks } = useTasks({ project: project.slug })
   const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
