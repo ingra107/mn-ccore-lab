@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  addYearsIso, barOf, dayToIso, defaultTermYears, formatUsd, ganttSpan, grantName, isoToDay, mechanismOf, movedTerms,
+  addYearsIso, barGesture, barOf, dayToIso, defaultTermYears, formatUsd, ganttSpan, grantName, isoToDay, mechanismOf, movedTerms,
 } from '../grants'
 
 describe('mechanism and default term (the reconciled plan: R01 5y, R21 2y, K 5y, R03 2y, else 3y)', () => {
@@ -67,5 +67,22 @@ describe('display', () => {
     const s = ganttSpan([{ id: 'a', start: '2022-12-15', end: '2027-11-30', hypothetical: false }], ['2028-03-01'], '2026-10-12')
     expect(dayToIso(s.from)).toBe('2022-01-01')
     expect(dayToIso(s.to)).toBe('2029-01-01')
+  })
+})
+
+describe('barGesture: a bar drag that writes dates never starts by accident', () => {
+  it('mouse and pen wait for 5px of travel, then drag', () => {
+    expect(barGesture({ pointerType: 'mouse', dx: 0, dy: 0, heldMs: 0 })).toBe('wait')
+    expect(barGesture({ pointerType: 'mouse', dx: 4, dy: 0, heldMs: 0 })).toBe('wait')
+    expect(barGesture({ pointerType: 'mouse', dx: 5, dy: 0, heldMs: 0 })).toBe('drag')
+    expect(barGesture({ pointerType: 'pen', dx: 0, dy: 6, heldMs: 0 })).toBe('drag')
+  })
+  it('touch: the start of a scroll (40px down, 4px right, no hold) lets the bar go', () => {
+    expect(barGesture({ pointerType: 'touch', dx: 4, dy: 40, heldMs: 60 })).toBe('release')
+    expect(barGesture({ pointerType: 'touch', dx: 12, dy: 0, heldMs: 100 })).toBe('release')
+  })
+  it('touch: jitter under 5px before the hold keeps waiting; a 250ms hold arms the drag', () => {
+    expect(barGesture({ pointerType: 'touch', dx: 2, dy: 3, heldMs: 100 })).toBe('wait')
+    expect(barGesture({ pointerType: 'touch', dx: 0, dy: 0, heldMs: 250 })).toBe('drag')
   })
 })

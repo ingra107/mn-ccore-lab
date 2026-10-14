@@ -129,6 +129,22 @@ export function barOf(g: Pick<GrantProduct, 'id' | 'kind' | 'period_start' | 'pe
   return { id: g.id, start: g.period_start, end: addYearsIso(g.period_start, defaultTermYears(g.venue)), hypothetical: true }
 }
 
+/** When a pointer on a Gantt bar becomes a date move. A bar drag writes grant
+ *  dates, so it must never start by accident. Mouse and pen: after 5px of
+ *  travel, the threshold the Hub's dnd boards use. Touch: only after a 250ms
+ *  press-and-hold that stays within 5px (the boards' touch sensor); earlier
+ *  movement is a scroll or swipe and the bar lets it go. On a 390px phone 1px
+ *  is about 19 days, so before this a scroll that started on a bar wrote a new
+ *  award period (overnight mobile audit 2026-10-14). */
+export const BAR_DRAG = { distance: 5, holdMs: 250, tolerance: 5 } as const
+
+export function barGesture(p: { pointerType: string; dx: number; dy: number; heldMs: number }): 'wait' | 'drag' | 'release' {
+  const moved = Math.hypot(p.dx, p.dy)
+  if (p.pointerType !== 'touch') return moved < BAR_DRAG.distance ? 'wait' : 'drag'
+  if (p.heldMs >= BAR_DRAG.holdMs) return 'drag'
+  return moved > BAR_DRAG.tolerance ? 'release' : 'wait'
+}
+
 /** The terms a drag writes. An award moves both ends and keeps its length;
  *  an application moves its proposed start (its end is not stored). */
 export function movedTerms(

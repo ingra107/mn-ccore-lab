@@ -1,8 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import {
-  barOf, dayToIso, ganttSpan, grantName, isoToDay, milestoneDate, movedTerms,
+  barGesture, barOf, BAR_DRAG, dayToIso, ganttSpan, grantName, isoToDay, milestoneDate, movedTerms,
   type GanttBar, type GrantProduct,
 } from '../../lib/grants'
 import { GRANT_BAR_LIT, GRANT_BAR_STROKE } from '../../lib/grantBar'
@@ -15,6 +15,8 @@ import { GRANT_BAR_LIT, GRANT_BAR_STROKE } from '../../lib/grantBar'
 // those dates by just moving those bars") or from the keyboard: focus a bar,
 // arrows move it a week (Shift: a month), Enter saves, Escape puts it back.
 // An award keeps its length; an application moves its proposed start.
+// A drag only starts on purpose (barGesture): a mouse after 5px, a finger
+// after a press-and-hold, so a phone scroll that starts on a bar scrolls.
 
 const WEEK = 7
 const MONTH = 30
@@ -81,7 +83,7 @@ export default function GrantGantt({ rows, today, onMove }: {
         <span><i className="gg-key gg-key-award" /> Award</span>
         <span><i className="gg-key gg-key-hyp" /> Proposed (hypothetical length)</span>
         <span><i className="gg-key-ms">◆</i> Milestone</span>
-        <span className="gg-hint">Drag a bar to move its dates, or focus it and use the arrow keys; Enter or Tab saves, Escape cancels.</span>
+        <span className="gg-hint">Drag a bar to move its dates (on a phone, press and hold it first), or focus it and use the arrow keys; Enter or Tab saves, Escape cancels.</span>
       </div>
       {unplotted > 0 && <p className="gg-note">{unplotted} {unplotted === 1 ? 'grant has' : 'grants have'} no start date yet and {unplotted === 1 ? 'is' : 'are'} not plotted.</p>}
       <style>{CSS}</style>
@@ -95,7 +97,22 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
 }) {
   // A move in progress, in days: shown on the bar, written on release/Enter.
   const [offset, setOffset] = useState(0)
-  const drag = useRef<{ x: number; pointer: number } | null>(null)
+  const [armed, setArmed] = useState(false)
+  // A pointer on the bar: `active` once barGesture says it is a deliberate
+  // drag; until then it is a click, a scroll or a hold in progress.
+  const drag = useRef<{ x: number; y: number; t0: number; pointer: number; type: string; active: boolean; offset: number; hold?: number } | null>(null)
+  const barRef = useRef<HTMLButtonElement>(null)
+  const letGo = () => { if (drag.current?.hold) window.clearTimeout(drag.current.hold); drag.current = null; setArmed(false) }
+  // The bar lets vertical panning through (touch-action: pan-y) so a scroll
+  // that starts on it scrolls. Once a hold arms a drag, this stops the page
+  // panning under the finger. React's touch listeners are passive, so native.
+  useEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    const stop = (e: TouchEvent) => { if (drag.current?.active && e.cancelable) e.preventDefault() }
+    el.addEventListener('touchmove', stop, { passive: false })
+    return () => { el.removeEventListener('touchmove', stop); letGo() }
+  }, [])
   const name = grantName(row)
   const start = isoToDay(bar.start) + offset
   const end = isoToDay(bar.end) + offset
@@ -117,26 +134,45 @@ function GanttRow({ row, bar, pct, dayPerPx, today, onMove }: {
         <span className="gg-today" style={{ left: pct(todayDay) }} aria-hidden="true" />
         <button
           type="button"
-          className={`gg-bar${bar.hypothetical ? ' is-hyp' : ''}${offset ? ' is-moving' : ''}`}
+          className={`gg-bar${bar.hypothetical ? ' is-hyp' : ''}${offset || armed ? ' is-moving' : ''}`}
           data-testid={`gantt-bar-${row.id}`}
           style={{ left: pct(start), width: `calc(${pct(end)} - ${pct(start)})` }}
           aria-label={`${describe}. Arrow keys move it a week, Shift with an arrow a month, Enter or Tab saves, Escape cancels.`}
           title={describe}
+          ref={barRef}
           onPointerDown={(e) => {
             if (e.button !== 0) return
-            e.currentTarget.setPointerCapture(e.pointerId)
-            drag.current = { x: e.clientX, pointer: e.pointerId }
+            letGo()
+            const d = { x: e.clientX, y: e.clientY, t0: e.timeStamp, pointer: e.pointerId, type: e.pointerType, active: false, offset: 0, hold: undefined as number | undefined }
+            drag.current = d
+            if (e.pointerType === 'touch') {
+              // A touch pointer is captured to the bar implicitly (Pointer Events
+              // spec). Arm on the hold itself: a still finger sends no pointermove.
+              d.hold = window.setTimeout(() => { if (drag.current === d) { d.active = true; setArmed(true) } }, BAR_DRAG.holdMs)
+            } else {
+              e.currentTarget.setPointerCapture(e.pointerId)
+            }
           }}
           onPointerMove={(e) => {
-            if (!drag.current || drag.current.pointer !== e.pointerId || !dayPerPx) return
-            setOffset(Math.round((e.clientX - drag.current.x) * dayPerPx))
+            const d = drag.current
+            if (!d || d.pointer !== e.pointerId || !dayPerPx) return
+            if (!d.active) {
+              const g = barGesture({ pointerType: d.type, dx: e.clientX - d.x, dy: e.clientY - d.y, heldMs: e.timeStamp - d.t0 })
+              if (g === 'release') { letGo(); return }
+              if (g === 'wait') return
+              d.active = true
+            }
+            d.offset = Math.round((e.clientX - d.x) * dayPerPx)
+            setOffset(d.offset)
           }}
           onPointerUp={(e) => {
-            if (!drag.current || drag.current.pointer !== e.pointerId) return
-            drag.current = null
-            commit(offset)
+            const d = drag.current
+            if (!d || d.pointer !== e.pointerId) return
+            letGo()
+            if (d.active) commit(d.offset)
           }}
-          onPointerCancel={() => { drag.current = null; setOffset(0) }}
+          onPointerCancel={() => { letGo(); setOffset(0) }}
+          onContextMenu={(e) => { if (drag.current?.type === 'touch') e.preventDefault() }}
           onKeyDown={(e) => {
             const step = e.shiftKey ? MONTH : WEEK
             if (e.key === 'ArrowRight') { e.preventDefault(); setOffset((o) => o + step) }
@@ -183,7 +219,8 @@ const CSS = `
 .gg-today { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 1px dashed var(--sk-t3); opacity: .6; }
 .gg-bar {
   position: absolute; top: 10px; height: 20px; min-width: 6px; border-radius: 6px; border: 0; padding: 0 6px;
-  background: ${GRANT_BAR_LIT}; color: #fff; font-size: 11px; text-align: left; cursor: grab; touch-action: none;
+  background: ${GRANT_BAR_LIT}; color: #fff; font-size: 11px; text-align: left; cursor: grab; touch-action: pan-y;
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
   overflow: hidden; white-space: nowrap;
 }
 .gg-bar:active { cursor: grabbing; }
