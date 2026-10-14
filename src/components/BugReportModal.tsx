@@ -5,6 +5,7 @@ import Modal from './ui/Modal'
 import Field from './ui/Field'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTouchOnly, modKeyLabel } from '../lib/platform'
+import { Button } from './ui/Button'
 
 interface BugReportModalProps {
   open: boolean
@@ -217,7 +218,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                     alt="Bug screenshot"
                     style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '200px', objectFit: 'contain', background: 'var(--sk-panel)' }}
                   />
-                  <button
+                  <Button size="icon"
                     onClick={() => setScreenshot(null)}
                     className="cursor-pointer"
                     style={{
@@ -238,7 +239,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                     aria-label="Remove screenshot"
                   >
                     <X {...ICON_PROPS} size={14} />
-                  </button>
+                  </Button>
                 </div>
               )}
 

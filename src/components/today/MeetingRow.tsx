@@ -33,6 +33,7 @@ import { usePrepMeetingFromEvent } from '../../hooks/mutations/useMeetingMutatio
 import { useToast } from '../../hooks/useToast'
 import { Faces } from './skin'
 import { MeetingActionsCard } from './MeetingActionsCard'
+import { Button } from '../ui/Button'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
@@ -262,13 +263,13 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           {facesEl}{!actionRowsEl && actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
           {hasUpdateSinceSeenMeeting && <span aria-hidden="true" title="Updated since you last looked" className="tk-dotg" />}
           <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
-          <button
+          <Button size="icon"
             type="button"
             onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
             title="Remove from today's view"
             aria-label={`Hide ${e.title}`}
             className="tk-x"
-          >×</button>
+          >×</Button>
         </div>
         {actionRowsEl}
         {expanded && notesPanel}
@@ -302,13 +303,13 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
               />
             )}
             {!scan && <span className="tk-caret">{expanded ? '▾' : '▸'}</span>}
-            <button
+            <Button size="icon"
               type="button"
               onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
               title="Remove from today's view"
               aria-label={`Hide ${e.title}`}
               className="tk-x"
-            >×</button>
+            >×</Button>
           </div>
         </div>
         <div className="tk-ft">

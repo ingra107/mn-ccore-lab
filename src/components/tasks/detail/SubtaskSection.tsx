@@ -13,6 +13,7 @@ import { useCreateSubtask, useToggleSubtask, useDeleteSubtask, useReorderSubtask
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../../../lib/dndSensors'
 import { tealRamp, BAR_TRACK } from '../../../lib/tealRamp'
+import { Button } from '../../ui/Button'
 
 // ── Subtask Section (collapsible wrapper) ───────────────────
 
@@ -64,16 +65,16 @@ function SortableSubtaskItem({
       {...attributes}
     >
       {/* Drag handle — visible on hover */}
-      <button
+      <Button size="icon" aria-label="Reorder subtask"
         {...listeners}
         className="cursor-grab active:cursor-grabbing reveal-on-hover flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: undefined }}
       >
         <GripVertical {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />
-      </button>
+      </Button>
 
       {/* Toggle button */}
-      <button
+      <Button size="icon" aria-label={subtask.completed ? "Mark subtask not done" : "Mark subtask done"}
         onClick={() => onToggle(subtask.id)}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
@@ -82,7 +83,7 @@ function SortableSubtaskItem({
         ) : (
           <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
-      </button>
+      </Button>
 
       {/* Title */}
       <span
@@ -97,13 +98,13 @@ function SortableSubtaskItem({
       </span>
 
       {/* Delete button (visible on hover) */}
-      <button
+      <Button size="icon" aria-label="Delete subtask"
         onClick={() => onDelete(subtask.id)}
         className="reveal-on-hover"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
       >
         <Trash2 {...ICON_PROPS} size={12} />
-      </button>
+      </Button>
     </motion.div>
   )
 }

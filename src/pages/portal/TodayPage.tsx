@@ -647,7 +647,7 @@ export default function TodayPage() {
             <span>
               Click a task to expand · pin or drag the grip to plan · click a meeting for notes.
             </span>
-            <button
+            <Button size="icon"
               type="button"
               onClick={dismissHowTo}
               aria-label="Dismiss tip"
@@ -658,7 +658,7 @@ export default function TodayPage() {
               // target). 5px/8px (in .tk-hint button) brings it to ~26x26.
             >
               ×
-            </button>
+            </Button>
           </div>
         )}
 

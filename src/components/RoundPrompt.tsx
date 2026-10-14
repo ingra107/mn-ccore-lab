@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, Pencil, Check, X, MessageCircle } from 'lucide-react'
 import { ROUND_PROMPTS, CATEGORY_LABELS, hashMeetingId } from '../data/roundPrompts'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 const LS_KEY = (id: string) => `roundprompt:${id}`
 
@@ -115,7 +116,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
             }}
           />
           <div className="flex flex-col gap-1 flex-shrink-0">
-            <button
+            <Button size="icon" aria-label="Save"
               type="button"
               onClick={commitEdit}
               title="Save"
@@ -126,8 +127,8 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               }}
             >
               <Check {...ICON_PROPS} size={13} />
-            </button>
-            <button
+            </Button>
+            <Button size="icon" aria-label="Cancel"
               type="button"
               onClick={cancelEdit}
               title="Cancel"
@@ -135,7 +136,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               style={{ padding: '7px', justifyContent: 'center', color: 'var(--slate)' }}
             >
               <X {...ICON_PROPS} size={13} />
-            </button>
+            </Button>
           </div>
         </div>
       ) : (

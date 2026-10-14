@@ -9,6 +9,7 @@ import { useUploadQueue } from '../lib/useUploadQueue'
 import { scopeByProduct, type ProductRow } from '../lib/products'
 import { useTagItem } from '../hooks/useProjectProducts'
 import ProductTag from './project/ProductTag'
+import { Button } from './ui/Button'
 
 interface FileAttachment {
   /** schema-v131: the product a project file is tagged to; null = project-wide. */
@@ -196,14 +197,14 @@ export default function FileUpload({ entityType, entityId, products = [], produc
                     {formatBytes(f.size_bytes)}
                   </span>
                 )}
-                <button
+                <Button size="icon" aria-label="Download"
                   onClick={() => handleDownload(f.r2_key, f.filename)}
                   title="Download"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: '2px' }}
                 >
                   <Download {...ICON_PROPS} size={13} />
-                </button>
-                <button
+                </Button>
+                <Button size="icon" aria-label="Delete"
                   onClick={() => {
                     if (window.confirm(`Delete "${f.filename}"? This cannot be undone.`)) {
                       deleteMutation.mutate(f.id)
@@ -213,7 +214,7 @@ export default function FileUpload({ entityType, entityId, products = [], produc
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-danger)', padding: '2px', opacity: 0.85 }}
                 >
                   <Trash2 {...ICON_PROPS} size={13} />
-                </button>
+                </Button>
               </div>
             )
           })}

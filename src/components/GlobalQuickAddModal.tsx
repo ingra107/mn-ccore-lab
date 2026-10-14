@@ -31,6 +31,7 @@ import { withAlpha } from '../lib/taskGrouping'
 import { Chip } from './ui/Chip'
 import { isHermesPrefix } from '../lib/hermesRouting'
 import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
+import { Button } from './ui/Button'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -229,7 +230,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                 >
                   esc
                 </kbd>
-                <button
+                <Button size="icon"
                   onClick={onClose}
                   style={{
                     background: 'none',
@@ -244,7 +245,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   aria-label="Close quick add"
                 >
                   <X {...ICON_PROPS} size={15} />
-                </button>
+                </Button>
               </div>
 
               {/* Input area */}

@@ -23,6 +23,7 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { compactStageLabel } from '../lib/projectStage'
 import { projectShortLabel } from '../lib/displayNames'
+import { Button } from './ui/Button'
 
 interface CommandItem {
   id: string
@@ -742,7 +743,7 @@ export default function CommandPalette() {
             esc
           </kbd>
           {/* Touch stand-in for "esc": a real Close button. */}
-          <button
+          <Button size="icon"
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close command palette"
@@ -750,7 +751,7 @@ export default function CommandPalette() {
             style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--slate)', display: 'inline-flex' }}
           >
             <X {...ICON_PROPS} size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Results */}

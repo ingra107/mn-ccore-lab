@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 // Bump this and add an entry to RELEASES when shipping a meaningful feature
 // set. Each release gets a one-line summary keyed to its version. The ribbon
@@ -97,7 +98,7 @@ export default function ReleaseRibbon() {
             {release.body}
           </span>
         </div>
-        <button
+        <Button size="icon"
           onClick={dismiss}
           aria-label="Dismiss release notes"
           className="hit-area p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
@@ -112,7 +113,7 @@ export default function ReleaseRibbon() {
           }}
         >
           <X {...ICON_PROPS} size={14} />
-        </button>
+        </Button>
       </motion.div>
     </AnimatePresence>
   )

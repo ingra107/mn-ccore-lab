@@ -22,6 +22,7 @@ import PhaseReleaseBanner from './PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 export default function PortalLayout() {
   const { mode, setTheme, isDark } = useDarkMode()
@@ -200,7 +201,7 @@ export default function PortalLayout() {
           }}
         >
           {/* Mobile hamburger */}
-          <button
+          <Button size="icon"
             ref={hamburgerRef}
             className="lg:hidden flex items-center justify-center min-w-[44px] min-h-[44px] mr-2 rounded-md"
             onClick={() => setMobileOpen((prev) => !prev)}
@@ -209,7 +210,7 @@ export default function PortalLayout() {
             style={{ color: 'var(--ink)' }}
           >
             {mobileOpen ? <X {...ICON_PROPS} size={20} /> : <Menu {...ICON_PROPS} size={20} />}
-          </button>
+          </Button>
 
           {/* Mobile brand mark — only below lg, kept tight (28px) so the
               top bar stays usable. Tapping returns to /dashboard. */}
@@ -264,14 +265,14 @@ export default function PortalLayout() {
 
           {/* Theme picker */}
           <div className="relative" ref={themePickerRef}>
-            <button
+            <Button size="icon"
               onClick={() => setShowThemeMenu(!showThemeMenu)}
               className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
               style={{ color: 'var(--slate)' }}
               aria-label="Change theme"
             >
               {mode === 'light' ? <Sun {...ICON_PROPS} size={18} /> : mode === 'dark' ? <Moon {...ICON_PROPS} size={18} /> : <Monitor {...ICON_PROPS} size={18} />}
-            </button>
+            </Button>
             {showThemeMenu && (
               <>
                 <div
@@ -357,7 +358,7 @@ export default function PortalLayout() {
 
       {/* Floating quick-add button: desktop only. Below lg it sat on the right-edge
           action slot of the card behind it; the More drawer has a Capture entry. */}
-      <button
+      <Button size="icon"
         data-testid="fab-quick-add"
         onClick={() => setQuickAddOpen(true)}
         className="fixed right-5 z-40 w-10 h-10 rounded-full hidden lg:flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95"
@@ -374,7 +375,7 @@ export default function PortalLayout() {
         title="Quick add task (press q)"
       >
         <Plus size={20} strokeWidth={2.5} />
-      </button>
+      </Button>
 
       <ScrollToTop />
 

@@ -30,6 +30,7 @@ import { normalizeLocalFolderPath } from '../../lib/urlClassify'
 import { checkLocalFolderPath } from '../../../shared/localFolderPath'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
+import { Button } from '../ui/Button'
 
 interface Props {
   /** Project slug (or id) the my-folder routes take. */
@@ -150,7 +151,7 @@ export default function ProjectFolderActions({ projectRef, projectLabel, piFallb
             </Link>
           )}
           {canSet && (
-            <button
+            <Button size="icon"
               type="button"
               className="pf-pencil tip"
               onClick={startEdit}
@@ -159,7 +160,7 @@ export default function ProjectFolderActions({ projectRef, projectLabel, piFallb
               data-testid="project-folder-edit"
             >
               <Pencil {...ICON_PROPS} size={13} aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </div>
       )}

@@ -288,13 +288,13 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                     style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)' }}
                   >
                     {projTitle}
-                    <button
+                    <Button size="icon" aria-label={`Unlink ${projTitle}`}
                       type="button"
                       onClick={() => toggleLinkedProject(slug)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: '0 2px', fontSize: '10px' }}
                     >
                       x
-                    </button>
+                    </Button>
                   </span>
                 )
               })}

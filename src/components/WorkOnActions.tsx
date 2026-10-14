@@ -4,6 +4,7 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { useLauncherInstalled } from '../hooks/useLauncherInstalled'
 import { useAuth } from '../hooks/useAuth'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 // Shared "Open folder" + "Work on this in Claude" action pair for a project
 // that has a primary_folder. Fires the mnccore:// protocol (local launch on
@@ -64,12 +65,12 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     const box: React.CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 24, height: 24, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }
     return (
       <>
-        <button type="button" onClick={openFolder} className="tip tk-wo" data-tip="Open folder" aria-label="Open project folder" style={box}>
+        <Button size="icon" type="button" onClick={openFolder} className="tip tk-wo" data-tip="Open folder" aria-label="Open project folder" style={box}>
           <FolderOpen {...ICON_PROPS} size={14} />
-        </button>
-        <button type="button" onClick={workOn} className="tip tk-wo" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={box}>
+        </Button>
+        <Button size="icon" type="button" onClick={workOn} className="tip tk-wo" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={box}>
           <Play {...ICON_PROPS} size={14} />
-        </button>
+        </Button>
       </>
     )
   }
@@ -82,12 +83,12 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     }
     return (
       <>
-        <button type="button" onClick={openFolder} className="tip" data-tip="Open folder" aria-label="Open project folder" style={iconBtn}>
+        <Button size="icon" type="button" onClick={openFolder} className="tip" data-tip="Open folder" aria-label="Open project folder" style={iconBtn}>
           <FolderOpen {...ICON_PROPS} size={13} />
-        </button>
-        <button type="button" onClick={workOn} className="tip" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={iconBtn}>
+        </Button>
+        <Button size="icon" type="button" onClick={workOn} className="tip" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={iconBtn}>
           <Play {...ICON_PROPS} size={13} />
-        </button>
+        </Button>
       </>
     )
   }

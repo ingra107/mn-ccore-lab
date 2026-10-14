@@ -5,6 +5,7 @@ import { formatShortDate, addDaysYmd, dueLabelText, dueLabelCompact } from '../l
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 import { dropdownTop } from '../lib/viewportBottom'
+import { Button } from './ui/Button'
 
 interface InlineDatePickerProps {
   value: string | null
@@ -248,17 +249,17 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
 
           {/* month header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <button
+            <Button size="icon"
               aria-label="Previous month"
               onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() - 1, 1)) }}
               style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
-            >‹</button>
+            >‹</Button>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
-            <button
+            <Button size="icon"
               aria-label="Next month"
               onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() + 1, 1)) }}
               style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
-            >›</button>
+            >›</Button>
           </div>
 
           {/* weekday labels */}

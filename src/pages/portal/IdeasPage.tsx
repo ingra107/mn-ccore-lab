@@ -757,7 +757,7 @@ function IdeaRowView({
         >
           {/* S15: promote approved ideas to a project */}
           {idea.status === 'approved' && (
-            <button
+            <Button size="icon"
               className="rounded-md"
               onClick={(e) => { e.stopPropagation(); onPromote() }}
               style={{
@@ -776,9 +776,9 @@ function IdeaRowView({
               title="Promote to project"
             >
               <Rocket {...ICON_PROPS} size={12} />
-            </button>
+            </Button>
           )}
-          <button
+          <Button size="icon"
             className="rounded-md"
             onClick={(e) => {
               e.stopPropagation()
@@ -800,8 +800,8 @@ function IdeaRowView({
             title="Edit"
           >
             <Pencil {...ICON_PROPS} size={12} />
-          </button>
-          <button
+          </Button>
+          <Button size="icon"
             className="rounded-md"
             onClick={(e) => {
               e.stopPropagation()
@@ -823,7 +823,7 @@ function IdeaRowView({
             title="Archive"
           >
             <Archive {...ICON_PROPS} size={12} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -887,7 +887,7 @@ function IdeaRowView({
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)', marginLeft: 'auto', flexShrink: 0 }}>
             {idea.status === 'approved' && (
-              <button
+              <Button size="icon"
                 onClick={(e) => { e.stopPropagation(); onPromote() }}
                 className="rounded-md flex items-center justify-center"
                 style={{
@@ -903,9 +903,9 @@ function IdeaRowView({
                 title="Promote to project"
               >
                 <Rocket {...ICON_PROPS} size={12} />
-              </button>
+              </Button>
             )}
-            <button
+            <Button size="icon"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit()
@@ -924,8 +924,8 @@ function IdeaRowView({
               title="Edit"
             >
               <Pencil {...ICON_PROPS} size={12} />
-            </button>
-            <button
+            </Button>
+            <Button size="icon"
               onClick={(e) => {
                 e.stopPropagation()
                 onStatusChange('archived')
@@ -944,7 +944,7 @@ function IdeaRowView({
               title="Archive"
             >
               <Archive {...ICON_PROPS} size={12} />
-            </button>
+            </Button>
             <div style={{ width: 18, height: 18, flexShrink: 0 }}>
               <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
             </div>

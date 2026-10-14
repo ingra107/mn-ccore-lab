@@ -1764,8 +1764,35 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   align-items: center;
 }
 
-/* Button size="icon" outside touch: the WCAG 2.2 2.5.8 floor, 24x24. */
-.btn-icon { min-width: 24px; min-height: 24px; }
+/* Button size="icon" (.btn-icon). Everything here is @layer base under :where(),
+   zero specificity, so a page class, a Tailwind utility or an inline style at the
+   site always wins, and a raw <button> that moved to Button keeps its own size.
+   The target floor (WCAG 2.2 2.5.8, 24px; 44px on touch) is a hit area, a
+   ::before that never changes the visual box, so migrating a site moves no pixel.
+   The one exception is .btn-icon-box, a real box: Button sets it when the caller
+   gives a variant (a standalone icon button with no classes of its own). An
+   unlayered min-width floor here once beat every utility (min-w-[44px] shrank to
+   24, a 14px select box grew to 24). */
+@layer base {
+  :where(.btn-icon) {
+    --btn-hit: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  :where(.btn-icon:disabled) { cursor: default; }
+  :where(.btn-icon-box) { min-width: 24px; min-height: 24px; }
+  :where(.btn-icon:not(.btn-icon-box, .done-box, .stage-dot, .pill-btn, .tk-hov, .tk-btn, .tk-pill, .tk-ck, .tk-wo, .tk-x, .tk-si, .tk-rmore, .tk-prio)) { position: relative; }
+  :where(.btn-icon:not(.btn-icon-box, .done-box, .stage-dot, .pill-btn, .tk-hov, .tk-btn, .tk-pill, .tk-ck, .tk-wo, .tk-x, .tk-si, .tk-rmore, .tk-prio))::before {
+    content: '';
+    position: absolute;
+    top: min(0px, calc((100% - var(--btn-hit)) / 2));
+    bottom: min(0px, calc((100% - var(--btn-hit)) / 2));
+    left: min(0px, calc((100% - var(--btn-hit)) / 2));
+    right: min(0px, calc((100% - var(--btn-hit)) / 2));
+  }
+}
 
 /* Touch targets. NO rule here sizes a <button> by default: a blanket
    `button { min-height: 44px }` (with a :not() list of exemptions) stretched
@@ -1789,20 +1816,24 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      .touch-tall a real 44px minimum height, for stand-alone full-size controls
                  only (the shared Button at md/lg, tabs). Never on a control that
                  sits inside a flex or inline row.
-     .btn-icon   an icon-only button that sits in a row (Button size="icon"): a
-                 real 24x24 box, 44x44 on touch. Real layout space, not an
-                 overhang, so two icon buttons side by side cannot cover each
-                 other the way two .hit-area overhangs do.
+     .btn-icon   an icon-only button (Button size="icon"): a 24px hit area off touch,
+                 44px on touch, drawn as the same ::before as .hit-area at zero
+                 specificity (a site that draws its own ::before keeps it). The
+                 visual box is never grown. .btn-icon-box is the opposite: a real
+                 24x24 box (44x44 on touch), for a standalone icon button or a row
+                 of adjacent ones, where two overhangs would cover each other.
    Phone (<=768px) and touch tablets ((hover:none) and (pointer:coarse), 769px up;
    a 900px mouse-driven desktop window keeps its dense tables). The older
    .done-box / .stage-dot / .pill-btn / .tk-* lists below predate .hit-area and
-   keep their own fixed-inset hit areas. */
+   keep their own fixed-inset hit areas; an icon button carrying one of those
+   classes gets none of the rules here, so the Today card's slots do not move. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  .btn-icon {
-    min-width: 44px;
+  @layer base {
+    :where(.btn-icon) { --btn-hit: 44px; }
+    :where(.btn-icon-box) { min-width: 44px; min-height: 44px; }
   }
   .touch-tall,
-  .btn-icon,
+  a.inline-link,
   select {
     min-height: 44px;
   }

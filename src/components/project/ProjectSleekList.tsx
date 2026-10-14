@@ -47,6 +47,7 @@ import { displayName } from '../../lib/nameUtils'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import type { Project } from '../../data/types'
 import type { StoredLink, ProjectPublicationLink } from '../../hooks/useApiData'
+import { Button } from '../ui/Button'
 
 // Only Critical keeps a status color on the bar; the tooltip says the word.
 const healthColor = (status: string): string => (status === 'Critical' ? 'var(--job-stale)' : 'var(--sk-t2)')
@@ -204,7 +205,7 @@ export default function ProjectSleekList({
       render: (p) => {
         const pinned = pinnedSlugs.has(p.slug)
         return (
-          <button
+          <Button size="icon"
             type="button"
             className={`pj-pin tip${pinned ? ' pj-pinned' : ''}`}
             onClick={() => togglePin(p.slug)}
@@ -213,7 +214,7 @@ export default function ProjectSleekList({
             aria-pressed={pinned}
           >
             <Star {...ICON_PROPS} size={12} fill={pinned ? 'var(--sk-t2)' : 'none'} />
-          </button>
+          </Button>
         )
       },
     },

@@ -308,25 +308,25 @@ export default function Dashboard() {
   }, [cardLookup])
 
   const renderPinOverlay = useCallback((id: string) => (
-    <button
+    <Button size="icon"
       onClick={(e) => { e.stopPropagation(); togglePin(id) }}
       className="dashboard-pin-btn"
       title="Unpin"
       aria-label="Unpin card"
     >
       <Pin size={12} strokeWidth={1.5} absoluteStrokeWidth />
-    </button>
+    </Button>
   ), [togglePin])
 
   const renderUnpinOverlay = useCallback((id: string) => (
-    <button
+    <Button size="icon"
       onClick={(e) => { e.stopPropagation(); togglePin(id) }}
       className="dashboard-pin-btn dashboard-pin-btn--inactive"
       title="Pin to top"
       aria-label="Pin card"
     >
       <Pin size={12} strokeWidth={1.5} absoluteStrokeWidth />
-    </button>
+    </Button>
   ), [togglePin])
 
   const resetLayout = useCallback(() => {
@@ -400,7 +400,7 @@ export default function Dashboard() {
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                         Organized by your usage
                       </span>
-                      <button
+                      <Button size="icon" aria-label="Reset to default order"
                         onClick={resetAdaptive}
                         title="Reset to default order"
                         style={{
@@ -415,7 +415,7 @@ export default function Dashboard() {
                         }}
                       >
                         <RotateCcw size={10} strokeWidth={1.5} absoluteStrokeWidth />
-                      </button>
+                      </Button>
                     </div>
                   )}
                   <button
@@ -473,7 +473,7 @@ export default function Dashboard() {
                 {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
               </button>
               {visibleCards.has(card.id) && (
-                <button
+                <Button size="icon"
                   onClick={() => togglePin(card.id)}
                   aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
                   className="flex items-center justify-center"
@@ -489,7 +489,7 @@ export default function Dashboard() {
                   title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
                 >
                   <Pin size={14} strokeWidth={1.5} absoluteStrokeWidth />
-                </button>
+                </Button>
               )}
             </div>
           )

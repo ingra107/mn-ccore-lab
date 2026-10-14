@@ -40,6 +40,7 @@ import { Chip } from '../ui/Chip'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import { useProjectPairs } from '../../hooks/useProjectPairs'
 import { parseBlockedBy } from '../../../shared/blockedBy'
+import { Button } from '../ui/Button'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -738,7 +739,7 @@ function SortableColumnHeader({
           role-free (axe nested-interactive, 2026-04-18). The handle itself
           is a button; the ColumnHeader inside renders another button for
           sort — still two interactive elements side by side, not nested. */}
-      <button
+      <Button size="icon"
         type="button"
         {...attributes}
         {...listeners}
@@ -761,7 +762,7 @@ function SortableColumnHeader({
         title="Drag to reorder column"
       >
         <GripVertical {...ICON_PROPS} size={10} />
-      </button>
+      </Button>
       <ColumnHeader
         label={label}
         sortKey={field}
@@ -1095,7 +1096,7 @@ function TaskGridRow({
                 style={{ minWidth: 0, paddingRight: '12px' }}
               >
                 <div className="flex items-center gap-1">
-                  <button
+                  <Button size="icon" aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
                     onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
                     className="subtask-expand-btn"
                     style={{
@@ -1107,7 +1108,7 @@ function TaskGridRow({
                     title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
                   >
                     <ChevronRight {...ICON_PROPS} size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) var(--ease-out)' }} />
-                  </button>
+                  </Button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
                       <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
@@ -1483,24 +1484,24 @@ function TaskGridRow({
       {/* Row actions — own grid column, not absolute */}
       <div className="task-grid-row-actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
         {onPinToFocus && !isPinnedToFocus && !task.completed && (
-          <button
+          <Button size="icon"
             className="task-grid-row-action-btn"
             onClick={() => onPinToFocus(task.id)}
             title="Pin to Focus Next"
             aria-label="Pin to Focus Next"
           >
             <Pin {...ICON_PROPS} size={12} />
-          </button>
+          </Button>
         )}
-        <button
+        <Button size="icon"
           className="task-grid-row-action-btn"
           onClick={() => setQuickComment(!quickComment)}
           title="Quick comment"
           aria-label="Add quick comment"
         >
           <MessageSquare {...ICON_PROPS} size={12} />
-        </button>
-        <button
+        </Button>
+        <Button size="icon"
           className="task-grid-row-action-btn"
           onClick={() => {
             const prev = task.status
@@ -1511,7 +1512,7 @@ function TaskGridRow({
           aria-label="Archive task"
         >
           <Archive {...ICON_PROPS} size={12} />
-        </button>
+        </Button>
       </div>
 
       {/* Quick comment input — below the row */}
@@ -1612,7 +1613,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
       >
         <Icon {...ICON_PROPS} size={14} />
       </a>
-      <button
+      <Button size="icon" aria-label="Copy link"
         onClick={handleNonHttpClick}
         title="Copy link"
         className="hov-opacity"
@@ -1630,7 +1631,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         } as React.CSSProperties}
       >
         <Clipboard {...ICON_PROPS} size={11} />
-      </button>
+      </Button>
     </span>
   )
 }
@@ -1671,15 +1672,15 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
       className="flex items-center gap-2 py-1 group"
       {...attributes}
     >
-      <button
+      <Button size="icon" aria-label="Reorder subtask"
         {...listeners}
         className="cursor-grab active:cursor-grabbing reveal-on-hover flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
-      </button>
-      <button
+      </Button>
+      <Button size="icon" aria-label={subtask.completed ? "Mark subtask not done" : "Mark subtask done"}
         onClick={(e) => { e.stopPropagation(); onToggle(subtask.id) }}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
@@ -1688,7 +1689,7 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
         ) : (
           <Circle {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
-      </button>
+      </Button>
       <span
         style={{
           fontSize: '12px',

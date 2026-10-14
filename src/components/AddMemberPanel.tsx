@@ -109,6 +109,7 @@ function AddMemberForm({ onClose }: { onClose: () => void }) {
         <h2 className="text-base" style={{ fontWeight: 600, color: 'var(--ink)' }}>Add a member</h2>
         <Button
           variant="ghost"
+          size="icon"
           type="button"
           onClick={onClose}
           aria-label="Close add member"

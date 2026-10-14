@@ -9,6 +9,7 @@ import type { TeamMember, Director } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { GRAPH_PANEL_BG } from '../lib/graphCanvas'
+import { Button } from './ui/Button'
 
 interface NetworkSidebarProps {
   selectedNode: NetworkNode | null
@@ -123,7 +124,7 @@ export default function NetworkSidebar({
           }}
         >
           {/* Close button */}
-          <button
+          <Button size="icon"
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200 hov-border hov-color"
             style={{
@@ -137,7 +138,7 @@ export default function NetworkSidebar({
             aria-label="Close panel"
           >
             <X {...ICON_PROPS} size={16} />
-          </button>
+          </Button>
 
           <div className="p-6 pt-14">
             {selectedNode && (

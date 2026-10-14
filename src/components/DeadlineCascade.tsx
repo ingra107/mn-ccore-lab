@@ -6,6 +6,7 @@ import { formatShortDate, isOverdue, civilDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import { Button } from './ui/Button'
 
 // ── Status helpers ──────────────────────────────────────────
 
@@ -167,7 +168,7 @@ function CascadeRow({
       >
         {/* Expand/collapse */}
         {hasChildren ? (
-          <button
+          <Button size="icon"
             type="button"
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
             aria-label={expanded ? `Collapse ${node.title}` : `Expand ${node.title}`}
@@ -179,7 +180,7 @@ function CascadeRow({
               ? <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               : <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             }
-          </button>
+          </Button>
         ) : (
           <span style={{ width: 14 }} />
         )}
