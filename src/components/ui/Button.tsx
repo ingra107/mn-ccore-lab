@@ -7,7 +7,7 @@ import type {
 import { createElement } from 'react'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold' | 'ghost-gold'
-export type ButtonSize = 'sm' | 'md' | 'lg'
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
 /**
  * Own props the Button controls regardless of which element it renders as.
@@ -88,6 +88,13 @@ const SIZE_STYLES: Record<NonNullable<ButtonProps['size']>, CSSProperties> = {
     fontSize: 'var(--text-base)',
     borderRadius: 'var(--radius-lg)',
   },
+  // icon: an icon-only button in a row of other controls. No padding; the box
+  // itself is sized by .btn-icon in index.css (24x24, 44x44 on touch), so the
+  // tap zone is real layout space and can never cover a neighbour.
+  icon: {
+    padding: 0,
+    borderRadius: 'var(--radius-sm)',
+  },
 }
 
 const COMMON_STYLE: CSSProperties = {
@@ -126,13 +133,16 @@ export function Button<E extends ElementType = 'button'>({
   const disabledProp = Component === 'button' ? { disabled } : {}
 
   // Touch target (index.css): a stand-alone md/lg <button> gets the 44px
-  // minimum height; everything else (sm, or an anchor/Link) gets a hit area
-  // that grows the tap zone without changing the layout. md/lg buttons carry
-  // the hit area too: min-height fixes only the height, so an icon-only md
-  // button with padding 0 (link Archive/Restore, KeyLinksEditor, documents)
-  // was a 12x44 bar. The hit area adds nothing to a button already 44 wide.
+  // minimum height; an icon button gets a real 24x24 box (44x44 on touch);
+  // everything else (sm, or an anchor/Link) gets a hit area that grows the
+  // tap zone without changing the layout. md/lg do NOT get the hit area: its
+  // ::before overhang knows nothing of the neighbours, so in a row of narrow
+  // buttons the later one covers the earlier (Remove over Edit, 6px apart).
   const { className: extraClass, ...restProps } = rest as { className?: string }
-  const touchClass = Component === 'button' && size !== 'sm' ? 'touch-tall hit-area' : 'hit-area'
+  const touchClass =
+    size === 'icon' ? 'btn-icon'
+    : Component === 'button' && size !== 'sm' ? 'touch-tall'
+    : 'hit-area'
   const className = extraClass ? `${touchClass} ${extraClass}` : touchClass
 
   return createElement(

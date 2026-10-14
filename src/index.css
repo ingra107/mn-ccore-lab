@@ -1920,6 +1920,9 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   align-items: center;
 }
 
+/* Button size="icon" outside touch: the WCAG 2.2 2.5.8 floor, 24x24. */
+.btn-icon { min-width: 24px; min-height: 24px; }
+
 /* Touch targets. NO rule here sizes a <button> by default: a blanket
    `button { min-height: 44px }` (with a :not() list of exemptions) stretched
    every classless small button it did not know about, so each new icon button
@@ -1934,12 +1937,20 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
      .touch-tall a real 44px minimum height, for stand-alone full-size controls
                  only (the shared Button at md/lg, tabs). Never on a control that
                  sits inside a flex or inline row.
+     .btn-icon   an icon-only button that sits in a row (Button size="icon"): a
+                 real 24x24 box, 44x44 on touch. Real layout space, not an
+                 overhang, so two icon buttons side by side cannot cover each
+                 other the way two .hit-area overhangs do.
    Phone (<=768px) and touch tablets ((hover:none) and (pointer:coarse), 769px up;
    a 900px mouse-driven desktop window keeps its dense tables). The older
    .done-box / .stage-dot / .pill-btn / .tk-* lists below predate .hit-area and
    keep their own fixed-inset hit areas. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  .btn-icon {
+    min-width: 44px;
+  }
   .touch-tall,
+  .btn-icon,
   a.inline-link,
   select,
   .filter-chip {
@@ -3239,10 +3250,14 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-pill i.sg.sg-overdue{border-color:var(--job-overdue);background:var(--job-overdue)}
 /* Inline-edit trigger: the value as it reads elsewhere, a caret on row hover */
 .sr .sr-trig{all:unset;position:relative;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;min-width:24px;max-width:100%;min-height:24px;padding:2px 6px;margin-left:-6px;border-radius:6px;cursor:pointer}
-/* Touch: the trigger is 24px tall and as wide as its value (a bare "-" was 16px
-   wide), so min-width makes it 24 wide and an invisible ::before adds height
-   only, to 36px. More height, or any width, would reach the title or the next
-   value on the wrapped phone line. */
+/* Every pointer, desktop included: min-width 24px is the WCAG 2.2 2.5.8 floor
+   (24x24 for any pointer, not only touch); the trigger was as wide as its value,
+   so a bare "-" was 16px. This applies on Tasks, Grants and Projects rows alike
+   (InlineSelect, InlineDatePicker, InlineAssigneePicker); max-width:100% still
+   lets a long value shrink. Their menus are portals or siblings, so the
+   trigger's position:relative moves nothing.
+   Touch only: an invisible ::before adds height, to 36px. More height, or any
+   width, would reach the title or the next value on the wrapped phone line. */
 @media (hover:none){.sr .sr-trig::before{content:"";position:absolute;inset:-6px 0}}
 .sr .sr-trig:hover,.sr .sr-trig[aria-expanded="true"]{background:var(--sr-hov);box-shadow:inset 0 0 0 1px var(--sk-line)}
 .sr .sr-trig:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}

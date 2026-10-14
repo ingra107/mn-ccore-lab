@@ -1850,7 +1850,8 @@ recentActivity.length === 0 ? (
       </div>
     )
 
-  // Compact title: the short name sits on the title's line, not under it.
+  // Compact title: the short name sits on the title's line when both fit,
+  // and drops under the title when they do not (.pj-title wraps).
   const titleCompactEl = (
     <div className="pj-title">
       {editingTitle ? (

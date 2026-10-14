@@ -75,7 +75,8 @@ function LinkRow({
             data-tip={label}
             aria-label={`${label}: ${link.short_title || link.canonical_url}`}
             className="tip opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-            style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+            size="icon"
+            style={{ color: 'var(--slate)' }}
           >
             {archived
               ? <ArchiveRestore {...ICON_PROPS} size={12} />

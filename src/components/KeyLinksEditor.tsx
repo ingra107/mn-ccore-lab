@@ -114,7 +114,8 @@ function LinkRow({
           data-tip="Edit link"
           aria-label="Edit link"
           className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity tip"
-          style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+          size="icon"
+          style={{ color: 'var(--slate)' }}
         >
           <Pencil {...ICON_PROPS} size={11} />
         </Button>
@@ -124,7 +125,8 @@ function LinkRow({
           data-tip="Remove link"
           aria-label="Remove link"
           className="tip opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-          style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
+          size="icon"
+          style={{ color: 'var(--slate)' }}
         >
           <X {...ICON_PROPS} size={12} />
         </Button>
