@@ -1,4 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
+import { viewportBottom } from '../lib/viewportBottom'
 
 interface FitViewportOptions {
   /** Floor for the page height in px. Default 320. */
@@ -48,8 +49,19 @@ export function useFitViewportHeight(
       const top = el.getBoundingClientRect().top + window.scrollY
       let below = 0
       const main = el.closest('#portal-main') as HTMLElement | null
-      if (main) {
+      // Below lg a fixed tab bar owns the bottom of the screen. The page's room
+      // ends at its top edge, and main's bottom padding is NOT subtracted: that
+      // padding is window-scroll clearance (tab bar + the floater reserve) for
+      // pages whose document scrolls. A fitted shell scrolls inside itself and
+      // its scroller carries .fab-clear, so counting main's padding as well left
+      // a 127px blank band above the tab bar on a phone (overnight 2026-10-14).
+      const screenEnd = viewportBottom()
+      if (screenEnd < window.innerHeight) {
+        below += window.innerHeight - screenEnd
+      } else if (main) {
         below += parseFloat(getComputedStyle(main).paddingBottom) || 0
+      }
+      if (main) {
         for (let sib = main.nextElementSibling as HTMLElement | null; sib; sib = sib.nextElementSibling as HTMLElement | null) {
           const pos = getComputedStyle(sib).position
           if (pos !== 'fixed' && pos !== 'absolute') below += sib.offsetHeight

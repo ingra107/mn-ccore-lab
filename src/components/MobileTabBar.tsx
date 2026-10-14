@@ -88,6 +88,7 @@ export default function MobileTabBar() {
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
         aria-label="Primary navigation"
+        data-bottom-bar
       >
         {primaryTabs.map((tab) => {
           const Icon = tab.icon
