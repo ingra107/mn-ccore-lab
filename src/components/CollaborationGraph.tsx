@@ -5,6 +5,9 @@ import type { GraphNode as ReagraphNode, GraphEdge as ReagraphEdge, InternalGrap
 import type { Publication } from '../data/types'
 import { withAlpha } from '../lib/taskGrouping'
 import { isPublished } from '../lib/publicationCounts'
+import { LocateFixed } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
+import { GRAPH_PANEL_BG } from '../lib/graphCanvas'
 
 // Re-export the same interfaces the sidebar/filters expect
 export interface NetworkNode {
@@ -380,19 +383,26 @@ export default function CollaborationGraph({
     return [...visited]
   }, [networkNodes, networkEdges])
 
+  // One framing, used by the first render and by the Re-center control: a
+  // swipe or pinch can carry the graph off the canvas (touch-action is none,
+  // so the swipe pans instead of scrolling) and this is the way back.
+  const frameGraph = useCallback(() => {
+    if (ingrahamSubgraphIds.length > 0 && graphRef.current?.fitNodesInView) {
+      graphRef.current.fitNodesInView(ingrahamSubgraphIds)
+    } else {
+      graphRef.current?.centerGraph()
+    }
+  }, [ingrahamSubgraphIds])
+
   useEffect(() => {
     if (reagraphNodes.length > 0 && !hasRendered) {
       const timer = setTimeout(() => {
-        if (ingrahamSubgraphIds.length > 0 && graphRef.current?.fitNodesInView) {
-          graphRef.current.fitNodesInView(ingrahamSubgraphIds)
-        } else {
-          graphRef.current?.centerGraph()
-        }
+        frameGraph()
         setHasRendered(true)
       }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [reagraphNodes.length, hasRendered, ingrahamSubgraphIds])
+  }, [reagraphNodes.length, hasRendered, frameGraph])
 
   // Re-center when node/edge count changes (filter change)
   const prevCountRef = useRef(reagraphNodes.length)
@@ -456,6 +466,24 @@ export default function CollaborationGraph({
           nodeStrength: -300,
         }}
       />
+
+      <button
+        type="button"
+        onClick={frameGraph}
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 rounded-full cursor-pointer"
+        style={{
+          zIndex: 'var(--z-sticky)',
+          minHeight: 32,
+          fontSize: '11px',
+          color: 'rgba(255, 255, 255, 0.8)',
+          background: withAlpha(GRAPH_PANEL_BG, 80),
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+        }}
+        aria-label="Re-center the graph"
+      >
+        <LocateFixed {...ICON_PROPS} size={14} />
+        Re-center
+      </button>
 
       {/* Legend */}
       <div

@@ -35,7 +35,10 @@ export default function PulseScene({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
-      className="absolute inset-0 flex flex-col items-center justify-center px-16 py-12"
+      // Phone: side padding drops to 24px and top/bottom padding clears the
+      // absolute header and footer; safe-centering puts a scene that is
+      // still too tall at the top instead of off both ends.
+      className="absolute inset-0 flex flex-col items-center justify-center-safe px-6 pt-24 pb-24 sm:px-16 sm:py-12"
       aria-roledescription="kiosk slide"
     >
       <div
@@ -51,16 +54,19 @@ export default function PulseScene({
         }}
       >
         {/* Eyebrow row + heartbeat divider */}
-        <div className="flex items-center gap-6 mb-8 opacity-90">
-          <HeartbeatLine
-            width={120}
-            height={28}
-            strokeWidth={1.5}
-            variant="slow"
-            color="var(--job-brand)"
-          />
+        <div className="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-8 opacity-90">
+          {/* The 120px trace beside a tracked eyebrow wraps the eyebrow on a phone. */}
+          <span className="hidden sm:inline-flex">
+            <HeartbeatLine
+              width={120}
+              height={28}
+              strokeWidth={1.5}
+              variant="slow"
+              color="var(--job-brand)"
+            />
+          </span>
           <span
-            className="uppercase tracking-[0.32em]"
+            className="uppercase tracking-[0.32em] whitespace-nowrap"
             style={{
               fontFamily: 'var(--font-sans)',
               color: 'var(--job-brand)',
@@ -86,7 +92,7 @@ export default function PulseScene({
             fontFamily: 'var(--font-display)',
             color: '#f5efe2',
             fontWeight: 500,
-            fontSize: 'clamp(48px, 5.5vw, 84px)',
+            fontSize: 'clamp(34px, 5.5vw, 84px)',
             lineHeight: 1.05,
             letterSpacing: '-0.02em',
             margin: 0,
@@ -118,7 +124,7 @@ export default function PulseScene({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-12"
+          className="mt-6 sm:mt-12"
         >
           {children}
         </motion.div>

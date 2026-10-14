@@ -1,31 +1,18 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { List, BookOpen, Copy, X } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
-import type { Publication } from '../data/types'
 import PublicationFilters from '../components/PublicationFilters'
 import PublicationSearch from '../components/PublicationSearch'
-import PublicationCard from '../components/PublicationCard'
+import PubRow from '../components/public/PubRow'
 import PublicationLibrary from '../components/PublicationLibrary'
 import { PublicHead, SecHead } from '../components/public/PublicParts'
-import { areaById, inArea } from '../lib/researchAreas'
+import { areaById } from '../lib/researchAreas'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { getAllMembers } from '../data/team'
 import { resolveBylineAuthors } from '../lib/authorAvatars'
-import { countPublications, isPublished } from '../lib/publicationCounts'
-
-// High-impact journal names for the "Key Publications" section
-const KEY_JOURNALS = [
-  'New England Journal of Medicine',
-  'The Lancet Infectious Diseases',
-  'The Lancet Respiratory Medicine',
-  'Lancet Respiratory Medicine',
-  'Lancet Healthy Longevity',
-  'Intensive Care Medicine',
-  'JAMA Network Open',
-  'Annals of Surgery',
-  'Critical Care Medicine',
-]
+import { countPublications } from '../lib/publicationCounts'
+import { planPublicationsPage, RECENT_COUNT } from '../lib/publicationsPage'
 
 function parseYears(param: string | null): number[] {
   if (!param) return []
@@ -127,39 +114,20 @@ export default function Publications() {
     setSearchParams({}, { replace: true })
   }, [setSearchParams])
 
-  // Filter + search
-  const filtered = useMemo(() => {
-    let result: Publication[] = publications
-
-    if (activeYears.length > 0) {
-      result = result.filter((p) => activeYears.includes(p.year))
-    }
-    if (activeStatuses.length > 0) {
-      result = result.filter((p) => activeStatuses.includes(p.status))
-    }
-    if (activeTopics.length > 0) {
-      result = result.filter((p) =>
-        p.topics.some((t) => activeTopics.includes(t))
-      )
-    }
-
-    if (activeArea) {
-      result = result.filter((p) => inArea(p, activeArea))
-    }
-
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.authors.toLowerCase().includes(q) ||
-          p.journal.toLowerCase().includes(q) ||
-          (p.abstract && p.abstract.toLowerCase().includes(q))
-      )
-    }
-
-    return result
-  }, [publications, activeYears, activeStatuses, activeTopics, activeArea, searchTerm])
+  // Published only by default, one card per paper, bars from every filter
+  // but the year: lib/publicationsPage owns all three rules. Featured reuses
+  // Publication.featured, the field Home's Selected work reads (#906).
+  const plan = useMemo(
+    () => planPublicationsPage(publications, {
+      years: activeYears,
+      statuses: activeStatuses,
+      topics: activeTopics,
+      area: activeArea ?? null,
+      search: searchTerm,
+    }),
+    [publications, activeYears, activeStatuses, activeTopics, activeArea, searchTerm]
+  )
+  const { pool, beforeYear, filtered, barYears, featured: featuredPubs, key: keyPubs, recent: recentPubs } = plan
 
   const hasFilters =
     activeYears.length > 0 ||
@@ -167,50 +135,16 @@ export default function Publications() {
     activeTopics.length > 0 ||
     !!activeArea
 
-  // Group by year for default view
+  // Group by year for the "View all" view
   const years = useMemo(
     () =>
       [...new Set(filtered.map((p) => p.year))].sort((a, b) => b - a),
     [filtered]
   )
 
-  // Not the featured ones: each paper shows once on the page (principle #2).
-  const keyPubs = useMemo(
-    () =>
-      publications.filter(
-        (p) =>
-          isPublished(p) &&
-          !p.featured &&
-          KEY_JOURNALS.some((j) => p.journal.includes(j))
-      ),
-    [publications]
-  )
-
-  // #906 (Nick 2026-07-23) — "10-Featured section" on this page. Reuses the
-  // Publication.featured boolean the homepage's FeaturedResearch already
-  // curates from (same field, same convention) — no new data model needed
-  // for the lab-wide picks; per-MEMBER featuring (MemberPage's ask) is a
-  // separate, not-yet-built surface (see MemberPage.tsx).
-  const featuredPubs = useMemo(
-    () =>
-      [...publications]
-        .filter((p) => p.featured)
-        .sort((a, b) => b.year - a.year)
-        .slice(0, 10),
-    [publications]
-  )
-
-  const RECENT_COUNT = 10
-  const recentPubs = useMemo(
-    () => [...filtered].sort((a, b) => b.year - a.year).slice(0, RECENT_COUNT),
-    [filtered]
-  )
-
   const counts = useMemo(() => countPublications(publications), [publications])
   const pipelineCount = counts.inReview + counts.inPreparation
   const labMembers = useMemo(() => getAllMembers(), [])
-
-
 
   const journalCount = new Set(filtered.map((p) => p.journal).filter(Boolean)).size
   // Lab-wide: a paper counts when its first author resolves to ANY lab member
@@ -220,7 +154,22 @@ export default function Publications() {
   const thisYearCount = filtered.filter((p) => p.year === thisYear).length
   const KEY_SHOWN = 8
   const keyShown = showAllKey ? keyPubs : keyPubs.slice(0, KEY_SHOWN)
-  const yearMax = Math.max(1, ...years.map((y) => filtered.filter((p) => p.year === y).length))
+  const barCount = (year: number) => beforeYear.filter((p) => p.year === year).length
+  const yearMax = Math.max(1, ...barYears.slice(0, 12).map(barCount))
+
+  // Copy feedback: the label says what happened, and a refused clipboard
+  // write (permission denied) is caught instead of thrown.
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const copyBibliography = async () => {
+    const bib = filtered.map((p) => `${p.authors}. ${p.title}. ${p.journal} (${p.year}).${p.doi ? ` doi:${p.doi}` : ''}`).join('\n\n')
+    try {
+      await navigator.clipboard.writeText(bib)
+      setCopyState('copied')
+    } catch {
+      setCopyState('failed')
+    }
+    window.setTimeout(() => setCopyState('idle'), 2500)
+  }
 
   return (
     <div className="content-container pub-foot">
@@ -233,8 +182,8 @@ export default function Publications() {
 
       {/* Year distribution: a bar is a filter. Fixed-height slot prevents CLS (H-15). */}
       <div className="pub-ybars" style={{ height: 70 }}>
-        {years.length > 1 && years.slice(0, 12).reverse().map((year) => {
-          const count = filtered.filter((p) => p.year === year).length
+        {(barYears.length > 1 || activeYears.length > 0) && barYears.slice(0, 12).reverse().map((year) => {
+          const count = barCount(year)
           const on = activeYears.includes(year)
           return (
             <button key={year} type="button" onClick={() => handleYearToggle(year)} className={on ? 'pub-on' : undefined} title={`${year}: ${count} papers`} aria-pressed={on}>
@@ -254,27 +203,27 @@ export default function Publications() {
           <button
             type="button"
             className="pub-btn pub-sm"
-            onClick={() => {
-              const bib = filtered.map((p) => `${p.authors}. ${p.title}. ${p.journal} (${p.year}).${p.doi ? ` doi:${p.doi}` : ''}`).join('\n\n')
-              navigator.clipboard.writeText(bib)
-            }}
+            onClick={() => { void copyBibliography() }}
           >
             <Copy size={13} aria-hidden="true" />
-            Copy bibliography ({filtered.length})
+            <span aria-live="polite">
+              {copyState === 'copied'
+                ? `Copied ${filtered.length}`
+                : copyState === 'failed'
+                  ? 'Copy failed: select and copy by hand'
+                  : `Copy bibliography (${filtered.length})`}
+            </span>
           </button>
         </div>
       )}
 
       {/* Featured: lab-wide picks via Publication.featured (#906), the same
-          field Home's Selected work reads. PublicationCard keeps the
-          affordance identical wherever it renders. */}
+          field Home's Selected work reads. Every list is PubRow: one card. */}
       {featuredPubs.length > 0 && (
         <section>
           <SecHead title="Featured" count={featuredPubs.length} />
-          <div className="space-y-3 sm:space-y-4" style={{ marginTop: 14 }}>
-            {featuredPubs.map((pub) => (
-              <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
-            ))}
+          <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
+            {featuredPubs.map((pub) => <PubRow key={pub.id} pub={pub} />)}
           </div>
         </section>
       )}
@@ -292,22 +241,14 @@ export default function Publications() {
             ) : undefined}
           />
           <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-            {keyShown.map((pub) => (
-              <Link key={pub.id} to={`/publications/${pub.id}`} className="pub-row">
-                <span className="pub-yr">{pub.year}</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span className="pub-rt" style={{ fontSize: 16 }}>{pub.title}</span>
-                  <span className="pub-rj">{pub.journal}</span>
-                </span>
-              </Link>
-            ))}
+            {keyShown.map((pub) => <PubRow key={pub.id} pub={pub} />)}
           </div>
         </section>
       )}
 
       {/* Search + filters + list */}
       <section style={{ minHeight: '800px' }}>
-        <SecHead title="All papers" count={filtered.length === publications.length ? publications.length : `${filtered.length} of ${publications.length}`} />
+        <SecHead title="All papers" count={filtered.length === pool.length ? pool.length : `${filtered.length} of ${pool.length}`} />
         <div className="flex items-center gap-3 mb-4" style={{ marginTop: 14 }}>
           <div className="flex-1">
             <PublicationSearch value={searchTerm} onChange={setSearchTerm} resultCount={filtered.length} />
@@ -341,7 +282,7 @@ export default function Publications() {
             onTopicToggle={handleTopicToggle}
             onClearAll={handleClearAll}
             resultCount={filtered.length}
-            totalCount={publications.length}
+            totalCount={pool.length}
           />
         </div>
 
@@ -353,20 +294,18 @@ export default function Publications() {
             <p className="text-sm">Try adjusting your search or filter criteria.</p>
           </div>
         ) : hasFilters || searchTerm ? (
-          <div className="space-y-3 sm:space-y-4">
-            {filtered.map((pub) => (
-              <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
-            ))}
+          <div className="pub-card" style={{ padding: 8 }}>
+            {filtered.map((pub) => <PubRow key={pub.id} pub={pub} />)}
           </div>
         ) : !showAllPubs ? (
           /* #906 — 10 most-recent by default; "View all" reveals the full
              grouped-by-year view in place (design principle #3). */
           <>
-            <div className="space-y-3 sm:space-y-4">
-              {recentPubs.map((pub) => (
-                <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
-              ))}
-            </div>
+            {recentPubs.length > 0 && (
+              <div className="pub-card" style={{ padding: 8 }}>
+                {recentPubs.map((pub) => <PubRow key={pub.id} pub={pub} />)}
+              </div>
+            )}
             {filtered.length > RECENT_COUNT && (
               <div className="mt-6 text-center">
                 <button type="button" className="pub-btn" onClick={() => setShowAllPubs(true)}>
@@ -391,10 +330,8 @@ export default function Publications() {
                     <span className="pub-yrule" />
                     <span className="pub-meta">{n} {n === 1 ? 'paper' : 'papers'}</span>
                   </div>
-                  <div className="space-y-3 sm:space-y-4">
-                    {filtered.filter((p) => p.year === year).map((pub) => (
-                      <PublicationCard key={pub.id} pub={pub} showAuthorColumn />
-                    ))}
+                  <div className="pub-card" style={{ padding: 8 }}>
+                    {filtered.filter((p) => p.year === year).map((pub) => <PubRow key={pub.id} pub={pub} />)}
                   </div>
                 </div>
               )

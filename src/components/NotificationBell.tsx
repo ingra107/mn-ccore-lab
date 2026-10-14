@@ -7,6 +7,9 @@ import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '.
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import { clampToViewport, type AnchoredBox } from '../lib/viewportClamp'
+
+const PANEL_WIDTH = 360
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -31,6 +34,22 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
   const markAllRead = useMarkAllRead(slug)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  // Width and left offset come from one clamp (lib/viewportClamp), measured
+  // when the panel opens and again on resize, so the panel stays on screen
+  // wherever the bell sits (a phone header put it 72px off the left edge).
+  const [box, setBox] = useState<AnchoredBox | null>(null)
+  const measure = () => {
+    const el = ref.current
+    if (el) setBox(clampToViewport(el.getBoundingClientRect(), PANEL_WIDTH, window.innerWidth, align))
+  }
+  const measureRef = useRef(measure)
+  measureRef.current = measure
+  useEffect(() => {
+    if (!open) return
+    const onResize = () => measureRef.current()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [open])
 
   // Slack-style read semantics (Nick 2026-06-11): opening the list IS seeing
   // it. Unread highlights stay visible while the dropdown is open; when it
@@ -114,7 +133,7 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
   return (
     <div ref={ref} className="relative" style={{ display: 'inline-flex' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { if (!open) measure(); setOpen(!open) }}
         className="p-2 rounded-md cursor-pointer transition-colors duration-200 relative"
         style={{ color: triggerColor }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
@@ -156,9 +175,10 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
             style={{
               position: 'absolute',
               top: '100%',
-              ...(align === 'right' ? { right: 0 } : { left: 0 }),
+              left: box ? `${box.left}px` : align === 'left' ? 0 : undefined,
+              right: box || align === 'left' ? undefined : 0,
               marginTop: '8px',
-              width: '360px',
+              width: box ? `${box.width}px` : `min(${PANEL_WIDTH}px, calc(100vw - 24px))`,
               maxHeight: '480px',
               background: 'var(--cream)',
               border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,

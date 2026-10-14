@@ -27,22 +27,26 @@ export default function JoinPage() {
         lede={
           <>
             The Member Hub is where MN-CCORE members run their projects, meetings and tasks.
-            {isAuthenticated && !isMember && email
-              ? <> You are signed in as <strong style={{ color: 'var(--sk-t1)', fontWeight: 500 }}>{email}</strong>, which is not on a lab project yet. Here is how to join.</>
-              : <> Here is how to join.</>}
+            {isMember
+              ? <> You are already a member.</>
+              : isAuthenticated && email
+                ? <> You are signed in as <strong style={{ color: 'var(--sk-t1)', fontWeight: 500 }}>{email}</strong>, which is not on a lab project yet. Here is how to join.</>
+                : <> Here is how to join.</>}
           </>
         }
       />
 
-      {isMember && (
-        <p style={{ marginTop: 16, fontSize: 14 }}>
-          You are already a member. <Link to={PATHS.dashboard} className="pub-link">Go to Today</Link>
-        </p>
+      {/* A member (they reach this page from the footer's "Join the lab") gets
+          one action, into the Hub, not the steps and "Request to join". */}
+      {isMember ? (
+        <div className="pub-acts" style={{ marginTop: '1.5rem' }}>
+          <Link to={PATHS.dashboard} className="pub-btn pub-gold">Go to Today</Link>
+        </div>
+      ) : (
+        <div style={{ marginTop: '2rem' }}>
+          <JoinSteps email={email} name={name} />
+        </div>
       )}
-
-      <div style={{ marginTop: '2rem' }}>
-        <JoinSteps email={email} name={name} />
-      </div>
     </div>
   )
 }

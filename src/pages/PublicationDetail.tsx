@@ -1,13 +1,17 @@
+import { useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ClipboardCopy, ExternalLink } from 'lucide-react'
 import { usePublications, useLinkedProjects } from '../hooks/useApiData'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { FaceDisc } from '../components/today/skin'
-import { getPersonInfo } from '../data/team'
+import { getAllMembers } from '../data/team'
+import { resolveBylineAuthors } from '../lib/authorAvatars'
+import { SkeletonBar } from '../components/LoadingSkeleton'
 import { PATHS } from '../constants/paths'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { SecHead } from '../components/public/PublicParts'
+import PubRow from '../components/public/PubRow'
 import type { Publication } from '../data/types'
 import { topicLabel } from '../lib/topics'
 import { RESEARCH_AREAS, inArea } from '../lib/researchAreas'
@@ -27,14 +31,19 @@ export default function PublicationDetail() {
   const { id } = useParams<{ id: string }>()
   const decodedId = id ? decodeURIComponent(id) : ''
 
-  const { data: publications = [] } = usePublications()
+  const { data: publications = [], isLoading } = usePublications()
   const pub = publications.find((p) => p.id === decodedId)
+  const labMembers = useMemo(() => getAllMembers(), [])
 
   usePageMeta(
     pub ? `${pub.title} | MN-CCORE` : 'Publication | MN-CCORE',
     pub?.abstract ?? 'MN-CCORE publication details.',
     'article'
   )
+
+  // Loading is not "not found": a direct load used to flash the not-found
+  // copy, then jump to the paper.
+  if (!pub && isLoading) return <PublicationDetailSkeleton />
 
   if (!pub) {
     return (
@@ -46,9 +55,11 @@ export default function PublicationDetail() {
     )
   }
 
-  // Parse author slugs for avatars
-  const authorSlugs = (pub.authorSlugs ?? []).slice(0, 6)
-  const authorAvatars = authorSlugs.map((slug) => ({ slug, ...getPersonInfo(slug) }))
+  // Faces come from the byline (Rule 89), never from stored author_slugs:
+  // those credited non-authors and capped real ones at six (G12-5).
+  const authorAvatars = resolveBylineAuthors(pub, labMembers)
+    .map((a) => a.member)
+    .filter((m): m is NonNullable<typeof m> => !!m)
 
   return (
     <div className="content-container pub-foot" style={{ maxWidth: 880 }}>
@@ -92,6 +103,7 @@ export default function PublicationDetail() {
               PubMed <ExternalLink size={12} aria-hidden="true" />
             </a>
           )}
+          <CopyCitation pub={pub} />
           {!pub.doi && !pub.pubmed && !pub.abstract && <span className="pub-meta">No abstract or links on file yet.</span>}
         </div>
       </div>
@@ -99,6 +111,48 @@ export default function PublicationDetail() {
       <LinkedProjectsSection publicationId={decodedId} />
       <TrialRegSection pub={pub} />
       <RelatedPublicationsSection pub={pub} allPubs={publications} />
+    </div>
+  )
+}
+
+/** Copy the citation. Moved here from the retired PublicationCard so the
+ *  one-card list loses nothing; the label says whether it worked. */
+function CopyCitation({ pub }: { pub: Publication }) {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const copy = async () => {
+    const doi = pub.doi ? ` ${pub.doi}` : ''
+    try {
+      await navigator.clipboard.writeText(`${pub.authors} (${pub.year}). ${pub.title}. ${pub.journal}.${doi}`)
+      setState('copied')
+    } catch {
+      setState('failed')
+    }
+    window.setTimeout(() => setState('idle'), 2500)
+  }
+  return (
+    <button type="button" className="pub-btn pub-sm" onClick={() => { void copy() }}>
+      <ClipboardCopy size={12} aria-hidden="true" />
+      <span aria-live="polite">{state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Copy citation'}</span>
+    </button>
+  )
+}
+
+/** The page's own shape while the list loads: back link, kicker, two title
+ *  lines, byline, journal, abstract card, at the loaded page's sizes. */
+export function PublicationDetailSkeleton() {
+  return (
+    <div className="content-container pub-foot" style={{ maxWidth: 880 }} aria-busy="true" aria-label="Loading publication" data-testid="publication-detail-skeleton">
+      <div style={{ paddingTop: 28 }}><BackLink /></div>
+      <header style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SkeletonBar width={90} height={12} />
+        <SkeletonBar width="92%" height={34} />
+        <SkeletonBar width="64%" height={34} />
+        <SkeletonBar width="80%" height={18} />
+        <SkeletonBar width="40%" height={18} />
+      </header>
+      <div className="pub-card" style={{ padding: 'clamp(16px, 3vw, 26px)', marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {['100%', '97%', '99%', '94%', '98%', '60%'].map((w, i) => <SkeletonBar key={i} width={w} height={14} />)}
+      </div>
     </div>
   )
 }
@@ -133,15 +187,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: Publication; allPub
     <section>
       <SecHead title="Related papers" count={areas.map((a) => a.label).join(', ')} />
       <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-        {related.map((p) => (
-          <Link key={p.id} to={`/publications/${encodeURIComponent(p.id)}`} className="pub-row">
-            <span className="pub-yr">{p.year}</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="pub-rt" style={{ fontSize: 16 }}>{p.title}</span>
-              {p.journal && <span className="pub-rj">{p.journal}</span>}
-            </span>
-          </Link>
-        ))}
+        {related.map((p) => <PubRow key={p.id} pub={p} />)}
       </div>
     </section>
   )

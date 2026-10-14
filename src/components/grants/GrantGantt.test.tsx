@@ -139,8 +139,9 @@ describe('GrantGantt drag gesture, real touch input', () => {
       await touch('touchStart', o)
       for (let i = 1; i <= 10; i++) await touch('touchMove', { x: o.x + i * 0.4, y: o.y - i * 8 })
       await touch('touchEnd')
-      await wait(350)
-      expect(scroller.scrollTop).toBeGreaterThan(0)
+      // The compositor applies the pan asynchronously; under load a fixed 350 ms
+      // wait read scrollTop before it landed (2026-10-14 gate). Poll instead.
+      await expect.poll(() => scroller.scrollTop, { timeout: 3000 }).toBeGreaterThan(0)
       expect(onMove).not.toHaveBeenCalled()
     } finally { await done() }
   })

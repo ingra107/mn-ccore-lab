@@ -18,13 +18,14 @@
  * is invisible to `authorSlugs` by construction.
  *
  * Matching each byline segment against every member's `authorName` (the same
- * substring test `PublicationCard.formatAuthors` and `MemberPage`'s
- * `memberPubs` filter use) recovers every lab co-author actually present, in
+ * name test, `segmentNamesAuthor` in lib/publicationCounts, that `MemberPage`'s
+ * `memberPubs` filter also uses) recovers every lab co-author actually present, in
  * their real byline order, independent of all of the above. It costs nothing
  * in coverage: exactly one roster entry lacks an `authorName` today.
  */
 
 import type { Publication, TeamMember } from '../data/types'
+import { segmentNamesAuthor } from './publicationCounts'
 
 export interface ResolvedAuthorAvatar {
   slug: string
@@ -37,7 +38,7 @@ function toAvatar(m: TeamMember): ResolvedAuthorAvatar {
   return { slug: m.slug as string, name: m.name, initials: m.initials, photoUrl: m.photoUrl }
 }
 
-/** Same byline split `PublicationCard.formatAuthors` uses: strip one
+/** The byline split: strip one
  *  trailing period, split on commas, trim, drop empties. */
 function splitAuthorSegments(authors: string | undefined): string[] {
   if (!authors) return []
@@ -83,7 +84,7 @@ export function resolveBylineAuthors(
 
   return splitAuthorSegments(pub.authors).map((seg) => {
     const match = withAuthorName.find(
-      (m) => seg.includes(m.authorName as string) && !claimed.has(m.slug as string),
+      (m) => segmentNamesAuthor(seg, m.authorName as string) && !claimed.has(m.slug as string),
     )
     if (!match) return { name: seg }
     claimed.add(match.slug as string)

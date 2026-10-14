@@ -6,12 +6,9 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { topicLabel } from '../lib/topics'
 import { isPublished } from '../lib/publicationCounts'
+import { yearBounds, effectiveYearRange, withYearRange, type NetworkFilterState } from '../lib/networkFilters'
 
-export interface NetworkFilterState {
-  yearRange: [number, number]
-  activeTopics: string[]
-  mnccoreOnly: boolean
-}
+export type { NetworkFilterState }
 
 interface NetworkFiltersProps {
   publications: Publication[]
@@ -58,35 +55,46 @@ export default function NetworkFilters({
   filters,
   onChange,
 }: NetworkFiltersProps) {
-  const publishedPubs = useMemo(
-    () => publications.filter(isPublished),
+  const bounds = useMemo(() => yearBounds(publications), [publications])
+  const topics = useMemo(
+    () => [...new Set(publications.filter(isPublished).flatMap((p) => p.topics))].sort(
+      (a, b) => topicLabel(a).localeCompare(topicLabel(b))
+    ),
     [publications]
   )
-
-  const { minYear, maxYear, topics } = useMemo(() => {
-    const years = publishedPubs.map((p) => p.year)
-    const allTopics = [...new Set(publishedPubs.flatMap((p) => p.topics))].sort(
-      (a, b) => topicLabel(a).localeCompare(topicLabel(b))
-    )
-    return {
-      minYear: Math.min(...years),
-      maxYear: Math.max(...years),
-      topics: allTopics,
-    }
-  }, [publishedPubs])
+  const range = effectiveYearRange(filters, bounds)
+  const yearOptions = useMemo(() => {
+    if (!bounds) return []
+    const out: number[] = []
+    for (let y = bounds.max; y >= bounds.min; y--) out.push(y)
+    return out
+  }, [bounds])
 
   const hasFilters =
-    filters.yearRange[0] !== minYear ||
-    filters.yearRange[1] !== maxYear ||
+    filters.yearRange !== null ||
     filters.activeTopics.length > 0 ||
     filters.mnccoreOnly
 
   const clearAll = () => {
     onChange({
-      yearRange: [minYear, maxYear],
+      yearRange: null,
       activeTopics: [],
       mnccoreOnly: false,
     })
+  }
+
+  // Year selects, not range sliders: a 60px slider over ~90 years moved
+  // about a year per pixel, so one tap on a phone jumped to the end.
+  const yearSelectStyle: React.CSSProperties = {
+    fontSize: '12px',
+    minHeight: '32px',
+    padding: '0 6px',
+    borderRadius: 6,
+    background: 'rgba(255, 255, 255, 0.06)',
+    color: 'rgba(255, 255, 255, 0.85)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    colorScheme: 'dark',
+    cursor: 'pointer',
   }
 
   const toggleTopic = (topic: string) => {
@@ -122,53 +130,35 @@ export default function NetworkFilters({
         >
           Years
         </span>
-        <input
-          type="range"
-          min={minYear}
-          max={maxYear}
-          value={filters.yearRange[0]}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              yearRange: [
-                Math.min(Number(e.target.value), filters.yearRange[1]),
-                filters.yearRange[1],
-              ],
-            })
-          }
-          className="network-range-slider"
-          style={{ width: '60px', accentColor: 'var(--job-brand)' }}
-          aria-label="Start year"
-        />
-        <span
-          className="text-xs tabular-nums"
-          style={{
-            color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: '11px',
-            minWidth: '55px',
-            textAlign: 'center',
-          }}
-        >
-          {filters.yearRange[0]}-{String(filters.yearRange[1]).slice(2)}
-        </span>
-        <input
-          type="range"
-          min={minYear}
-          max={maxYear}
-          value={filters.yearRange[1]}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              yearRange: [
-                filters.yearRange[0],
-                Math.max(Number(e.target.value), filters.yearRange[0]),
-              ],
-            })
-          }
-          className="network-range-slider"
-          style={{ width: '60px', accentColor: 'var(--job-brand)' }}
-          aria-label="End year"
-        />
+        {bounds && range && (
+          <>
+            <select
+              value={range[0]}
+              onChange={(e) => {
+                const start = Number(e.target.value)
+                onChange(withYearRange(filters, [start, Math.max(start, range[1])], bounds))
+              }}
+              className="tabular-nums"
+              style={yearSelectStyle}
+              aria-label="Start year"
+            >
+              {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <span aria-hidden style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '11px' }}>to</span>
+            <select
+              value={range[1]}
+              onChange={(e) => {
+                const end = Number(e.target.value)
+                onChange(withYearRange(filters, [Math.min(range[0], end), end], bounds))
+              }}
+              className="tabular-nums"
+              style={yearSelectStyle}
+              aria-label="End year"
+            >
+              {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </>
+        )}
       </div>
 
       {/* Divider */}

@@ -183,7 +183,6 @@ export const ALLOW = {
   'src/components/RequireAuth.tsx': { families: [...PUB, 'teal'], why: 'fixed-dark sign-in splash (public front door)' },
   'src/components/JoinSteps.tsx': { families: [...PUB, 'teal'], why: 'public /join + the fixed-dark sign-in splash' },
   // Shared by public and portal; --job-brand is gray inside .portal-shell.
-  'src/components/PublicationCard.tsx': { families: ['brand'], why: 'public publication card; gray in .portal-shell' },
   'src/components/MemberFeaturedPublications.tsx': { families: ['brand'], why: 'public member page Featured head; gray in .portal-shell' },
   'src/components/ui/Button.tsx': { families: ['brand'], why: "the 'gold' variant: public brand button, gray in .portal-shell" },
   // The public site's one stylesheet (s68): every rule in it is a public page's gold.

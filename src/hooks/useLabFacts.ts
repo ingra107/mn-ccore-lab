@@ -43,6 +43,10 @@ export function useLabFacts() {
     return {
       loaded: publications !== undefined,
       papers: publications ? countPublications(list).published : null,
+      // The band's hero number: the papers in the years its bars draw, so the
+      // number, its "<first> to <last>" label and the bars agree. The all-time
+      // count above runs back to 1935 and read as "579 ... 2017 to 2026".
+      papersShown: publications ? byYear.reduce((sum, y) => sum + y.n, 0) : null,
       byYear,
       areas: areaCounts(list),
       recent,

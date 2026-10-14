@@ -5,7 +5,10 @@
    inside the portal. Section heads and labels are sentence case. */
 
 .pub { background: color-mix(in srgb, var(--sk-page) 70%, var(--sk-panel)); color: var(--sk-t1); }
-.pub a { text-decoration: none; }
+/* :where() keeps the reset at class weight, so any link class declared later
+   (.pub-link's gold underline) wins without fighting it. As `.pub a` it
+   outranked .pub-link and erased every inline link's underline. */
+.pub :where(a) { text-decoration: none; }
 
 /* page head */
 .pub-top { padding-top: clamp(20px, 4vw, 44px); padding-bottom: 8px; }
@@ -44,14 +47,9 @@ a.pub-card:hover, .pub-card.pub-hov:hover { border-color: var(--sk-line2); box-s
 .pub-rt { font: 500 17px/1.3 var(--font-display); display: block; color: var(--sk-t1); }
 .pub-rj { font: italic 400 13px var(--font-display); color: var(--sk-t3); display: block; margin-top: 2px; }
 .pub-meta { font-size: 13px; color: var(--sk-t3); }
-
-/* compact recent row: title and journal on one line when there is room */
-.pub-rrow { align-items: center; }
-.pub-rrow .pub-rt { flex: 1; min-width: 0; font-size: 15px; }
-.pub-rrow .pub-meta { max-width: 24%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* lab authors on a paper row (PubRow): small faces under the journal */
+.pub-row-faces { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
 .pub-sec-r a { color: inherit; }
-@media (min-width: 641px) { .pub-rrow .pub-rt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
-@media (max-width: 640px) { .pub-rrow .pub-meta { display: none; } }
 
 /* the dark proof band: fixed dark in both themes, so its colors are literal */
 .pub-band { background: #0e1319; color: #eef1f4; border-radius: 14px; padding: clamp(20px, 3vw, 30px); display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(0, 1fr)); gap: 22px clamp(20px, 3vw, 44px); align-items: end; margin-top: clamp(28px, 4vw, 44px); }

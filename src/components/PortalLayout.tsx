@@ -4,6 +4,7 @@ import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import Sidebar from './Sidebar'
+import LogoMark from './LogoMark'
 import CommandPalette from './CommandPalette'
 import ShortcutHelp from './ShortcutHelp'
 import RouteTransition from './RouteTransition'
@@ -218,8 +219,8 @@ export default function PortalLayout() {
             className="lg:hidden flex items-center mr-1"
             style={{ color: 'inherit' }}
           >
-            <img
-              src={isDark ? "/logos/mnccore-logo-mark-dark.svg" : "/logos/mnccore-logo-mark.svg"}
+            <LogoMark
+              dark={isDark}
               alt=""
               width={28}
               height={28}

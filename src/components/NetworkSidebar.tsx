@@ -7,7 +7,8 @@ import type { NetworkNode, NetworkEdge } from './CollaborationGraph'
 import { directors, getAllMembers } from '../data/team'
 import type { TeamMember, Director } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
-import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
+import { withAlpha } from '../lib/taskGrouping'
+import { GRAPH_PANEL_BG } from '../lib/graphCanvas'
 
 interface NetworkSidebarProps {
   selectedNode: NetworkNode | null
@@ -39,10 +40,7 @@ function findTeamMember(authorName: string): (TeamMember | Director) | undefined
 }
 
 function getSlug(authorName: string): string | undefined {
-  const member = findTeamMember(authorName)
-  if (!member) return undefined
-  if ('path' in member) return member.path.replace('/', '')
-  return member.slug
+  return findTeamMember(authorName)?.slug
 }
 
 function getPhotoUrl(authorName: string): string | undefined {
@@ -117,7 +115,7 @@ export default function NetworkSidebar({
           className="absolute top-0 right-0 h-full overflow-y-auto"
           style={{
             width: 'min(380px, 90vw)',
-            background: withAlpha(PANEL_BG, 85),
+            background: withAlpha(GRAPH_PANEL_BG, 92),
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderLeft: `1px solid ${withAlpha('var(--job-brand)', 20)}`,
@@ -129,7 +127,7 @@ export default function NetworkSidebar({
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200 hov-border hov-color"
             style={{
-              background: 'var(--hover-light)',
+              background: 'rgba(255, 255, 255, 0.06)',
               border: `1px solid ${withAlpha('var(--job-brand)', 15)}`,
               color: 'rgba(255, 255, 255, 0.6)',
               zIndex: 'var(--z-dropdown)',
@@ -254,7 +252,7 @@ function NodeDetail({
       <div
         className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-lg"
         style={{
-          background: 'var(--hover-light)',
+          background: 'rgba(255, 255, 255, 0.06)',
           border: `1px solid ${withAlpha('var(--job-brand)', 10)}`,
         }}
       >
@@ -297,7 +295,7 @@ function NodeDetail({
       {/* Team page link */}
       {slug && (
         <Link
-          to={slug === 'nick-ingraham' || slug === 'nate-mesfin' ? `/${slug}` : `/team/${slug}`}
+          to={`/team/${slug}`}
           className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200 hov-bg hov-border"
           style={{
             background: 'color-mix(in srgb, var(--job-brand) 10%, transparent)',
@@ -341,7 +339,7 @@ function NodeDetail({
                   key={c.node.id}
                   className="flex items-center justify-between px-3 py-2 rounded-md"
                   style={{
-                    background: 'var(--hover-subtle)',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     border: `1px solid ${withAlpha('var(--job-brand)', 6)}`,
                   }}
                 >
@@ -453,7 +451,7 @@ function EdgeDetail({
               key={paper.id}
               className="p-3 rounded-lg"
               style={{
-                background: 'var(--hover-subtle)',
+                background: 'rgba(255, 255, 255, 0.03)',
                 border: `1px solid ${withAlpha('var(--job-brand)', 6)}`,
               }}
             >

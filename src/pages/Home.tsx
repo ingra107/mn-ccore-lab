@@ -5,23 +5,11 @@ import { useLabFacts } from '../hooks/useLabFacts'
 import { PublicHead, SecHead, PersonLink } from '../components/public/PublicParts'
 import { rosterPeople } from '../lib/roster'
 import { areaHref } from '../lib/researchAreas'
-import type { Publication } from '../data/types'
+import PubRow from '../components/public/PubRow'
 
 const SELECTED = 5
 const RECENT = 6
 const dash = '—'
-
-function PaperRow({ p, to }: { p: Publication; to: string }) {
-  return (
-    <Link to={to} className="pub-row">
-      <span className="pub-yr">{p.year}</span>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span className="pub-rt">{p.title}</span>
-        {p.journal && <span className="pub-rj">{p.journal}</span>}
-      </span>
-    </Link>
-  )
-}
 
 export default function Home() {
   usePageMeta(
@@ -80,7 +68,7 @@ export default function Home() {
       {/* The proof: live counts, fixed dark in both themes */}
       <section className="pub-band" aria-label="The lab in numbers">
         <div className="pub-band-papers">
-          <b>{facts.papers ?? dash}</b>
+          <b>{facts.papersShown ?? dash}</b>
           <small>Published papers, {firstYear.year} to {thisYear.year}</small>
           <div className="pub-bars" role="img" aria-label={`Papers per year: ${facts.byYear.map((y) => `${y.year} ${y.n}`).join(', ')}`}>
             {facts.byYear.map((y, i) => (
@@ -116,20 +104,14 @@ export default function Home() {
 
       <SecHead title="Selected work" right={<Link to="/publications">All publications</Link>} />
       <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-        {selected.map((p) => <PaperRow key={p.id} p={p} to={`/publications/${p.id}`} />)}
+        {selected.map((p) => <PubRow key={p.id} pub={p} />)}
       </div>
 
       {recent.length > 0 && (
         <>
           <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers`} />
           <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-            {recent.map((p) => (
-              <Link key={p.id} to={`/publications/${p.id}`} className="pub-row pub-rrow">
-                <span className="pub-yr" style={{ width: 40 }}>{p.year}</span>
-                <span className="pub-rt">{p.title}</span>
-                <span className="pub-meta">{p.journal}</span>
-              </Link>
-            ))}
+            {recent.map((p) => <PubRow key={p.id} pub={p} />)}
           </div>
         </>
       )}

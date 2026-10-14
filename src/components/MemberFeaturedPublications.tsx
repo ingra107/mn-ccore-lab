@@ -22,16 +22,16 @@
  * `featured` flag, so showing it here would put picks on the page that the
  * member never made, and any "save" against it could not persist.
  *
- * Reuses PublicationCard (design principle #4 — same affordance everywhere).
- * Avatars stay OFF, matching the sibling "All Publications" section: on a
- * member's own page the stack would mostly show that member's photo back at
- * them (principle #2, and PublicationCard's own showAuthorColumn comment).
+ * Renders through PubRow, the one public paper card (Nick's Wave 2 pick on
+ * 2026-10-13, "Published by default, one card"; source cited in PubRow). The
+ * faces stay on here too, the member's own included: principle 11, one card
+ * looks the same on every page.
  */
 
 import { useMemo, useState } from 'react'
 import { Star, ChevronUp, ChevronDown, X, Plus, Check } from 'lucide-react'
 import type { Publication } from '../data/types'
-import PublicationCard from './PublicationCard'
+import PubRow from './public/PubRow'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useMemberFeaturedPublications } from '../hooks/useApiData'
 import { useSetMemberFeaturedPublications } from '../hooks/useMutations'
@@ -185,11 +185,9 @@ export default function MemberFeaturedPublications({
       </div>
 
       {/* ── read view ── */}
-      {!editing && (
-        <div className="space-y-4">
-          {featured.map((pub) => (
-            <PublicationCard key={pub.id} pub={pub} />
-          ))}
+      {!editing && featured.length > 0 && (
+        <div className="pub-card" style={{ padding: 8 }}>
+          {featured.map((pub) => <PubRow key={pub.id} pub={pub} />)}
         </div>
       )}
 

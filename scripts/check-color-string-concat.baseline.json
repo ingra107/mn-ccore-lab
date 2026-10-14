@@ -372,30 +372,6 @@
     "sample": "rgba(201, 168, 76, 0.15)"
   },
   {
-    "file": "src/components/PublicationCard.tsx",
-    "line": 267,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.3)"
-  },
-  {
-    "file": "src/components/PublicationCard.tsx",
-    "line": 312,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.2)"
-  },
-  {
-    "file": "src/components/PublicationCard.tsx",
-    "line": 329,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.15)"
-  },
-  {
-    "file": "src/components/PublicationCard.tsx",
-    "line": 344,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201, 168, 76, 0.15)"
-  },
-  {
     "file": "src/components/PublicationFilters.tsx",
     "line": 91,
     "kind": "token-rgba-literal",

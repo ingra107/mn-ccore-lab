@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveBylineAuthors } from '../authorAvatars'
+import { segmentNamesAuthor } from '../publicationCounts'
 import type { TeamMember } from '../../data/types'
 
 const dudley: TeamMember = { name: 'Adams Dudley', initials: 'AD', role: 'Senior Mentor', slug: 'adams-dudley', authorName: 'Dudley RA', photoUrl: 'https://example.com/dudley.png' }
@@ -50,5 +51,34 @@ describe('resolveBylineAuthors', () => {
     const result = resolveBylineAuthors({ authors: 'Dudley RA, Chipman JG' }, members)
     expect(result[0].member?.photoUrl).toBe('https://example.com/dudley.png')
     expect(result[1].member?.photoUrl).toBeUndefined()
+  })
+
+  it('matches a full-name byline as well as the PubMed form (G12-6)', () => {
+    const ingraham: TeamMember = { name: 'Nick Ingraham', initials: 'NI', role: 'Co-Director', slug: 'nick-ingraham', authorName: 'Ingraham NE' }
+    const collins: TeamMember = { name: 'Claire Collins', initials: 'CC', role: 'Student', slug: 'claire-collins', authorName: 'Collins C' }
+    const roster = [ingraham, dudley, collins]
+    const result = resolveBylineAuthors({ authors: 'Nicholas E. Ingraham, A. Claire Collins, R Adams Dudley, John Ingraham' }, roster)
+    expect(result.map((a) => a.member?.slug)).toEqual(['nick-ingraham', 'claire-collins', 'adams-dudley', undefined])
+  })
+})
+
+describe('segmentNamesAuthor', () => {
+  it('needs the surname at the end and a matching given initial', () => {
+    expect(segmentNamesAuthor('Nathan Mesfin', 'Mesfin N')).toBe(true)
+    expect(segmentNamesAuthor('Mesfin N', 'Mesfin N')).toBe(true)
+    expect(segmentNamesAuthor('Kim Mesfin', 'Mesfin N')).toBe(false)
+    expect(segmentNamesAuthor('Nathan Mesfinson', 'Mesfin N')).toBe(false)
+    expect(segmentNamesAuthor('Mesfin', 'Mesfin N')).toBe(false)
+  })
+
+  it('keeps out a namesake whose initials contradict the PubMed ones', () => {
+    expect(segmentNamesAuthor('David X. Wacker', 'Wacker DA')).toBe(false)
+    expect(segmentNamesAuthor('Daniel E. Wacker', 'Wacker DA')).toBe(false)
+    expect(segmentNamesAuthor('David A. Wacker', 'Wacker DA')).toBe(true)
+    expect(segmentNamesAuthor('David Wacker', 'Wacker DA')).toBe(true)
+    expect(segmentNamesAuthor('J.G. Chipman', 'Chipman JG')).toBe(true)
+    expect(segmentNamesAuthor('J. Q. Chipman', 'Chipman JG')).toBe(false)
+    expect(segmentNamesAuthor('Kendall R. McEachron', 'McEachron K')).toBe(true)
+    expect(segmentNamesAuthor('A. Claire Collins', 'Collins C')).toBe(true)
   })
 })

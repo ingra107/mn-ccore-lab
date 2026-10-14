@@ -33,6 +33,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import NotificationBell from './NotificationBell'
+import LogoMark from './LogoMark'
 import { useNextMeeting, useProjects } from '../hooks/useApiData'
 import { civilDaysUntil } from '../lib/dateUtils'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
@@ -377,11 +378,10 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           rightward over the content instead of off-screen. */}
       <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <Link to={PATHS.dashboard} className="flex items-center gap-2 min-w-0" aria-label="MN-CCORE Hub — Today">
-          <img
-            src="/logos/mnccore-logo-mark.svg"
-            alt="MN-CCORE"
+          <LogoMark
+            dark={isDark}
             className="flex-shrink-0"
-            style={{ width: 32, height: 32, filter: isDark ? 'invert(1) brightness(1.5)' : 'none' }}
+            style={{ width: 32, height: 32 }}
           />
           {!collapsed && (
             <img
