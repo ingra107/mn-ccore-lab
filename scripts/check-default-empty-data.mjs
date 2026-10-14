@@ -91,9 +91,21 @@ function sourceFiles(staged) {
     walk(path.join(ROOT, 'src'))
     return out
   }
-  const paths = git(['ls-files', '--cached', '--', 'src']).split('\n').filter((f) => SRC_FILE.test(f) && !SKIP.test(f))
+  // One `ls-files -s` for the index entries (path + blob id), one `cat-file
+  // --batch` for every blob: a `git show :<file>` per file cost ~17 ms each on
+  // Windows (12 s for 700 files); this is one process pair.
+  const entries = git(['ls-files', '-s', '--', 'src']).split('\n').filter(Boolean)
+    .map((l) => { const tab = l.indexOf('\t'); return { sha: l.split(' ')[1], file: l.slice(tab + 1) } })
+    .filter((e) => SRC_FILE.test(e.file) && !SKIP.test(e.file))
+  const raw = execFileSync('git', ['cat-file', '--batch'], { cwd: ROOT, input: entries.map((e) => e.sha).join('\n') + '\n', maxBuffer: 1 << 29, stdio: ['pipe', 'pipe', 'pipe'] })
   const out = []
-  for (const f of paths) out.push([f, git(['show', ':' + f])])
+  let pos = 0
+  for (const e of entries) {
+    const eol = raw.indexOf(0x0a, pos)
+    const size = Number(raw.subarray(pos, eol).toString('latin1').split(' ')[2])
+    out.push([e.file, raw.subarray(eol + 1, eol + 1 + size).toString('utf8')])
+    pos = eol + 1 + size + 1
+  }
   return out
 }
 

@@ -142,7 +142,8 @@ fi
 # the same destructure (or an empty-data-ok: reason); the rest are counted per
 # file against HEAD's committed scripts/check-default-empty-data.baseline.json,
 # reading the STAGED blobs. Fires when src/
-# or the gate is staged; a full scan is well under a second.
+# or the gate is staged; a full staged scan of 700 files takes ~0.3 s (one
+# cat-file --batch, not a git process per file).
 if git diff --cached --name-only --diff-filter=ACMR \
         | grep -qE "^src/|^scripts/check-default-empty-data(\.baseline\.json|\.mjs)$"; then
     if ! node scripts/check-default-empty-data.mjs --staged; then
