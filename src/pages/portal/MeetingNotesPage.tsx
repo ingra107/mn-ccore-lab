@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Brain, Upload, FileText, CheckCircle2, ArrowRight,
-  Sparkles, Search} from 'lucide-react'
+  Brain, ClipboardPaste, FileText, CheckCircle2, ArrowRight,
+  ListChecks, Search} from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
@@ -71,12 +71,16 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
         </span>
       </button>
       {expanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-5 pb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-5 pb-5">
+          {/* G5-7 (2026-10-14): these steps once promised audio upload and
+              "Claude analyzes your meeting". This page does neither: Add
+              Transcript saves the pasted text as the meeting's notes (P1-5).
+              Summaries and action items come from the separate meeting
+              debrief, which runs outside the Hub. Say what happens. */}
           {[
-            { step: '1', icon: Upload, title: 'Upload or Paste', desc: 'Upload audio (MP3/WAV/M4A) or paste a transcript' },
-            { step: '2', icon: Brain, title: 'AI Processing', desc: 'Claude analyzes your meeting content' },
-            { step: '3', icon: Sparkles, title: 'Extract Insights', desc: 'Get summaries, action items, and decisions' },
-            { step: '4', icon: CheckCircle2, title: 'Track Progress', desc: 'Action items flow to your task board' },
+            { step: '1', icon: ClipboardPaste, title: 'Paste a transcript', desc: 'Add Transcript, then pick the meeting it belongs to' },
+            { step: '2', icon: FileText, title: 'Saved as notes', desc: "The text is saved as that meeting's notes, as written" },
+            { step: '3', icon: ListChecks, title: 'Debrief adds the rest', desc: 'Summaries, decisions and action items come from the meeting debrief, run separately; its action items land on the task board' },
           ].map((item) => {
             const Icon = item.icon
             return (
@@ -130,7 +134,7 @@ export default function MeetingNotesPage() {
     <PageContainer>
       <PageHeader
         title="Meeting Transcripts"
-        subtitle="Transcription, summaries, and action items"
+        subtitle="Each meeting's transcript and notes"
         count={processedCount}
         actions={
           <Button variant="primary" onClick={() => setShowCreate(true)}>
@@ -143,8 +147,8 @@ export default function MeetingNotesPage() {
       {/* Stats */}
       <StatRow
         stats={[
-          { label: 'Processed meetings', value: processedCount },
-          { label: 'Pending', value: totalCount - processedCount },
+          { label: 'With notes', value: processedCount },
+          { label: 'No notes yet', value: totalCount - processedCount },
           { label: 'Total meetings', value: totalCount },
         ]}
       />
@@ -224,7 +228,15 @@ export default function MeetingNotesPage() {
               </Link>
             </motion.div>
           ))}
-          {filteredMeetings.length === 0 && (
+          {/* G5-6: a search with no hits is not the first-run state. */}
+          {filteredMeetings.length === 0 && meetings.length > 0 && (
+            <div className="py-10 text-center px-4">
+              <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                No matches.
+              </p>
+            </div>
+          )}
+          {meetings.length === 0 && (
             <EmptyState
               icon={<FileText size={40} />}
               title="No meetings recorded yet"
@@ -253,7 +265,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
 
   // P1-5: AI processing isn't wired yet, so the honest, useful action is to
   // SAVE the pasted transcript as the meeting's notes. Optimistic close.
-  const handleProcess = async () => {
+  const handleSave = async () => {
     if (!transcript.trim() || !meetingId || saving) return
     setSaving(true)
     try {
@@ -279,14 +291,14 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
     <Modal
       open={open}
       onClose={onClose}
-      title="Process Meeting"
+      title="Add transcript"
       maxWidth="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button
             variant="primary"
-            onClick={handleProcess}
+            onClick={handleSave}
             disabled={!transcript.trim() || !meetingId || saving}
           >
             <FileText {...ICON_PROPS} size={14} />
