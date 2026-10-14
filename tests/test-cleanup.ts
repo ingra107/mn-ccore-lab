@@ -83,13 +83,6 @@ export async function cleanupTestTasks(request: APIRequestContext): Promise<numb
     if (delRes.ok()) deleted += batch.length
   }
 
-  // Also clean up test settings key
-  try {
-    await request.post(`${BASE}/api/settings`, {
-      data: { key: '_inspection_test', value: null }
-    })
-  } catch { /* settings key may not exist */ }
-
   return deleted
 }
 

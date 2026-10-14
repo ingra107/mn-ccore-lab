@@ -501,19 +501,13 @@ else
   skip "D4: No project slug"
 fi
 
-# D5: Settings round-trip
-echo "D5: Settings round-trip..."
-d1post "/api/settings" '{"key":"_workflow_test","value":"hello"}' > /dev/null
-SETTINGS_VAL=$(d1get "/api/settings" | python -c "
-import sys,json
-data = json.load(sys.stdin).get('data',{})
-if isinstance(data, dict): print(data.get('_workflow_test','NOT_FOUND'))
-elif isinstance(data, list):
-    match = [s for s in data if s.get('key') == '_workflow_test']
-    print(match[0]['value'] if match else 'NOT_FOUND')
-else: print('UNEXPECTED_FORMAT')
-" 2>/dev/null)
-[ "$SETTINGS_VAL" = "hello" ] && pass "D5: Settings write + readback" || fail "D5: Settings" "got: $SETTINGS_VAL"
+# D5: Settings refuse an unknown key (#8949). The old round-trip posted
+# {"key":..,"value":..}, which the route stored as rows named 'key' and 'value'
+# in prod. The route now takes only the Settings-page keys; this checks the
+# refusal, which writes nothing.
+echo "D5: Settings refuse an unknown key..."
+SETTINGS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/api/settings" -H "Content-Type: application/json" -d '{"key":"_workflow_test","value":"hello"}')
+[ "$SETTINGS_CODE" = "400" ] && pass "D5: Settings refuse an unknown key" || fail "D5: Settings" "expected 400, got: $SETTINGS_CODE"
 
 # D6: Decision creation
 echo "D6: Decision creation..."
