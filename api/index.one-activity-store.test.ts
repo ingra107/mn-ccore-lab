@@ -15,6 +15,7 @@ import type { Env } from './types'
 import { prodSchemaDb, d1Adapter, insertRow } from './test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests } from './helpers'
 import { nowInstant } from './lib/time'
+import { deletedDescription } from './lib/idempotent-delete'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -166,5 +167,42 @@ describe('a comment or note is stored once', () => {
     expect(r.status).toBe(200)
     const rows = r.json.data.recentActivity as Array<{ type: string }>
     expect(rows.filter((x) => POSTED_TYPES.includes(x.type)).length).toBe(4)
+  })
+
+  // O2B (2026-10-14): the Overview card and /portal/activity printed "Bulk sync:
+  // 1 created, 0 updated" and "activity_entries f9ad... deleted", and the prep
+  // printed "Posted update on mn-ccore-lab-hub". The lab feed now reads the same
+  // type rule as the prep (api/lib/activity-feed-types.ts), and posts name the
+  // project by its short name.
+  it('the lab feed leaves out machine rows and names projects, not slugs', async () => {
+    db.prepare("UPDATE projects SET short_name = 'OneStore' WHERE id = ?").run(PROJ)
+    const ts = nowInstant().replace('T', ' ').slice(0, 19)
+    const hex = 'f9ad0a6640efb2944cc5e9265db4a563'
+    insertRow(db, 'activity_log', { id: 'al-bulk', type: 'pb_session', description: 'Bulk sync: 1 created, 0 updated', actor: 'nick-ingraham', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-del', type: 'activity', description: `activity_entries ${hex} deleted`, actor: 'nick-ingraham', related_id: hex, related_type: 'activity_entry', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-conf', type: 'conference', description: 'conferences c123 deleted', actor: 'nick-ingraham', related_id: 'c123', related_type: 'conference', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-mut', type: 'links', description: 'Deleted links record link_01M', actor: 'nick-ingraham', related_id: 'link_01M', related_type: 'links', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-task', type: 'task', description: 'Created task: "X" -> casey-eddington', actor: 'nick-ingraham', related_id: TASK, related_type: 'task', timestamp: ts })
+    insertRow(db, 'activity_log', { id: 'al-tdel', type: 'task_delete', description: 'Deleted task: X', actor: 'nick-ingraham', related_id: TASK, related_type: 'task', timestamp: ts })
+    expect((await call('POST', `/api/projects/${SLUG}/updates`, PI_EMAIL, { content: 'named ONESTORE' })).status).toBe(201)
+
+    const feed = (await call('GET', '/api/activity?limit=50', PI_EMAIL)).json.data as Array<{ id: string; description: string }>
+    const ids = feed.map((x) => x.id)
+    expect(ids).toEqual(expect.arrayContaining(['al-task', 'al-tdel']))
+    for (const gone of ['al-bulk', 'al-del', 'al-conf', 'al-mut']) expect(ids).not.toContain(gone)
+    expect(feed.map((x) => x.description)).toContain('Posted update on OneStore: "named ONESTORE"')
+
+    insertRow(db, 'meetings', { id: 'mtg-o2b', title: 'M', date: '2099-01-01', type: 'lab', audience: 'lab' })
+    const prep = (await call('GET', '/api/meetings/mtg-o2b/prep', PI_EMAIL)).json.data.recentActivity as Array<{ description: string }>
+    const prepText = prep.map((x) => x.description)
+    expect(prepText).toContain('Posted update on OneStore: "named ONESTORE"')
+    expect(prepText.join(' ')).not.toContain(hex)
+    expect(prepText).not.toContain('conferences c123 deleted')
+    expect(prepText).not.toContain('Deleted task: X')
+  })
+
+  it('a delete logs a readable line with the id kept in related_id', () => {
+    expect(deletedDescription('activity_entry')).toBe('Deleted activity entry')
+    expect(deletedDescription('conference')).toBe('Deleted conference')
   })
 })

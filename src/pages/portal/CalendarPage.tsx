@@ -17,7 +17,7 @@ import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/S
 import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
 import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
-import { agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
+import { agendaEmptyTitle, agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
 
 
 // Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
@@ -660,7 +660,7 @@ export function AgendaView({ events, from, to }: { events: CalendarEvent[]; from
       {grouped.length === 0 && (
         <EmptyState
           icon={<Calendar size={40} />}
-          title="The week ahead is open"
+          title={agendaEmptyTitle(lo, to, today)}
           subtitle="Meetings, deadlines, and milestones stream in here as the team books them."
         />
       )}

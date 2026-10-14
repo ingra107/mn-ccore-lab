@@ -66,7 +66,8 @@ export async function postedActivityRows(env: Env, opts: PostedOptions): Promise
   binds.push(opts.limit);
   const res = await env.DB.prepare(
     `SELECT ae.id, ae.kind, ae.entity_type, ae.entity_id, ae.actor_slug, ae.body, ae.created_at,
-            t.title AS task_title, p.title AS project_title, p.slug AS project_slug
+            t.title AS task_title, t.short_title AS task_short_title,
+            p.title AS project_title, p.short_name AS project_short_name
        FROM activity_entries ae
        LEFT JOIN tasks t ON ae.entity_type = 'task' AND t.id = ae.entity_id
        LEFT JOIN projects p ON ae.entity_type = 'project' AND p.id = ae.entity_id
@@ -74,25 +75,30 @@ export async function postedActivityRows(env: Env, opts: PostedOptions): Promise
       ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`,
   ).bind(...binds).all<{
     id: string; kind: string; entity_type: 'task' | 'project'; entity_id: string; actor_slug: string | null;
-    body: string; created_at: string; task_title: string | null; project_title: string | null; project_slug: string | null;
+    body: string; created_at: string; task_title: string | null; task_short_title: string | null;
+    project_title: string | null; project_short_name: string | null;
   }>();
 
   return (res.results ?? []).map((r) => {
     const snippet = r.body.trim().slice(0, 100);
+    // Names, never slugs or ids (principle 8): the prep page printed
+    // "Posted update on mn-ccore-lab-hub" (O2B, 2026-10-14).
+    const project = r.project_short_name?.trim() || r.project_title?.trim() || 'a project';
+    const task = r.task_short_title?.trim() || r.task_title?.trim() || 'a task';
     if (r.kind === 'comment') {
       return {
         id: r.id, type: 'comment', actor: r.actor_slug, related_id: r.entity_id, related_type: r.entity_type, timestamp: r.created_at,
-        description: r.entity_type === 'task' ? 'Commented on task' : `Commented on "${r.project_title ?? r.entity_id}"`,
+        description: r.entity_type === 'task' ? 'Commented on task' : `Commented on "${project}"`,
       };
     }
     return r.entity_type === 'task'
       ? {
           id: r.id, type: 'task_update', actor: r.actor_slug, related_id: r.entity_id, related_type: 'task', timestamp: r.created_at,
-          description: `Posted note on "${r.task_title || r.entity_id}": "${snippet}"`,
+          description: `Posted note on "${task}": "${snippet}"`,
         }
       : {
           id: r.id, type: 'project_update', actor: r.actor_slug, related_id: r.entity_id, related_type: 'project', timestamp: r.created_at,
-          description: `Posted update on ${r.project_slug ?? r.entity_id}: "${snippet}"`,
+          description: `Posted update on ${project}: "${snippet}"`,
         };
   });
 }

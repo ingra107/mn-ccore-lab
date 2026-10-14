@@ -13,6 +13,7 @@ import FilterLinks from '../../components/ui/FilterLinks'
 import StatRow from '../../components/ui/StatRow'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { projectShortLabel, projectFullTitleHint } from '../../lib/displayNames'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -180,10 +181,14 @@ export default function SessionHistory() {
   )
   const { data: allStats } = usePBSessionStats()
 
-  // Derive project list for dropdown
-  const projectNames = useMemo(() => {
+  // Derive project list for dropdown: the value is the name the sessions
+  // carry (the filter key), the label its short name (principle 8).
+  const projectOptions = useMemo(() => {
     if (!allStats?.per_project) return []
-    return allStats.per_project.map(p => p.project_name).filter(Boolean).sort()
+    return allStats.per_project
+      .filter((p) => p.project_name)
+      .map((p) => ({ value: p.project_name, label: projectShortLabel({ short_name: p.project_short_name, title: p.project_name }) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
   }, [allStats])
 
   // Filter by search term
@@ -192,7 +197,8 @@ export default function SessionHistory() {
     const q = searchTerm.toLowerCase()
     return sessions.filter(s =>
       (s.summary && s.summary.toLowerCase().includes(q)) ||
-      (s.project_name && s.project_name.toLowerCase().includes(q))
+      (s.project_name && s.project_name.toLowerCase().includes(q)) ||
+      (s.project_short_name && s.project_short_name.toLowerCase().includes(q))
     )
   }, [sessions, searchTerm])
 
@@ -286,7 +292,7 @@ export default function SessionHistory() {
           {/* Project filter */}
           <InlineSelect
             value={projectFilter}
-            options={[{ value: '', label: 'All projects' }, ...projectNames.map((name) => ({ value: name, label: name }))]}
+            options={[{ value: '', label: 'All projects' }, ...projectOptions]}
             onChange={setProjectFilter}
             alwaysShowChevron
           />
@@ -442,8 +448,11 @@ export default function SessionHistory() {
                                 flexShrink: 0,
                               }}
                             />
-                            <span style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {session.project_name}
+                            <span
+                              style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                              title={projectFullTitleHint({ short_name: session.project_short_name, title: session.project_name })}
+                            >
+                              {projectShortLabel({ short_name: session.project_short_name, title: session.project_name })}
                             </span>
                           </>
                         ) : (

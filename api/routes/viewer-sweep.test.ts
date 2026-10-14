@@ -273,8 +273,20 @@ describe('read sweep: a member who is not on a meeting reads nothing of it, on a
       const all = await call('GET', '/api/meetings', who)
       expect(all.text, who).toContain(`${MARK} title`)
       const act = await call('GET', '/api/activity?limit=500&include_fixtures=1', who)
-      expect(act.text, who).toContain(`${MARK} PB session`)
+      expect(act.text, who).toContain(`${MARK} created`)
+      // table-scope.ts's activity_log rule hides pb_session/sync rows from a
+      // non-PI member and lets the PI and the key through. /api/activity no
+      // longer serves pb_session rows to anyone (labFeedWhere, O2B), so the
+      // control reads them where they still surface: search's activity leg.
+      // The sweep above proves Casey gets none of them on any route.
+      // Read the hits, not the body: the response echoes the query string.
+      const found = await call('GET', `/api/search?q=${encodeURIComponent(`${MARK} PB session`)}&limit=50`, who)
+      expect(found.status, who).toBe(200)
+      expect(JSON.stringify(JSON.parse(found.text).data), who).toContain(`${MARK} PB session`)
     }
+    const caseySearch = await call('GET', `/api/search?q=${encodeURIComponent(`${MARK} PB session`)}&limit=50`, CASEY_EMAIL)
+    expect(caseySearch.status).toBe(200)
+    expect(JSON.stringify(JSON.parse(caseySearch.text).data)).not.toContain(`${MARK} PB session`)
   })
 
   it('the project directory shows Casey the hidden project by name, PI and blurb only', async () => {

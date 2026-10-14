@@ -44,7 +44,7 @@ export async function handlePIDashboard(env: Env, isPi = false, wideEnv: Env = e
         MIN(p.year) as first_year,
         MAX(p.year) as latest_year
       FROM team_members tm
-      LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
+      LEFT JOIN publications p ON instr(p.author_slugs, '"' || tm.slug || '"') > 0
       WHERE ${TRAINEE_SQL}
       GROUP BY tm.slug
     `).all(),
@@ -195,7 +195,7 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
     env.DB.prepare(`
       SELECT tm.slug, tm.name, p.year, COUNT(p.id) as count
       FROM team_members tm
-      LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
+      LEFT JOIN publications p ON instr(p.author_slugs, '"' || tm.slug || '"') > 0
       WHERE ${TRAINEE_SQL}
       GROUP BY tm.slug, p.year
       ORDER BY tm.name, p.year
@@ -206,7 +206,7 @@ export async function handleMenteeVelocity(env: Env, isPi: boolean, now = new Da
       WHERE LOWER(p.status) = 'published' AND p.year >= ?
         AND EXISTS (
           SELECT 1 FROM team_members tm
-          WHERE ${TRAINEE_SQL} AND p.author_slugs LIKE '%"' || tm.slug || '"%'
+          WHERE ${TRAINEE_SQL} AND instr(p.author_slugs, '"' || tm.slug || '"') > 0
         )
       GROUP BY p.year
     `).bind(year - 4).all(),

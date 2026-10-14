@@ -20,6 +20,13 @@ import SectionHead from '../components/ui/SectionHead'
 import { taskShortLabel } from '../lib/displayNames'
 import { nameSlugsInText } from '../lib/personLabel'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
+import { useShowMore } from '../hooks/useShowMore'
+import { ShowMoreButton } from '../components/ui/ShowMore'
+
+// The prep API returns at most this many activity rows (meetings.ts LIMIT 30).
+// A full page means "at least this many", so the stat says 30+, not 30.
+const RECENT_ACTIVITY_CAP = 30
+const NO_ACTIVITY: never[] = []
 
 // An action item from the previous meeting of this series. `description` is the
 // ingestion provenance body ("From the X meeting on ... Source: [[...]]"), never
@@ -56,6 +63,10 @@ export default function MeetingPrep() {
     data ? `Prep: ${data.meeting.title} | MN-CCORE` : 'Meeting Prep | MN-CCORE',
     'Facilitator preparation view with action items, activity, and deadlines.'
   )
+
+  // The list shows 10 and the rest one tap away (principle 5); the stat above
+  // it used to say 30 over a list that stopped at 10 (O2B, 2026-10-14).
+  const activityList = useShowMore(data?.recentActivity ?? NO_ACTIVITY, 10)
 
   if (isLoading) {
     return (
@@ -146,7 +157,7 @@ export default function MeetingPrep() {
             { label: 'Overdue', value: overdueTasks.length, rule: 'o' },
             { label: 'Pending from last', value: pendingPrev.length },
             { label: 'Deadlines (14d)', value: upcomingDeadlines.length },
-            { label: 'Recent activity', value: recentActivity.length },
+            { label: 'Recent activity', value: recentActivity.length >= RECENT_ACTIVITY_CAP ? `${RECENT_ACTIVITY_CAP}+` : recentActivity.length },
           ]}
         />
 
@@ -282,11 +293,11 @@ export default function MeetingPrep() {
             <SectionHead title="Recent activity" count="Last 14 days" />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
-                recentActivity.slice(0, 10).map((act, i) => {
+                activityList.visible.map((act, i) => {
                   // Rule 34: never split('@')[0] — route through the team_members directory.
                   const person = getPersonInfo(slugForEmail(act.actor || ''))
                   return (
-                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? `1px solid var(--sk-line)` : 'none' }}>
+                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < activityList.visible.length - 1 ? `1px solid var(--sk-line)` : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
@@ -299,6 +310,7 @@ export default function MeetingPrep() {
                   No recent activity.
                 </p>
               )}
+              <ShowMoreButton list={activityList} />
             </div>
           </motion.div>
         </div>

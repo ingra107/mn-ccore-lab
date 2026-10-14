@@ -72,7 +72,7 @@ describe('failed-write floor', () => {
     const host = await mountMode('undo-fails')
     await until(() => undoToasts(host).length === 1, 'undo toast')
     await until(() => errorToasts(host).length === 1, 'error toast')
-    expect(errorToasts(host)[0].textContent).toContain('Task completed: not saved. The Hub did not answer; try again.')
+    expect(errorToasts(host)[0].textContent).toContain('Did not go through: Task completed. The Hub did not answer; try again.')
     await until(() => undoToasts(host).length === 0, 'undo toast withdrawn')
   })
 
@@ -112,7 +112,9 @@ describe('writeFailures rules', () => {
   })
 
   it('failureMessage names the withdrawn Undo when there is one', () => {
-    expect(failureMessage(new TypeError('x'), 'Idea → archived')).toBe('Idea → archived: not saved. The Hub did not answer; try again.')
+    expect(failureMessage(new TypeError('x'), 'Idea → archived')).toBe('Did not go through: Idea → archived. The Hub did not answer; try again.')
+    // The digest's Undo label is the outcome word itself; the toast must not contradict it.
+    expect(failureMessage(new TypeError('x'), 'Saved')).toBe('Did not go through: Saved. The Hub did not answer; try again.')
     expect(failureMessage(new TypeError('x'))).toBe('Not saved. The Hub did not answer; try again.')
   })
 

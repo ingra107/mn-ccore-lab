@@ -50,7 +50,8 @@ function dotColorForType(type: string): string {
 export function FeedEntryText({ actorName, actorInitials, description }: Pick<FeedItem, 'actorName' | 'actorInitials' | 'description'>) {
   return (
     <CollapsibleBody maxLines={3} fontSize="12.5px" lineHeight={1.375} contentKey={description}>
-      <p style={{ color: 'var(--ink)', margin: 0 }}>
+      {/* overflowWrap: a long unbroken token (an id, a URL) wraps inside the card instead of running past its edge. */}
+      <p style={{ color: 'var(--ink)', margin: 0, overflowWrap: 'anywhere' }}>
         {actorName ? (
           <>
             {/* .tk scopes the shared Today initials badge (.tk-face, 16px at .tk-sm) */}
