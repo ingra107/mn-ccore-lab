@@ -15,13 +15,17 @@
 // POSTs trigger a CORS preflight (OPTIONS). The server must handle OPTIONS and
 // return Allow-Origin + Allow-Methods: GET,POST,OPTIONS + Allow-Headers: Content-Type.
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { fetchWithTimeout } from '../lib/api'
+import { createReachabilityPoller, type ReachabilityPoller } from '../lib/reachabilityPoller'
 
 // Exported so callers can also open the timer's own web UI (PomodoroControl
 // opens it on Start) without a second hardcoded copy of the origin.
 export const POMO_BASE = 'http://localhost:5555'
-const POLL_MS = 5000    // background status poll (local tick drives display between polls)
+const POLL_MS = 5000    // background status poll while the server answers (local tick drives display between polls)
+// After the server stops answering the poll stops (a dead localhost call logs a
+// CORS error per tick). It tries again when the tab regains focus, at most this often.
+const RETRY_GAP_MS = 60_000
 const FETCH_TIMEOUT_MS = 2000
 
 export interface PomoStatus {
@@ -50,25 +54,30 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
   const [serverReachable, setServerReachable] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const fetchStatus = useCallback(async () => {
+  const fetchStatus = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetchWithTimeout(`${POMO_BASE}/api/status`, undefined, FETCH_TIMEOUT_MS)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as PomoStatus
       setStatus(data)
       setServerReachable(true)
+      return true
     } catch {
       // network error or timeout — server not running; show disabled state
       setServerReachable(false)
       setStatus(null)
+      return false
     }
   }, [])
 
-  // Initial load + background poll
+  // Initial load + background poll while the server answers; backs off when it
+  // does not (see reachabilityPoller).
+  const pollerRef = useRef<ReachabilityPoller | null>(null)
   useEffect(() => {
-    fetchStatus()
-    const id = setInterval(fetchStatus, POLL_MS)
-    return () => clearInterval(id)
+    const poller = createReachabilityPoller({ poll: fetchStatus, intervalMs: POLL_MS, retryGapMs: RETRY_GAP_MS })
+    pollerRef.current = poller
+    poller.start()
+    return () => { poller.stop(); pollerRef.current = null }
   }, [fetchStatus])
 
   const start = useCallback(async (opts?: { project_id?: string; project_name?: string }) => {
@@ -84,7 +93,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
     } finally {
       setIsLoading(false)
     }
-    await fetchStatus()
+    await (pollerRef.current?.probe() ?? fetchStatus())
   }, [fetchStatus])
 
   const stop = useCallback(async () => {
@@ -100,7 +109,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
     } finally {
       setIsLoading(false)
     }
-    await fetchStatus()
+    await (pollerRef.current?.probe() ?? fetchStatus())
   }, [fetchStatus])
 
   return { status, serverReachable, isLoading, start, stop }
