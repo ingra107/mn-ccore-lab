@@ -29,7 +29,7 @@ import {
   Video,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth, forgetCachedSlugs } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import NotificationBell from './NotificationBell'
@@ -543,7 +543,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                 <ExternalLink size={15} {...ICON_PROPS} />
                 <span>Back to website</span>
               </Link>
-              <a href={SIGN_OUT_HREF} role="menuitem" className="sb-menu-item">
+              <a href={SIGN_OUT_HREF} role="menuitem" className="sb-menu-item" onClick={() => forgetCachedSlugs()}>
                 <LogOut size={15} {...ICON_PROPS} />
                 <span>Sign out</span>
               </a>
