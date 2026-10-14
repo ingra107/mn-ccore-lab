@@ -35,6 +35,7 @@ import { fmtDuration } from './utils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
 import { stripMeetingMarker } from '../../lib/textUtils'
+import { CollapsibleBody } from '../activity/CollapsibleBody'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -74,7 +75,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const updateTask = useUpdateTask()
   const undoToast = useUndoToast()
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
-  const [descExpanded, setDescExpanded] = useState(false)
 
   // Subtask toggle — TP-03. The drawer's subtasks come from useTaskDetail
   // (`['task-detail', taskId]`), not the `['subtasks', taskId]` cache that
@@ -250,25 +250,10 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           from display; stored value stays intact. */}
       {task.description ? (
         <div style={{ marginTop: 12, marginBottom: 4 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: INK_MUTED,
-              lineHeight: 1.55,
-              ...(descExpanded ? {} : {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                overflow: 'hidden',
-              }),
-            }}
-          >{stripMeetingMarker(task.description)}</div>
-          {!descExpanded && (
-            <button
-              onClick={() => setDescExpanded(true)}
-              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-            >more</button>
-          )}
+          {/* Rule 72: 3 lines; "more"/"less" only when it overflows (#8635). */}
+          <CollapsibleBody maxLines={3} fontSize={12} contentKey={task.description}>
+            <div style={{ color: INK_MUTED }}>{stripMeetingMarker(task.description)}</div>
+          </CollapsibleBody>
         </div>
       ) : (
         <button

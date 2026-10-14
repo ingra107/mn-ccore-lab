@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -10,6 +10,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
+import { CollapsibleBody } from '../activity/CollapsibleBody'
 
 interface FeedItem {
   id: string
@@ -22,14 +23,9 @@ interface FeedItem {
   link?: string
 }
 
-// Collapsed entries clamp to 3 lines (Nick 2026-06-15: consistent height, easier
-// on the eyes); a "more" toggle expands the full text per entry.
-const CLAMP_STYLE: React.CSSProperties = {
-  display: '-webkit-box',
-  WebkitLineClamp: 3,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-}
+// Collapsed entries show 3 lines (Nick 2026-06-15: consistent height, easier
+// on the eyes) through the shared CollapsibleBody, which offers "more" only
+// when the text measurably overflows (#8635: was a `length > 120` guess).
 
 /**
  * Pick a small accent dot color based on the activity entry's `type`.
@@ -69,15 +65,6 @@ function ActivityFeedCard() {
         }
       })
   }, [rawActivity, mounted])
-
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const toggle = (id: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
 
   return (
     <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity} drillDown>
@@ -146,44 +133,22 @@ function ActivityFeedCard() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p
-                      className="leading-snug"
-                      style={{
-                        fontSize: '12.5px',
-                        color: 'var(--ink)',
-                        margin: 0,
-                        ...(expanded.has(item.id) ? null : CLAMP_STYLE),
-                      }}
-                    >
-                      {item.actorName ? (
-                        <>
-                          {/* .tk scopes the shared Today initials badge (.tk-face) */}
-                          <span className="tk" style={{ display: 'inline-block', verticalAlign: 'middle', fontSize: 'inherit', color: 'inherit' }}>
-                            <span className="tk-face tk-sm" aria-hidden="true">{item.actorInitials}</span>
-                          </span>
-                          {' '}
-                          <span style={{ fontWeight: 500 }}>{item.actorName}</span>
-                        </>
-                      ) : null}
-                      {item.actorName ? ' ' : ''}
-                      {item.description}
-                    </p>
-                    {item.description.length > 120 && (
-                      <button
-                        onClick={() => toggle(item.id)}
-                        style={{
-                          fontSize: '10px',
-                          color: 'var(--sk-t2)',
-                          background: 'none',
-                          border: 'none',
-                          padding: '2px 0 0',
-                          cursor: 'pointer',
-                          opacity: 0.85,
-                        }}
-                      >
-                        {expanded.has(item.id) ? 'less' : 'more'}
-                      </button>
-                    )}
+                    <CollapsibleBody maxLines={3} fontSize="12.5px" lineHeight={1.375} contentKey={item.description}>
+                      <p style={{ color: 'var(--ink)', margin: 0 }}>
+                        {item.actorName ? (
+                          <>
+                            {/* .tk scopes the shared Today initials badge (.tk-face) */}
+                            <span className="tk" style={{ display: 'inline-block', verticalAlign: 'middle', fontSize: 'inherit', color: 'inherit' }}>
+                              <span className="tk-face tk-sm" aria-hidden="true">{item.actorInitials}</span>
+                            </span>
+                            {' '}
+                            <span style={{ fontWeight: 500 }}>{item.actorName}</span>
+                          </>
+                        ) : null}
+                        {item.actorName ? ' ' : ''}
+                        {item.description}
+                      </p>
+                    </CollapsibleBody>
                   </div>
 
                   {/* Time */}

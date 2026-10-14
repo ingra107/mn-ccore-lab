@@ -21,6 +21,7 @@ import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityF
 import StoredLinkChip from '../../../components/StoredLinkChip'
 import { taskOwnOverflowLinks } from '../../../lib/taskLinkOverflow'
 import LinkifiedText from '../../../components/LinkifiedText'
+import { CollapsibleBody } from '../../../components/activity/CollapsibleBody'
 import {
   JOB_ACCENT,
   INK, INK_DIM, PANEL_BG,
@@ -86,7 +87,6 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
   const isPlanned = plannedToday
   const [moveOpen, setMoveOpen] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
-  const [descExpanded, setDescExpanded] = useState(false)
   const moveRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -166,33 +166,18 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
     // (withAlpha(INK, 3)) is the only elevation signal.
     <div onClick={(e) => e.stopPropagation()} style={{ borderTop: `1px solid ${withAlpha(INK, 6)}`, padding: '10px 14px 4px' }}>
 
-      {/* Description — clamped to ~3 lines with "more" expander (C) */}
+      {/* Description — 3 lines (Rule 72); "more"/"less" only when it overflows (#8635) */}
       {task.description && (
         <div style={{ marginBottom: 10 }}>
           {/* #81: linkify raw URLs into readable, clickable chips (was plain
               text — bare URLs rendered unshortened + unclickable). pre-wrap so
               line breaks survive (LinkifiedText leaves non-URL text untouched). */}
-          <LinkifiedText
-            text={stripMeetingMarker(task.description)}
-            style={{
-              display: descExpanded ? 'block' : '-webkit-box',
-              fontSize: 11,
-              color: INK_MUTED,
-              lineHeight: 1.5,
-              whiteSpace: 'pre-wrap',
-              ...(descExpanded ? {} : {
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                overflow: 'hidden',
-              }),
-            }}
-          />
-          {!descExpanded && (
-            <button
-              onClick={() => setDescExpanded(true)}
-              style={{ fontSize: 10, color: INK_DIM, background: 'transparent', border: 'none', padding: '1px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-            >more</button>
-          )}
+          <CollapsibleBody maxLines={3} fontSize={11} lineHeight={1.5} contentKey={task.description}>
+            <LinkifiedText
+              text={stripMeetingMarker(task.description)}
+              style={{ display: 'block', color: INK_MUTED, whiteSpace: 'pre-wrap' }}
+            />
+          </CollapsibleBody>
         </div>
       )}
 
