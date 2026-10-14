@@ -23,9 +23,11 @@ import { createReachabilityPoller, type ReachabilityPoller } from '../lib/reacha
 // opens it on Start) without a second hardcoded copy of the origin.
 export const POMO_BASE = 'http://localhost:5555'
 const POLL_MS = 5000    // background status poll while the server answers (local tick drives display between polls)
-// After the server stops answering the poll stops (a dead localhost call logs a
-// CORS error per tick). It tries again when the tab regains focus, at most this often.
-const RETRY_GAP_MS = 60_000
+// After the server stops answering the poll slows to BACKOFF_MS (a dead localhost
+// call logs a CORS error per tick) and a tab regaining focus re-probes at once,
+// at most every RETRY_GAP_MS. It never stops, so a server started later is found.
+const BACKOFF_MS = 45_000
+const RETRY_GAP_MS = 10_000
 const FETCH_TIMEOUT_MS = 2000
 
 export interface PomoStatus {
@@ -74,7 +76,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
   // does not (see reachabilityPoller).
   const pollerRef = useRef<ReachabilityPoller | null>(null)
   useEffect(() => {
-    const poller = createReachabilityPoller({ poll: fetchStatus, intervalMs: POLL_MS, retryGapMs: RETRY_GAP_MS })
+    const poller = createReachabilityPoller({ poll: fetchStatus, intervalMs: POLL_MS, backoffMs: BACKOFF_MS, retryGapMs: RETRY_GAP_MS })
     pollerRef.current = poller
     poller.start()
     return () => { poller.stop(); pollerRef.current = null }

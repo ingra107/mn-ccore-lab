@@ -11,46 +11,55 @@ describe('createReachabilityPoller', () => {
     let clock = 0
     const poll = vi.fn(async () => (answers.length > 1 ? answers.shift()! : answers[0]))
     const poller = createReachabilityPoller({
-      poll, intervalMs: 5000, retryGapMs: 60_000, focusTarget: focus, visibilityTarget: vis, now: () => clock,
+      poll, intervalMs: 5000, backoffMs: 45_000, retryGapMs: 10_000, focusTarget: focus, visibilityTarget: vis, now: () => clock,
     })
     return { poller, poll, focus, vis, tick: (ms: number) => { clock += ms } }
   }
 
-  it('keeps polling on the interval while the service answers', async () => {
+  it('polls on the interval while the service answers', async () => {
     const { poller, poll } = setup([true])
     poller.start()
-    await vi.advanceTimersByTimeAsync(0)
-    expect(poll).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(10_000)
     expect(poll).toHaveBeenCalledTimes(3)
     poller.stop()
   })
 
-  it('stops after the first unanswered poll', async () => {
+  it('after a miss it slows to the backoff interval and never stops', async () => {
     const { poller, poll } = setup([false])
     poller.start()
-    await vi.advanceTimersByTimeAsync(60_000)
+    await vi.advanceTimersByTimeAsync(44_000)
     expect(poll).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(2000) // 46 s: first slow tick
+    expect(poll).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(poll).toHaveBeenCalledTimes(4)
     poller.stop()
   })
 
-  it('retries on focus, no more often than the retry gap', async () => {
-    const { poller, poll, focus, tick } = setup([false, false, true])
+  it('finds a server started later, with no focus event at all', async () => {
+    const { poller, poll } = setup([false, false, true])
+    poller.start()
+    await vi.advanceTimersByTimeAsync(46_000) // second miss
+    await vi.advanceTimersByTimeAsync(45_000) // answers
+    expect(poll).toHaveBeenCalledTimes(3)
+    await vi.advanceTimersByTimeAsync(5000) // back on the fast interval
+    expect(poll).toHaveBeenCalledTimes(4)
+    poller.stop()
+  })
+
+  it('re-probes on focus, no more often than the retry gap', async () => {
+    const { poller, poll, focus, tick } = setup([false, true])
     poller.start()
     await vi.advanceTimersByTimeAsync(0)
     focus.dispatchEvent(new Event('focus'))
     await vi.advanceTimersByTimeAsync(0)
     expect(poll).toHaveBeenCalledTimes(1) // too soon after the first try
-    tick(61_000)
+    tick(11_000)
     focus.dispatchEvent(new Event('focus'))
     await vi.advanceTimersByTimeAsync(0)
-    expect(poll).toHaveBeenCalledTimes(2) // retried, still down
-    tick(61_000)
-    focus.dispatchEvent(new Event('focus'))
-    await vi.advanceTimersByTimeAsync(0)
-    expect(poll).toHaveBeenCalledTimes(3) // answered: interval resumes
+    expect(poll).toHaveBeenCalledTimes(2) // answered: fast interval resumes
     await vi.advanceTimersByTimeAsync(5000)
-    expect(poll).toHaveBeenCalledTimes(4)
+    expect(poll).toHaveBeenCalledTimes(3)
     poller.stop()
   })
 
@@ -58,7 +67,7 @@ describe('createReachabilityPoller', () => {
     const { poller, poll, vis, focus, tick } = setup([false])
     poller.start()
     await vi.advanceTimersByTimeAsync(0)
-    tick(61_000)
+    tick(11_000)
     vis.visibilityState = 'hidden'
     vis.dispatchEvent(new Event('visibilitychange'))
     await vi.advanceTimersByTimeAsync(0)
@@ -66,7 +75,7 @@ describe('createReachabilityPoller', () => {
     poller.stop()
     vis.visibilityState = 'visible'
     focus.dispatchEvent(new Event('focus'))
-    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(100_000)
     expect(poll).toHaveBeenCalledTimes(1)
   })
 })
