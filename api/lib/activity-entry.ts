@@ -982,6 +982,14 @@ async function dispatchHermes(
       // so are its children. A private sub-reply under someone else's TEAM root
       // still fails all three arms.
       //
+      // #119 B1: the gate below is what the ASKER can see; the answer LANDS at
+      // args.visibility (the ask's effective, inherited visibility). A
+      // team-visible ask is answered where the team reads, so only team rows
+      // may feed it -- the asker's own private rows (a private sub-reply under
+      // a team root, a private day note) would otherwise be quoted back into a
+      // team thread.
+      const teamOnly = args.visibility === 'team' ? `AND ae.visibility = 'team'` : '';
+      //
       // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
       // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
       // rows. Requester-scoped + visibility-gated in the WHERE regardless.
@@ -991,6 +999,7 @@ async function dispatchHermes(
             AND ae.id != ?2
             AND ae.kind = 'comment'
             AND ae.body != ?3
+            ${teamOnly}
             AND (
               ae.visibility = 'team'
               OR ae.actor_slug = ?4
@@ -1058,6 +1067,13 @@ async function dispatchHermes(
     // so asking Hermes a follow-up inside a thread pushed its answer out of
     // that thread entirely — the conversation visibly came apart.
     parentId: args.threadRootId ?? null,
+    // #119: bind the placeholder to the request it waits on. The answer is
+    // written into the row keyed (ai_requests, aiId) and nowhere else, so two
+    // asks in one thread cannot swap answers and a private answer cannot land
+    // in a team placeholder. The partial UNIQUE(source_table, source_id) index
+    // also makes a second placeholder for one request unrepresentable.
+    sourceTable: 'ai_requests',
+    sourceId: aiId,
   });
 
   return 'dispatched';

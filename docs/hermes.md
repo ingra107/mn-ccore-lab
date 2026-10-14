@@ -37,9 +37,22 @@ Meeting comments are team-visible by default (a meeting page is a shared surface
 - Data analysis approaches ("How should we handle missing data in this CLIF cohort?")
 - General lab knowledge ("When is the next R01 deadline?")
 
+## Private asks and Nick's mail (#119)
+- A typed `@hermes` at the start of a comment is private: only you see the ask
+  and the answer. A mid-text "ask @hermes about X" is a team comment, and the
+  answer is visible to everyone who can read the thread.
+- For Nick only, a private ask can read and draft his email (UMN and personal)
+  and read his Peripheral Brain. The same ask in a team thread gets neither, so
+  nothing from his mailbox can land where the team reads. Hermes never sends
+  mail; a draft link is posted in the thread.
+- Long answers become artifact pages only when asked in a team thread; a
+  private answer always stays in its thread.
+- An `@hermes` comment on an artifact rewrites that artifact, which the team
+  can read. Even a private comment's text is folded into the new version.
+
 ## What Hermes Cannot Do
 - Access external databases or PubMed directly
-- Send emails or create calendar events
+- Send email (it can only draft, for Nick) or create calendar events
 - Access files on Nick's computer
 - Make changes to the Hub (it can only respond to questions)
 
