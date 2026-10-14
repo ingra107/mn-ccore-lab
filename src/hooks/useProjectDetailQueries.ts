@@ -1,6 +1,6 @@
 import {
   useProjectUpdates, useComments, useRevisions, useProjectLinks, useProjectPapers,
-  useProjectPublications, useTasks, useInsightSuggestions,
+  useProjectPublications, useTasks, useInsightSuggestions, useProjectDocuments, useConferences,
 } from './useApiData'
 import { useProjectFiles } from './useProjectFiles'
 import { useProjectProducts } from './useProjectProducts'
@@ -35,4 +35,6 @@ export function useProjectDetailQueries(slug: string | undefined): void {
   useProjectMembers(slug)
   useMyProjectFolder(slug)
   useInsightSuggestions(ref)
+  useProjectDocuments(ref)
+  useConferences(ref)
 }
