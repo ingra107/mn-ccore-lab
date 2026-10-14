@@ -1412,7 +1412,11 @@ export default function TrajectoryPage() {
           </div>
         </div>
 
-        {/* Export button */}
+        {/* Export button: the member's and the PI's review packet. A visitor
+            (signed out, or anyone the server sends papers only) has no packet
+            to export, so the button is not there for them (G11-8 / O2B,
+            2026-10-14). */}
+        {canSeeContributions && (
         <button
           onClick={() => window.print()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium no-print hover:border-[var(--sk-line2)] hover:text-[var(--sk-t1)] transition-colors"
@@ -1427,6 +1431,7 @@ export default function TrajectoryPage() {
           <Printer {...ICON_PROPS} size={14} />
           Export for Review
         </button>
+        )}
       </motion.div>
 
       {/* Tab bar: one tab is no choice, so a viewer without Contributions sees none */}

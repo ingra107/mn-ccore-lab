@@ -273,7 +273,7 @@ describe('read sweep: a member who is not on a meeting reads nothing of it, on a
       const all = await call('GET', '/api/meetings', who)
       expect(all.text, who).toContain(`${MARK} title`)
       const act = await call('GET', '/api/activity?limit=500&include_fixtures=1', who)
-      expect(act.text, who).toContain(`${MARK} PB session`)
+      expect(act.text, who).toContain(`${MARK} created`)
     }
   })
 

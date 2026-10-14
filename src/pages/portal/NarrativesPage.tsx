@@ -9,7 +9,7 @@ import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
-import { normalizeStage, stageColor } from '../../lib/stageNormalize'
+import { stageColor } from '../../lib/stageNormalize'
 import { stageCountLabel } from '../../lib/projectStage'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
@@ -18,22 +18,15 @@ import { QueryErrorNote } from '../../components/QueryErrorNote'
 // its home product's stage (contract phase step 1; the Worker sends the ladder
 // words). stageColor() (shared) colors manuscript rungs along the teal ramp; any
 // other kind reads slate. Text about a rung stays gray.
-const STAGE_ABBREV: Record<string, string> = {
-  idea: 'Idea',
-  data_collection: 'Data',
-  analysis: 'Anal',
-  writing: 'Writ',
-  review: 'Rev',
-  revisions: 'R&R',
-  published: 'Pub',
-}
 
 function rungColor(kind: string | null, stage: string | null): string {
   return kind === 'manuscript' && stage ? stageColor(stage) : 'var(--slate)'
 }
 
-function rungAbbrev(r: { kind: string; kind_label: string; stage: string; stage_label: string }): string {
-  if (r.kind === 'manuscript') return STAGE_ABBREV[normalizeStage(r.stage)] || r.stage_label
+// Every rung reads "<kind> · <stage>" in full. Manuscript rungs used clipped
+// 3-4 letter labels ('Anal 4', 'Writ 9') beside full names on every other
+// kind; one anatomy for every rung (principle 4, O2B 2026-10-14).
+function rungLabel(r: { kind_label: string; stage_label: string }): string {
   return `${r.kind_label} · ${r.stage_label}`
 }
 
@@ -118,14 +111,15 @@ export default function NarrativesPage() {
 
               {/* Stage pipeline — labeled so each dot's meaning is obvious.
                   Wraps: an arc can carry 16 rungs, about 1,080px, and a phone
-                  must never scroll sideways. */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-4">
+                  must never scroll sideways. No connector dashes between
+                  rungs: on a wrapped row each new line started with an
+                  orphan dash (O2B, 2026-10-14); the gap separates them. */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
                 <span style={{ fontSize: '12px', color: 'var(--slate)', marginRight: 4 }}>
                   Pipeline
                 </span>
-                {arc.stageDistribution.map((s, i) => (
-                  <div key={`${s.kind}:${s.stage}`} className="flex items-center gap-1">
-                    {i > 0 && <div style={{ width: 8, height: 1, background: 'var(--sk-line2)' }} />}
+                {arc.stageDistribution.map((s) => (
+                  <div key={`${s.kind}:${s.stage}`} className="flex items-center">
                     <div className="flex flex-col items-center" style={{ gap: 2 }}>
                       <div style={{
                         width: s.count > 0 ? 10 + s.count * 4 : 8,
@@ -136,7 +130,7 @@ export default function NarrativesPage() {
                         transition: 'all 0.2s',
                       }} title={`${stageCountLabel(s)}: ${s.count}`} />
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, lineHeight: 1 }}>
-                        {rungAbbrev(s)}{s.count > 0 ? ` ${s.count}` : ''}
+                        {rungLabel(s)}{s.count > 0 ? ` ${s.count}` : ''}
                       </span>
                     </div>
                   </div>

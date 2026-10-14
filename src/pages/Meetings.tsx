@@ -761,7 +761,10 @@ export default function Meetings() {
                   submitLabel="Save Meeting"
                 >
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Stacked on a phone, so the Title input gets the full width and
+                        a prefilled "Sync: ..." title reads whole; from sm up the date
+                        takes a fixed column and the title the rest (O2B, 2026-10-14). */}
+                    <div className="grid grid-cols-1 sm:grid-cols-[11rem_minmax(0,1fr)] gap-3">
                       <Field label="Date" htmlFor="new-meeting-date" noContainer>
                         <input id="new-meeting-date" type="date" value={newMeetingDate} onChange={(e) => setNewMeetingDate(e.target.value)} style={inputStyle} />
                       </Field>
