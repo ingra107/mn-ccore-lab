@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, Sun, Moon, ChevronUp } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import { AnimatePresence } from 'framer-motion'
@@ -263,9 +263,7 @@ export default function Layout() {
       {/* Main content — add top padding for non-home pages to clear sticky nav */}
       <main id="main-content" className="pub flex-1" style={{ paddingTop: '64px' }}>
         <AnimatePresence mode="wait">
-          <PageTransition key={location.pathname}>
-            <Outlet />
-          </PageTransition>
+          <PageTransition key={location.pathname} />
         </AnimatePresence>
       </main>
 

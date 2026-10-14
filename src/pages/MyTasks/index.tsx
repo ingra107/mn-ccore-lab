@@ -14,7 +14,7 @@ import { lazyRoute } from '../../lib/lazyRoute'
 import { useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
-import { researchTeam } from '../../data/team'
+import { researchTeam, getPersonInfo } from '../../data/team'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useBulkUpdateTasks, useUpdateTask, useCreateTask } from '../../hooks/useMutations'
@@ -50,15 +50,25 @@ export default function UnifiedMyTasks() {
   const { user } = useAuth()
   const userSlug = user?.slug ?? ''
 
-  const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
-  const projectsQuery = useProjects()
-
   // URL-backed state so DD-2 saved views can capture/restore via the
   // SavedViewsMenu. Bare arrival ALWAYS opens List (Nick 2026-06-10: "List as
   // default when I come to the page") — URL `?view=` deep-links and saved
   // views still win; the old localStorage.mt_view read is gone so a stale
   // persisted choice can't override the cold-load default.
   const [searchParams, setSearchParams] = useSearchParams()
+
+  // `?assignee=<slug>` scopes the page to one member's tasks (Lab overview's
+  // Workload rows link here). No param, or the viewer's own slug, is the
+  // viewer's own list. It is state like every other filter so the state->URL
+  // sync below keeps it instead of stripping it (it used to be dropped on
+  // arrival, so the PI landed on his own list).
+  const [assigneeParam, setAssigneeParam] = useState<string | null>(() => searchParams.get('assignee'))
+  // Until the viewer's own slug loads, a self link (?assignee=<me>) cannot be
+  // told from another member's, so no notice yet; the query already scopes.
+  const viewingOther = assigneeParam && userSlug && assigneeParam !== userSlug ? assigneeParam : null
+  const scopeSlug = assigneeParam || userSlug
+  const tasksQuery = useTasks(scopeSlug ? { assignee: scopeSlug } : undefined)
+  const projectsQuery = useProjects()
 
   const [view, setView] = useState<ViewMode>(() => parseViewMode(searchParams.get('view')))
 
@@ -106,6 +116,7 @@ export default function UnifiedMyTasks() {
     if (filter.mentee) next.set('mentee', filter.mentee)
     if (filter.group) next.set('group', filter.group)
     if (!filter.hideCompleted) next.set('hideCompleted', '0')
+    if (viewingOther) next.set('assignee', viewingOther)
     // S1: carry a not-yet-consumed `open` deep-link param through this sync so
     // useOpenParam can still see it. Without this the sync would strip `open`
     // on first render before the consumer fires.
@@ -122,7 +133,7 @@ export default function UnifiedMyTasks() {
     // searchParams intentionally omitted from deps: this effect mirrors local
     // state INTO the URL; reading the live `open` value each run suffices.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, quickView, view, filter, setSearchParams])
+  }, [search, quickView, view, filter, viewingOther, setSearchParams])
 
   // S1: consume `?open=<taskId>` deep-links (search results, ⌘K palette pick,
   // Copy-task-link, context-menu open-in-new-tab). Open the detail drawer for
@@ -145,6 +156,7 @@ export default function UnifiedMyTasks() {
       group: (p.get('group') as GroupKey | null) ?? null,
       hideCompleted: p.get('hideCompleted') !== '0',
     })
+    setAssigneeParam(p.get('assignee'))
   }, [])
 
   // Re-read planned set on each render so /portal/dashboard updates flow through.
@@ -353,6 +365,18 @@ export default function UnifiedMyTasks() {
         onApplyView={applyView}
         onCreateTask={() => setShowCreate(true)}
       />
+      {viewingOther && (
+        <div className="mt-band" style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--sk-t2)' }}>Showing {getPersonInfo(viewingOther).name.split(' ')[0]}'s tasks</span>
+          <button
+            type="button"
+            onClick={() => setAssigneeParam(null)}
+            style={{ fontSize: 12, color: 'var(--job-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Show mine
+          </button>
+        </div>
+      )}
       {selected.size > 0 && (
         <BulkBar
           count={selected.size}

@@ -8,7 +8,7 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SleekTable, SleekRow, SleekOverdueLine, type SleekColumn } from '../../../components/table/SleekRows'
 import { TaskTitleCell, TaskCheckCell, TaskDueCell } from '../../../components/tasks/taskSleekCells'
 import { CardProjectLine } from '../../../components/tasks/TaskCardRow'
@@ -42,8 +42,6 @@ function writeSet(key: string, s: Set<GroupKey>) {
   try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
 }
 
-const LONG_PRESS_MS = 420
-
 export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, Project>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching lane.
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
@@ -58,10 +56,6 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
   const selectModeActive = useSelectMode(true)
   const selectionActive = selectModeActive || selected.size > 0
   const { prefs } = useLabPrefs()
-
-  // Long-press = select (touch). One press at a time, so one timer serves every row.
-  const press = useRef<{ id: string; timer: ReturnType<typeof setTimeout> | null; fired: boolean } | null>(null)
-  const endPress = () => { if (press.current?.timer) clearTimeout(press.current.timer); if (press.current && !press.current.fired) press.current = null }
 
   // The overdue line counts every visible lane.
   const allTasks = useMemo(() => visibleGroups.flatMap((g) => byGroup[g]), [visibleGroups, byGroup])
@@ -140,20 +134,11 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
                     done={isTaskDone(t)}
                     expanded={expanded === t.id}
                     selectMode={selectModeActive}
-                    onMouseDown={(e) => {
-                      // Stop text selection on modifier+mousedown; start the long-press.
-                      if (e.shiftKey || e.ctrlKey || e.metaKey) { e.preventDefault(); return }
-                      if (e.button !== 0) return
-                      endPress()
-                      const p = { id: t.id, timer: null as ReturnType<typeof setTimeout> | null, fired: false }
-                      p.timer = setTimeout(() => { p.fired = true; toggleSelect(t.id) }, LONG_PRESS_MS)
-                      press.current = p
-                    }}
-                    onMouseUp={endPress}
-                    onMouseLeave={endPress}
+                    // Stop text selection on a modifier+mousedown (a select click).
+                    onMouseDown={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
+                    // Long-press = select, touch included; the row swallows its click.
+                    onLongPress={() => toggleSelect(t.id)}
                     onClick={(e) => {
-                      // A long-press just selected: swallow its click.
-                      if (press.current?.fired && press.current.id === t.id) { press.current = null; return }
                       if (e.shiftKey) { selectRange(t.id, visibleIds, anchorId); return }
                       if (e.ctrlKey || e.metaKey || selectionActive) { toggleSelect(t.id); return }
                       setExpanded(expanded === t.id ? null : t.id)

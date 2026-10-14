@@ -297,6 +297,8 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
                       onClick={(e) => onRowClick(row.index, t.id, e)}
                       // Stop the browser's text selection on modifier+mousedown.
                       onMouseDown={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
+                      // Long-press = select (the only way in on a touch phone).
+                      onLongPress={() => toggleSelect(t.id)}
                       onDoubleClick={() => setDrawer(t.id)}
                     />
                   </div>

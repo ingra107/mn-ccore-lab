@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import type { ReactNode } from 'react'
+import { useState } from 'react'
+import { useOutlet } from 'react-router-dom'
 
 interface PageTransitionProps {
-  children: ReactNode
   /** Unique key per route — required for AnimatePresence to detect route changes */
   transitionKey?: string
 }
@@ -19,7 +19,22 @@ const pageTransition = {
   ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
 }
 
-export default function PageTransition({ children, transitionKey }: PageTransitionProps) {
+/**
+ * The route's page, wrapped in the enter/exit fade. It renders the matched
+ * route itself (it takes no children), so the outlet is always FROZEN per page.
+ *
+ * Why: under `<AnimatePresence mode="wait">` the exiting wrapper stays mounted
+ * for its exit animation. A live `<Outlet />` inside it re-resolves against the
+ * NEW location, so the next page mounted once inside the exiting wrapper, ran
+ * its effects (consuming `?create=true` / `?open=` and stripping the param),
+ * then unmounted and mounted again fresh with the param already gone. That is
+ * how Lab overview's "+ Task" opened the Create Task modal and lost it within a
+ * second (prod probe 2026-10-14). Capturing the outlet element at mount keeps
+ * the exiting copy on the OLD page, so the new page mounts exactly once.
+ */
+export default function PageTransition({ transitionKey }: PageTransitionProps) {
+  const outlet = useOutlet()
+  const [frozen] = useState(outlet)
   return (
     <motion.div
       key={transitionKey}
@@ -29,7 +44,7 @@ export default function PageTransition({ children, transitionKey }: PageTransiti
       variants={pageVariants}
       transition={pageTransition}
     >
-      {children}
+      {frozen}
     </motion.div>
   )
 }

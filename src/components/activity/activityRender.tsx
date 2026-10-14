@@ -378,7 +378,7 @@ export interface ActivityEntryItemProps {
 // no-op. Now the armed state says so in words ("Delete?"), stays visible
 // off-hover (the inline `visibility` below outranks the .detail-card/.lc-row
 // hover-hide rules in index.css), and holds for 5s.
-const DELETE_ARM_WINDOW_MS = 5000
+export const DELETE_ARM_WINDOW_MS = 5000
 
 export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
   const [armed, setArmed] = useState(false)
