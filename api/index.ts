@@ -82,7 +82,6 @@ import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRe
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { HUB_URL, isEmailRecipient, raw, sendEmail, warnIfRecipientsMatchNobody } from './lib/email';
-import { handlePBCapture } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
@@ -91,7 +90,7 @@ import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleG
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
-import { handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
+import { handleGetExpiringItems, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
@@ -2846,13 +2845,6 @@ defineRoute({
 // PB sector writes
 defineRoute({
   method: 'POST',
-  path: '/api/pb/capture',
-  auth: 'pi',
-  entity: 'pb',
-  handler: (c) => handlePBCapture(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/pb/sessions',
   auth: 'pi',
   entity: 'pb',
@@ -2944,13 +2936,6 @@ defineRoute({
 // 2026-10-12 with the grants table's readers.
 
 // Regulatory
-defineRoute({
-  method: 'POST',
-  path: '/api/regulatory',
-  auth: 'authed',
-  entity: 'regulatory',
-  handler: (c) => handleCreateRegulatoryItem(R(c), USER(c), E(c)),
-});
 defineRoute({
   method: 'POST',
   path: '/api/regulatory/:id',

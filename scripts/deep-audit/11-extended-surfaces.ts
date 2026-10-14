@@ -9,7 +9,7 @@
  *
  * Run: npx tsx scripts/deep-audit/11-extended-surfaces.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGet, marker, leaveForResidueSweep } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGet, marker, cleanupPost } from './harness'
 
 async function main() {
   const s = await openSession('11-extended-surfaces')
@@ -43,30 +43,25 @@ async function main() {
     else pass(s, `11.C /api/narratives returns ${narratives.length} narratives`)
 
     // ═══════════════════ QUICK CAPTURE INBOX ═══════════════════
-    section(s, '11.D  Inbox Quick Capture create + read + sync marker')
+    // /api/inbox was retired 2026-05-04; captures land in inbox_events.
+    section(s, '11.D  Inbox Quick Capture create + read (/api/inbox-events)')
     const captureText = marker('capture')
-    // Inbox POST body is { text, tag?, project_id?, author? }.
-    // Valid tags: note | idea | decision | follow-up | meeting-note.
-    const createResp = await s.api.post('/api/inbox', {
-      data: { text: captureText, tag: 'note', author: 'deep-audit' },
+    const createResp = await s.api.post('/api/inbox-events', {
+      data: { raw_text: captureText, source: 'hub_ui' },
     })
     if (!createResp.ok()) {
-      bug(s, 'INBOX-CREATE', 'P1', '11.D POST /api/inbox', `HTTP ${createResp.status()}`, '200')
+      bug(s, 'INBOX-CREATE', 'P1', '11.D POST /api/inbox-events', `HTTP ${createResp.status()}`, '201')
     } else {
-      // Inbox returns the record directly (no { data: ... } wrapper).
-      const cb = (await createResp.json()) as { id?: string }
-      if (cb?.id) {
-        cleanupInboxIds.push(cb.id)
-        pass(s, `11.D Inbox entry ${cb.id} created`)
+      const cb = (await createResp.json()) as { data?: { id?: string } }
+      const id = cb?.data?.id
+      if (id) {
+        cleanupInboxIds.push(id)
+        pass(s, `11.D Inbox event ${id} created`)
       }
-      await s.page.waitForTimeout(600)
-      // Note: GET /api/inbox returns { data: [...] } (wrapped) while POST
-      // returns the record directly. Shape inconsistency worth noting in
-      // REFERENCE.md API-conventions.
-      const inbox = await apiGet<Array<{ id: string; text?: string }>>(s, '/api/inbox')
-      const found = inbox?.find((i) => i.text === captureText)
-      if (found) pass(s, '11.D Inbox entry appears in /api/inbox list')
-      else bug(s, 'INBOX-READ-MISSING', 'P1', '11.D inbox read shows new entry', `${inbox?.length ?? 0} entries, marker missing`, 'includes new entry')
+      const inbox = await apiGet<Array<{ id: string; raw_text?: string }>>(s, '/api/inbox-events?source=hub_ui&limit=200')
+      const found = inbox?.find((i) => i.raw_text === captureText)
+      if (found) pass(s, '11.D Inbox event appears in /api/inbox-events list')
+      else bug(s, 'INBOX-READ-MISSING', 'P1', '11.D inbox read shows new event', `${inbox?.length ?? 0} events, marker missing`, 'includes new event')
     }
 
     // ═══════════════════ DEADLINE CASCADE ═══════════════════
@@ -187,7 +182,7 @@ async function main() {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
     for (const iid of cleanupInboxIds) {
-      leaveForResidueSweep(s, 'inbox', iid)
+      cleanupPost(s, `/api/inbox-events/${iid}/delete`)
     }
     await closeSession(s)
   }

@@ -49,6 +49,7 @@ import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
+import { PastThoughts } from '../../components/today/PastThoughts'
 import { DayActivityFeed } from '../../components/today/DayActivityFeed'
 import { PomodoroControl } from '../../components/today/PomodoroControl'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
@@ -667,6 +668,7 @@ export default function TodayPage() {
             <MorningThoughtCompose />
           </div>
         </div>
+        <PastThoughts />
 
         {/* Today's conversations — @hermes asks become real threads you can reply
             to (Hermes wave Phase 3). Replaces the flat daily_thought reply cards. */}

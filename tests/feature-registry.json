@@ -597,15 +597,6 @@
       "covered": true
     },
     {
-      "id": "api-post-pb-capture",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "POST /api/pb/capture — PB quick capture",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API POST: PB capture (quick capture)",
-      "covered": true
-    },
-    {
       "id": "api-post-dependencies-create",
       "component": "api/routes/dependencies.ts",
       "type": "api",

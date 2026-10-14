@@ -50,7 +50,6 @@ import {
 } from './conferences'
 import {
   handleGetExpiringItems,
-  handleCreateRegulatoryItem,
   handleUpdateRegulatoryItem,
 } from './regulatory'
 import {
@@ -589,11 +588,6 @@ const patternWriteCases: PatternWriteCase[] = [
     call: (c, r, env) => handleDeleteConference(r.conf, c.post({}), c.user, env),
   },
   // Lifecycle CRUD — regulatory
-  {
-    label: 'POST /api/regulatory (handleCreateRegulatoryItem)',
-    touches: ['regulatory_items'],
-    call: (c, r, env) => handleCreateRegulatoryItem(c.post({ project_id: r.slug, item_type: 'irb', title: 'T' }), c.user, env),
-  },
   {
     // withExistingRowProject: both "row missing" and "row hidden" return hiddenResource() 404.
     label: 'POST /api/regulatory/:id (handleUpdateRegulatoryItem)',

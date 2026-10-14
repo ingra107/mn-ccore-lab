@@ -28,7 +28,7 @@ import { _resetValidationFlagsCache, _resetPiEmailsCacheForTests } from '../help
 import { applyInsert } from './mutations';
 import { handleUpdateProject, handleAddComment, handleDeleteProject } from './projects';
 import { handleAddTaskComment, handleDeleteTask } from './tasks';
-import { handleCreateRegulatoryItem, handleUpdateRegulatoryItem } from './regulatory';
+import { handleUpdateRegulatoryItem } from './regulatory';
 import { handleCreateSubmission } from './submissions';
 import { handleCreateConference } from './conferences';
 import { handleCreateRevision } from './revisions';
@@ -253,27 +253,21 @@ describe('Fix 4 — handleUpdateProject: a refused mutation → HTTP 409', () =>
 
 // ── Fix 5: regulatory VALID_STATUSES enum alignment ──────────────────────────
 
+// POST /api/regulatory (create) was deleted 2026-10-14: no client ever called
+// it. Rows are edited through POST /api/regulatory/:id, which validates status.
 describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as valid status', () => {
-  it.each([
-    ['action_needed', 'irb', 'IRB Protocol v3'],
-    ['expiring_soon', 'dua', 'DUA with hospital'],
-  ])('accepts %s as a valid status on create, stored on the canonical project', async (status, itemType, title) => {
-    const res = await handleCreateRegulatoryItem(makeRequest({ project_id: PROJ_SLUG, item_type: itemType, title, status }), NICK, env);
-    expect(res.status).toBe(201);
-    expect(rows('SELECT project_id, status, item_type FROM regulatory_items')).toEqual([{ project_id: PROJ_ID, status, item_type: itemType }]);
-  });
-
-  it('still rejects truly invalid status, and writes nothing', async () => {
-    const res = await handleCreateRegulatoryItem(makeRequest({ project_id: PROJ_SLUG, item_type: 'irb', title: 'IRB Protocol', status: 'flying_blind' }), NICK, env);
-    expect(res.status).toBe(400);
-    expect(count('regulatory_items')).toBe(0);
-  });
-
-  it('accepts action_needed on update', async () => {
+  it.each([['action_needed'], ['expiring_soon']])('accepts %s on update', async (status) => {
     insertRow(db, 'regulatory_items', { id: 'reg_1', project_id: PROJ_ID, item_type: 'irb', title: 'IRB Protocol', status: 'pending' });
-    const res = await handleUpdateRegulatoryItem('reg_1', makeRequest({ status: 'action_needed' }), NICK, env);
+    const res = await handleUpdateRegulatoryItem('reg_1', makeRequest({ status }), NICK, env);
     expect(res.status).toBe(200);
-    expect(rows("SELECT status FROM regulatory_items WHERE id = 'reg_1'")).toEqual([{ status: 'action_needed' }]);
+    expect(rows("SELECT status FROM regulatory_items WHERE id = 'reg_1'")).toEqual([{ status }]);
+  });
+
+  it('still rejects truly invalid status, and changes nothing', async () => {
+    insertRow(db, 'regulatory_items', { id: 'reg_1', project_id: PROJ_ID, item_type: 'irb', title: 'IRB Protocol', status: 'pending' });
+    const res = await handleUpdateRegulatoryItem('reg_1', makeRequest({ status: 'flying_blind' }), NICK, env);
+    expect(res.status).toBe(400);
+    expect(rows("SELECT status FROM regulatory_items WHERE id = 'reg_1'")).toEqual([{ status: 'pending' }]);
   });
 });
 
@@ -299,14 +293,6 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
     }), NICK, env);
     expect(res.status).toBe(201);
     expect(rows('SELECT project_id FROM conference_submissions')).toEqual([{ project_id: PROJ_ID }]);
-  });
-
-  it('regulatory: returns 400 on unknown project, and writes nothing', async () => {
-    const res = await handleCreateRegulatoryItem(makeRequest({ project_id: 'ghost-project', item_type: 'irb', title: 'IRB' }), NICK, env);
-    expect(res.status).toBe(400);
-    const body = await res.json() as { error: string };
-    expect(body.error).toMatch(/Unknown project/i);
-    expect(count('regulatory_items')).toBe(0);
   });
 
   it('revisions: uses projectRefToCanonical and returns 400 on unknown project', async () => {

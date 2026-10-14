@@ -28,7 +28,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useCreateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { todayKey } from './constants'
-import { nowInstant } from '../../lib/time'
+import { appendDailyThought } from '../../lib/dailyThoughts'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { useLaunchCommands } from '../../hooks/useLaunchCommands'
@@ -42,19 +42,6 @@ function tomorrowISO(): string {
   const d = new Date()
   d.setDate(d.getDate() + 1)
   return localDateKey(d)
-}
-
-function appendDailyThought(content: string, kind: 'note' | 'hermes' | 'task') {
-  if (typeof window === 'undefined') return
-  const key = `today_state_${todayKey()}`
-  try {
-    const raw = window.localStorage.getItem(key)
-    const state = raw ? JSON.parse(raw) : {}
-    const thoughts = Array.isArray(state.thoughts) ? state.thoughts : []
-    thoughts.push({ at: nowInstant(), kind, content })
-    state.thoughts = thoughts
-    window.localStorage.setItem(key, JSON.stringify(state))
-  } catch { /* ignore */ }
 }
 
 export function MorningThoughtCompose() {
