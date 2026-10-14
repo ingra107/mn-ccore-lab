@@ -113,7 +113,7 @@ function LinkRow({
           onClick={onEdit}
           data-tip="Edit link"
           aria-label="Edit link"
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity tip"
+          className="reveal-on-hover tip"
           style={{ color: 'var(--slate)', padding: 0, display: 'grid' }}
         >
           <Pencil {...ICON_PROPS} size={11} />

@@ -5,12 +5,14 @@
 //    (rules-ui-design 8 and 12).
 // 2. .reveal-on-hover: the meeting page's title pencil and notes Edit button were
 //    `opacity-0 group-hover:` with no touch arm, so a phone never showed them.
-//    The shared utility must keep its (hover: none) arm, and the meeting pages
-//    must not go back to a bare Tailwind hover-only pair. This reads the CSS and
-//    source text; it is a contract on the rule, not a render at 390px.
+//    The shared utility must keep its (hover: none) arm, and no page may go back
+//    to a bare Tailwind hover-only pair. This reads the CSS and source text; it
+//    is a contract on the rule, not a render at 390px.
+// 3. A meeting link targets meeting_ref, never the raw meeting_id (#1593 review).
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { nameSlugsInText } from '../personLabel'
 
 describe('nameSlugsInText', () => {
@@ -35,10 +37,33 @@ describe('hover-revealed controls show on touch', () => {
     expect(css).toMatch(/@media \(hover: none\) \{\s*\.reveal-on-hover \{ opacity: var\(--reveal-opacity, 1\); \}/)
   })
 
-  it('the meeting pages use it, not a hover-only Tailwind pair', () => {
+  it('a Tailwind group host reveals it too', () => {
+    expect(css).toMatch(/\.group:hover \.reveal-on-hover,\s*\.group:focus-within \.reveal-on-hover/)
+  })
+
+  it('the meeting title pencil uses it; notes Edit sits in the header slot, never over the notes', () => {
     const detail = readFileSync('src/pages/MeetingDetail.tsx', 'utf8')
-    expect(detail).not.toMatch(/opacity-0 group-hover/)
     expect(detail).toMatch(/className="reveal-on-hover hit-area"\s+aria-label="Edit meeting title"/)
-    expect(detail).toMatch(/aria-label="Edit meeting notes"\s+className="[^"]*reveal-on-hover/)
+    // Pinned absolute over the notes it covered their first line on a phone.
+    expect(detail).toMatch(/aria-label="Edit meeting notes"\s+className="inline-flex/)
+    expect(detail).not.toMatch(/absolute top-0 right-0 reveal-on-hover/)
+  })
+
+  it('no control anywhere in src is hidden behind a bare hover-only pair', () => {
+    const offenders = (readdirSync('src', { recursive: true }) as string[])
+      .filter((f) => /\.tsx?$/.test(f) && !f.includes('__tests__'))
+      .filter((f) => /opacity-0[^"'`]*group-hover:opacity-100/.test(readFileSync(join('src', f), 'utf8')))
+    expect(offenders).toEqual([])
+  })
+})
+
+describe('meeting links target meeting_ref', () => {
+  it('no component links a task to PATHS.meeting(<raw meeting_id>)', () => {
+    // meeting_id is a calendar source_id on every debrief row and 404s;
+    // meetingHrefFor() reads the resolved meeting_ref (meetingOrigin.ts).
+    const offenders = (readdirSync('src', { recursive: true }) as string[])
+      .filter((f) => /\.tsx?$/.test(f) && !f.includes('__tests__'))
+      .filter((f) => /PATHS\.meeting\([^)]*\.meeting_id\)/.test(readFileSync(join('src', f), 'utf8')))
+    expect(offenders).toEqual([])
   })
 })

@@ -549,7 +549,9 @@ export default function MeetingDetail() {
                   straight to the team. Copies the raw markdown source (what
                   pastes cleanly into mail/Slack), not the rendered DOM. Sits in
                   the section header rather than the hover layer: "copy quick"
-                  means always visible, unlike the Edit affordance below. */}
+                  means always visible. Edit sits beside it in the same slot
+                  (rules-ui-design 14): pinned over the notes it covered their
+                  first line on a phone, where it can never hide. */}
               {!editingNotes && meeting?.notes && (
                 <button
                   onClick={() => {
@@ -572,6 +574,18 @@ export default function MeetingDetail() {
                 >
                   {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
                   {copiedNotes ? 'Copied!' : 'Copy'}
+                </button>
+              )}
+              {!editingNotes && meeting?.notes && (
+                <button
+                  type="button"
+                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
+                  aria-label="Edit meeting notes"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors hit-area"
+                  style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', border: '1px solid var(--sk-line2)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+                >
+                  <Pencil {...ICON_PROPS} size={11} />
+                  Edit
                 </button>
               )}
             </>}
@@ -619,24 +633,18 @@ export default function MeetingDetail() {
                 </div>
               </div>
             ) : (
-              <div className="relative reveal-host tk">
+              <div className="tk">
                 {meeting?.notes ? (
                   <MarkdownView source={meeting.notes} className="tk-msum" />
                 ) : (
-                  <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
-                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>
+                  <button
+                    type="button"
+                    onClick={() => { setNotesDraft(''); setEditingNotes(true) }}
+                    style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, padding: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                  >
                     No notes yet. Click to add.
-                  </p>
+                  </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(true) }}
-                  aria-label="Edit meeting notes"
-                  className="absolute top-0 right-0 reveal-on-hover hit-area"
-                  style={{ background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-md)', padding: 'var(--sp-xs) var(--sp-sm)', cursor: 'pointer', color: 'var(--slate)', fontSize: 'var(--label-size)' }}
-                >
-                  Edit
-                </button>
               </div>
             )}
           </div>

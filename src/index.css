@@ -2135,10 +2135,14 @@ button[aria-label="Deselect task"]::before {
    visibility rule is for non-interactive badges). --reveal-opacity sets how
    strong the shown state is. A bare Tailwind `opacity-0 group-hover:` pair has
    no touch arm, which is how the meeting page's title pencil and notes Edit
-   button never appeared on a phone (2026-10-14). */
+   button never appeared on a phone (2026-10-14). A Tailwind `group` host works
+   too, so a hover-only control is one class, never the bare pair; the
+   meetingTouchAndNames test refuses `opacity-0 group-hover` anywhere in src. */
 .reveal-on-hover { opacity: 0; transition: opacity 0.15s ease; }
 .reveal-host:hover .reveal-on-hover,
 .reveal-host:focus-within .reveal-on-hover,
+.group:hover .reveal-on-hover,
+.group:focus-within .reveal-on-hover,
 .reveal-on-hover:focus-visible { opacity: var(--reveal-opacity, 1); }
 @media (hover: none) {
   .reveal-on-hover { opacity: var(--reveal-opacity, 1); }
