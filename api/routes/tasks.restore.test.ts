@@ -71,7 +71,7 @@ function makeEnv(task: TaskStub | null): Env {
 }
 
 function makeUser(email = 'test@example.com'): AuthUser {
-  return { email, name: 'Test User', isNick: false } as AuthUser
+  return { email, name: 'Test User' } as AuthUser
 }
 
 function makeRequest(body?: Record<string, unknown>): Request {

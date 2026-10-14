@@ -169,7 +169,7 @@ async function readAuthIdentity(request: Request, env: Env): Promise<Omit<AuthUs
   // audit needs to test prod-DB write paths with auth, not test-DB write
   // paths. Send `X-Test-Mode: true` only when DB isolation is also wanted.
   //
-  // Why: CF Access service-token JWTs (used by hub-audit + CI) are valid
+  // Why: CF Access service-token JWTs (used by audit scripts + CI) are valid
   // CF Access tokens but lack an `email` claim, so JWKS-based auth below
   // returns null and every audit mutation 401s. This bypass lets the
   // audit run as an explicit test user without exposing prod auth.

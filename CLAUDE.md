@@ -45,7 +45,7 @@ The Hub is a **research operations center**, not a magazine. Full rationale: `Co
 1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0. Light mode secondary.
 2. **Columnar tables, not card stacks.** Data pages use fixed-column tables (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
 3. **Inline editability with visible affordance.** Every editable field shows "▾" indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button.
-4. **Typography: 3-tier weight, 5-tier opacity.** Weights: `--weight-body` (400), `--weight-ui` (500), `--weight-heading` (600), `--weight-metric` (700). Opacity: `--ink-primary` (1.0), `--ink-muted` (0.7), `--ink-label` (0.55), `--ink-hint` (0.4), `--ink-disabled` (0.3). NEVER opacity below 0.3 on readable dark-mode text.
+4. **Typography: 3-tier weight, 5-tier opacity.** Weights: `--weight-body` (400), `--weight-ui` (500), `--weight-heading` (600). Opacity: `--ink-primary` (1.0), `--ink-muted` (0.7), `--ink-label` (0.55), `--ink-hint` (0.4). NEVER opacity below 0.3 on readable dark-mode text.
 5. **One accent color per view.** Teal for interactive. Max 2 non-neutral colors per view.
 6. **More info, more readable.** Density is not clutter. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
 7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
@@ -59,7 +59,7 @@ The Hub is a **research operations center**, not a magazine. Full rationale: `Co
 
 ### Palette (Phase 35 hex-pinned, 2026-04-18 axe AA)
 
-All text-carrying color tokens are **literal sRGB hex**, not OKLCH. (axe-core 4.11's OKLCH parser resolves to darker sRGB than Chromium renders.) OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
+All text-carrying color tokens are **literal sRGB hex**, not OKLCH. (axe-core 4.11's OKLCH parser resolves to darker sRGB than Chromium renders.) OKLCH remains only on pure-bg tokens (`--cream`, `--ice`).
 
 | Token | Light | Dark |
 |-------|-------|------|
@@ -71,19 +71,11 @@ All text-carrying color tokens are **literal sRGB hex**, not OKLCH. (axe-core 4.
 | `--orange` | `#a23d08` | `#f08a5b` |
 | `--green` | `#066e2f` | `#6ee89a` |
 | `--teal-solid` | `#0d6f68` (both) | — |
-| `--maroon-solid` | `#8a1f2e` (both) | — |
-| `--stage-fill-idea` | `#4b5563` (both) | — |
 | `--stage-fill-data-collection` | `#0d6f68` (both) | — |
 | `--stage-fill-analysis` | `#6b5420` (both) | — |
-| `--stage-fill-writing` | `#a23d08` (both) | — |
-| `--stage-fill-review` | `#8a1f2e` (both) | — |
-| `--stage-fill-submitted` | `#0d6f68` (both) | — |
-| `--stage-fill-published` | `#066e2f` (both) | — |
-| `--gold-on-emphasis` | `#5a4518` | `#dcb355` |
 
-- `--teal-solid` + `--maroon-solid`: solid button/badge bg where white text sits on top (6-7:1 with #fff). Separate token from `--teal` because button bg has opposite contrast needs from same-color text.
+- `--teal-solid`: solid button/badge bg where white text sits on top (6-7:1 with #fff). Separate token from `--teal` because button bg has opposite contrast needs from same-color text.
 - `--stage-fill-*`: for ANY bar/pill/button fill where white text sits on top — these never flip between themes. `--slate`/`--teal`/`--gold` flip to light dark-mode variants where `#fff` text fails ~2:1.
-- `--gold-on-emphasis`: gold text on `--gold-emphasis` pill. `--gold` light on `#efebdf` = 4.25:1 fail; pinned to `#5a4518` (5.8:1).
 - Sidebar-bg: `color-mix(in oklch, var(--cream), black 12%)`. Category dots: 6px, 0.7 opacity — maroon=CLIF, teal=Lab, gold=Mesfin.
 
 ### Opacity policy (dark mode AA)
@@ -195,7 +187,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 
 ## Critical Rules
 
-1. **Content visible by default.** `.fade-in-up` starts at opacity:1. NEVER hide content behind animations.
+1. **Content visible by default.** NEVER hide content behind animations (the scroll-reveal hook and `.fade-in-up` were deleted 2026-10-14; they had become a no-op).
 2. **Hero cards use `<a>` tags**, not React Router `<Link>`. AnimatePresence + useCountUp conflict.
 3. **initialData as factory functions.** `initialData: () => data`, never `initialData: data`.
 4. **Avatar:** Container `overflow-hidden`, img `w-full h-full`.
@@ -234,8 +226,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 37. **Google Fonts `<link>` tags need `crossorigin="anonymous"`.** Without it, axe-core's contrast checker trips CORS preflight — 3 console errors per page in audit runs. Same for any new cross-origin stylesheet.
 38. **Every `<select>` must have `aria-label` or a matching `<label htmlFor>`/`<select id>` pair.** Bare `<select>` trips axe `select-name` critical.
 39. **`role="switch"` with `aria-checked` must use string `"true"`/`"false"`, not boolean.** `aria-checked={myBool ? "true" : "false"}`. Only `aria-checked` on role=switch/checkbox/radio is strict; `aria-expanded`/`aria-pressed` boolean bindings are fine.
-41. **Stage-bar fills use `--stage-fill-*` tokens, not `--slate/--teal/--gold`.** The accent tokens flip to light dark-mode variants where `#fff` text fails ~2:1. Use `--stage-fill-{idea,data-collection,analysis,writing,review,submitted,published}` — dark hex values stable across themes.
-42. **Gold pill bg + gold text uses `--gold-on-emphasis`, not `--gold`.** `--gold` light on `--gold-emphasis` bg = 4.25:1 fail. `--gold-on-emphasis` pins to `#5a4518` light / `#dcb355` dark for AA on both.
+41. **Stage-bar fills use `--stage-fill-*` tokens, not `--slate/--teal/--gold`.** The accent tokens flip to light dark-mode variants where `#fff` text fails ~2:1. The two left are `--stage-fill-data-collection` and `--stage-fill-analysis` (dark hex, stable across themes); the other five went with `projects.stage` (2026-10-14). Colour by job uses the `--job-*` tokens.
 43. **Parent `opacity` on a card multiplies with child colored spans.** See compound-opacity section above. Never dim whole cards for state.
 44. **Mount animations must use transform-only, not opacity: 0 → 1.** Axe-core's contrast checker catches elements mid-transition. Animate via `y` / `scale` only.
 45. **Dropdowns use fully-opaque bg, not semi-transparent + backdrop-filter.** Band bleed-through on pages with dark headers. Use `#ffffff` / `#0f1923` (full opaque) with `box-shadow` for depth.

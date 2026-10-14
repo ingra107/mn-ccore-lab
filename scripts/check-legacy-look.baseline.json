@@ -74,9 +74,6 @@
     "tabstrip": 1,
     "initials": 1
   },
-  "src/pages/portal/DeadlinesPage.tsx": {
-    "edge": 1
-  },
   "src/pages/portal/DecisionsPage.tsx": {
     "edge": 2
   }

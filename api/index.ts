@@ -35,7 +35,7 @@ import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, 
 import { joinQuestionMinter } from './lib/project-join';
 import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
-import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
+import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
 import { handleGetPublications, handleGetStats } from './routes/publications';
 import { handleGetGrants, handleGrantsTimeline } from './routes/grants';
@@ -89,9 +89,9 @@ import { handleLane3List } from './routes/lane3';
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleAttentionManuscripts } from './routes/revisions';
 import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone } from './routes/mentee-milestones';
-import { handleGetCascade, handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
+import { handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
-import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
+import { handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
@@ -904,26 +904,6 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/projects/:slug/revisions',
-  auth: 'authed',
-  entity: 'projects',
-  handler: async (c) => {
-  const ref = c.req.param('slug');
-  const env = E(c);
-  const proj = await env.DB.prepare(
-    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(ref, ref).first<{ id: string }>();
-  if (!proj) return json({ data: [] });
-  // Post-P2: use proj.id (typed proj_ PK) so the filter matches rewritten rows.
-  // Pre-P2 this was `proj.slug || proj.id`; manuscript_revisions.project_id is
-  // a FK that will hold typed PKs after the P2 data migration.
-  const rewrittenUrl = new URL(c.req.url);
-  rewrittenUrl.searchParams.set('project_id', proj.id);
-  return handleGetRevisions(rewrittenUrl, R(c), env);
-},
 });
 defineRoute({
   method: 'GET',
@@ -1848,13 +1828,6 @@ defineRoute({
   entity: 'deadline-cascade',
   handler: (c) => handleGetImpact(U(c), R(c), E(c)),
 });
-defineRoute({
-  method: 'GET',
-  path: '/api/deadline-cascade',
-  auth: 'authed',
-  entity: 'deadline-cascade',
-  handler: (c) => handleGetCascade(U(c), R(c), E(c)),
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mentee milestones
@@ -1872,17 +1845,6 @@ defineRoute({
   auth: 'authed',
   entity: 'mentee-milestones',
   handler: (c) => handleGetMenteeMilestones(U(c), E(c)),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Milestones (project + grant share a handler for listing)
-// ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/milestones',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleGetMilestones(U(c), E(c)),
 });
 
 // Grant post-award milestones are kind='milestone' tasks on a grant product
@@ -1906,13 +1868,6 @@ defineRoute({
   auth: 'authed',
   entity: 'regulatory',
   handler: (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/regulatory',
-  auth: 'authed',
-  entity: 'regulatory',
-  handler: (c) => handleGetRegulatoryItems(U(c), R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2529,13 +2484,6 @@ defineRoute({
 });
 
 // Milestones
-defineRoute({
-  method: 'POST',
-  path: '/api/milestones/:id/note',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)),
-});
 defineRoute({
   method: 'POST',
   path: '/api/milestones/:id/complete',

@@ -92,7 +92,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants
   - **`/api/projects` returns a DERIVED `last_activity`** (2026-07-21, #95) — `MAX(activity_entries.created_at)` for the project (its own rows ∪ its tasks' rows), emitted as a zone-explicit ISO instant. It is **not a stored column**; `SELECT *` alone will not produce it. Drives the Projects list's default "last worked on" sort + the "Xd ago" staleness chip (`Project.lastActivity` via `rowToProject`). **Present on the browser read ONLY — the `?seq_after=` cursor branch (PB sync wire) is deliberately byte-identical to the stored row**, mirroring the `tasks.project_id` browser-slug / sync-typed split. Don't "fix" the sync branch to include it.
-- GET /api/milestones, /api/meetings, /api/digest
+- GET /api/meetings, /api/digest
 - GET /api/notifications, /api/commitments
 - **GET /api/team/:slug/featured-publications** (PUBLIC, #906, schema-v106) — the Top-10 that member chose, joined to `publications` and returned in the MEMBER'S order (`member_featured_publications.sort_order`), capped at 10 in SQL. Public because it renders on the public `/team/:slug` page; it is declared `auth: 'public'` with `anonRows: PUBLISHED_ONLY` in the route registry, so logged-out callers and non-members get Published rows only (19ef60c2).
 - **PUT /api/team/:slug/featured-publications** (the member, a PI, or the service key) — `{ publicationIds: string[] }`, ORDERED, max 10, distinct, every id must exist. Replace-set: one DELETE + N INSERTs in a single `DB.batch`, `sort_order` = array index. Echoes the stored list back. A rejected request writes NOTHING. Does NOT check authorship against `publications.author_slugs` — that column keeps one slug per paper in practice (PB #1126), so the check would reject legitimate coauthors; add it after #1126's union+backfill.
@@ -173,8 +173,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - POST /api/questions, POST /api/questions/:id/answers, POST /api/answers/:id/accept
 
 ### Manuscript Revisions
-- GET /api/revisions?project_id=
-- **GET /api/projects/:slug/revisions** — slug-aware convenience alias (Phase 35)
+- GET /api/revisions?project_id= (id or slug)
 - POST /api/revisions (accepts `project_id` OR `project_slug`, `reviewer_comments` alias for `notes`)
 - POST /api/revisions/:id, POST /api/revisions/:id/comments
 
@@ -398,7 +397,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - **POST `/api/tasks`** requires `description` + `assignee`. `title` is optional (defaults to description). CreateTaskModal always sends both so UI users don't notice.
 - **POST `/api/tasks/:id/comments`** takes `{ content, author_slug? }`. `source_id` in resulting notifications references the **task id** (not the comment row id) — link is `/tasks?open=${taskId}` so clicking lands on the correct task.
 - **POST `/api/questions/:id/answers`** takes `{ content, author_slug? }`. Body field is `content`, not `answer`.
-- **POST `/api/revisions`** takes `{ project_id | project_slug, round?, submitted_at?, response_due?, status?, journal?, notes | reviewer_comments? }`. Accepts either id or slug; `reviewer_comments` is an alias for `notes`. Convenience GET: `/api/projects/:slug/revisions`.
+- **POST `/api/revisions`** takes `{ project_id | project_slug, round?, submitted_at?, response_due?, status?, journal?, notes | reviewer_comments? }`. Accepts either id or slug; `reviewer_comments` is an alias for `notes`. List rounds with `GET /api/revisions?project_id=` (id or slug).
 - **POST `/api/tasks/:id/handoffs`** uses SBAR format: `{ to_slug, situation, background?, assessment?, recommendation? }`. `situation` is required.
 - **POST `/api/digest/:id/status`** sets the CALLER's own save/dismiss (`new` clears it); per person since schema-v136. Not `POST /api/digest/:id` directly.
 - **POST `/api/digest/comments/:id/task`** turns a digest note into a task assigned to the caller (through `handleCreateTask`); a second call returns the same task. The title is the note's first line plus the paper tag (`(PMID 222)`), or plus the note's own tag when that title is already held anywhere in the lab. It never adopts another task: `handleCreateTask(..., { adopt: false })` answers 409 `title_taken` instead of handing back an existing row.

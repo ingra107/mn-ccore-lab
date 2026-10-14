@@ -7,8 +7,8 @@
  *   - Does NOT include the AS project_id COALESCE alias (that is for slug mode).
  *
  * Also verifies the ?wire=typed gate in handleGetTasks:
- *   - wire=typed + canSeePb=true → uses TASK_SELECT_COLS_TYPED (raw proj_*)
- *   - wire=typed + canSeePb=false → uses TASK_SELECT_COLS (slug, gate blocks raw PKs)
+ *   - wire=typed + isPi=true → uses TASK_SELECT_COLS_TYPED (raw proj_*)
+ *   - wire=typed + isPi=false → uses TASK_SELECT_COLS (slug, gate blocks raw PKs)
  *   - no wire param → uses TASK_SELECT_COLS (unchanged behaviour)
  */
 
@@ -48,9 +48,9 @@ describe('TASK_SELECT_COLS_TYPED — A2 typed wire shape (Slice C)', () => {
 describe('handleGetTasks ?wire=typed gate — A2 (Slice C)', () => {
   // We test the gate logic by constructing a minimal stub rather than spinning up
   // the full Worker runtime (which requires wrangler pool workers). The key contract
-  // is that wire=typed is only honoured when canSeePb=true.
+  // is that wire=typed is only honoured when isPi=true.
 
-  it('wire=typed + canSeePb=false falls back to slug mode (security gate)', async () => {
+  it('wire=typed + isPi=false falls back to slug mode (security gate)', async () => {
     // Import dynamically to avoid module-level side effects with the worker pool.
     const { handleGetTasks } = await import('../routes/tasks')
     const url = new URL('http://localhost/api/tasks?wire=typed')
@@ -66,8 +66,8 @@ describe('handleGetTasks ?wire=typed gate — A2 (Slice C)', () => {
     }
     const env = { DB: stubDB } as unknown as import('../helpers').Env
 
-    // canSeePb=false — even with wire=typed the gate blocks raw PKs
-    const resp = await handleGetTasks(url, env, /* canSeePb= */ false)
+    // isPi=false — even with wire=typed the gate blocks raw PKs
+    const resp = await handleGetTasks(url, env, /* isPi= */ false)
     expect(resp.status).toBe(200)
     const body = await resp.json() as { data: unknown[] }
     // Empty result is fine — we just need to confirm it didn't throw and used slug mode.

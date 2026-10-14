@@ -5,7 +5,6 @@ import {
   buildWorkOnUri,
   classifyUrl,
   obsidianVaultRelPath,
-  buildObsidianUri,
   shortLabelForUrl,
   gmailKind,
   encodeLocalFolderPath,
@@ -118,18 +117,6 @@ describe('Obsidian vault markdown classification', () => {
 
   it('returns null for a .md file outside the vault', () => {
     expect(obsidianVaultRelPath('C:/Users/ingra107/Box/Research/notes.md')).toBeNull()
-  })
-
-  it('builds the obsidian://open URI with the verified vault name + slashes intact', () => {
-    expect(buildObsidianUri('Projects/clif/PROJECT')).toBe(
-      'obsidian://open?vault=Peripheral-Brain&file=Projects/clif/PROJECT',
-    )
-  })
-
-  it('percent-encodes spaces in the note path but keeps folder slashes', () => {
-    expect(buildObsidianUri('Context/Meeting Notes/2026-06-10')).toBe(
-      'obsidian://open?vault=Peripheral-Brain&file=Context/Meeting%20Notes/2026-06-10',
-    )
   })
 
   it('classifyUrl routes a vault .md key link to Obsidian via the mnccore handler verb', () => {

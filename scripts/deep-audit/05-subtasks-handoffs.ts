@@ -3,7 +3,7 @@
  *
  * Run: npx tsx scripts/deep-audit/05-subtasks-handoffs.ts
  */
-import { openSession, closeSession, section, log, pass, bug, apiGet, apiGetTaskFromList, marker } from './harness'
+import { openSession, closeSession, section, log, pass, bug, apiGet, apiGetTaskFromList, marker, cleanupPost } from './harness'
 
 async function main() {
   const s = await openSession('05-subtasks-handoffs')
@@ -135,7 +135,7 @@ async function main() {
   } catch (e) {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
-    for (const tid of createdTaskIds) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
+    for (const tid of createdTaskIds) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
     await closeSession(s)
   }
 }

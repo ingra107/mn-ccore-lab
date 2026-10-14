@@ -168,7 +168,6 @@ export const ALLOW = {
   'src/components/PublicationLibrary.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/PublicationSearch.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/PublicationFilters.tsx': { families: PUB, why: PUBLIC_BRAND },
-  'src/components/PublicationTimeline.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/NetworkFilters.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/pulse/PulseMetric.tsx': { families: PUB, why: PUBLIC_BRAND },
   'src/components/pulse/PulseScene.tsx': { families: PUB, why: PUBLIC_BRAND },

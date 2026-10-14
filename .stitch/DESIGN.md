@@ -47,13 +47,8 @@ For ANY bar / progress strip / status pill where white text sits on top, do NOT 
 
 | Token | Hex (both themes) |
 |---|---|
-| `--stage-fill-idea` | `#4b5563` |
 | `--stage-fill-data-collection` | `#0d6f68` (teal) |
 | `--stage-fill-analysis` | `#6b5420` (gold) |
-| `--stage-fill-writing` | `#a23d08` (orange) |
-| `--stage-fill-review` | `#8a1f2e` (maroon) |
-| `--stage-fill-submitted` | `#0d6f68` (teal) |
-| `--stage-fill-published` | `#066e2f` (green) |
 
 ---
 
@@ -76,7 +71,6 @@ For ANY bar / progress strip / status pill where white text sits on top, do NOT 
 - `--ink-muted` 0.70 — secondary content
 - `--ink-label` 0.55 (light) / 0.85 (dark) — column headers, labels
 - `--ink-hint` 0.68 (light) / 0.85 (dark) — placeholders, subtitles
-- `--ink-disabled` 0.30 — explicitly disabled
 
 ### Size scale
 
@@ -143,9 +137,8 @@ Dashboard, Personal, Analytics, PIAnalytics, Calendar, Meetings (split-panel), P
 Card border = `box-shadow: 0 0 0 1px var(--border-subtle)` (not CSS border).
 Top-edge highlight on dark cards: `inset 0 1px 0 rgba(255,255,255,0.03)`.
 
-### Animation timing (5 durations + 2 easings)
+### Animation timing (4 durations + 2 easings)
 
-- `--duration-instant` 0ms (state toggle)
 - `--duration-fast` 100ms (tooltip, button press)
 - `--duration-normal` 150ms (hover, row highlight)
 - `--duration-moderate` 200ms (dropdown, panel)

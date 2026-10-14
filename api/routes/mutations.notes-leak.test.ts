@@ -37,8 +37,7 @@ const seqOf = (db: ReturnType<typeof prodSchemaDb>, table: string, id: string) =
 const fakeUser: AuthUser = {
   email: 'nate@umn.edu',
   name: 'Nate Mesfin',
-  isNick: false,
-} as unknown as AuthUser
+} as AuthUser
 
 // M07: handleMutations now requires PI/API-key auth. Use a stable test key so
 // validateApiKey(request, env) returns true, bypassing the getPiEmails DB call.

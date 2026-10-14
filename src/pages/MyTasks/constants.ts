@@ -22,7 +22,6 @@ import type { GroupKey } from '../../lib/taskGrouping'
 // progress, overdue = red, stale = orange (urgent edge, stale days).
 export const JOB_ACCENT = 'var(--job-accent)'
 export const JOB_OVERDUE = 'var(--job-overdue)'
-export const JOB_STALE = 'var(--job-stale)'
 import { todayKey } from '../../lib/taskGrouping'
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 
@@ -77,7 +76,6 @@ export const PRIORITY_COLOR: Record<string, string> = {
   medium: 'var(--task-ink-muted)',
   low:    'var(--task-ink-muted)',
 }
-export const PRIORITY_SHORT: Record<string, string> = { urgent: 'P1', high: 'P1', medium: 'P2', low: 'P3' }
 
 // Mentee slugs derived from researchTeam (CD spec — Mentee filter chip).
 // Trainees/coordinators/students/analysts treated as mentees for the filter.

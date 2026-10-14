@@ -11,9 +11,9 @@
 //     InlineDetail planToday, constants readPlannedToday) re-point here.
 //
 // `right_now` is RETIRED from the UI (the Right Now badge / promote action /
-// auto-promote were removed). NO frontend path WRITES 'right_now' anymore — the
-// legacy-LS migrator below now lifts a pre-existing LS rightNow onto the columns
-// as a normal planned ('strip') task. derivePlanState still READS a stored
+// auto-promote were removed). NO frontend path WRITES 'right_now' anymore (the
+// one-time LS migrator was deleted 2026-10-14: nothing has written a plan to LS
+// since 2026-06-09). derivePlanState still READS a stored
 // 'right_now' plan_slot for back-compat (toPlannedSlot coerces it to 'strip', so
 // it renders as a normal planned task). A pending D1 normalize strips any
 // residual 'right_now' values already in the column.
@@ -28,15 +28,6 @@ import { useUpdateTask } from '../hooks/mutations/useTaskMutations'
 import { todayKey } from './taskGrouping'
 import type { PlannedSlot } from '../components/today/constants'
 import type { TaskRow } from './api'
-
-// The localStorage plan blob shape (legacy store — kept only for the one-time
-// migration + the still-LS-local `thoughts` field, which this module ignores).
-export interface LegacyTodayBlob {
-  rightNow?: string | null
-  planned?: Record<string, { slot: string }>
-  done?: Record<string, boolean>
-  thoughts?: string
-}
 
 // The derived plan state — the SAME shape useTodayState exposes, so the seam
 // contract is identical whether the backing store is LS or task columns.
@@ -157,79 +148,4 @@ export function useTodayPlan(): TodayPlanApi {
   }, [updateTask])
 
   return { planTask, unplanTask, setPlanSlot }
-}
-
-// ── One-time localStorage migration ─────────────────────────────────────────
-//
-// On first load after deploy: if today's LS blob carries a plan but the synced
-// tasks lack planned_for, PATCH the plan up to the columns, then stop reading
-// LS for plan state. `thoughts` stays in LS (out of scope).
-
-const MIGRATED_FLAG_PREFIX = 'today_plan_migrated_'
-
-export function readLegacyBlob(today: string = todayKey()): LegacyTodayBlob | null {
-  try {
-    const raw = window.localStorage.getItem(`today_state_${today}`)
-    if (!raw) return null
-    return JSON.parse(raw) as LegacyTodayBlob
-  } catch {
-    return null
-  }
-}
-
-/** True once today's LS plan has been migrated to the columns (idempotency). */
-export function hasMigratedToday(today: string = todayKey()): boolean {
-  try {
-    return window.localStorage.getItem(MIGRATED_FLAG_PREFIX + today) === '1'
-  } catch {
-    return false
-  }
-}
-
-function markMigratedToday(today: string = todayKey()): void {
-  try {
-    window.localStorage.setItem(MIGRATED_FLAG_PREFIX + today, '1')
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Hook: returns a one-time migrator. Call once tasks have loaded. It PATCHes any
- *  LS-planned task that lacks a synced planned_for as a normal planned ('strip')
- *  task, then marks today migrated. A legacy LS rightNow task migrates to planned
- *  (right_now is retired — no longer written). Idempotent; no-op if already
- *  migrated or no LS plan exists. */
-export function useLegacyPlanMigration() {
-  const updateTask = useUpdateTask()
-
-  return useCallback((tasks: TaskRow[]) => {
-    const today = todayKey()
-    if (hasMigratedToday(today)) return
-    const blob = readLegacyBlob(today)
-    if (!blob || !blob.planned || Object.keys(blob.planned).length === 0) {
-      // Nothing to migrate — but still mark so we don't re-check every render.
-      markMigratedToday(today)
-      return
-    }
-    const byId = new Map(tasks.map((t) => [t.id, t]))
-    let rank = nextPlanRank(tasks, today)
-    for (const [id, entry] of Object.entries(blob.planned)) {
-      const t = byId.get(id)
-      if (!t) continue                       // task no longer exists — skip
-      if (isPlannedToday(t, today)) continue  // already synced — skip
-      // right_now is RETIRED: a legacy LS rightNow task migrates to a normal
-      // planned task ('strip' via toPlannedSlot), NOT the retired slot value.
-      // This is the last frontend path that could write 'right_now' to D1; it
-      // no longer does. (blob.rightNow stays in the LS shape but is ignored.)
-      updateTask.mutate({
-        id,
-        fields: {
-          planned_for: today,
-          plan_slot: toPlannedSlot(entry?.slot),
-          plan_rank: rank++,
-        },
-      })
-    }
-    markMigratedToday(today)
-  }, [updateTask])
 }

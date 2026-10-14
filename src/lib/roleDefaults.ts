@@ -20,14 +20,6 @@ export function getUserRoleFromAuth(user: { email?: string; slug?: string; isPi?
   return 'default'
 }
 
-// Role display labels
-export const ROLE_LABELS: Record<UserRole, string> = {
-  pi: 'PI View',
-  fellow: 'Fellow View',
-  coordinator: 'Coordinator View',
-  default: 'Default',
-}
-
 // ── Team Dashboard card configs ──
 
 export const ROLE_DEFAULTS: Record<UserRole, {

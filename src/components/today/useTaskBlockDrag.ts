@@ -7,8 +7,8 @@
 //
 // RESIZE gesture: KEPT as raw pointer events (dnd-kit has no resize primitive).
 //   The bottom 6px strip fires onPointerDown(resize) with stopPropagation, which
-//   prevents dnd-kit's PointerSensor from activating. The resize math is unchanged
-//   from useTaskBlockGesture.ts.
+//   prevents dnd-kit's PointerSensor from activating. The resize math is the same
+//   snap/clamp the retired pointer hook used.
 //
 // CLICK (expand): movement < 8px on pointer events → dnd-kit activation
 //   constraint is 4px on the DndContext PointerSensor, so sub-4px release =
@@ -29,7 +29,7 @@ import { useRef, useState, useCallback, type PointerEvent as ReactPointerEvent }
 import { useDraggable } from '@dnd-kit/core'
 import { minToPx, pxToMin } from './timelineModel'
 import type { TaskRow } from '../../lib/api'
-import { resolveAcrossGaps, type FreeWindow } from './useTaskBlockGesture'
+import { resolveAcrossGaps, type FreeWindow } from './freeWindows'
 
 // ── Snap helper ──────────────────────────────────────────────────────────────
 
@@ -38,18 +38,6 @@ function snap15(minutes: number): number {
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
-
-export interface TaskBlockResizeState {
-  /** Current live height delta in px (resize gesture preview). 0 when idle. */
-  heightDeltaPx: number
-  /** True while resizing. */
-  isResizing: boolean
-}
-
-export interface TaskBlockResizeHandlers {
-  /** Attach to the RESIZE STRIP element at the bottom of the block. */
-  onPointerDownResize: (e: ReactPointerEvent<HTMLDivElement>) => void
-}
 
 export interface UseTaskBlockDragOptions {
   taskId: string

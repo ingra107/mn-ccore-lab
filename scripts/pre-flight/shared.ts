@@ -272,3 +272,20 @@ function writeFindingsFile(s: PersonaSession): void {
 export function mk(kind: string): string {
   return `test_delete_preflight_${kind}_${Math.random().toString(36).slice(2, 8)}`
 }
+
+/** Queue a cleanup POST that fails loud: a non-2xx throws, and closePersona
+ *  writes it to the run log. A swallowed 404 here once left test rows in prod
+ *  because the persona posted to delete routes that do not exist. */
+export function cleanupPost(s: PersonaSession, path: string, data?: unknown): void {
+  s.cleanup.push(async () => {
+    const r = await s.api.post(path, data === undefined ? undefined : { data })
+    if (!r.ok()) throw new Error(`POST ${path} -> HTTP ${r.status()}`)
+  })
+}
+
+/** Ideas, decisions, questions and meetings have no delete route. Their test
+ *  rows carry the test_delete_ prefix, and scripts/test-residue-cleanup.sql
+ *  removes them; this says so in the run log instead of pretending to delete. */
+export function leaveForResidueSweep(s: PersonaSession, table: string, id: string): void {
+  s.cleanup.push(async () => { write(s, `  left for scripts/test-residue-cleanup.sql: ${table} ${id}`) })
+}

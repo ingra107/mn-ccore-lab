@@ -41,14 +41,10 @@ npm run test:local       # Playwright against local D1
 ## Run the audit
 
 ```bash
-npx tsx scripts/hub-audit.ts              # full 14-section audit (~8 min)
-npx tsx scripts/hub-audit.ts --section=X  # one section
-npx tsx scripts/hub-audit.ts --cleanup    # delete test_delete_* rows
-npx tsx scripts/hub-audit.ts --list       # list sections
+npm run preflight         # persona walk-throughs against prod (scripts/pre-flight/)
 ```
 
-Output goes to `review/audit/YYYYMMDDTHHMM/` — screenshots + findings per
-section.
+Output goes to `review/preflight/<run id>/<persona>/`: screenshots and findings.
 
 ## Design assets for Claude Design
 
@@ -96,7 +92,7 @@ src/
   lib/               Utilities (dateUtils, nameUtils, api)
 tests/               Playwright + Vitest specs
 scripts/
-  hub-audit.ts       Canonical interaction audit (see HUB-AUDIT-CHECKLIST.md)
+  pre-flight/        Persona audit scripts (npm run preflight*)
   seed/              Data seeding + cleanup SQL
 workers/
   hub-realtime/      Durable Object for PartySocket realtime updates

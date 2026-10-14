@@ -8,7 +8,7 @@
  *
  * Run: npx tsx scripts/pre-flight/persona-coordinator.ts
  */
-import { openPersona, closePersona, section, pass, record, snap, goto, mk } from './shared'
+import { openPersona, closePersona, section, pass, record, snap, goto, mk, cleanupPost, leaveForResidueSweep } from './shared'
 
 async function main() {
   const s = await openPersona({
@@ -164,10 +164,10 @@ async function main() {
   } catch (e) {
     record(s, { id: 'FATAL', severity: 'P0', scenario: 'Persona journey aborted', observed: (e as Error).message.slice(0, 200), expected: 'journey completes' })
   } finally {
-    for (const tid of cleanupTasks) s.cleanup.push(async () => { await s.api.post('/api/tasks/batch', { data: { ids: [tid], action: 'delete' } }).catch(() => {}) })
-    for (const iid of cleanupIdeas) s.cleanup.push(async () => { await s.api.post(`/api/ideas/${iid}/delete`).catch(() => {}) })
-    for (const did of cleanupDecisions) s.cleanup.push(async () => { await s.api.post(`/api/decisions/${did}/delete`).catch(() => {}) })
-    for (const qid of cleanupQuestions) s.cleanup.push(async () => { await s.api.post(`/api/questions/${qid}/delete`).catch(() => {}) })
+    for (const tid of cleanupTasks) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
+    for (const iid of cleanupIdeas) leaveForResidueSweep(s, 'ideas', iid)
+    for (const did of cleanupDecisions) leaveForResidueSweep(s, 'hub_decisions', did)
+    for (const qid of cleanupQuestions) leaveForResidueSweep(s, 'lab_questions', qid)
     const result = await closePersona(s)
     console.log(`\n[coordinator] DONE — ${result.passCount} pass, ${result.findings.length} findings`)
   }
