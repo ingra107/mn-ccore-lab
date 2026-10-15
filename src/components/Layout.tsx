@@ -76,7 +76,7 @@ export default function Layout() {
   }, [])
 
   // Homepage hero is full-bleed, so no top padding needed there
-  const isHome = location.pathname === '/'
+  const isHome = location.pathname === '/' && !/[?&]look=/.test(location.search)
   // The Home hero is a fixed dark band in both themes. While the bar sits on
   // it (top of Home, not scrolled) it takes the dark-theme ink and the
   // bright brand gold, or light mode drew a navy logo and slate links on

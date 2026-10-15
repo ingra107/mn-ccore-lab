@@ -1,4 +1,5 @@
 import { Suspense, Component, useEffect } from 'react'
+import LookSwitch from './pages/publicLooks/LookSwitch'
 import { lazyRoute, isStaleChunkError } from './lib/lazyRoute'
 import type { ReactNode, ErrorInfo } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
@@ -243,8 +244,8 @@ export default function App() {
                       that survives lazyRoute's one automatic reload would
                       unmount the entire tree (blank page). Same class as the
                       other public routes below. */}
-                  <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
-                  <Route path="/team" element={<ErrorBoundary><Team /></ErrorBoundary>} />
+                  <Route path="/" element={<ErrorBoundary><LookSwitch page="home"><Home /></LookSwitch></ErrorBoundary>} />
+                  <Route path="/team" element={<ErrorBoundary><LookSwitch page="team"><Team /></LookSwitch></ErrorBoundary>} />
                   <Route path="/nick" element={<ErrorBoundary><NickLab /></ErrorBoundary>} />
                   <Route path="/nate" element={<ErrorBoundary><NateLab /></ErrorBoundary>} />
                   <Route path="/team/:slug" element={<ErrorBoundary><MemberPage /></ErrorBoundary>} />
