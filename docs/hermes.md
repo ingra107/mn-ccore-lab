@@ -72,14 +72,17 @@ Hub API detects @hermes mention (regex: /@(hermes|claude)\b/i)
 Creates ai_requests record (status: pending)
 Creates placeholder answer: "Thinking about this..."
     |
-hub_ai_listener.py (home laptop, polls every 60s)
+hub_ai_listener.py (home laptop, polls POST /api/ai-requests/queue every 60s)
     |
-Picks up pending request
+Claims the request (POST /api/ai-requests/:id/claim -> a token, 20-minute lease;
+  the row stays status 'pending'; only one runner can hold it)
 Builds prompt with conversation history
     |
 Calls `claude --print --model sonnet` (Max subscription, $0 API cost)
     |
-Posts response back to Hub API
+Posts response back to Hub API with the claim token. The Hub accepts it only
+  from the current, unexpired token, and writes the answer, the placeholder and
+  the notification in one transaction (schema-v140: one answer per ask)
     |
 Team member sees Hermes response (gold badge) in 20-40 seconds
 ```
@@ -95,7 +98,7 @@ Team member sees Hermes response (gold badge) in 20-40 seconds
 |-------|-----|
 | No response after 1 minute | Check if listener is running: `type data\hub_ai_listener.pid` on home machine |
 | Listener not running | Health check auto-restarts every 60 min. Manual: `python scripts/scheduled/hub_ai_listener.py` |
-| "Thinking about this..." stuck | Check home machine is online and has internet |
+| "Thinking about this..." stuck | Check home machine is online and has internet. A request claimed three times without an answer is marked failed by the next poll, and Nick gets one Telegram alert; ask again |
 | PB_API_KEY errors | Verify env var is set: `echo %PB_API_KEY%` on home machine |
 
 ## Artifacts lane (v1, 2026-06-11)

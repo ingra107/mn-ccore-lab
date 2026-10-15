@@ -21,34 +21,30 @@
  * 'claude-ai' and 'Thinking' got "the placeholder"), so the thread-scoped
  * placeholder query, the answered_at stamp and the notification idempotency
  * check never ran. Here the ask, its placeholder and any prior notification
- * are real rows, and each case reads the stored result. postActivityEntry
- * (the fresh-INSERT fallback, covered by its own suite) stays mocked.
+ * are real rows, and each case reads the stored result.
+ *
+ * schema-v140: the fresh-INSERT fallback is no longer a postActivityEntry call
+ * (that ran outside the acceptance transaction); it is an INSERT built by
+ * prepareActivityEntry and run inside the batch. So nothing is mocked: each
+ * fallback case reads the row the batch wrote. These cases post without a
+ * claim token (the legacy, never-claimed arm); the claim protocol itself is
+ * covered in ai-requests.claim.test.ts.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
-
-// Stub postActivityEntry so we can assert it was/wasn't called and what it got.
-vi.mock('../lib/activity-entry', () => ({
-  postActivityEntry: vi.fn().mockResolvedValue({ ok: true, row: { id: 'new-ae-id' } }),
-  activityVisibilityGate: vi.fn().mockResolvedValue({ clause: '1=1', binds: [] }),
-}));
-
-import { postActivityEntry } from '../lib/activity-entry';
 import { handleCreateAIRequest, handleGetAIRequests, handleUpdateAIResponse } from './ai-requests';
 
-const mockPostActivity = vi.mocked(postActivityEntry);
-
+const KEY = 'k';
 let db: InstanceType<typeof Database>;
 let env: Env;
 beforeEach(() => {
-  vi.clearAllMocks();
   db = prodSchemaDb();
   // #8945: requested_by (an email) resolves to a slug through team_members.email.
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' });
-  env = { DB: d1Adapter(db) } as unknown as Env;
+  env = { DB: d1Adapter(db), PB_API_KEY: KEY } as unknown as Env;
 });
 
 function aiRequest(row: Record<string, unknown>) {
@@ -69,13 +65,17 @@ function ask(id: string, entityType: string, entityId: string, opts: { visibilit
 }
 const ae = (id: string) => db.prepare('SELECT body, answered_at FROM activity_entries WHERE id = ?').get(id) as { body: string; answered_at: string | null };
 const aiRow = (id: string) => db.prepare('SELECT status, response, responded_at FROM ai_requests WHERE id = ?').get(id) as Record<string, unknown>;
+/** The fresh answer row the no-placeholder fallback writes, keyed to its request (schema-v140). */
+const freshAnswer = (aiId: string) =>
+  db.prepare("SELECT * FROM activity_entries WHERE source_table = 'ai_requests' AND source_id = ?").get(aiId) as Record<string, unknown> | undefined;
+const entryCount = () => (db.prepare('SELECT COUNT(*) AS n FROM activity_entries').get() as { n: number }).n;
 const notifications = (sourceId: string) =>
   db.prepare("SELECT recipient_slug, type, title, body, link FROM notifications WHERE source_type = 'ai_request' AND source_id = ?").all(sourceId) as Array<Record<string, unknown>>;
 
 function makeRequest(body: unknown): Request {
   return new Request('https://example.com/api/ai-requests/test-id/response', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${KEY}` },
     body: JSON.stringify(body),
   });
 }
@@ -94,7 +94,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     expect(ae('ae-placeholder-1').answered_at).toBeTruthy();
     expect(aiRow('ai-1')).toMatchObject({ status: 'completed', response: 'Here is my answer to your question.' });
     expect(aiRow('ai-1').responded_at).toBeTruthy();
-    expect(mockPostActivity).not.toHaveBeenCalled();
+    expect(freshAnswer('ai-1')).toBeUndefined();
   });
 
   it('answers land in the asking thread: another thread\'s placeholder on the same entity is left alone (#98)', async () => {
@@ -108,7 +108,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     expect(ae('ae-ph-a').body).toMatch(/^Thinking about this/);
   });
 
-  it('task_comment: inserts a fresh comment when no placeholder exists', async () => {
+  it('task_comment: inserts a fresh comment, keyed to the request, when no placeholder exists', async () => {
     insertRow(db, 'projects', { id: 'proj-111', slug: 'p-111', title: 'P', category: 'MNCCORE' });
     insertRow(db, 'tasks', { id: 'task-456', title: 'T', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', project_id: 'proj-111' });
     aiRequest({ id: 'ai-2', source_type: 'task_comment', source_id: 'ae-trigger-2' });
@@ -117,12 +117,11 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     const res = await handleUpdateAIResponse('ai-2', makeRequest({ response: 'Task analysis complete.' }), env);
 
     expect(res.status).toBe(200);
-    expect(mockPostActivity).toHaveBeenCalledOnce();
-    const call = mockPostActivity.mock.calls[0][0];
-    expect(call).toMatchObject({
-      entityType: 'task', entityId: 'task-456', kind: 'comment', actorSlug: 'claude-ai',
-      body: 'Task analysis complete.', fireSideEffects: false, taskProjectId: 'proj-111', parentId: 'ae-trigger-2',
+    expect(freshAnswer('ai-2')).toMatchObject({
+      entity_type: 'task', entity_id: 'task-456', kind: 'comment', actor_slug: 'claude-ai',
+      body: 'Task analysis complete.', project_id: 'proj-111', parent_id: 'ae-trigger-2', visibility: 'team',
     });
+    expect(freshAnswer('ai-2')!.answered_at).toBeTruthy();
   });
 
   it('project_comment: updates placeholder body in place when placeholder exists', async () => {
@@ -133,20 +132,20 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
 
     expect(res.status).toBe(200);
     expect(ae('ae-ph-project-1').body).toBe('Project review done.');
-    expect(mockPostActivity).not.toHaveBeenCalled();
+    expect(freshAnswer('ai-3')).toBeUndefined();
   });
 
   it('project_comment: inserts fresh comment when no placeholder exists', async () => {
+    insertRow(db, 'projects', { id: 'proj-999', slug: 'my-proj', title: 'P', category: 'MNCCORE' });
     aiRequest({ id: 'ai-4', source_type: 'project_comment', source_id: 'ae-trigger-4', project_slug: 'my-proj' });
     ask('ae-trigger-4', 'project', 'proj-999');
 
     const res = await handleUpdateAIResponse('ai-4', makeRequest({ response: 'Project notes summarized.' }), env);
 
     expect(res.status).toBe(200);
-    expect(mockPostActivity).toHaveBeenCalledOnce();
-    const call = mockPostActivity.mock.calls[0][0];
-    expect(call).toMatchObject({ entityType: 'project', entityId: 'proj-999', actorSlug: 'claude-ai', fireSideEffects: false });
-    expect(call.taskProjectId).toBeUndefined();
+    expect(freshAnswer('ai-4')).toMatchObject({
+      entity_type: 'project', entity_id: 'proj-999', actor_slug: 'claude-ai', project_id: 'proj-999', parent_id: 'ae-trigger-4',
+    });
   });
 
   it('inherits author visibility from the triggering entry', async () => {
@@ -155,8 +154,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
 
     await handleUpdateAIResponse('ai-5', makeRequest({ response: 'Private answer.' }), env);
 
-    expect(mockPostActivity).toHaveBeenCalledOnce();
-    expect(mockPostActivity.mock.calls[0][0].visibility).toBe('author');
+    expect(freshAnswer('ai-5')?.visibility).toBe('author');
   });
 
   it('defaults to team visibility when triggering entry is team', async () => {
@@ -165,7 +163,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
 
     await handleUpdateAIResponse('ai-6', makeRequest({ response: 'Team answer.' }), env);
 
-    expect(mockPostActivity.mock.calls[0][0].visibility).toBe('team');
+    expect(freshAnswer('ai-6')?.visibility).toBe('team');
   });
 
   // ── Self-gating: source_id that doesn't resolve → no timeline write ──────────
@@ -174,13 +172,12 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     // 'direct' stands in for any source whose source_id isn't an activity_entries
     // id — also a legacy daily_thought task/date key, or a deleted entry.
     aiRequest({ id: 'ai-7', source_type: 'direct', source_id: 'some-id' });
-    const before = (db.prepare('SELECT COUNT(*) AS n FROM activity_entries').get() as { n: number }).n;
+    const before = entryCount();
 
     const res = await handleUpdateAIResponse('ai-7', makeRequest({ response: 'Direct answer.' }), env);
 
     expect(res.status).toBe(200);
-    expect(mockPostActivity).not.toHaveBeenCalled();
-    expect((db.prepare('SELECT COUNT(*) AS n FROM activity_entries').get() as { n: number }).n).toBe(before);
+    expect(entryCount()).toBe(before);
     expect(aiRow('ai-7').status).toBe('completed');
   });
 
@@ -198,11 +195,12 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
   it('does not write to timeline when status is failed', async () => {
     aiRequest({ id: 'ai-8', source_type: 'task_comment', source_id: 'ae-trigger-8' });
     ask('ae-trigger-8', 'task', 'task-fail', { placeholder: 'ae-ph-8' });
+    const before = entryCount();
 
     const res = await handleUpdateAIResponse('ai-8', makeRequest({ response: 'Error occurred.', status: 'failed' }), env);
 
     expect(res.status).toBe(200);
-    expect(mockPostActivity).not.toHaveBeenCalled();
+    expect(entryCount()).toBe(before);
     expect(ae('ae-ph-8').body).toMatch(/^Thinking about this/);
     expect(aiRow('ai-8').status).toBe('failed');
   });
@@ -223,7 +221,7 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     expect(aiRow('ai-x').status).toBe('pending');
   });
 
-  it('returns 404 when ai_request row not found after update', async () => {
+  it('returns 404 when the ai_request row does not exist', async () => {
     const res = await handleUpdateAIResponse('ai-missing', makeRequest({ response: 'ok' }), env);
     expect(res.status).toBe(404);
   });
@@ -263,7 +261,6 @@ describe('handleUpdateAIResponse — placeholder bound to its request (#119)', (
 
     expect(ae('ph-a').body).toBe('Answer for A.');
     expect(ae('ph-b').body).toBe(PENDING);
-    expect(mockPostActivity).not.toHaveBeenCalled();
   });
 
   it('a private answer never overwrites a team placeholder in the same thread', async () => {
@@ -290,8 +287,7 @@ describe('handleUpdateAIResponse — placeholder bound to its request (#119)', (
     await handleUpdateAIResponse('ai-P3', makeRequest({ response: 'Private answer.' }), env);
 
     expect(ae('ph-legacy-team').body).toBe(PENDING);
-    expect(mockPostActivity).toHaveBeenCalledOnce();
-    expect(mockPostActivity.mock.calls[0][0]).toMatchObject({ visibility: 'author', parentId: 'root-3' });
+    expect(freshAnswer('ai-P3')).toMatchObject({ visibility: 'author', parent_id: 'root-3', body: 'Private answer.' });
   });
 
   it('a keyless placeholder at the same visibility is still answered (in-flight at deploy)', async () => {
@@ -303,7 +299,7 @@ describe('handleUpdateAIResponse — placeholder bound to its request (#119)', (
     await handleUpdateAIResponse('ai-4k', makeRequest({ response: 'Legacy answer.' }), env);
 
     expect(ae('ph-legacy-4').body).toBe('Legacy answer.');
-    expect(mockPostActivity).not.toHaveBeenCalled();
+    expect(freshAnswer('ai-4k')).toBeUndefined();
   });
 });
 
@@ -311,7 +307,6 @@ describe('handleUpdateAIResponse — placeholder bound to its request (#119)', (
 
 describe('handleGetAIRequests — landing_visibility (#119)', () => {
   it('returns the trigger entry visibility, or null when the source is not an entry', async () => {
-    const piEnv = { DB: d1Adapter(db), PB_API_KEY: 'k' } as unknown as Env;
     entry({ id: 'trig-author', entity_type: 'task', entity_id: 't', visibility: 'author' });
     entry({ id: 'trig-team', entity_type: 'task', entity_id: 't', visibility: 'team' });
     aiRequest({ id: 'lv-a', source_type: 'task_comment', source_id: 'trig-author' });
@@ -319,9 +314,9 @@ describe('handleGetAIRequests — landing_visibility (#119)', () => {
     aiRequest({ id: 'lv-n', source_type: 'daily_thought', source_id: '2026-10-13' });
 
     const req = new Request('https://example.com/api/ai-requests?status=pending', {
-      headers: { Authorization: 'Bearer k' },
+      headers: { Authorization: `Bearer ${KEY}` },
     });
-    const res = await handleGetAIRequests(new URL(req.url), piEnv, req);
+    const res = await handleGetAIRequests(new URL(req.url), env, req);
     const { data } = await res.json() as { data: Array<{ id: string; landing_visibility: string | null }> };
     const byId = Object.fromEntries(data.map((r) => [r.id, r.landing_visibility]));
 
@@ -333,8 +328,7 @@ describe('handleGetAIRequests — landing_visibility (#119)', () => {
 //
 // INSERT INTO notifications for every completed ai_request, keyed by
 // requested_by email → resolveSlug (team_members.email, e.g. ingra107 → nick-ingraham).
-// Idempotent: repeated response-POST retries skip the INSERT when a
-// (recipient_slug, 'ai_request', ai_request.id) row already exists.
+// At most one per (recipient_slug, 'ai_request', ai_request.id).
 
 describe('handleUpdateAIResponse — submitter notifications', () => {
   it('inserts notification for daily_thought completion with requested_by set', async () => {
@@ -361,11 +355,19 @@ describe('handleUpdateAIResponse — submitter notifications', () => {
     expect(notifications('ai-n2')).toEqual([]);
   });
 
-  it('a retried response POST does not notify twice (idempotent)', async () => {
+  it('a retried response POST does not notify twice (an exact replay is a no-op, schema-v140)', async () => {
     aiRequest({ id: 'ai-n3', source_type: 'daily_thought', source_id: '2026-06-25', requested_by: 'ingra107@umn.edu' });
     await handleUpdateAIResponse('ai-n3', makeRequest({ response: 'Answer.' }), env);
-    await handleUpdateAIResponse('ai-n3', makeRequest({ response: 'Answer.' }), env);
+    const replay = await handleUpdateAIResponse('ai-n3', makeRequest({ response: 'Answer.' }), env);
+    expect(replay.status).toBe(200);
     expect(notifications('ai-n3')).toHaveLength(1);
+  });
+
+  it('a notification already on file is not duplicated (NOT EXISTS inside the guarded INSERT)', async () => {
+    aiRequest({ id: 'ai-n3b', source_type: 'daily_thought', source_id: '2026-06-25', requested_by: 'ingra107@umn.edu' });
+    insertRow(db, 'notifications', { id: 'pre-n', recipient_slug: 'nick-ingraham', type: 'update', source_type: 'ai_request', source_id: 'ai-n3b', title: 'earlier' });
+    await handleUpdateAIResponse('ai-n3b', makeRequest({ response: 'Answer.' }), env);
+    expect(notifications('ai-n3b')).toHaveLength(1);
   });
 
   it('does not insert notification when status=failed', async () => {

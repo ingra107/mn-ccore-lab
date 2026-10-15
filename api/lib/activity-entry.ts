@@ -329,21 +329,54 @@ function applyMePolicy(
   return { visibility, body };
 }
 
+// The INSERT column list and its VALUES, created_at stamped by SQL. hidden_at
+// is the 15th bind, appended AFTER parent_id so indices 0-13 are unchanged --
+// phase4-correctness.test.ts's positional asserts (ph[1], ph[2], ph[4], ph[6])
+// and the INSERT<->column-list contract stay green (§2.3 bind-order landmine).
+const ACTIVITY_ENTRY_COLS = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at, product_id, created_at)`;
+const ACTIVITY_ENTRY_VALS = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+
 /**
- * THE unified activity write. See module header. Returns { ok, row } on success
- * (row is the freshly-read activity_entries record in its canonical shape) or
- * { ok:false, error, status } so the route layer controls the HTTP response.
+ * Everything postActivityEntry decides BEFORE it writes: validation, the
+ * parent's identity and visibility, the @me policy, the entity and project,
+ * the product tag, the mentions, and the INSERT's bind values.
+ *
+ * Exported for a caller that must fold the insert into its OWN D1 batch, so
+ * the row lands in one transaction with that caller's other writes (the Hermes
+ * answer, ai-requests.ts: acceptance, publication and notification commit
+ * together or not at all). Such a caller gets the row and nothing else: no
+ * mention notification, no Hermes dispatch, no artifact key_link hook. Every
+ * other caller goes through postActivityEntry, which runs this first.
  */
-export async function postActivityEntry(input: PostActivityEntryInput): Promise<PostActivityEntryResult> {
+export interface PreparedActivityEntry {
+  ok: true;
+  id: string;
+  entityType: EntityType;
+  entityId: string;
+  projectId: string | null;
+  visibility: Visibility;
+  body: string;
+  mentions: string[];
+  parentId: string | null;
+  /** The column list, `(id, ..., created_at)`; created_at is SQL's datetime('now'), never bound. */
+  cols: string;
+  /** One value per bound column of `cols`, in order. */
+  binds: readonly unknown[];
+  /** Cached by the existence read; postActivityEntry's owner notification reuses it. */
+  taskMeta: TaskMeta | null;
+  meeting: MeetingRow | null;
+}
+
+export async function prepareActivityEntry(
+  input: PostActivityEntryInput,
+): Promise<PreparedActivityEntry | { ok: false; error: string; status: number }> {
   const {
     env,
-    user,
     kind,
     actorSlug,
     sourceTable = null,
     sourceId = null,
     metadata = null,
-    fireSideEffects = true,
   } = input;
   // #98: identity is mutable because a reply INHERITS it from its parent (see
   // the parent-resolution block below). Roots keep exactly what the caller passed.
@@ -439,9 +472,6 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     : await entityConfig(entityType)!.resolve(env, entityId);
   if (!resolved.ok) return resolved;
   const projectId = resolved.projectId;
-  // Cached by the existence lookup so the owner-notification side effect below
-  // doesn't need a second SELECT on the same row (simplify pass 2026-06-11).
-  const taskMeta = resolved.taskMeta ?? null;
 
   // ── product tag (project-entity rows only) ──────────────────────────────────
   let productId: string | null = null;
@@ -462,14 +492,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   const mentions = parseMentions(body).filter((slug) => slug !== actorSlug);
   const mentionsJson = mentions.length > 0 ? JSON.stringify(mentions) : null;
 
-  // ── insert (idempotent when a backfill source is provided) ─────────────────
   const id = generateId(); // 'ae_'-prefix is conceptual; generateId() mints a hex id (matches comments/updates legacy ids)
-  // hidden_at is the LAST bind (index 14), appended AFTER parent_id so indices
-  // 0-13 are unchanged — phase4-correctness.test.ts's positional asserts (ph[1],
-  // ph[2], ph[4], ph[6]) and the INSERT↔column-list contract stay green (§2.3
-  // bind-order landmine). NULL for a root; inherited from the parent for a reply.
-  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at, product_id, created_at)`;
-  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  // hidden_at (index 14): NULL for a root; inherited from the parent for a reply.
   const binds = [
     id,
     entityType,
@@ -489,6 +513,29 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     productId,
   ] as const;
 
+  return {
+    ok: true, id, entityType, entityId, projectId, visibility, body, mentions, parentId,
+    cols: ACTIVITY_ENTRY_COLS, binds,
+    // Cached by the existence lookup so postActivityEntry's owner notification
+    // doesn't need a second SELECT on the same row (simplify pass 2026-06-11).
+    taskMeta: resolved.taskMeta ?? null, meeting: resolved.meeting ?? null,
+  };
+}
+
+/**
+ * THE unified activity write. See module header. Returns { ok, row } on success
+ * (row is the freshly-read activity_entries record in its canonical shape) or
+ * { ok:false, error, status } so the route layer controls the HTTP response.
+ */
+export async function postActivityEntry(input: PostActivityEntryInput): Promise<PostActivityEntryResult> {
+  const { env, user, kind, actorSlug, sourceTable = null, sourceId = null, fireSideEffects = true } = input;
+  const prep = await prepareActivityEntry(input);
+  if (!prep.ok) return prep;
+  const { id, entityType, entityId, projectId, visibility, body, mentions, parentId, taskMeta, binds } = prep;
+  const cols = ACTIVITY_ENTRY_COLS;
+  const vals = ACTIVITY_ENTRY_VALS;
+
+  // ── insert (idempotent when a backfill source is provided) ─────────────────
   let row: Record<string, unknown> | null;
   let linkSkipped: 'already_linked' | 'slots_full' | undefined;
   if (sourceTable) {
@@ -636,7 +683,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
           body,
           visibility,
           requestedBy: user.email,
-          meeting: resolved.meeting ?? null,
+          meeting: prep.meeting,
           // #98: the thread this ask belongs to. A reply's root is its parent;
           // a root's own thread is itself. Hermes answers INTO that thread
           // rather than starting a new one, and gets the preceding exchange as

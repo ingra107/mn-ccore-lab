@@ -203,7 +203,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 265 as of 2026-10-14 -- Nick's rulings (-2): POST /api/pb/capture (every
     // prod row since April was a test-harness row) and POST /api/regulatory
     // (no client; regulatory_items and its rows stay, edited via POST :id).
-    expect(ROUTE_REGISTRY).toHaveLength(265)
+    // 268 as of 2026-10-14 -- schema-v140 Hermes claim (+3): POST
+    // /api/ai-requests/queue, POST /api/ai-requests/:id/claim, POST
+    // /api/ai-requests/:id/release (caller: PB hub_ai_listener.py).
+    expect(ROUTE_REGISTRY).toHaveLength(268)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
