@@ -59,6 +59,13 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
   if (status) {
     query += ' AND status = ?';
     params.push(status);
+    // schema-v140: `?status=pending` is the PRE-claim listener's poll (the new
+    // listener reads POST /api/ai-requests/queue; nothing in src/ reads this
+    // GET). A row that has ever been claimed must not appear here: an old
+    // listener would generate, get a 409 on its tokenless answer, read that
+    // as a transport failure, and regenerate every poll with full side
+    // effects (the #2128 spin class). Never-claimed rows it may still answer.
+    if (status === 'pending') query += ` AND ${NEVER_CLAIMED}`;
   }
 
   if (projectSlug) {
@@ -178,36 +185,52 @@ export async function handleCreateAIRequest(
 // unconditionally. The claim protocol (PB plan
 // Scratch/plans/2026-10-14-hermes-claim-reconciled.md):
 //
-//   POST /api/ai-requests/queue        sweep exhausted claims, list claimable rows
-//   POST /api/ai-requests/:id/claim    acquire: a fresh token, a 20-minute lease
-//   POST /api/ai-requests/:id/release  give a lease back after a known transient
-//   POST /api/ai-requests/:id/response the terminal answer, fenced by the token
+//   POST /api/ai-requests/queue          sweep exhausted claims, list claimable rows
+//                                        and the exhaustion alerts still owed
+//   POST /api/ai-requests/:id/claim      acquire: a fresh token, a 20-minute lease
+//   POST /api/ai-requests/:id/release    give a lease back after a known transient
+//   POST /api/ai-requests/:id/alert-sent ack an owed exhaustion alert
+//   POST /api/ai-requests/:id/response   the terminal answer, fenced by the token
 //
 // A claimed row stays status='pending'; ownership lives in the claim columns.
 // claimed_by is diagnostic only: the TOKEN is the authority, and a takeover
 // mints a new one, so a late answer from a superseded holder is refused even
-// when both holders report the same machine name. All four routes are
+// when both holders report the same machine name. All five routes are
 // PI/service only (/response was `auth: 'authed'`: any signed-in member could
 // post an answer to anyone's ask).
 
 /** One lease. More than 3x the longest one-row path (300s CLI + 30s HTTP calls), reconciled plan decision 4. */
 export const AI_CLAIM_TTL_SECONDS = 20 * 60;
-/** Acquisitions per request; the CHECK in schema-v140 holds the same bound. */
+/** Leases that ended without a release (crash, expiry); the CHECK in schema-v140 holds the same bound. */
 export const AI_CLAIM_MAX_ATTEMPTS = 3;
+/**
+ * Releases after a known transient, a separate budget (coordinator ruling,
+ * 2026-10-14, changing decision 4): a busy backlog lock must not burn the crash
+ * budget and permanently fail an ask. Each release backs the next claim off by
+ * 1, 2, 4 ... minutes, capped at AI_CLAIM_RELEASE_BACKOFF_CAP_MIN, so ten span
+ * roughly three hours before the sweep fails the row.
+ */
+export const AI_CLAIM_MAX_RELEASES = 10;
+export const AI_CLAIM_RELEASE_BACKOFF_CAP_MIN = 30;
 
 // D1's clock, unix seconds. claim_expires_at is compared only against this.
 const NOW_S = "CAST(strftime('%s', 'now') AS INTEGER)";
-// A lease is live while claim_expires_at > now. Released and revoked rows carry
-// no token, so they are free whatever their expiry says.
-const FREE_LEASE = `(claim_token IS NULL OR claim_expires_at <= ${NOW_S})`;
-const CLAIMABLE = `status = 'pending' AND claim_attempts < ${AI_CLAIM_MAX_ATTEMPTS} AND ${FREE_LEASE}`;
-const EXHAUSTED = `status = 'pending' AND claim_attempts >= ${AI_CLAIM_MAX_ATTEMPTS} AND ${FREE_LEASE}`;
+// claim_expires_at is when a lease, or a release's backoff, ends. A row is free
+// to claim once it has passed (or was never set / was revoked to NULL).
+const FREE_LEASE = `(claim_expires_at IS NULL OR claim_expires_at <= ${NOW_S})`;
+// No runner has ever held the row. Only such a row takes a tokenless answer,
+// and only such a row appears in the legacy `?status=pending` GET.
+const NEVER_CLAIMED = 'claim_attempts = 0 AND claim_releases = 0';
+const CLAIMABLE = `status = 'pending' AND claim_attempts < ${AI_CLAIM_MAX_ATTEMPTS}
+  AND claim_releases < ${AI_CLAIM_MAX_RELEASES} AND ${FREE_LEASE}`;
+const EXHAUSTED = `status = 'pending' AND (claim_attempts >= ${AI_CLAIM_MAX_ATTEMPTS}
+  OR claim_releases >= ${AI_CLAIM_MAX_RELEASES}) AND ${FREE_LEASE}`;
 /** The terminal reason the sweep writes. Never published: failed rows reach no feed and notify no one. */
 export const AI_CLAIM_SWEEP_REASON =
-  `Hermes took this request ${AI_CLAIM_MAX_ATTEMPTS} times and never finished it, so it was marked failed. Ask again to retry.`;
+  `Hermes could not finish this request (${AI_CLAIM_MAX_ATTEMPTS} runs lost, or ${AI_CLAIM_MAX_RELEASES} retries after a temporary failure), so it was marked failed. Ask again to retry.`;
 
 // The queue's projection. Never claim_token.
-const QUEUE_COLS = 'id, source_type, source_id, project_slug, prompt, context, status, requested_by, created_at, claim_attempts, claimed_by, claim_expires_at';
+const QUEUE_COLS = 'id, source_type, source_id, project_slug, prompt, context, status, requested_by, created_at, claim_attempts, claim_releases, claimed_by, claim_expires_at';
 
 const PI_ONLY = 'Forbidden — PI or service access only';
 
@@ -224,6 +247,7 @@ interface AIRequestRow {
   output_tokens: number | null;
   claim_token: string | null;
   claim_attempts: number;
+  claim_releases: number;
   [k: string]: unknown;
 }
 
@@ -232,26 +256,42 @@ async function readRequest(env: Env, id: string): Promise<AIRequestRow | null> {
 }
 
 // POST /api/ai-requests/queue — the listener's poll. Two things in one batch:
-// a request whose third lease is gone is marked failed (no public diagnostic:
-// failed rows reach no feed and notify no one), and the rows a runner may claim
-// now are listed oldest first. Listing grants nothing; only /claim does.
-// `swept` names the rows THIS call failed. The sweep stamps its own commit id,
-// so two concurrent polls cannot both report the same row, and the listener
-// alerts Nick once per row.
+// a request that is out of budget (its third lease gone, or its tenth release)
+// is marked failed (no public diagnostic: failed rows reach no feed and notify
+// no one) and its exhaustion alert is marked owed; then the rows a runner may
+// claim now are listed oldest first. Listing grants nothing; only /claim does.
+// `swept` is every row whose alert is still OWED, not only the ones this call
+// failed: the alert survives a lost /queue response, and leaves the list only
+// when a listener acks it (/alert-sent) after sending it. At least once, then:
+// two listeners polling inside one window can both alert.
 export async function handleAIRequestQueue(request: Request, env: Env): Promise<Response> {
   if (!(await isPiRequest(request, env))) return error(PI_ONLY, 403);
-  const sweepId = generateId();
   const [, swept, claimable] = await env.DB.batch([
     env.DB.prepare(
-      `UPDATE ai_requests SET status = 'failed', response = ?, responded_at = datetime('now'), response_commit_id = ?
+      `UPDATE ai_requests SET status = 'failed', response = ?, responded_at = datetime('now'), exhaustion_alert = 'owed'
         WHERE ${EXHAUSTED}`
-    ).bind(AI_CLAIM_SWEEP_REASON, sweepId),
+    ).bind(AI_CLAIM_SWEEP_REASON),
     env.DB.prepare(
-      'SELECT id, source_type, source_id, requested_by, claimed_by, claim_attempts FROM ai_requests WHERE response_commit_id = ?'
-    ).bind(sweepId),
+      `SELECT id, source_type, source_id, requested_by, claimed_by, claim_attempts, claim_releases
+         FROM ai_requests WHERE exhaustion_alert = 'owed' ORDER BY responded_at ASC, id ASC`
+    ),
     env.DB.prepare(`SELECT ${QUEUE_COLS} FROM ai_requests WHERE ${CLAIMABLE} ORDER BY created_at ASC, id ASC`),
   ]);
   return json({ data: claimable.results ?? [], swept: swept.results ?? [] });
+}
+
+// POST /api/ai-requests/:id/alert-sent — the listener sent Nick the exhaustion
+// alert for this row; stop listing it. exhaustion_alert is outside the
+// terminal-row trigger's column list on purpose: it is bookkeeping, not result.
+export async function handleAIRequestAlertSent(id: string, request: Request, env: Env): Promise<Response> {
+  if (!(await isPiRequest(request, env))) return error(PI_ONLY, 403);
+  const res = await env.DB.prepare(
+    "UPDATE ai_requests SET exhaustion_alert = 'sent' WHERE id = ? AND exhaustion_alert = 'owed'"
+  ).bind(id).run();
+  if (res.meta.changes === 1) return json({ data: { id, acked: true } });
+  const exists = await env.DB.prepare('SELECT 1 AS one FROM ai_requests WHERE id = ?').bind(id).first();
+  if (!exists) return error('AI request not found', 404);
+  return json({ error: 'No alert is owed for this request', reason: 'not_owed' }, 409);
 }
 
 // POST /api/ai-requests/:id/claim  body {machine?}
@@ -295,30 +335,49 @@ export async function handleClaimAIRequest(id: string, request: Request, env: En
 
 async function claimRefusal(env: Env, id: string): Promise<Response> {
   const row = await env.DB.prepare(
-    `SELECT status, claim_attempts, (claim_token IS NOT NULL AND claim_expires_at > ${NOW_S}) AS held
+    `SELECT status, (claim_token IS NOT NULL AND claim_expires_at > ${NOW_S}) AS held,
+            (claim_token IS NULL AND claim_expires_at > ${NOW_S}) AS backoff
        FROM ai_requests WHERE id = ?`
-  ).bind(id).first<{ status: string | null; claim_attempts: number; held: number }>();
+  ).bind(id).first<{ status: string | null; held: number; backoff: number }>();
   if (!row) return error('AI request not found', 404);
   if (row.status !== 'pending') return json({ error: 'AI request already has its answer', reason: 'terminal' }, 409);
   if (row.held) return json({ error: 'AI request is claimed by another runner', reason: 'held' }, 409);
-  return json({ error: `AI request has used all ${AI_CLAIM_MAX_ATTEMPTS} claims`, reason: 'exhausted' }, 409);
+  if (row.backoff) return json({ error: 'AI request was released and is backing off', reason: 'backoff' }, 409);
+  return json({ error: 'AI request has used its claim budget', reason: 'exhausted' }, 409);
 }
 
 // POST /api/ai-requests/:id/release  body {claim_token}
 // A runner that hit a KNOWN transient failure (backlog lock busy, a failed
-// artifact /revise) gives the lease back so the next poll can retry at once
-// instead of after the TTL. The attempt count is kept: three transients in a
-// row exhaust the request like three crashes would.
+// artifact /revise, an unexpected error in the listener's loop) gives the lease
+// back. A release is not a lost run: it refunds its attempt and spends one of
+// the separate AI_CLAIM_MAX_RELEASES instead, and it backs the next claim off
+// by 1, 2, 4 ... minutes (capped), so a lock that stays busy is retried for
+// hours rather than burning the crash budget in three polls. SQLite evaluates
+// every SET expression against the OLD row, so the backoff reads the release
+// count before this one.
 export async function handleReleaseAIRequest(id: string, request: Request, env: Env): Promise<Response> {
   if (!(await isPiRequest(request, env))) return error(PI_ONLY, 403);
-  const body = await request.json() as { claim_token?: unknown };
-  const token = typeof body?.claim_token === 'string' ? body.claim_token : '';
+  let token = '';
+  try {
+    const body = await request.json() as { claim_token?: unknown };
+    if (typeof body?.claim_token === 'string') token = body.claim_token;
+  } catch {
+    // Total fallback on the next line: a bodyless or non-JSON release has no token.
+    token = '';
+  }
   if (!token) return error('claim_token is required', 400);
   const res = await env.DB.prepare(
-    `UPDATE ai_requests SET claim_token = NULL, claimed_by = NULL, claim_expires_at = ${NOW_S}
+    `UPDATE ai_requests
+        SET claim_token = NULL, claimed_by = NULL,
+            claim_attempts = claim_attempts - 1, claim_releases = claim_releases + 1,
+            claim_expires_at = ${NOW_S} + 60 * MIN(${AI_CLAIM_RELEASE_BACKOFF_CAP_MIN}, 1 << claim_releases)
       WHERE id = ? AND status = 'pending' AND claim_token = ?`
   ).bind(id, token).run();
-  if (res.meta.changes === 1) return json({ data: { id, released: true } });
+  if (res.meta.changes === 1) {
+    const row = await env.DB.prepare('SELECT claim_releases, claim_expires_at FROM ai_requests WHERE id = ?')
+      .bind(id).first<{ claim_releases: number; claim_expires_at: number }>();
+    return json({ data: { id, released: true, releases: row?.claim_releases, next_claim_at: row?.claim_expires_at } });
+  }
   const exists = await env.DB.prepare('SELECT 1 AS one FROM ai_requests WHERE id = ?').bind(id).first();
   if (!exists) return error('AI request not found', 404);
   return json({ error: 'This token does not hold the claim', reason: 'not_held' }, 409);
@@ -327,9 +386,13 @@ export async function handleReleaseAIRequest(id: string, request: Request, env: 
 // POST /api/ai-requests/:id/response — the terminal answer (for the PB listener).
 //
 // FENCED (schema-v140). A request that has ever been claimed takes its answer
-// only from the CURRENT, unexpired claim token. A tokenless (legacy) answer
-// wins only while the row has never been claimed (claim_attempts = 0, no
-// token); once claimed, every tokenless answer loses. So an old listener can
+// only from the CURRENT claim token. No expiry test here, on purpose: a
+// takeover always mints a new token and a release clears it, so a token that
+// still matches belongs to the only runner that has the row, even if its lease
+// ran out -- and refusing it would throw away a finished answer and regenerate
+// it. The lease bounds /claim and the queue, not the answer. A tokenless
+// (legacy) answer wins only while the row has never been claimed; once
+// claimed, every tokenless answer loses. So an old listener can
 // still answer a row nobody claimed, and cannot answer one a new listener holds.
 //
 // ONE TRANSACTION. Acceptance, the timeline write and the notification are one
@@ -399,8 +462,8 @@ export async function handleUpdateAIResponse(
           SET response = ?, status = ?, responded_at = datetime('now'),
               input_tokens = ?, output_tokens = ?, response_commit_id = ?
         WHERE id = ? AND status = 'pending' AND (
-              (? IS NOT NULL AND claim_token = ? AND claim_expires_at > ${NOW_S})
-           OR (? IS NULL AND claim_token IS NULL AND claim_attempts = 0))`
+              (? IS NOT NULL AND claim_token = ?)
+           OR (? IS NULL AND claim_token IS NULL AND ${NEVER_CLAIMED}))`
     ).bind(responseText, status, inTok, outTok, commitId, id, token, token, token),
   ];
   if (status === 'completed') {
@@ -420,7 +483,7 @@ export async function handleUpdateAIResponse(
   if (!now) return error('AI request not found', 404);
   if (now.status !== 'pending') return replayOrConflict(now, submitted);
   return json({
-    error: 'This request is claimed, and the submission does not carry its current, unexpired claim token',
+    error: 'This request is claimed, and the submission does not carry its current claim token',
     reason: 'claim_not_held',
   }, 409);
 }

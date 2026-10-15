@@ -14,21 +14,33 @@
 -- seats, two of three per decision).
 --
 -- WHAT.
---   * Five claim columns. A claimed row stays status='pending'; ownership lives
---     here, not in a new status value (no reader of `status` changes meaning).
---       claim_attempts      acquisitions so far, 0..3 (CHECK). Never reset by
---                           a release; the service sweep fails a row whose
---                           third lease is gone.
+--   * Seven claim columns. A claimed row stays status='pending'; ownership
+--     lives here, not in a new status value (no reader of `status` changes
+--     meaning).
+--       claim_attempts      acquisitions that did NOT end in a release (a crash,
+--                           a lease that ran out, or the live one), 0..3
+--                           (CHECK). The service sweep fails a row whose third
+--                           such lease is gone. A release refunds its attempt.
+--       claim_releases      releases after a known transient (backlog lock busy,
+--                           a failed /revise), 0..10 (CHECK). Each release
+--                           pushes the next claim out by 1, 2, 4 ... minutes
+--                           (capped at 30); the tenth exhausts the row. Its own
+--                           budget so a busy lock cannot burn the crash budget.
 --       claimed_by          diagnostic only (machine name). Never authority.
 --       claim_token         fresh server-minted token per acquisition. The
 --                           terminal /response of a claimed row must carry the
---                           current one, unexpired. Never returned by the
---                           requester-readable GET.
---       claim_expires_at    UTC unix seconds, D1 clock.
+--                           current one (a takeover mints a new one, a release
+--                           clears it). Never returned by the requester GET.
+--       claim_expires_at    UTC unix seconds, D1 clock: when the lease (or a
+--                           release's backoff) ends. Gates /claim and the queue.
 --       response_commit_id  fresh per terminal submission; every publication
 --                           and notification statement in the acceptance batch
 --                           is guarded on it, so a losing submission writes
 --                           nothing.
+--       exhaustion_alert    'owed' when the sweep fails a row, 'sent' once a
+--                           listener has alerted Nick and acked. The queue keeps
+--                           returning owed rows, so a lost /queue response does
+--                           not lose the alert.
 --   * Three RAISE(ABORT) triggers (the schema-v101 precedent): a terminal row's
 --     result and identity fields cannot be rewritten, the row cannot be
 --     deleted, and an INSERT (OR REPLACE) cannot land on its id. Metadata such
@@ -46,6 +58,10 @@
 -- columns). No DELETE FROM ai_requests and no INSERT OR REPLACE anywhere. PB
 -- has no direct D1 writer of this table.
 --
+-- RETENTION. Terminal ai_requests rows cannot be deleted. Any retention job or
+-- table-rebuild migration (the CREATE-copy-DROP-RENAME shape) must drop these
+-- three triggers first and re-create them after.
+--
 -- HUB-ONLY columns -- NO Peripheral Brain lockstep (brain.db has no
 -- ai_requests table; same class as v82). The cross-repo CONTRACT (claim /
 -- release / queue routes, token on /response) is recorded in PB
@@ -61,10 +77,14 @@
 --   UPDATE ai_requests SET claimed_by = NULL, claim_token = NULL, claim_expires_at = NULL
 --    WHERE status = 'pending';
 -- Restoring the old unconditional /response is NOT an acceptable rollback while
--- two listeners can run. To remove this migration entirely:
+-- two listeners can run. To remove this migration entirely, FIRST redeploy the
+-- previous Pages build (the new routes name these columns, so every
+-- /api/ai-requests call 500s once they are gone), then:
 --   DROP TRIGGER IF EXISTS ai_requests_terminal_result_immutable;
 --   DROP TRIGGER IF EXISTS ai_requests_terminal_no_delete;
 --   DROP TRIGGER IF EXISTS ai_requests_terminal_no_replace;
+--   ALTER TABLE ai_requests DROP COLUMN exhaustion_alert;
+--   ALTER TABLE ai_requests DROP COLUMN claim_releases;
 --   ALTER TABLE ai_requests DROP COLUMN response_commit_id;
 --   ALTER TABLE ai_requests DROP COLUMN claim_expires_at;
 --   ALTER TABLE ai_requests DROP COLUMN claim_token;
@@ -84,6 +104,10 @@ ALTER TABLE ai_requests ADD COLUMN claimed_by TEXT;
 ALTER TABLE ai_requests ADD COLUMN claim_token TEXT;
 ALTER TABLE ai_requests ADD COLUMN claim_expires_at INTEGER;
 ALTER TABLE ai_requests ADD COLUMN response_commit_id TEXT;
+ALTER TABLE ai_requests ADD COLUMN claim_releases INTEGER NOT NULL DEFAULT 0
+  CHECK (claim_releases BETWEEN 0 AND 10);
+ALTER TABLE ai_requests ADD COLUMN exhaustion_alert TEXT
+  CHECK (exhaustion_alert IS NULL OR exhaustion_alert IN ('owed', 'sent'));
 
 DROP TRIGGER IF EXISTS ai_requests_terminal_result_immutable;
 DROP TRIGGER IF EXISTS ai_requests_terminal_no_delete;
@@ -94,7 +118,8 @@ DROP TRIGGER IF EXISTS ai_requests_terminal_no_replace;
 CREATE TRIGGER ai_requests_terminal_result_immutable
 BEFORE UPDATE OF
   id, status, response, responded_at, input_tokens, output_tokens,
-  claimed_by, claim_token, claim_expires_at, claim_attempts, response_commit_id
+  claimed_by, claim_token, claim_expires_at, claim_attempts, claim_releases,
+  response_commit_id
 ON ai_requests FOR EACH ROW
 WHEN OLD.status IN ('completed', 'failed')
 BEGIN SELECT RAISE(ABORT, 'ai_request terminal result is immutable (schema-v140): one answer per ask'); END;

@@ -76,7 +76,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 // pi-analytics.ts retired 2026-05-05 (5.9) — 0 frontend callers; /api/analytics/pi-dashboard is canonical
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
-import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse, handleClaimAIRequest, handleReleaseAIRequest, handleAIRequestQueue } from './routes/ai-requests';
+import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse, handleClaimAIRequest, handleReleaseAIRequest, handleAIRequestQueue, handleAIRequestAlertSent } from './routes/ai-requests';
 import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleSearchArtifacts, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
@@ -2778,7 +2778,7 @@ defineRoute({
   entity: 'ai-requests',
   handler: (c) => handleCreateAIRequest(R(c), USER(c), E(c)),
 });
-// schema-v140 claim protocol (one answer per ask). All four are PI/service:
+// schema-v140 claim protocol (one answer per ask). All five are PI/service:
 // isPiRequest gates in-handler, the same idiom as /api/launch-log/:id/claim.
 // /response was `auth: 'authed'`, so any signed-in member could write the
 // answer to anyone's ask. Specific-before-generic: /queue is not an :id.
@@ -2808,6 +2808,14 @@ defineRoute({
   entity: 'ai-requests',
   noVersionBump: true,
   handler: (c) => handleReleaseAIRequest(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/ai-requests/:id/alert-sent',
+  auth: 'pi',
+  entity: 'ai-requests',
+  noVersionBump: true,
+  handler: (c) => handleAIRequestAlertSent(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
   method: 'POST',

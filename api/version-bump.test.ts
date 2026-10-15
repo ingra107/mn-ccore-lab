@@ -73,6 +73,8 @@ describe('version bump', () => {
     const token = (db.prepare("SELECT claim_token FROM ai_requests WHERE id = 'ai-vb'").get() as { claim_token: string }).claim_token
     expect(await post('/api/ai-requests/ai-vb/release', { claim_token: token }, 'service')).toBe(200)
     expect(version()).toBe('1')
+    // The release backed the next claim off; let the clock pass it.
+    db.prepare("UPDATE ai_requests SET claim_expires_at = 0 WHERE id = 'ai-vb'").run()
     // Through the real router and auth: a member cannot claim, the service can answer.
     expect(await post('/api/ai-requests/ai-vb/claim', {}, 'casey')).toBe(403)
     expect(await post('/api/ai-requests/ai-vb/claim', {}, 'service')).toBe(200)
@@ -85,6 +87,7 @@ describe('version bump', () => {
   it('only the read-receipt, error-report and Hermes claim routes opt out', () => {
     const optOut = ROUTE_REGISTRY.filter((r) => r.noVersionBump).map((r) => `${r.method} ${r.path}`).sort()
     expect(optOut).toEqual([
+      'POST /api/ai-requests/:id/alert-sent',
       'POST /api/ai-requests/:id/claim',
       'POST /api/ai-requests/:id/release',
       'POST /api/ai-requests/queue',

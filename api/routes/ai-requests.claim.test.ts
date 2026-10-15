@@ -16,8 +16,8 @@ import type Database from 'better-sqlite3';
 import type { Env } from '../helpers';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 import {
-  handleAIRequestQueue, handleClaimAIRequest, handleGetAIRequests, handleReleaseAIRequest, handleUpdateAIResponse,
-  AI_CLAIM_SWEEP_REASON,
+  handleAIRequestAlertSent, handleAIRequestQueue, handleClaimAIRequest, handleGetAIRequests, handleReleaseAIRequest,
+  handleUpdateAIResponse, AI_CLAIM_SWEEP_REASON, AI_CLAIM_MAX_RELEASES,
 } from './ai-requests';
 
 const KEY = 'svc-key';
@@ -98,8 +98,12 @@ async function queue() {
 const row = (id: string) => db.prepare('SELECT * FROM ai_requests WHERE id = ?').get(id) as Record<string, unknown>;
 const body = (id: string) => (db.prepare('SELECT body FROM activity_entries WHERE id = ?').get(id) as { body: string }).body;
 const notes = (id: string) => db.prepare("SELECT * FROM notifications WHERE source_type = 'ai_request' AND source_id = ?").all(id);
-/** Push a held lease into the past, as the clock would. */
+/** Push a held lease (or a release's backoff) into the past, as the clock would. */
 const expireLease = (id: string) => db.prepare('UPDATE ai_requests SET claim_expires_at = claim_expires_at - 100000 WHERE id = ?').run(id);
+const nowS = () => (db.prepare("SELECT CAST(strftime('%s','now') AS INTEGER) AS n").get() as { n: number }).n;
+async function ackAlert(id: string) {
+  return (await handleAIRequestAlertSent(id, svc(`/api/ai-requests/${id}/alert-sent`), env)).status;
+}
 
 // ── auth ────────────────────────────────────────────────────────────────────
 
@@ -150,7 +154,7 @@ describe('claim: one winner, a fresh token per acquisition', () => {
 
 // ── the fence ───────────────────────────────────────────────────────────────
 
-describe('the response fence: the current, unexpired token only', () => {
+describe('the response fence: the current token only', () => {
   it('A expires, B takes over (same machine name), A posts late: A is refused and writes nothing', async () => {
     askWithPlaceholder('ai-f1');
     const a = await claim('ai-f1', 'work');
@@ -174,24 +178,31 @@ describe('the response fence: the current, unexpired token only', () => {
     expect(notes('ai-f1')).toHaveLength(1);
   });
 
-  it('an expired token is refused even when nobody took over', async () => {
+  it('a lease that ran out but was never taken over still lands its answer (no regeneration)', async () => {
     askWithPlaceholder('ai-f2');
     const a = await claim('ai-f2');
     expireLease('ai-f2');
-    const r = await answer('ai-f2', 'too late', a.token);
-    expect(r.status).toBe(409);
-    expect(row('ai-f2').status).toBe('pending');
-    expect(body('ph-ai-f2')).toBe(PENDING);
+    const r = await answer('ai-f2', 'finished late', a.token);
+    expect(r.status).toBe(200);
+    expect(row('ai-f2')).toMatchObject({ status: 'completed', response: 'finished late' });
+    expect(body('ph-ai-f2')).toBe('finished late');
+    expect(notes('ai-f2')).toHaveLength(1);
   });
 
   it('release then reclaim: the released token stays dead', async () => {
     askWithPlaceholder('ai-f3');
     const a = await claim('ai-f3');
     expect(await release('ai-f3', a.token!)).toBe(200);
-    expect(row('ai-f3')).toMatchObject({ claim_token: null, claim_attempts: 1 });
+    // A release refunds its attempt and spends a release instead.
+    expect(row('ai-f3')).toMatchObject({ claim_token: null, claim_attempts: 0, claim_releases: 1 });
+    // It also backs the next claim off.
+    const early = await claim('ai-f3');
+    expect(early.status).toBe(409);
+    expect(early.body.reason).toBe('backoff');
+    expireLease('ai-f3');
     const b = await claim('ai-f3');
     expect(b.status).toBe(200);
-    expect(row('ai-f3').claim_attempts).toBe(2);
+    expect(row('ai-f3')).toMatchObject({ claim_attempts: 1, claim_releases: 1 });
     expect((await answer('ai-f3', 'stale', a.token)).status).toBe(409);
     expect((await answer('ai-f3', 'fresh', b.token)).status).toBe(200);
   });
@@ -201,6 +212,16 @@ describe('the response fence: the current, unexpired token only', () => {
     const a = await claim('ai-f4');
     expect(await release('ai-f4', 'not-the-token')).toBe(409);
     expect(row('ai-f4').claim_token).toBe(a.token);
+  });
+
+  it('a bodyless or non-JSON release is a 400, not a 500', async () => {
+    askWithPlaceholder('ai-f5');
+    await claim('ai-f5');
+    const bare = new Request('https://hub.test/api/ai-requests/ai-f5/release', { method: 'POST', headers: { Authorization: `Bearer ${KEY}` } });
+    expect((await handleReleaseAIRequest('ai-f5', bare, env)).status).toBe(400);
+    const junk = new Request('https://hub.test/api/ai-requests/ai-f5/release', { method: 'POST', headers: { Authorization: `Bearer ${KEY}` }, body: 'not json' });
+    expect((await handleReleaseAIRequest('ai-f5', junk, env)).status).toBe(400);
+    expect(row('ai-f5').claim_releases).toBe(0);
   });
 });
 
@@ -219,6 +240,7 @@ describe('legacy compatibility: tokenless wins only on a never-claimed row', () 
     const a = await claim('ai-l2');
     expect((await answer('ai-l2', 'old listener')).status).toBe(409);
     await release('ai-l2', a.token!);
+    expect(row('ai-l2')).toMatchObject({ claim_attempts: 0, claim_releases: 1 });   // refunded, still "claimed once"
     expect((await answer('ai-l2', 'old listener again')).status).toBe(409);
     expect(row('ai-l2')).toMatchObject({ status: 'pending' });
     expect(body('ph-ai-l2')).toBe(PENDING);
@@ -233,6 +255,25 @@ describe('legacy compatibility: tokenless wins only on a never-claimed row', () 
     const b = await claim('ai-l3');
     expect(b.status).toBe(200);
     expect((await answer('ai-l3', 'repaired', b.token)).status).toBe(200);
+  });
+
+  it('the legacy GET ?status=pending lists only never-claimed rows, so an old listener cannot spin on one', async () => {
+    askWithPlaceholder('ai-l5');                     // never claimed
+    askWithPlaceholder('ai-l6');                     // held
+    askWithPlaceholder('ai-l7');                     // claimed, then released
+    askWithPlaceholder('ai-l8');                     // claimed, lease lost
+    await claim('ai-l6');
+    const c7 = await claim('ai-l7');
+    await release('ai-l7', c7.token!);
+    await claim('ai-l8');
+    expireLease('ai-l8');
+    const req = new Request('https://hub.test/api/ai-requests?status=pending', { headers: { Authorization: `Bearer ${KEY}` } });
+    const { data } = await (await handleGetAIRequests(new URL(req.url), env, req)).json() as { data: Array<{ id: string }> };
+    expect(data.map((r) => r.id)).toEqual(['ai-l5']);
+    // Without the status filter the claimed rows are still readable history.
+    const all = new Request('https://hub.test/api/ai-requests', { headers: { Authorization: `Bearer ${KEY}` } });
+    const every = await (await handleGetAIRequests(new URL(all.url), env, all)).json() as { data: Array<{ id: string }> };
+    expect(every.data.map((r) => r.id).sort()).toEqual(['ai-l5', 'ai-l6', 'ai-l7', 'ai-l8']);
   });
 
   it('two concurrent legacy answers: one acceptance, one publication, one notification', async () => {
@@ -354,8 +395,12 @@ describe('three acquisitions, then the service sweep fails the row', () => {
     expect(body('ph-ai-x1')).toBe(PENDING);          // failed rows publish nothing
     expect(notes('ai-x1')).toHaveLength(0);
 
-    // A second poll does not report it again (one alert per row).
+    // The alert stays owed -- a lost /queue response must not lose it -- until acked.
+    expect((await queue()).body.swept.map((r) => r.id)).toEqual(['ai-x1']);
+    expect(await ackAlert('ai-x1')).toBe(200);
     expect((await queue()).body.swept).toEqual([]);
+    expect(await ackAlert('ai-x1')).toBe(409);
+    expect(row('ai-x1')).toMatchObject({ status: 'failed', exhaustion_alert: 'sent' });
   });
 
   it('a third lease still live is neither swept nor claimable', async () => {
@@ -369,13 +414,26 @@ describe('three acquisitions, then the service sweep fails the row', () => {
     expect((await answer('ai-x2', 'finished on the third', third.token)).status).toBe(200);
   });
 
-  it('three transient releases exhaust a row like three crashes', async () => {
+  it('releases have their own budget: three do not exhaust a row, the tenth does, and each backs off further', async () => {
     askWithPlaceholder('ai-x3');
-    for (let i = 0; i < 3; i++) {
+    const backoffs: number[] = [];
+    for (let i = 0; i < AI_CLAIM_MAX_RELEASES; i++) {
       const c = await claim('ai-x3');
+      expect(c.status, `claim ${i + 1}`).toBe(200);
+      const before = nowS();
       expect(await release('ai-x3', c.token!)).toBe(200);
+      backoffs.push(Math.round(((row('ai-x3').claim_expires_at as number) - before) / 60));
+      if (i === 2) {
+        expireLease('ai-x3');
+        expect((await queue()).body.swept, 'three releases are not three crashes').toEqual([]);
+      }
+      expireLease('ai-x3');
     }
+    expect(backoffs).toEqual([1, 2, 4, 8, 16, 30, 30, 30, 30, 30]);
+    expect(row('ai-x3')).toMatchObject({ claim_attempts: 0, claim_releases: AI_CLAIM_MAX_RELEASES });
+    expect((await claim('ai-x3')).body.reason).toBe('exhausted');
     expect((await queue()).body.swept.map((r) => r.id)).toEqual(['ai-x3']);
+    expect(row('ai-x3').status).toBe('failed');
   });
 });
 
@@ -441,6 +499,7 @@ describe('schema-v140 triggers: a terminal row is history', () => {
       "UPDATE ai_requests SET input_tokens = 5 WHERE id = 'ai-done'",
       "UPDATE ai_requests SET claim_token = 'x' WHERE id = 'ai-done'",
       "UPDATE ai_requests SET claim_attempts = 0 WHERE id = 'ai-done'",
+      "UPDATE ai_requests SET claim_releases = 1 WHERE id = 'ai-done'",
       "UPDATE ai_requests SET response_commit_id = 'x' WHERE id = 'ai-done'",
       "UPDATE ai_requests SET id = 'ai-moved' WHERE id = 'ai-done'",
     ]) {
@@ -457,13 +516,15 @@ describe('schema-v140 triggers: a terminal row is history', () => {
   });
 
   it('metadata corrections on a terminal row, and every write to a pending row, still succeed', () => {
-    raw("UPDATE ai_requests SET requested_by = 'nick-ingraham', project_slug = 'renamed' WHERE id = 'ai-done'")();
-    expect(row('ai-done')).toMatchObject({ requested_by: 'nick-ingraham', project_slug: 'renamed' });
+    raw("UPDATE ai_requests SET requested_by = 'nick-ingraham', project_slug = 'renamed', exhaustion_alert = 'sent' WHERE id = 'ai-done'")();
+    expect(row('ai-done')).toMatchObject({ requested_by: 'nick-ingraham', project_slug: 'renamed', exhaustion_alert: 'sent' });
     raw("UPDATE ai_requests SET response = 'x', status = 'completed' WHERE id = 'ai-open'")();
     raw("DELETE FROM ai_requests WHERE id = 'ai-nonexistent'")();
   });
 
-  it('claim_attempts is bounded 0..3 by CHECK', () => {
+  it('claim_attempts (0..3), claim_releases (0..10) and exhaustion_alert are bounded by CHECK', () => {
     expect(raw("UPDATE ai_requests SET claim_attempts = 4 WHERE id = 'ai-open'")).toThrow(/CHECK/);
+    expect(raw("UPDATE ai_requests SET claim_releases = 11 WHERE id = 'ai-open'")).toThrow(/CHECK/);
+    expect(raw("UPDATE ai_requests SET exhaustion_alert = 'maybe' WHERE id = 'ai-open'")).toThrow(/CHECK/);
   });
 });

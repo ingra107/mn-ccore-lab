@@ -87,6 +87,8 @@ Posts response back to Hub API with the claim token. The Hub accepts it only
 Team member sees Hermes response (gold badge) in 20-40 seconds
 ```
 
+Terminal `ai_requests` rows (completed or failed) cannot be deleted or rewritten: schema-v140 triggers refuse it. Any retention job or table-rebuild migration must drop and re-create those triggers.
+
 ## Rate Limits
 - No per-user rate limit currently enforced
 - Responses use Nick's Claude Max subscription (no API cost)
@@ -98,7 +100,7 @@ Team member sees Hermes response (gold badge) in 20-40 seconds
 |-------|-----|
 | No response after 1 minute | Check if listener is running: `type data\hub_ai_listener.pid` on home machine |
 | Listener not running | Health check auto-restarts every 60 min. Manual: `python scripts/scheduled/hub_ai_listener.py` |
-| "Thinking about this..." stuck | Check home machine is online and has internet. A request claimed three times without an answer is marked failed by the next poll, and Nick gets one Telegram alert; ask again |
+| "Thinking about this..." stuck | Check home machine is online and has internet. A request whose run was lost three times, or that was retried ten times after a temporary failure, is marked failed by the next poll and Nick gets a Telegram alert; ask again |
 | PB_API_KEY errors | Verify env var is set: `echo %PB_API_KEY%` on home machine |
 
 ## Artifacts lane (v1, 2026-06-11)
