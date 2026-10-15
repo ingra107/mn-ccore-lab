@@ -2787,6 +2787,10 @@ defineRoute({
   path: '/api/ai-requests/queue',
   auth: 'pi',
   entity: 'ai-requests',
+  // Changes nothing a client renders: a claim, a release and a sweep to
+  // 'failed' touch no feed row. The listener polls this every 60s; a bump
+  // would refetch every query in every member's tab once a minute.
+  noVersionBump: true,
   handler: (c) => handleAIRequestQueue(R(c), E(c)),
 });
 defineRoute({
@@ -2794,6 +2798,7 @@ defineRoute({
   path: '/api/ai-requests/:id/claim',
   auth: 'pi',
   entity: 'ai-requests',
+  noVersionBump: true,
   handler: (c) => handleClaimAIRequest(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
@@ -2801,6 +2806,7 @@ defineRoute({
   path: '/api/ai-requests/:id/release',
   auth: 'pi',
   entity: 'ai-requests',
+  noVersionBump: true,
   handler: (c) => handleReleaseAIRequest(c.req.param('id'), R(c), E(c)),
 });
 defineRoute({
