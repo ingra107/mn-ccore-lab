@@ -98,33 +98,53 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def _wrangler_cmd() -> list[str]:
-    """Resolve wrangler: the Hub repo's own node_modules (the pinned version
-    the Hub deploys with), else an explicit global install on PATH (CI).
-    Mirrors scripts/check-project-identity-gate.py::_wrangler_cmd and PB's
-    scripts/db/backup_d1.py::_wrangler_cmd.
+def resolve_wrangler(root: Path) -> list[str]:
+    """Resolve wrangler for the Hub checkout at `root`: the nearest
+    node_modules/.bin/wrangler at `root` or any ANCESTOR of it (the pinned
+    version the Hub deploys with), else an explicit global install on PATH
+    (CI). The single resolver: scripts/check-project-identity-gate.py's
+    _wrangler_cmd calls it too (that script already imports this stdlib-only
+    module, so sharing adds no import cycle).
 
-    NO `npx wrangler` fallback (removed 2026-10-18). With node_modules empty,
-    npx went to the registry and installed an UNPINNED wrangler into its cache
-    on the call path. On home 2026-10-18 that install outran the 120 s timeout
-    and the activity gardener died with what looked like a slow D1 query
-    (`subprocess.TimeoutExpired` on a 43-row SELECT). A missing install is a
-    setup fault: fail at once and name the fix.
+    Ancestor walk (2026-10-18): Node resolves packages by walking up from the
+    working directory, and `npm exec` puts every ancestor node_modules/.bin on
+    PATH. A Hub worktree under ~/mn-ccore-lab-wt/<name> has no node_modules of
+    its own; a junction at ~/mn-ccore-lab-wt/node_modules serves it. Looking
+    only at <root>/node_modules made a direct call from a worktree raise
+    "wrangler is not installed" while `npm exec` from the same tree worked.
+    Walking up applies Node's rule, nearest directory first.
+
+    NO `npx wrangler` fallback (removed 2026-10-18, 4e51b1b2). With
+    node_modules empty, npx went to the registry and installed an UNPINNED
+    wrangler into its cache on the call path. On home 2026-10-18 that install
+    outran the 120 s timeout and the activity gardener died with what looked
+    like a slow D1 query (`subprocess.TimeoutExpired` on a 43-row SELECT). A
+    missing install is a setup fault: fail at once and name the fix.
+
+    PB's scripts/db/backup_d1.py::_wrangler_cmd keeps its own copy rooted at
+    the MAIN Hub checkout (it runs from PB, never from a Hub worktree), so it
+    needs no ancestor walk.
     """
-    root = _repo_root()
-    for name in ("wrangler.cmd", "wrangler"):
-        cand = root / "node_modules" / ".bin" / name
-        if cand.exists():
-            return [str(cand)]
+    root = Path(root).resolve()
+    for d in (root, *root.parents):
+        for name in ("wrangler.cmd", "wrangler"):
+            cand = d / "node_modules" / ".bin" / name
+            if cand.exists():
+                return [str(cand)]
     for exe in ("wrangler.cmd", "wrangler"):
         if path := shutil.which(exe):
             return [path]
     raise RuntimeError(
-        f"wrangler is not installed: no {root / 'node_modules' / '.bin' / 'wrangler'}"
-        " and none on PATH. Run `npm ci` in the Hub repo"
-        f" ({root}) to restore the pinned version. (npx is not used: it"
+        f"wrangler is not installed: no node_modules/.bin/wrangler in {root}"
+        " or any parent directory, and none on PATH. Run `npm ci` in the Hub"
+        f" repo ({root}) to restore the pinned version. (npx is not used: it"
         " installs an unpinned wrangler on the call path.)"
     )
+
+
+def _wrangler_cmd() -> list[str]:
+    """wrangler for this checkout; see resolve_wrangler."""
+    return resolve_wrangler(_repo_root())
 
 
 def _stripped_env() -> dict[str, str]:

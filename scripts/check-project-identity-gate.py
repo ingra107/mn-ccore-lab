@@ -54,7 +54,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:  # run as a file, sys.path[0] is already scripts/
     sys.path.insert(0, str(_HERE))
-from wrangler_d1 import format_wrangler_error, is_cold_token_failure  # noqa: E402 -- stdlib-only sibling
+from wrangler_d1 import format_wrangler_error, is_cold_token_failure, resolve_wrangler  # noqa: E402 -- stdlib-only sibling
 SURFACES_JSON = _HERE / "project-identity-surfaces.json"
 STORE_KEY = "hub_d1"
 DB = "mnccore-lab"
@@ -87,19 +87,12 @@ def load_surfaces() -> dict:
 # D1 query (CI) — direct wrangler subprocess; CI env carries D1-scoped creds.
 # ─────────────────────────────────────────────────────────────────────────────
 def _wrangler_cmd() -> list[str]:
-    """Resolve a wrangler invocation. CI installs it globally (`wrangler` on
-    PATH); locally fall back to the repo-local node_modules bin (mirrors
-    scripts/wrangler_d1.py::_wrangler_cmd) so the live path is testable offline-
-    from-PATH."""
-    import shutil
-    for name in ("wrangler.cmd", "wrangler"):
-        cand = _HERE.parent / "node_modules" / ".bin" / name
-        if cand.exists():
-            return [str(cand)]
-    for exe in ("wrangler", "wrangler.cmd"):
-        if path := shutil.which(exe):
-            return [path]
-    raise RuntimeError("wrangler not found on PATH or repo node_modules")
+    """Resolve a wrangler invocation through the ONE shared resolver,
+    scripts/wrangler_d1.py::resolve_wrangler: the nearest node_modules/.bin in
+    this repo or an ancestor (a Hub worktree is served by a junction above it),
+    else PATH (CI installs it globally), else a loud `npm ci` error. Never npx.
+    Kept as a function so tests can patch the seam."""
+    return resolve_wrangler(_HERE.parent)
 
 
 # Env vars that secrets.ps1 exports locally for Pages deploys (Pages-scoped, NO
