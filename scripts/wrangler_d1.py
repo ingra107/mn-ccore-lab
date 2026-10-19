@@ -38,6 +38,7 @@ import json as _json
 import os
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -147,20 +148,75 @@ def is_cold_token_failure(returncode: int, stdout: str | None, stderr: str | Non
     return returncode != 0 and _COLD_TOKEN_ERROR in ((stderr or "") + (stdout or ""))
 
 
+# Seconds allowed to each kill step (taskkill, then the reap) after a timeout.
+_KILL_GRACE_S = 30
+
+
+def _kill_tree(pid: int) -> None:
+    """Kill `pid` and its descendants. On Windows `Popen.kill` ends only the
+    direct child (`wrangler.cmd`'s cmd.exe); the node process doing the work is
+    a grandchild and survives it. POSIX wrangler is node itself (shebang), so
+    the direct kill reaches the worker there."""
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(pid)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=_KILL_GRACE_S, check=False,
+        )
+    else:
+        try:
+            os.kill(pid, 9)
+        except ProcessLookupError:
+            pass  # already exited between the timeout and the kill
+
+
 def _run_once(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        cmd,
-        text=True,
-        # wrangler emits UTF-8 (box-drawing chars in deploy banners); without an
-        # explicit encoding, Windows decodes with cp1252 and the reader thread
-        # dies on bytes like 0x8f (hit on the 2026-07-16 worker deploy).
-        encoding="utf-8",
-        errors="replace",
-        capture_output=True,
-        timeout=timeout,
-        env=_stripped_env(),
-        cwd=str(_repo_root()),
-    )
+    """Run once with a timeout that actually bounds the call.
+
+    `subprocess.run(capture_output=True, timeout=N)` does not, on Windows: on
+    expiry it kills only `wrangler.cmd`'s cmd.exe, then drains the pipes with
+    no timeout while the node grandchild still holds them. Measured
+    2026-10-18 with a .cmd whose child sleeps 25 s: a declared 3 s timeout
+    took 25.7 s. The same night the activity gardener's 120 s call took ~480 s
+    to fail. So: capture through FILES (no pipe for a grandchild to hold, so
+    nothing to drain), wait with the timeout, and on expiry kill the TREE and
+    re-raise TimeoutExpired carrying the partial output. Same shape as PB's
+    scripts/utils/bounded_subprocess.py::run_bounded (the Hub cannot import PB).
+    """
+    with tempfile.TemporaryDirectory(prefix="wrangler-d1-",
+                                     ignore_cleanup_errors=True) as td:
+        out_path = Path(td) / "stdout.txt"
+        err_path = Path(td) / "stderr.txt"
+
+        def _read(p: Path) -> str:
+            # wrangler emits UTF-8 (box-drawing chars in deploy banners);
+            # without an explicit encoding Windows decodes with cp1252 and dies
+            # on bytes like 0x8f (hit on the 2026-07-16 worker deploy).
+            try:
+                return p.read_text(encoding="utf-8", errors="replace")
+            except OSError:  # a just-killed grandchild may still hold the file
+                return ""
+
+        with open(out_path, "wb") as fout, open(err_path, "wb") as ferr:
+            proc = subprocess.Popen(
+                cmd, stdout=fout, stderr=ferr,
+                env=_stripped_env(), cwd=str(_repo_root()),
+            )
+            try:
+                returncode = proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired as expired:
+                _kill_tree(proc.pid)
+                try:
+                    proc.wait(timeout=_KILL_GRACE_S)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                raise subprocess.TimeoutExpired(
+                    expired.cmd, expired.timeout,
+                    output=_read(out_path), stderr=_read(err_path),
+                ) from None
+        return subprocess.CompletedProcess(
+            cmd, returncode, stdout=_read(out_path), stderr=_read(err_path),
+        )
 
 
 def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
