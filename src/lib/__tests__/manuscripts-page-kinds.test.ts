@@ -35,6 +35,14 @@ describe('the Manuscripts page shows manuscripts, abstracts and talks only (Nick
   it('no abstracts: Manuscripts only, no All', () => {
     expect(manuscriptsPageTabs(KINDS, { proj_X: [row('m', 'manuscript'), row('t', 'trial_ops')] }).map((t) => t.value)).toEqual(['manuscript'])
   })
+
+  it('a moderated session (v141) has its own tab after Talks, never inside it (Nick 2026-10-19)', () => {
+    const withMod = [...KINDS, kind('session_moderator', 'Moderated sessions', 27)].sort((a, b) => a.sort_order - b.sort_order)
+    const byProject = { proj_X: [row('t', 'talk'), row('s', 'session_moderator')] }
+    expect(manuscriptsPageTabs(withMod, byProject).map((t) => t.label)).toEqual(['Manuscripts', 'Talks', 'Moderated sessions', 'All'])
+    expect(kindsForManuscriptsTab('talk', withMod)).toEqual(['talk'])
+    expect(kindsForManuscriptsTab('session_moderator', withMod)).toEqual(['session_moderator'])
+  })
 })
 
 describe('pipeline board places', () => {

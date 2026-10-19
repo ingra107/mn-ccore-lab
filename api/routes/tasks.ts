@@ -4,6 +4,7 @@ import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
+import { eventDateRefusal } from './products';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
 // can import it without creating a circular dependency.
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
@@ -485,6 +486,41 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 }
 
 // POST /api/tasks — create new task
+/** The event kinds a task create may mint (v132 talk, v141 session_moderator). */
+const EVENT_PRODUCT_KINDS: Record<string, 'presenter' | 'moderator'> = {
+  talk: 'presenter',
+  session_moderator: 'moderator',
+};
+
+/**
+ * `talk` on POST /api/tasks -> the products insert payload, or the refusal in
+ * words. Shape: { title (required), kind? ('talk' | 'session_moderator',
+ * default 'talk'), venue?, event_date? ('YYYY' | 'YYYY-MM' | 'YYYY-MM-DD'),
+ * nick_event_role? ('presenter' | 'moderator', default by kind) }. A title is
+ * required: a delivery is told apart by its title, venue and date, and a
+ * titleless product is the "~ talk" slot this replaces.
+ */
+export function parseEventSpec(v: unknown): Record<string, string | null> | string {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return 'talk must be an object.';
+  const t = v as Record<string, unknown>;
+  const kind = t.kind == null ? 'talk' : t.kind;
+  if (typeof kind !== 'string' || !(kind in EVENT_PRODUCT_KINDS)) {
+    return `talk.kind must be one of ${Object.keys(EVENT_PRODUCT_KINDS).join(', ')}.`;
+  }
+  const title = typeof t.title === 'string' ? t.title.replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+  if (!title) return 'A talk needs a title.';
+  const venue = typeof t.venue === 'string' && t.venue.trim() ? t.venue.replace(/\s+/g, ' ').trim().slice(0, 200) : null;
+  let eventDate: string | null = null;
+  if (t.event_date != null && t.event_date !== '') {
+    const why = eventDateRefusal(t.event_date);
+    if (why) return why;
+    eventDate = t.event_date as string;
+  }
+  const role = t.nick_event_role == null ? EVENT_PRODUCT_KINDS[kind] : t.nick_event_role;
+  if (role !== 'presenter' && role !== 'moderator') return 'talk.nick_event_role must be presenter or moderator.';
+  return { kind, title, venue, event_date: eventDate, nick_event_role: role };
+}
+
 export async function handleCreateTask(
   request: Request,
   user: AuthUser,
@@ -519,6 +555,9 @@ export async function handleCreateTask(
     approval_status?: 'pending' | 'accepted' | 'declined' | null;
     // schema-v109 (2026-09-16): 'task' (default) | 'milestone'.
     kind?: TaskKind | null;
+    // A talk (or a moderated session) the task is for: minted as its OWN
+    // product in the task's project, and the task sits on it. parseEventSpec.
+    talk?: unknown;
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
   if (body.kind != null && !isTaskKind(body.kind)) {
@@ -558,6 +597,40 @@ export async function handleCreateTask(
     if (!prod) return error('That product is not in this project.', 400);
     productId = prod.id;
   }
+
+  // A talk invitation gets its own titled product (Nick 2026-10-19: "the EBP
+  // talk at University of Chicago Feb 2026 needs to be separate from another
+  // EBP talk that I might do"). Without this the task carried only a project
+  // and the v125 home rule put it on the project's home product: on "Invited
+  // talks" an untitled slot the Hub showed as "Invited talks ~ talk". The spec
+  // and the project are checked before anything is written.
+  let eventProductId: string | null = null;
+  if (body.talk != null) {
+    if (body.product_id) return error('Send product_id or talk, not both.', 400);
+    const spec = parseEventSpec(body.talk);
+    if (typeof spec === 'string') return error(spec, 400);
+    if (!resolvedProjectId) return error('A talk needs a project.', 400);
+    const next = await env.DB.prepare(
+      'SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM products WHERE project_id = ?'
+    ).bind(resolvedProjectId).first<{ n: number }>();
+    eventProductId = generateId('product');
+    const made = await applyMutation(env, {
+      table: 'products', record_id: eventProductId, op: 'insert', route: 'handleCreateTask', user,
+      payload: { project_id: resolvedProjectId, is_home: 0, stage: 'invited', sort_order: next?.n ?? 1, ...spec },
+    });
+    if (made.status !== 'accepted') {
+      return error(`talk product rejected: ${made.status} — ${made.reason ?? ''}`, 409);
+    }
+    productId = eventProductId;
+  }
+  // The task did not land on the product just minted (refused, or the I18
+  // title dedup adopted an existing task): tombstone it, so no product is left
+  // with no task. It is never the home and never the project's last product.
+  const dropEventProduct = async () => {
+    if (eventProductId) {
+      await applyMutation(env, { table: 'products', record_id: eventProductId, op: 'delete', route: 'handleCreateTask', user });
+    }
+  };
 
   const id = generateId('task');  // A1.2: typed ULID
   const title = body.title || body.description;
@@ -616,6 +689,7 @@ export async function handleCreateTask(
     user,
   });
   if (createMutResult.status !== 'accepted') {
+    await dropEventProduct();
     return error(`mutation rejected: ${createMutResult.status} — ${createMutResult.reason ?? ''}`, 409);
   }
 
@@ -627,6 +701,7 @@ export async function handleCreateTask(
   // its own (unlike handleMobileTasksToHub) — every direct-route/Gmail create
   // relies on this to be correct.
   const resultId = (createMutResult.canonical_payload?.id as string | undefined) ?? id;
+  if (resultId !== id) await dropEventProduct();
   // A caller that will write the new id somewhere else (a digest note's
   // task_id) cannot use an adopted row: it is someone else's task. With
   // adopt:false it never receives one; it gets 409 + code 'title_taken'.

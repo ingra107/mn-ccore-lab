@@ -86,9 +86,9 @@ export interface ProjectProducts {
 // ── when it happened, and Nick's part (schema-v135) ────────
 
 /** The kinds whose date is when they HAPPENED: a talk given, an abstract
- *  presented. Their card shows that date, never "Due" (Nick 2026-10-12: a
- *  delivered talk should not read "Due Feb 11"). */
-export const EVENT_KINDS: readonly string[] = ['talk', 'abstract']
+ *  presented, a session moderated (schema-v141). Their card shows that date,
+ *  never "Due" (Nick 2026-10-12: a delivered talk should not read "Due Feb 11"). */
+export const EVENT_KINDS: readonly string[] = ['talk', 'abstract', 'session_moderator']
 
 /** The date facts a product card shows. An event date is shown as written
  *  (`formatEvent` keeps a month a month); due and deadline dates go through
@@ -437,9 +437,11 @@ export function productsOfKinds(
 /** The product kinds the Manuscripts page shows (Nick 2026-10-12: "we can keep
  *  grants separate ... manuscripts page will have the abstract and such").
  *  A talk (schema-v132) sits beside abstracts, its own tab: both are things
- *  you present. Grant applications, awards and honors live on /portal/grants;
- *  trial ops and infrastructure have no list page. */
-export const MANUSCRIPTS_PAGE_KINDS: readonly string[] = ['manuscript', 'abstract', 'talk']
+ *  you present. A moderated session (schema-v141) gets its own tab after
+ *  Talks: Nick 2026-10-19, "it needs to be a separate moderator thing".
+ *  Grant applications, awards and honors live on /portal/grants; trial ops
+ *  and infrastructure have no list page. */
+export const MANUSCRIPTS_PAGE_KINDS: readonly string[] = ['manuscript', 'abstract', 'talk', 'session_moderator']
 
 /** The Manuscripts page's tabs: manuscript always (the default), each other
  *  page kind that has a visible product, in the kinds' sort_order with their

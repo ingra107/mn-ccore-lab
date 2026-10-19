@@ -284,9 +284,27 @@ describe('the talk kind (Nick, 2026-10-12)', () => {
     expect(row("SELECT label, plural_label FROM product_kinds WHERE kind = 'abstract'")).toEqual({ label: 'Abstract', plural_label: 'Abstracts' })
   })
 
-  it('lists beside abstracts, before grant applications', () => {
-    expect(rows('SELECT kind FROM product_kinds ORDER BY sort_order').map((r) => r.kind).slice(0, 4))
-      .toEqual(['manuscript', 'abstract', 'talk', 'grant_application'])
+  it('lists beside abstracts, then moderated sessions, before grant applications', () => {
+    expect(rows('SELECT kind FROM product_kinds ORDER BY sort_order').map((r) => r.kind).slice(0, 5))
+      .toEqual(['manuscript', 'abstract', 'talk', 'session_moderator', 'grant_application'])
+  })
+})
+
+describe('the session_moderator kind (Nick, 2026-10-19: "a separate moderator thing")', () => {
+  it('has its ladder (Invited > Preparing > Moderated, Declined), and cannot fund', () => {
+    expect(row("SELECT label, plural_label, can_fund, has_page FROM product_kinds WHERE kind = 'session_moderator'"))
+      .toEqual({ label: 'Moderated session', plural_label: 'Moderated sessions', can_fund: 0, has_page: 1 })
+    expect(rows("SELECT stage, label, is_terminal FROM product_stages WHERE kind = 'session_moderator' ORDER BY ordinal")).toEqual([
+      { stage: 'invited', label: 'Invited', is_terminal: 0 }, { stage: 'preparing', label: 'Preparing', is_terminal: 0 },
+      { stage: 'moderated', label: 'Moderated', is_terminal: 1 }, { stage: 'declined', label: 'Declined', is_terminal: 1 },
+    ])
+  })
+
+  it('a talk is not moderated, and a moderated session is not delivered: the composite FK refuses each', async () => {
+    await pb('projects', `proj_${ULID}`, 'insert', { title: 'ATS', slug: 'ats', category: 'MNCCORE', status: 'active', stage: 'idea' })
+    expect((await pb('products', `prd_${ULID}`, 'update', { kind: 'talk', stage: 'moderated' })).status).not.toBe('accepted')
+    expect((await pb('products', `prd_${ULID}`, 'update', { kind: 'session_moderator', stage: 'delivered' })).status).not.toBe('accepted')
+    expect((await pb('products', `prd_${ULID}`, 'update', { kind: 'session_moderator', stage: 'moderated' })).status).toBe('accepted')
   })
 
   it('an abstract re-files as a delivered talk in place: kind and stage in one update, tasks stay on it', async () => {

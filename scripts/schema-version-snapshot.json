@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "f9d93f98e467f07787bc6ccc433616c9056ff6b2a224e89cc24a9a0b8fe56edd",
-  "file_count": 144,
+  "hash": "e43b42b67e3be90c6ded7d4e90cb32a8fd42f551266124f9510fc6c5a18aeade",
+  "file_count": 145,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -146,11 +146,12 @@
     "schema-v137-drop-digest-lab-status.sql",
     "schema-v138-tasks-title-dedup-per-assignee.sql",
     "schema-v139-project-join-requests.sql",
-    "schema-v140-ai-request-claims.sql"
+    "schema-v140-ai-request-claims.sql",
+    "schema-v141-product-kind-session-moderator.sql"
   ],
   "version_range": [
     2,
-    140
+    141
   ],
   "gaps": [
     35,

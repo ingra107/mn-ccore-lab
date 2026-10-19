@@ -72,7 +72,7 @@ describe('GET /api/projects/:slug/products', () => {
     expect(typeof body.products[0].seq).toBe('number')
     const kinds = body.kinds as { kind: string; stages: { stage: string; ordinal: number }[] }[]
     expect(kinds.map((k) => k.kind)).toEqual(
-      ['manuscript', 'abstract', 'talk', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure'],
+      ['manuscript', 'abstract', 'talk', 'session_moderator', 'grant_application', 'award', 'honor', 'trial_ops', 'infrastructure'],
     )
     const ordinals = kinds.find((k) => k.kind === 'award')!.stages
     expect(ordinals.map((s) => s.stage)).toEqual(['active', 'no_cost_extension', 'closeout', 'closed'])
