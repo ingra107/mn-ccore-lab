@@ -98,9 +98,18 @@ def _repo_root() -> Path:
 
 
 def _wrangler_cmd() -> list[str]:
-    """Resolve a working wrangler invocation, preferring the Hub repo's
-    repo-local node_modules (matches the deployed version) before PATH/npx.
-    Mirrors scripts/db/backup_d1.py::_wrangler_cmd in PB."""
+    """Resolve wrangler: the Hub repo's own node_modules (the pinned version
+    the Hub deploys with), else an explicit global install on PATH (CI).
+    Mirrors scripts/check-project-identity-gate.py::_wrangler_cmd and PB's
+    scripts/db/backup_d1.py::_wrangler_cmd.
+
+    NO `npx wrangler` fallback (removed 2026-10-18). With node_modules empty,
+    npx went to the registry and installed an UNPINNED wrangler into its cache
+    on the call path. On home 2026-10-18 that install outran the 120 s timeout
+    and the activity gardener died with what looked like a slow D1 query
+    (`subprocess.TimeoutExpired` on a 43-row SELECT). A missing install is a
+    setup fault: fail at once and name the fix.
+    """
     root = _repo_root()
     for name in ("wrangler.cmd", "wrangler"):
         cand = root / "node_modules" / ".bin" / name
@@ -109,11 +118,11 @@ def _wrangler_cmd() -> list[str]:
     for exe in ("wrangler.cmd", "wrangler"):
         if path := shutil.which(exe):
             return [path]
-    for exe in ("npx.cmd", "npx"):
-        if path := shutil.which(exe):
-            return [path, "wrangler"]
     raise RuntimeError(
-        "Neither wrangler nor npx found on PATH or mn-ccore-lab/node_modules"
+        f"wrangler is not installed: no {root / 'node_modules' / '.bin' / 'wrangler'}"
+        " and none on PATH. Run `npm ci` in the Hub repo"
+        f" ({root}) to restore the pinned version. (npx is not used: it"
+        " installs an unpinned wrangler on the call path.)"
     )
 
 
