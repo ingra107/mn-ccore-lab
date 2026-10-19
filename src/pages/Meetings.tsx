@@ -479,6 +479,9 @@ export default function Meetings() {
   // below this page (top bar, host tabs, main padding, status bar); see the hook.
   const pageRef = useRef<HTMLDivElement>(null)
   const isPhone = useIsMobile(768)
+  // Fitted (768px and up): the page ends at the tab bar below lg, so its two
+  // scrollers carry .fab-clear. Phone (fill): the window scrolls and main's
+  // padding is the clearance, so they must not add their own.
   useFitViewportHeight(pageRef, { minHeight: 480, headerFloor: 360, fill: isPhone })
   // `?filter=today` is the Today page's "meetings" stat line link: this page's
   // list narrowed to today's meeting records.
@@ -886,7 +889,7 @@ export default function Meetings() {
             </div>
           </div>
 
-          <div className="tk-mlist" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          <div className={isPhone ? 'tk-mlist' : 'tk-mlist fab-clear'} style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {meetingsLoading && filteredMeetings.length === 0 ? (
               // CLS fix (C8): skeleton meeting rows reserve list height before data arrives
               Array.from({ length: 10 }).map((_, i) => (
@@ -955,7 +958,7 @@ export default function Meetings() {
         </div>
 
         {/* Right panel: meeting detail */}
-        <div className="meetings-detail-panel" style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 0, contain: 'layout' }}>
+        <div className={isPhone ? 'meetings-detail-panel' : 'meetings-detail-panel fab-clear'} style={{ overflowY: 'auto', padding: 'var(--sp-xl)', minHeight: 0, contain: 'layout' }}>
           {/* M-34: mobile back button */}
           <button
             type="button"
