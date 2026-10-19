@@ -6,6 +6,7 @@ import { spring } from '../lib/animations'
 import { formatBrandName } from './BrandName'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 export default function WelcomeBanner() {
   const { dismissed, allComplete, dismiss } = useOnboarding()
@@ -48,7 +49,7 @@ export default function WelcomeBanner() {
           >
             Get started →
           </Link>
-          <button
+          <Button size="icon"
             onClick={dismiss}
             aria-label="Dismiss welcome banner"
             className="p-1 rounded transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
@@ -62,7 +63,7 @@ export default function WelcomeBanner() {
             }}
           >
             <X {...ICON_PROPS} size={14} />
-          </button>
+          </Button>
         </div>
       </motion.div>
     </AnimatePresence>

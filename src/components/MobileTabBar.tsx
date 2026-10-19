@@ -33,6 +33,7 @@ import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
 import { QUICK_ADD_EVENT, openGlobalQuickAdd } from './GlobalQuickAddModal'
+import { Button } from './ui/Button'
 
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
@@ -180,7 +181,7 @@ export default function MobileTabBar() {
               >
                 All pages
               </div>
-              <button
+              <Button size="icon"
                 type="button"
                 onClick={() => setOverflowOpen(false)}
                 aria-label="Close menu"
@@ -195,7 +196,7 @@ export default function MobileTabBar() {
                 }}
               >
                 <X size={20} {...ICON_PROPS} />
-              </button>
+              </Button>
             </div>
 
             {/* Capture — the two floating buttons (quick add, inbox) are hidden

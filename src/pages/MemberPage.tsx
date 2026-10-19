@@ -35,6 +35,7 @@ import { topicLabel } from '../lib/topics'
 import MemberHead from '../components/MemberHead'
 import { statusLabel } from '../lib/textUtils'
 import { formatContributionScore } from '../lib/contributionScore'
+import { Button } from '../components/ui/Button'
 
 // isOverdue imported from dateUtils
 
@@ -495,7 +496,7 @@ export default function MemberPage() {
                       )}
                     </Link>
                     {canEditProfile && (
-                      <button
+                      <Button size="icon"
                         type="button"
                         onClick={() => removeTag(t)}
                         className="inline-flex items-center justify-center rounded-full hov-color"
@@ -512,7 +513,7 @@ export default function MemberPage() {
                         title="Remove tag"
                       >
                         <X {...ICON_PROPS} size={12} />
-                      </button>
+                      </Button>
                     )}
                   </motion.span>
                 ))}

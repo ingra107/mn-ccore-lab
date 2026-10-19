@@ -13,6 +13,7 @@ import {
   saveLayouts,
   type GridCard,
 } from '../../lib/dashboardLayout'
+import { Button } from '../ui/Button'
 // NOTE: react-grid-layout/css/styles.css and react-resizable/css/styles.css
 // are NOT imported here. react-resizable's CSS embeds a base64 SVG as a CSS
 // background-image: url(data:...) that violates the Cloudflare Pages CSP.
@@ -219,7 +220,7 @@ export default function DashboardGrid({
           >
             {renderCard(card.id)}
           </div>
-          <button
+          <Button size="icon"
             type="button"
             className="rgl-drag-handle"
             aria-label="Drag to reorder"
@@ -234,7 +235,7 @@ export default function DashboardGrid({
               <circle cx="3" cy="9" r="1" fill="currentColor" />
               <circle cx="9" cy="9" r="1" fill="currentColor" />
             </svg>
-          </button>
+          </Button>
           {renderOverlay?.(card.id)}
         </div>
       ))}

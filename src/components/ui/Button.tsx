@@ -1,6 +1,6 @@
 import type {
   CSSProperties,
-  ComponentPropsWithoutRef,
+  ComponentPropsWithRef,
   ElementType,
   ReactNode,
 } from 'react'
@@ -28,11 +28,22 @@ interface ButtonOwnProps {
  * any element/component) to render a `<Link>`-styled-as-button while reusing
  * Button's variant/size styling. The rendered element's full prop surface is
  * preserved and type-checked (e.g. `to` is required when `as={Link}`), with no
- * `any` escape hatch.
+ * `any` escape hatch. `ref` is included: React 19 passes it as a plain prop,
+ * and the spread below hands it to the rendered element.
  */
 export type ButtonProps<E extends ElementType = 'button'> = ButtonOwnProps & {
   as?: E
-} & Omit<ComponentPropsWithoutRef<E>, keyof ButtonOwnProps | 'as'>
+} & Omit<ComponentPropsWithRef<E>, keyof ButtonOwnProps | 'as'> & IconName
+
+/**
+ * An icon-only button has no visible text, so its name comes from
+ * `aria-label`: size="icon" without one does not type-check. The raw
+ * `<button>` route around this is refused by the lint rule icon/icon-button
+ * (eslint-rules/icon-button.mjs).
+ */
+type IconName =
+  | { size: 'icon'; 'aria-label': string }
+  | { size?: Exclude<ButtonSize, 'icon'> }
 
 const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties> = {
   primary: {
@@ -90,7 +101,9 @@ const SIZE_STYLES: Record<NonNullable<ButtonProps['size']>, CSSProperties> = {
   },
   // icon: an icon-only button in a row of other controls. No padding; the box
   // itself is sized by .btn-icon in index.css (24x24, 44x44 on touch), so the
-  // tap zone is real layout space and can never cover a neighbour.
+  // tap zone is real layout space and can never cover a neighbour. Used only
+  // with an explicit variant; a bare icon button takes no inline style at all
+  // (see Button below).
   icon: {
     padding: 0,
     borderRadius: 'var(--radius-sm)',
@@ -111,7 +124,7 @@ const COMMON_STYLE: CSSProperties = {
 
 export function Button<E extends ElementType = 'button'>({
   as,
-  variant = 'secondary',
+  variant,
   size = 'md',
   disabled,
   style,
@@ -120,9 +133,15 @@ export function Button<E extends ElementType = 'button'>({
 }: ButtonProps<E>) {
   const Component = (as ?? 'button') as ElementType
 
-  const computedStyle: CSSProperties = {
+  // A bare icon button (size="icon", no variant) keeps its look in the caller's
+  // className and style: inline variant styles would override every class rule
+  // (colour, hover background, padding) at the ~130 sites that moved here from
+  // a raw <button>. Its base (inline-flex, centred, pointer) is
+  // :where(.btn-icon) in index.css, zero specificity, so any class still wins.
+  const bareIcon = size === 'icon' && variant === undefined
+  const computedStyle: CSSProperties | undefined = bareIcon ? style : {
     ...COMMON_STYLE,
-    ...VARIANT_STYLES[variant],
+    ...VARIANT_STYLES[variant ?? 'secondary'],
     ...SIZE_STYLES[size],
     ...(disabled ? { opacity: 0.5, cursor: 'default' } : {}),
     ...style,

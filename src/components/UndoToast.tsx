@@ -5,6 +5,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import {
   failureMessage, linkedMutationIds, showsItsOwnError, specificErrorShown, GENERIC_ERROR_DELAY_MS,
 } from '../lib/writeFailures'
+import { Button } from './ui/Button'
 
 interface ToastAction {
   label: string
@@ -344,7 +345,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                 Undo
               </button>
             )}
-            <button
+            <Button size="icon"
               onClick={() => dismiss(toast.id)}
               aria-label="Close"
               style={{
@@ -361,7 +362,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               }}
             >
               <X {...ICON_PROPS} size={14} />
-            </button>
+            </Button>
           </div>
           )
         })}

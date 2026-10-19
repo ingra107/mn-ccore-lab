@@ -133,7 +133,7 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
                     </a>
                   )}
                   {isPi && (
-                    <button
+                    <Button size="icon" aria-label="Remove link"
                       onClick={() => unlinkPaper.mutate({ id: p.id, project_slug: projectSlug })}
                       className="cursor-pointer p-1 rounded transition-colors"
                       style={{
@@ -145,7 +145,7 @@ export default function ProjectLiterature({ projectSlug, projectTitle, isPi }: P
                       title="Remove link"
                     >
                       <X {...ICON_PROPS} size={12} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -279,9 +279,9 @@ function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
               { value: 'doi', label: 'Add by DOI', icon: <Link2 {...ICON_PROPS} size={13} /> },
             ]}
           />
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
+          <Button size="icon" onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
             <X {...ICON_PROPS} size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Search tab */}

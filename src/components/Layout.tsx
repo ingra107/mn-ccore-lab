@@ -11,6 +11,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import { memberHubTarget } from '../lib/memberHubTarget'
+import { Button } from './ui/Button'
 import '../styles/public.css'
 
 // Public nav (2026-10-09): Home, Team, Publications, Member Hub, Contact.
@@ -179,28 +180,28 @@ export default function Layout() {
               )
             })}
             <NotificationBell triggerColor={barFg} />
-            <button
+            <Button size="icon"
               onClick={toggle}
               className="ml-2 p-2 rounded-md cursor-pointer transition-colors duration-200"
               style={{ color: barFg }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
-            </button>
+            </Button>
           </div>
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden items-center gap-2">
             <NotificationBell triggerColor={barFg} />
-            <button
+            <Button size="icon"
               onClick={toggle}
               className="p-2 rounded-md cursor-pointer"
               style={{ color: barFg }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
-            </button>
-            <button
+            </Button>
+            <Button size="icon"
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-2 rounded-md cursor-pointer"
               style={{ color: barInk }}
@@ -209,7 +210,7 @@ export default function Layout() {
               aria-controls="public-mobile-menu"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -475,7 +476,7 @@ export default function Layout() {
 
       {/* Scroll to top */}
       {showScrollTop && (
-        <button
+        <Button size="icon"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="fixed bottom-6 right-6 p-3 rounded-full cursor-pointer transition-all duration-200 z-40"
           style={{
@@ -486,7 +487,7 @@ export default function Layout() {
           aria-label="Scroll to top"
         >
           <ChevronUp {...ICON_PROPS} size={20} />
-        </button>
+        </Button>
       )}
     </div>
   )

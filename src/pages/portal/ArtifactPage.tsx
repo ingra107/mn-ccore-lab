@@ -353,7 +353,7 @@ export default function ArtifactPage() {
                 >
                   {t}
                   {canEdit && (
-                    <button
+                    <Button size="icon"
                       type="button"
                       onClick={() => removeTag.mutate(t, { onError: () => showError('Could not remove tag') })}
                       aria-label={`Remove tag ${t}`}
@@ -364,7 +364,7 @@ export default function ArtifactPage() {
                       style={{ background: 'none', border: 'none', color: 'var(--job-accent)', padding: 0, opacity: 0.8, width: 24, height: 24, margin: '-6px -8px -6px -4px', flexShrink: 0 }}
                     >
                       <X {...ICON_PROPS} size={11} />
-                    </button>
+                    </Button>
                   )}
                 </span>
               ))}
@@ -388,7 +388,7 @@ export default function ArtifactPage() {
                   <datalist id="artifact-tag-suggestions">
                     {allTags.map((t) => <option key={t.tag} value={t.tag} />)}
                   </datalist>
-                  <button
+                  <Button size="icon"
                     type="button"
                     onClick={handleAddTag}
                     disabled={!tagInput.trim() || addTag.isPending}
@@ -397,7 +397,7 @@ export default function ArtifactPage() {
                     style={{ opacity: tagInput.trim() ? 1 : 0.5 }}
                   >
                     <Plus {...ICON_PROPS} size={11} />
-                  </button>
+                  </Button>
                 </span>
               )}
             </div>

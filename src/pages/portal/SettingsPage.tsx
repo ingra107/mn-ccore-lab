@@ -105,7 +105,7 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
       {LAB_ICON_OPTIONS.map(({ name, Icon }) => {
         const isSelected = selected === name
         return (
-          <button
+          <Button size="icon"
             key={name}
             type="button"
             onClick={() => onChange(name)}
@@ -115,7 +115,7 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
             style={{ width: 40, height: 40, justifyContent: 'center', padding: 0 }}
           >
             <Icon {...ICON_PROPS} size={18} />
-          </button>
+          </Button>
         )
       })}
     </div>
@@ -762,9 +762,9 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
     <div className="sk-mat mt-2" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
-        <button onClick={() => setOpen(false)} aria-label="Close" className="hit-area" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
+        <Button size="icon" onClick={() => setOpen(false)} aria-label="Close" className="hit-area" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
           <X {...ICON_PROPS} size={16} />
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -792,7 +792,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                 style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
               />
               {stages.length > 1 && (
-                <button
+                <Button size="icon"
                   type="button"
                   onClick={() => removeStage(i)}
                   aria-label={`Remove stage ${i + 1}`}
@@ -800,7 +800,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 5, margin: -5 }}
                 >
                   <X {...ICON_PROPS} size={14} />
-                </button>
+                </Button>
               )}
             </div>
           ))}

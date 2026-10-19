@@ -6,6 +6,7 @@ import { useToggleReaction } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { nowInstant } from '../lib/time'
+import { Button } from './ui/Button'
 
 const EMOJI_OPTIONS = [
   { emoji: '\u{1F44D}', label: 'Thumbs up' },
@@ -109,7 +110,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
 
       {/* Add reaction button + picker */}
       <div className="relative" ref={pickerRef}>
-        <button
+        <Button size="icon" aria-label="Add reaction"
           onClick={() => setShowPicker(!showPicker)}
           className="inline-flex items-center justify-center rounded-full transition-all"
           style={{
@@ -126,7 +127,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
           title="Add reaction"
         >
           +
-        </button>
+        </Button>
 
         {showPicker && (
           <div

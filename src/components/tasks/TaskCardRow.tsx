@@ -31,6 +31,7 @@ import { useCompletionRing } from '../../lib/completionMoment'
 import type { CardTaskRowProps } from './TaskRow'
 import { taskShortLabel } from '../../lib/displayNames'
 import { usePairName } from '../../hooks/useProjectPairs'
+import { Button } from '../ui/Button'
 
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
@@ -185,7 +186,7 @@ export function CardRow(props: CardTaskRowProps) {
   )
 
   const planBtn = onTogglePlan && !isDone && !isPlanned ? (
-    <button
+    <Button size="icon"
       type="button"
       data-plan-btn={task.id}
       className="tk-hov today-plan-btn tip"
@@ -195,7 +196,7 @@ export function CardRow(props: CardTaskRowProps) {
       aria-label="Plan task for today"
     >
       <Pin {...ICON_PROPS} size={12} />
-    </button>
+    </Button>
   ) : null
 
   const grip = draggable && !isDone ? (

@@ -25,6 +25,7 @@ import { useUndoToast } from '../UndoToast'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { PRIORITY_OPTIONS } from '../../lib/taskConstants'
 import { hasBlockers } from '../../../shared/blockedBy'
+import { Button } from '../ui/Button'
 
 // Board cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same
 // one List renders: bold title, the project as a muted line, due pill + priority
@@ -292,7 +293,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect, project
                 <DroppableColumn key={col.key} id={col.key} isOver={overColumnId === col.key}>
                   {/* Column head: plain text and a muted count, no coloured rule. */}
                   <h4 className="tk-bd-h">
-                    <button
+                    <Button size="icon"
                       type="button"
                       className="tk-bd-col"
                       onClick={() => toggleCollapse(col.key)}
@@ -300,7 +301,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect, project
                       aria-label={`Collapse ${col.label}`}
                     >
                       <ChevronDown {...ICON_PROPS} size={12} />
-                    </button>
+                    </Button>
                     {col.label}
                     <span className="tk-bd-n">{columnTasks.length}</span>
                   </h4>
@@ -397,9 +398,9 @@ function CollapsedColumn({
 
   return (
     <div ref={setNodeRef} onClick={onExpand} className={`tk-bd-collapsed${isOver ? ' tk-bd-over' : ''}`}>
-      <button type="button" className="tk-bd-col" title="Expand column" aria-label={`Expand ${label}`}>
+      <Button size="icon" type="button" className="tk-bd-col" title="Expand column" aria-label={`Expand ${label}`}>
         <ChevronRight {...ICON_PROPS} size={12} />
-      </button>
+      </Button>
       <div className="tk-bd-vert">{label}</div>
       <span className="tk-bd-n">{count}</span>
     </div>

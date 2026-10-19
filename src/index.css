@@ -1935,6 +1935,18 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 
 /* Button size="icon" outside touch: the WCAG 2.2 2.5.8 floor, 24x24. */
 .btn-icon { min-width: 24px; min-height: 24px; }
+/* The bare icon button's base look (Button size="icon" with no variant). In
+   @layer base under :where(), so a Tailwind utility, a page class or an inline
+   style on the site always wins; only the size floor above is unlayered. */
+@layer base {
+  :where(.btn-icon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  :where(.btn-icon:disabled) { cursor: default; }
+}
 
 /* Touch targets. NO rule here sizes a <button> by default: a blanket
    `button { min-height: 44px }` (with a :not() list of exemptions) stretched
@@ -1965,13 +1977,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    Phone (<=768px) and touch tablets ((hover:none) and (pointer:coarse), 769px up;
    a 900px mouse-driven desktop window keeps its dense tables). The older
    .done-box / .stage-dot / .pill-btn / .tk-* lists below predate .hit-area and
-   keep their own fixed-inset hit areas. */
+   keep their own fixed-inset hit areas. An icon button that carries one of
+   those classes keeps that measured hit area on touch instead of growing to a
+   44px box, so the Today card's fixed action slots do not move. */
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  .btn-icon {
+  .btn-icon:not(.done-box, .stage-dot, .pill-btn, .tk-hov, .tk-btn, .tk-pill, .tk-ck, .tk-wo, .tk-x, .tk-si, .tk-rmore, .tk-prio) {
     min-width: 44px;
+    min-height: 44px;
   }
   .touch-tall,
-  .btn-icon,
   a.inline-link,
   select,
   .filter-chip {

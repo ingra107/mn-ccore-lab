@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ArrowUp } from 'lucide-react'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false)
@@ -18,7 +19,7 @@ export default function ScrollToTop() {
   if (!visible || isMobile) return null
 
   return (
-    <button
+    <Button size="icon"
       data-testid="scroll-to-top"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className="fixed z-50 rounded-full shadow-lg transition-all"
@@ -40,6 +41,6 @@ export default function ScrollToTop() {
       aria-label="Scroll to top"
     >
       <ArrowUp {...ICON_PROPS} size={16} />
-    </button>
+    </Button>
   )
 }

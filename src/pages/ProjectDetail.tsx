@@ -602,7 +602,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   const iconsEl = (
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
+            <Button size="icon"
               onClick={handleCopyLink}
               className="p-1.5 rounded-md transition-colors hover:bg-black/5 tip"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--job-accent)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
@@ -610,11 +610,11 @@ function ProjectDetailInner({ project }: InnerProps) {
               aria-label={copied ? 'Link copied!' : 'Copy link'}
             >
               {copied ? <Check {...ICON_PROPS} size={14} /> : <Link2 {...ICON_PROPS} size={14} />}
-            </button>
+            </Button>
             <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
             {/* Action menu (archive / delete / duplicate) — PD-7 */}
             <div style={{ position: 'relative' }}>
-              <button
+              <Button size="icon"
                 onClick={() => setActionMenuOpen((v) => !v)}
                 onBlur={(e) => {
                   // close when focus leaves the wrapper
@@ -630,7 +630,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 aria-expanded={actionMenuOpen}
               >
                 <MoreVertical {...ICON_PROPS} size={14} />
-              </button>
+              </Button>
               {actionMenuOpen && (
                 <div
                   role="menu"
@@ -805,14 +805,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                       </label>
                     )}
                   </span>
-                  <button
+                  <Button size="icon" aria-label="Close agenda form"
                     type="button"
                     onClick={() => { setShowAgendaForm(false); setAgendaNote('') }}
                     className="cursor-pointer"
                     style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '2px' }}
                   >
                     <X {...ICON_PROPS} size={14} />
-                  </button>
+                  </Button>
                 </div>
                 <form
                   onSubmit={(e) => {
@@ -849,7 +849,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                     onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--sk-line2)')}
                   />
                   {agendaNote.trim() && (
-                    <motion.button
+                    <Button
+                      as={motion.button}
+                      size="icon"
+                      aria-label="Add to agenda"
                       type="submit"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -858,7 +861,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       whileTap={{ scale: 0.95 }}
                     >
                       <Send {...ICON_PROPS} size={14} />
-                    </motion.button>
+                    </Button>
                   )}
                 </form>
               </div>
@@ -1679,7 +1682,7 @@ recentActivity.length === 0 ? (
                 <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
                 <span><strong>Notes</strong> are an informal progress log — visible to the team, auto-timestamped (e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (@mentions notify).</span>
               </div>
-              <button
+              <Button size="icon"
                 type="button"
                 onClick={() => {
                   try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch { /* best-effort; localStorage can throw in private mode / on quota */ }
@@ -1697,7 +1700,7 @@ recentActivity.length === 0 ? (
                 }}
               >
                 <X {...ICON_PROPS} size={14} />
-              </button>
+              </Button>
             </div>
           )}
 

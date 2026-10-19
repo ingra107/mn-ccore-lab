@@ -8,6 +8,7 @@ import type { Project } from '../../data/types'
 import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
 import Field from '../../components/ui/Field'
+import { Button } from '../../components/ui/Button'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import SectionHead from '../../components/ui/SectionHead'
@@ -287,7 +288,10 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   </span>
                 )}
                 {isPi && (
-                  <motion.button
+                  <Button
+                    as={motion.button}
+                    size="icon"
+                    aria-label="Remove dependency"
                     type="button"
                     onClick={() => deleteDep.mutate(dep.id)}
                     className="cursor-pointer flex-shrink-0 p-1 rounded"
@@ -302,7 +306,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     title="Remove dependency"
                   >
                     <Trash2 {...ICON_PROPS} size={12} />
-                  </motion.button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -364,7 +368,10 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   </span>
                 )}
                 {isPi && (
-                  <motion.button
+                  <Button
+                    as={motion.button}
+                    size="icon"
+                    aria-label="Remove dependency"
                     type="button"
                     onClick={() => deleteDep.mutate(dep.id)}
                     className="cursor-pointer flex-shrink-0 p-1 rounded"
@@ -379,7 +386,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     title="Remove dependency"
                   >
                     <Trash2 {...ICON_PROPS} size={12} />
-                  </motion.button>
+                  </Button>
                 )}
               </div>
             ))}

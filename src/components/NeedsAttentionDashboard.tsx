@@ -9,6 +9,7 @@ import { PATHS } from '../constants/paths'
 import { formatShortDate } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 export type AttentionFilter = 'revisions-overdue' | 'awaiting-review' | 'stale-drafts' | null
 
@@ -170,7 +171,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
                 >
                   {/* Chevron — expand/collapse only. M-17: aria-controls links button to panel. */}
                   {!onlyOne && (
-                    <button
+                    <Button size="icon"
                       type="button"
                       onClick={() => toggleSubgroup(g.key)}
                       aria-expanded={openForReal ? 'true' : 'false'}
@@ -186,7 +187,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
                         ? <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
                         : <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
                       }
-                    </button>
+                    </Button>
                   )}
                   {/* Row body — filter toggle only. M-09. */}
                   <button

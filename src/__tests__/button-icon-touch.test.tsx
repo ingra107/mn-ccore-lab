@@ -77,6 +77,41 @@ describe('Button size="icon"', () => {
     })
   }
 
+  // The ~130 raw icon buttons moved here (#1366) keep their look in a class:
+  // a bare icon button (no variant) sets no inline colour or padding, so the
+  // page class wins and only the 24px floor is added.
+  it('lets the caller class style a bare icon button, floor kept', async () => {
+    setCss(base + '\n.t-skin { color: rgb(255, 0, 0); background: rgb(0, 0, 255); padding: 1px; }')
+    const host = await mount(
+      <Button size="icon" aria-label="Close" className="t-skin" onClick={() => {}}>
+        <svg width="10" height="10" />
+      </Button>,
+      { ready: (h) => h.querySelector('button'), label: 'bare icon' },
+    )
+    const btn = host.querySelector('button')!
+    const cs = getComputedStyle(btn)
+    expect(btn.getAttribute('style')).toBeNull()
+    expect(cs.color).toBe('rgb(255, 0, 0)')
+    expect(cs.backgroundColor).toBe('rgb(0, 0, 255)')
+    expect(cs.display).toBe('inline-flex')
+    const r = btn.getBoundingClientRect()
+    expect(r.width).toBeGreaterThanOrEqual(24)
+    expect(r.height).toBeGreaterThanOrEqual(24)
+  })
+
+  // Today's tk-* controls own a measured ::before hit area; on touch they keep
+  // it rather than growing to a 44px box that would shift the card's slots.
+  it('leaves a tk-* icon button at its own size on touch', async () => {
+    setCss(touch)
+    const host = await mount(
+      <Button size="icon" aria-label="Remove from plan" className="tk-x">x</Button>,
+      { ready: (h) => h.querySelector('button'), label: 'tk-x icon' },
+    )
+    const r = host.querySelector('button')!.getBoundingClientRect()
+    expect(r.width).toBeGreaterThanOrEqual(24)
+    expect(r.width).toBeLessThan(44)
+  })
+
   it('keeps the overhang off md buttons', async () => {
     setCss(touch)
     const host = await mount(<Button aria-label="Save">Save</Button>, {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 interface PageTooltipProps {
   /** Unique key for localStorage persistence */
@@ -99,13 +100,13 @@ export default function PageTooltip({ id, text, delay = 0 }: PageTooltipProps) {
           }}
         >
           <span style={{ minWidth: 0 }}>{text}</span>
-          <button
+          <Button size="icon"
             onClick={dismiss}
             aria-label="Dismiss tooltip"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.7, padding: 4, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
             <X {...ICON_PROPS} size={14} />
-          </button>
+          </Button>
         </motion.div>
         </div>
       )}

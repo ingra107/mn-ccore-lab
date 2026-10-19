@@ -38,6 +38,7 @@ import { stripMeetingMarker } from '../../lib/textUtils'
 import { CollapsibleBody } from '../activity/CollapsibleBody'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+import { Button } from '../ui/Button'
 
 // ── helpers ───────────────────────────────────────────────────────────────
 
@@ -306,19 +307,19 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           {/* Duration stepper */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span className="tk-lbl" style={{ minWidth: 52, margin: 0 }}>Duration</span>
-            <button
+            <Button size="icon"
               onClick={() => adjustDuration(-DURATION_STEP)}
               disabled={durationMins <= DURATION_MIN}
               aria-label="Decrease duration by 15 minutes"
               className="hov-bg" style={{ '--hov-bg': 'var(--hover-subtle)', width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: 'none', borderRadius: 6, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 } as React.CSSProperties}
-            >−</button>
+            >−</Button>
             <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
-            <button
+            <Button size="icon"
               onClick={() => adjustDuration(DURATION_STEP)}
               disabled={durationMins >= DURATION_MAX}
               aria-label="Increase duration by 15 minutes"
               className="hov-bg" style={{ '--hov-bg': 'var(--hover-subtle)', width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: 'none', borderRadius: 6, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 } as React.CSSProperties}
-            >+</button>
+            >+</Button>
           </div>
 
           {/* Subtasks + Blocks */}

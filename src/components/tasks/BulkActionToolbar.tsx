@@ -4,6 +4,7 @@ import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { DELETE_ARM_WINDOW_MS } from '../../lib/uiTiming'
+import { Button } from '../ui/Button'
 
 interface BulkActionToolbarProps {
   selectedIds: Set<string>
@@ -106,7 +107,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
           >
             {count} selected
           </span>
-          <button
+          <Button size="icon"
             onClick={() => { closeDropdowns(); onClear() }}
             aria-label="Clear selection"
             style={{
@@ -124,7 +125,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             }}
           >
             <X {...ICON_PROPS} size={12} />
-          </button>
+          </Button>
 
           {/* Divider */}
           <div style={{ width: 1, height: 24, background: 'var(--sk-line2)' }} />

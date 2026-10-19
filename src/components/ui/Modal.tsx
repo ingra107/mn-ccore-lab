@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Button } from './Button'
 
 const MAX_WIDTHS: Record<'sm' | 'md' | 'lg', number> = {
   sm: 420,
@@ -223,7 +224,7 @@ export default function Modal({
               {title}
             </h2>
           </div>
-          <button
+          <Button size="icon"
             onClick={onClose}
             aria-label="Close"
             style={{
@@ -238,7 +239,7 @@ export default function Modal({
             }}
           >
             <X {...ICON_PROPS} size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}

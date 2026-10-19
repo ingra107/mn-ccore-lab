@@ -36,6 +36,7 @@ import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
+import { Button } from '../components/ui/Button'
 
 type FilterMode = 'all' | 'decisions' | 'actions' | 'today'
 
@@ -801,8 +802,8 @@ export default function Meetings() {
                               onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--job-accent)' }}
                               onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--sk-line2)' }} />
                             {newMeetingAgenda.length > 1 && (
-                              <button type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
-                                style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</button>
+                              <Button size="icon" aria-label="Remove agenda item" type="button" onClick={() => removeAgendaItem(i)} className="cursor-pointer shrink-0 text-xs"
+                                style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 'var(--sp-xs)' }}>x</Button>
                             )}
                           </div>
                         ))}

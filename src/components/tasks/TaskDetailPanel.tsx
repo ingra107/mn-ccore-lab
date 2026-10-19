@@ -61,6 +61,7 @@ import { askHermesOnTask, activityQueryKey, hermesOutcomeToast } from '../../lib
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { taskShortLabel } from '../../lib/displayNames'
+import { Button } from '../ui/Button'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
 
@@ -424,25 +425,25 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Prev/Next navigation */}
             {(onPrev || onNext) && (
               <div className="flex items-center mr-1">
-                <button
+                <Button size="icon" aria-label="Previous task (Alt+↑)"
                   onClick={onPrev}
                   disabled={!onPrev}
                   title="Previous task (Alt+↑)"
                   style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onPrev ? 'var(--ink-hint)' : 0.15 }}
                 >
                   <ChevronUp size={14} strokeWidth={1.5} absoluteStrokeWidth />
-                </button>
-                <button
+                </Button>
+                <Button size="icon" aria-label="Next task (Alt+↓)"
                   onClick={onNext}
                   disabled={!onNext}
                   title="Next task (Alt+↓)"
                   style={{ background: 'none', border: 'none', cursor: onNext ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onNext ? 'var(--ink-hint)' : 0.15 }}
                 >
                   <ChevronDown size={14} strokeWidth={1.5} absoluteStrokeWidth />
-                </button>
+                </Button>
               </div>
             )}
-            <button
+            <Button size="icon" aria-label="Copy task link"
               data-testid="copy-task-link"
               onClick={() => {
                 const url = `${window.location.origin}${PATHS.myTasks}?open=${task.id}`
@@ -455,8 +456,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
             >
               {copied ? <Check size={14} strokeWidth={1.5} absoluteStrokeWidth /> : <Copy size={14} strokeWidth={1.5} absoluteStrokeWidth />}
-            </button>
-            <button
+            </Button>
+            <Button size="icon"
               data-testid="close-detail-panel"
               onClick={onClose}
               aria-label="Close task"
@@ -473,7 +474,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               }}
             >
               <X size={18} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1060,12 +1061,12 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
           >
             <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={16} />
             {p.name.split(' ')[0]}
-            <button
+            <Button size="icon" aria-label={`Remove watcher ${p.name}`}
               onClick={() => removeWatcher(slug)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: 0, lineHeight: 1 }}
             >
               <X size={9} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
+            </Button>
           </span>
         )
       })}
@@ -1443,12 +1444,12 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
               <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
               </a>
-              <button
+              <Button size="icon" aria-label="Delete file"
                 onClick={() => deleteFile.mutate(f.id)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75, padding: '2px' }}
               >
                 <Trash2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -1789,7 +1790,7 @@ export function OverviewQuickAdd({
             style={{ marginTop: 6 }}
           >
             {/* Left: quiet icon-buttons */}
-            <button
+            <Button size="icon"
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -1801,8 +1802,8 @@ export function OverviewQuickAdd({
               {uploading
                 ? <Loader2 size={12} strokeWidth={1.5} absoluteStrokeWidth className="animate-spin" />
                 : <Paperclip size={12} strokeWidth={1.5} absoluteStrokeWidth />}
-            </button>
-            <button
+            </Button>
+            <Button size="icon"
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh('@')}
@@ -1812,8 +1813,8 @@ export function OverviewQuickAdd({
               style={composerIconBtn}
             >
               <AtSign size={12} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
-            <button
+            </Button>
+            <Button size="icon"
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh(':')}
@@ -1823,7 +1824,7 @@ export function OverviewQuickAdd({
               style={composerIconBtn}
             >
               <Smile size={12} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
+            </Button>
 
             {/* @me lock — ROW 81: shared MeLockToggle (unified with SmartCompose) */}
             <MeLockToggle
