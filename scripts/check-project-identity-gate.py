@@ -65,7 +65,7 @@ _TYPED_PREFIX = "proj_"
 
 # Hub D1 kg is a DETACHED store post-P4 (2026-06-05/09): there is NO steady-state
 # brain.db -> Hub kg propagation path (PB `upsert_kg_entity` is event-first/no-
-# outbox; the Lane-3 kg pull is gated OFF under PB_BRAIN_EVENT_LOGS=on;
+# outbox; the steady-state Lane-3 pull skips kg, only a dr_rebuild pull reads it;
 # mutations.ts' kg rail is unfed; reenqueue_brain_to_hub is rollback-only).
 # Cross-machine kg now syncs home<->work via the brain event log, NOT via Hub.
 # PB cannot repair Hub-only kg drift through its normal write path, so HARD-gating
