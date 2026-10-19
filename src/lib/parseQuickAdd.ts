@@ -16,7 +16,7 @@
 import { directors, getAllMembers } from '../data/team'
 import { projects } from '../data/projects'
 import { localDateKey } from './dateUtils'
-import { productLabel, type ProductRow } from './products'
+import { productKindLabel, productLabel, type ProductRow } from './products'
 import type { PairProject } from './projectPairs'
 
 // ── Types ────────────────────────────────────────────────────
@@ -337,7 +337,7 @@ export function parseQuickAddInput(input: string, ctx?: QuickAddContext): Parsed
         const prod = productToken ? resolveProduct(productToken, prods) : null
         if (prod) {
           productId = prod.id
-          productName = productLabel(prod)
+          productName = productKindLabel(prod)
         } else if (productToken) {
           const keep = span.text.indexOf('~')
           tails.set(span, { text: span.text.slice(keep), type: 'plain', start: span.start + keep, end: span.end })

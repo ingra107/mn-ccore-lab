@@ -3,8 +3,10 @@ import {
   addProduct,
   groupByKind,
   ladderFor,
+  productKindLabel,
   productLabel,
   productsOfKinds,
+  shortTitle,
   productViewMode,
   setProductHome,
   setProductStage,
@@ -32,6 +34,29 @@ describe('product display helpers', () => {
     expect(productLabel(row('prd_1', { short_name: 'A1', title: 'R03 resubmission' }))).toBe('A1')
     expect(productLabel(row('prd_2', { title: 'R03 resubmission' }))).toBe('R03 resubmission')
     expect(productLabel(row('prd_3', {}))).toBe('Manuscript')
+  })
+
+  it('names a product kind first, then its title (Nick 2026-10-19)', () => {
+    expect(productKindLabel(row('prd_1', { short_name: 'A1', title: 'R03 resubmission' }))).toBe('Manuscript: A1')
+    expect(productKindLabel(row('prd_2', { title: 'Epidemiology of ICU Readmissions' }))).toBe('Manuscript: Epidemiology of ICU Readmissions')
+    // untitled: the kind alone, never "Manuscript: Manuscript"
+    expect(productKindLabel(row('prd_3', {}))).toBe('Manuscript')
+    expect(productKindLabel(row('prd_4', { title: '  ' }))).toBe('Manuscript')
+    expect(productKindLabel(row('prd_5', { title: 'manuscript' }))).toBe('Manuscript')
+    // a title that already opens with its kind is not prefixed twice
+    const talk = { kind: 'talk', kind_label: 'Talk' }
+    expect(productKindLabel(row('prd_6', { ...talk, title: 'Talk: Methodist DNR talk' }))).toBe('Talk: Methodist DNR talk')
+    expect(productKindLabel(row('prd_7', { ...talk, title: 'AID-H Workshop' }))).toBe('Talk: AID-H Workshop')
+  })
+
+  it('cuts a long title at a word, with an ellipsis', () => {
+    const long = 'Association of Early Mobility With Ventilator-Free Days Among Critically Ill Adults in Minnesota'
+    const out = productKindLabel(row('prd_8', { title: long }))
+    expect(out.startsWith('Manuscript: Association of Early Mobility')).toBe(true)
+    expect(out.endsWith('…')).toBe(true)
+    expect(out.length).toBeLessThanOrEqual('Manuscript: '.length + 60)
+    expect(shortTitle('short one')).toBe('short one')
+    expect(shortTitle('a'.repeat(80))).toBe('a'.repeat(59) + '…')
   })
 
   it('chips for 2+ products, a ladder for one', () => {

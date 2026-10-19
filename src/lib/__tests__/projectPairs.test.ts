@@ -25,7 +25,7 @@ describe('project ~ product pairs', () => {
   it('offers one option per product for a project with 2+ products, the name alone for one', () => {
     const o = buildPairOptions(projects, byProject)
     expect(o.map((x) => x.label)).toEqual([
-      'ADHERE-LPV ~ Trial ops', 'ADHERE-LPV ~ Results manuscript', 'ADHERE-LPV ~ Protocol paper', 'CCI in ARDS',
+      'ADHERE-LPV ~ Manuscript: Trial ops', 'ADHERE-LPV ~ Manuscript: Results manuscript', 'ADHERE-LPV ~ Manuscript: Protocol paper', 'CCI in ARDS',
     ])
     expect(o[3].value).toBe('cci')
     expect(o[3].productId).toBeNull()
@@ -38,7 +38,7 @@ describe('project ~ product pairs', () => {
   })
 
   it('names a task row with its pair only for a project with 2+ products', () => {
-    expect(pairLabelFor('ADHERE-LPV', 'adhere', 'prd_2', projects, byProject)).toBe('ADHERE-LPV ~ Results manuscript')
+    expect(pairLabelFor('ADHERE-LPV', 'adhere', 'prd_2', projects, byProject)).toBe('ADHERE-LPV ~ Manuscript: Results manuscript')
     expect(pairLabelFor('CCI in ARDS', 'cci', 'prd_9', projects, byProject)).toBe('CCI in ARDS')
     // a stale product id from before a move names no pair
     // a stale product id, or none, is a project-wide task on a project with 2+ products
@@ -55,5 +55,16 @@ describe('project ~ product pairs', () => {
     const fb = withCurrent(opts, 'adhere', projects)
     expect(fb[fb.length - 1].label).toBe('ADHERE-LPV')
     expect(withCurrent(opts, 'cci', projects)).toHaveLength(opts.length)
+  })
+
+  it('names an untitled product by its kind and a titled one kind first (Nick 2026-10-19)', () => {
+    const untitled: ProductRow = { ...prod('prd_u', '', 1), title: null, short_name: null }
+    const abstract: ProductRow = { ...prod('prd_t', 'Epidemiology of ICU Readmissions (ATS)'), kind: 'abstract', kind_label: 'Abstract', short_name: null }
+    const icu: PairProject[] = [{ id: 'proj_icu', slug: 'icu', title: 'ICU Readmissions', short_name: null }]
+    const by = { proj_icu: [untitled, abstract] }
+    expect(buildPairOptions(icu, by).map((x) => x.label)).toEqual([
+      'ICU Readmissions ~ Manuscript', 'ICU Readmissions ~ Abstract: Epidemiology of ICU Readmissions (ATS)',
+    ])
+    expect(pairLabelFor('ICU Readmissions', 'icu', 'prd_u', icu, by)).toBe('ICU Readmissions ~ Manuscript')
   })
 })

@@ -52,7 +52,7 @@ describe('parseQuickAddInput, #project~product', () => {
     expect(p.title).toBe('Draft intro')
     expect(p.projectSlug).toBe('adhere-lpv-trial')
     expect(p.productId).toBe('prd_results')
-    expect(p.productName).toBe('Results paper')
+    expect(p.productName).toBe('Manuscript: Results paper')
     const tok = p.tokens.find((t) => t.type === 'project')!
     expect(tok.text).toBe('#adhere~results')
   })

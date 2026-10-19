@@ -16,6 +16,7 @@ import {
   NO_ROLES,
   nickRoleLabel,
   productDateFacts,
+  productKindLabel,
   productLabel,
   sortProducts,
   type EventFields,
@@ -122,7 +123,7 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
                 onClick={() => { setOpenId(on ? null : p.id); setMore(false) }}
                 data-testid={`product-chip-${p.id}`}
               >
-                <span className="pp-chip-n">{productLabel(p)}</span>
+                <span className="pp-chip-n">{productKindLabel(p)}</span>
                 <span className="pp-chip-s">{p.stage_label}</span>
               </button>
             )
@@ -168,7 +169,7 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
       )}
 
       {selected && (
-        <div className="pp-panel" id={PANEL_ID} role="region" aria-label={`${productLabel(selected)} stage`}>
+        <div className="pp-panel" id={PANEL_ID} role="region" aria-label={`${productKindLabel(selected)} stage`}>
           <ProductDetail
             key={selected.id}
             product={selected}
@@ -211,7 +212,7 @@ function GroupedList({
               >
                 <span className="pp-row-n">{productLabel(p)}</span>
                 {p.is_home === 1 && <span className="pp-home">Home</span>}
-                {parent && <span className="pp-dim pp-row-from">from {productLabel(parent)}</span>}
+                {parent && <span className="pp-dim pp-row-from">from {productKindLabel(parent)}</span>}
                 <span className="pp-stage-chip">{p.stage_label}</span>
               </button>
             )
@@ -233,7 +234,7 @@ function useStageMover(product: ProductRow, ladder: { stage: string; label: stri
     const next = ladder.find((s) => s.stage === stage)
     if (!next) return
     setStage.mutate({
-      slug, productId: product.id, stage, label: next.label, productName: productLabel(product),
+      slug, productId: product.id, stage, label: next.label, productName: productKindLabel(product),
       seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
     })
   }
@@ -279,9 +280,9 @@ function InlineLadder({
         onClick={onToggle}
         data-testid={`product-chip-${product.id}`}
       >
-        <span className="pp-chip-n">{productLabel(product)}</span>
+        <span className="pp-chip-n">{productKindLabel(product)}</span>
       </button>
-      <span className="pp-dots" role="group" aria-label={`Stage of ${productLabel(product)}`}>
+      <span className="pp-dots" role="group" aria-label={`Stage of ${productKindLabel(product)}`}>
         {ladder.map((st, i) => {
           const cur = i === idx
           const past = i < idx
@@ -328,7 +329,7 @@ function ProductDetail({
   const facts: string[] = []
   if (product.waiting_on) facts.push(`Waiting on ${product.waiting_on}`)
   if (product.venue) facts.push(product.venue)
-  if (parent) facts.push(`Grew from ${productLabel(parent)}`)
+  if (parent) facts.push(`Grew from ${productKindLabel(parent)}`)
   // A talk or an abstract shows when it happened, never "Due" once given
   // (schema-v135); every other kind keeps its due date and deadline.
   facts.push(...productDateFacts(product, formatPublicationDate, formatShortDate))
@@ -561,7 +562,7 @@ function AddProductForm({
         <span>Grew from</span>
         <select value={parentId} onChange={(e) => setParentId(e.target.value)} data-testid="product-add-parent">
           <option value="">Nothing</option>
-          {products.map((p) => <option key={p.id} value={p.id}>{productLabel(p)}</option>)}
+          {products.map((p) => <option key={p.id} value={p.id}>{productKindLabel(p)}</option>)}
         </select>
       </label>
       <div className="pp-form-actions">

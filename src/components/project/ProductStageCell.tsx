@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import InlineSelect from '../InlineSelect'
 import { PATHS } from '../../constants/paths'
 import { useSetProductStage } from '../../hooks/useProjectProducts'
-import { ladderFor, listStageView, productLabel, sortProducts, type ProductKind, type ProductRow } from '../../lib/products'
+import { ladderFor, listStageView, productKindLabel, sortProducts, type ProductKind, type ProductRow } from '../../lib/products'
 
 // The Projects list's Stage cell (Nick, bracket 2026-10-11: "chips if there
 // are multiple products but a ladder if there's only one"):
@@ -56,7 +56,7 @@ export function ProductLadder({ slug, product, kinds, testId }: {
           if (stage === product.stage) return
           const label = ladder.find((s) => s.stage === stage)?.label ?? stage
           setStage.mutate({
-            slug, productId: product.id, stage, label, productName: productLabel(product),
+            slug, productId: product.id, stage, label, productName: productKindLabel(product),
             seen: { seq: product.seq, stage: product.stage, label: product.stage_label },
           })
         }}
@@ -70,7 +70,7 @@ export function ProductLadder({ slug, product, kinds, testId }: {
 function ProductChips({ slug, products }: { slug: string; products: ProductRow[] }) {
   const shown = products.slice(0, CHIPS_SHOWN)
   const more = products.length - shown.length
-  const all = products.map((p) => `${productLabel(p)}: ${p.stage_label}`).join(' · ')
+  const all = products.map((p) => `${productKindLabel(p)} (${p.stage_label})`).join(' · ')
   return (
     <Link
       to={PATHS.project(slug)}
@@ -81,7 +81,7 @@ function ProductChips({ slug, products }: { slug: string; products: ProductRow[]
     >
       {shown.map((p) => (
         <span key={p.id} className="psc-chip">
-          <span className="psc-cn">{productLabel(p)}</span>
+          <span className="psc-cn">{productKindLabel(p)}</span>
           <span className="psc-cs">{p.stage_label}</span>
         </span>
       ))}

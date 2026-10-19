@@ -100,7 +100,7 @@ test('typing the pair out in full files on the pair, no pick needed', async ({ p
   // The list is open mid-token; a space closes it, then Enter submits.
   await box.pressSequentially(' ')
   // The parse needs the live project list; the preview chip shows it has it.
-  await expect(page.getByText(`Quick Pair ${STAMP} ~ Results paper`).last()).toBeVisible()
+  await expect(page.getByText(`Quick Pair ${STAMP} ~ Manuscript: Results paper`).last()).toBeVisible()
   await box.press('Enter')
   await expect.poll(async () => (await tasksOf(page)).find((t) => t.title === 'Write abstract')?.product_id, { timeout: 20_000 }).toBe(results.id)
 })

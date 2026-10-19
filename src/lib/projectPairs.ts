@@ -10,7 +10,7 @@
 // "Project ~ Product".
 
 import { projectShortLabel } from './displayNames'
-import { productLabel, type ProductRow } from './products'
+import { productKindLabel, type ProductRow } from './products'
 
 export interface PairProject {
   /** proj_* PK: the key of the bulk product read. */
@@ -66,7 +66,7 @@ export function buildPairOptions(projects: readonly PairProject[], byProject: By
       continue
     }
     for (const pr of prods) {
-      out.push({ value: encodePair(p.slug, pr.id), label: `${name} ~ ${productLabel(pr)}`, slug: p.slug, productId: pr.id })
+      out.push({ value: encodePair(p.slug, pr.id), label: `${name} ~ ${productKindLabel(pr)}`, slug: p.slug, productId: pr.id })
     }
   }
   return out
@@ -100,7 +100,7 @@ export function pairLabelFor(
   if (prods.length < 2) return baseName
   // No product (or one that is no longer live): a project-wide task.
   const pr = productId ? prods.find((x) => x.id === productId) : undefined
-  return pr ? `${baseName} ~ ${productLabel(pr)}` : `${baseName} ~ project`
+  return pr ? `${baseName} ~ ${productKindLabel(pr)}` : `${baseName} ~ project`
 }
 
 /** Options for a select: the pair options, plus a fallback for a current value

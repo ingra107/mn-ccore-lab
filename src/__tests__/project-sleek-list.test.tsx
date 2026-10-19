@@ -147,7 +147,7 @@ describe('Projects list on sleek rows', () => {
     expect(row('alpha').querySelector('[aria-label="Stage: Data analysis"] .psc-d.is-on')).not.toBeNull()
     expect(row('charlie').querySelector('.psc-chips')!.textContent).toContain('Paper')
     expect(row('charlie').querySelector('.psc-chips')!.textContent).toContain('+1')
-    expect(row('charlie').querySelector('.psc-chips')!.getAttribute('data-tip')).toContain('Poster: Writing')
+    expect(row('charlie').querySelector('.psc-chips')!.getAttribute('data-tip')).toContain('Manuscript: Poster (Writing)')
     expect(row('alpha').querySelector('[data-col="title"]')!.textContent).toContain('3')
   })
 

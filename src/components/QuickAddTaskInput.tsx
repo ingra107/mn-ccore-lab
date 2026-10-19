@@ -8,7 +8,7 @@
 
 import { useRef, useCallback, useEffect, useState } from 'react'
 import { parseQuickAddInput, productSuggestions, productToken, type TokenType } from '../lib/parseQuickAdd'
-import { productLabel } from '../lib/products'
+import { productKindLabel } from '../lib/products'
 import { useQuickAddContext } from '../hooks/useQuickAddContext'
 import { formatShortDate } from '../lib/dateUtils'
 import type { ParsedQuickAdd } from '../lib/parseQuickAdd'
@@ -329,8 +329,9 @@ export default function QuickAddTaskInput({
                 background: i === activeIdx ? withAlpha('var(--sk-t1)', 8) : 'transparent',
               }}
             >
-              <span>{productLabel(p)}</span>
-              <span style={{ color: 'var(--slate)', opacity: 0.75 }}>{p.kind_label}</span>
+              {/* Kind first, then title (Nick 2026-10-19); the kind no longer
+                  repeats in a second column, so an untitled product reads once. */}
+              <span>{productKindLabel(p)}</span>
             </li>
           ))}
         </ul>

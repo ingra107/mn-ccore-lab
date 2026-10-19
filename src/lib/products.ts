@@ -193,6 +193,37 @@ export function productLabel(p: Pick<ProductRow, 'short_name' | 'title' | 'kind_
   return p.short_name?.trim() || p.title?.trim() || p.kind_label
 }
 
+/** The longest title a kind-first label carries before it is cut at a word. */
+export const KIND_LABEL_TITLE_MAX = 60
+
+/** A title cut at a word boundary to `max` characters, with an ellipsis. */
+export function shortTitle(text: string, max = KIND_LABEL_TITLE_MAX): string {
+  const t = text.trim().replace(/\s+/g, ' ')
+  if (t.length <= max) return t
+  const cut = t.slice(0, max - 1)
+  const sp = cut.lastIndexOf(' ')
+  // Cut at the last space unless that throws away most of the line.
+  const head = sp >= max * 0.6 ? cut.slice(0, sp) : cut
+  return `${head.replace(/[\s,;:.\-–—]+$/, '')}…`
+}
+
+/** The kind-first name for a product shown beside its project or on its own:
+ *  "Manuscript: Epidemiology of ICU Readmissions", or "Manuscript" when it has
+ *  no title. Nick, 2026-10-19 ("Kind first, then title"): an untitled product
+ *  used to read as its bare kind and a titled one never showed its kind.
+ *  Short name first, else the title cut at a word. The kind never shows twice:
+ *  a title that is just the kind, or already opens with "Kind:", gets no second prefix. */
+export function productKindLabel(p: Pick<ProductRow, 'short_name' | 'title' | 'kind_label'>): string {
+  const kind = p.kind_label
+  const raw = p.short_name?.trim() || p.title?.trim() || ''
+  if (!raw) return kind
+  const lowKind = kind.toLowerCase()
+  if (raw.toLowerCase() === lowKind) return kind
+  const prefix = `${lowKind}:`
+  const name = raw.toLowerCase().startsWith(prefix) ? raw.slice(prefix.length).trim() : raw
+  return name ? `${kind}: ${shortTitle(name)}` : kind
+}
+
 /** Chips for 2+ products, a ladder for one (Nick, bracket 2026-10-11). */
 export function productViewMode(count: number): 'ladder' | 'chips' {
   return count > 1 ? 'chips' : 'ladder'

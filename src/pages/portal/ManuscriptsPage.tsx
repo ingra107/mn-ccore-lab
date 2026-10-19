@@ -38,7 +38,7 @@ import ProductKindList from '../../components/project/ProductKindList'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
+import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productKindLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -259,7 +259,7 @@ export default function ManuscriptsPage() {
     }
     setProductStage.mutate({
       slug, productId: home.id, stage: nextStage, label: STAGE_LABELS[nextStage] ?? nextStage,
-      productName: productLabel(home),
+      productName: productKindLabel(home),
       seen: { seq: home.seq, stage: home.stage, label: home.stage_label },
     })
   }
