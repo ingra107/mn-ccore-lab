@@ -41,5 +41,8 @@ cd "$REPO_ROOT"
 # wrangler uses OAuth. `unset` is a no-op when the var is absent.
 unset CLOUDFLARE_API_TOKEN
 unset CLOUDFLARE_ACCOUNT_ID
+# The legacy names shadow OAuth the same way (2026-10-19: a shell carrying one
+# got "Authentication error 10000" through this wrapper; env -u of these fixed it).
+unset CF_API_TOKEN CF_API_KEY CF_ACCOUNT_ID CLOUDFLARE_API_KEY
 
 exec npx wrangler "$@"
