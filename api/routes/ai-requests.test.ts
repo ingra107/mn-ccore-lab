@@ -445,6 +445,6 @@ describe('handleCreateAIRequest — entity context derivation', () => {
   });
 
   it('stores NULL for an activity-entry source_id with no caller context', async () => {
-    expect(await createAndGetContext({ source_type: 'lab_question', source_id: 'deadbeefdeadbeefdeadbeefdeadbeef', prompt: 'question' })).toBeNull();
+    expect(await createAndGetContext({ source_type: 'project_comment', source_id: 'deadbeefdeadbeefdeadbeefdeadbeef', prompt: 'question' })).toBeNull();
   });
 });

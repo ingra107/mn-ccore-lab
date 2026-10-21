@@ -3,7 +3,7 @@
  *
  * Shown in place of the literal `'Thinking about this... (AI response pending)'`
  * string that the backend writes as the `claude-ai` answer the instant a
- * `@hermes` mention is detected (api/routes/questions.ts:41, projects.ts:45).
+ * `@hermes` mention is detected (api/lib/activity-entry.ts postActivityEntry).
  * The real answer lands later via the ai-request queue + polling, at which
  * point the answer content changes and the renderer swaps to <HermesResponse>.
  *

@@ -1,46 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
-import { HERMES_DETECT_RE, HERMES_STRIP_RE } from '../lib/hermes-mention';
-
-// ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
-async function handleClaudeMentionInAnswer(
-  content: string,
-  answerId: string,
-  questionId: string,
-  user: AuthUser,
-  env: Env,
-): Promise<void> {
-  if (!HERMES_DETECT_RE.test(content)) return;
-
-  const aiPrompt = content.replace(HERMES_STRIP_RE, '').trim();
-  if (aiPrompt.length <= 5) return;
-
-  // Get question context
-  const question = await env.DB.prepare(
-    'SELECT question, project_slug FROM lab_questions WHERE id = ?'
-  ).bind(questionId).first<{ question: string; project_slug: string | null }>();
-
-  // Create AI request record
-  const aiId = generateId();
-  await env.DB.prepare(
-    'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    aiId,
-    'lab_answer',
-    answerId,
-    question?.project_slug || null,
-    aiPrompt,
-    question ? `Question: ${question.question}` : null,
-    user.email,
-  ).run();
-
-  // Create a placeholder answer from claude-ai
-  const responseId = generateId();
-  await env.DB.prepare(
-    'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
-  ).bind(responseId, questionId, 'Thinking about this... (AI response pending)', 'claude-ai').run();
-}
+// Ask the Lab @hermes retired 2026-10-21 (#8238); rebuild through postActivityEntry.
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -150,26 +111,6 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
 
   await logActivity(env, 'question', `New question: "${questionText.trim().slice(0, 80)}"`, askedBy, id, 'question');
 
-  // Check for @hermes/@claude mention in question → create AI request + placeholder answer
-  try {
-    if (HERMES_DETECT_RE.test(questionText)) {
-      const aiPrompt = questionText.replace(HERMES_STRIP_RE, '').trim();
-      if (aiPrompt.length > 5) {
-        const aiId = generateId();
-        await env.DB.prepare(
-          'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        ).bind(aiId, 'lab_question', id, canonicalProjectSlug, aiPrompt, null, user.email).run();
-
-        const responseId = generateId();
-        await env.DB.prepare(
-          'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'
-        ).bind(responseId, id, 'Thinking about this... (AI response pending)', 'claude-ai').run();
-      }
-    }
-  } catch (e) {
-    console.error('Failed to create AI request for @hermes mention in question:', e);
-  }
-
   const created = await env.DB.prepare('SELECT * FROM lab_questions WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
@@ -206,13 +147,6 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
     questionId,
     'question',
   );
-
-  // Check for @hermes/@claude mention → create AI request + placeholder answer
-  try {
-    await handleClaudeMentionInAnswer(body.content, id, questionId, user, env);
-  } catch (e) {
-    console.error('Failed to create AI request for @hermes mention in answer:', e);
-  }
 
   const created = await env.DB.prepare('SELECT * FROM lab_answers WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

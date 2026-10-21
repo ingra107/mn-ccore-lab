@@ -1,7 +1,8 @@
 // api/lib/hermes-mention.ts — SSOT for detecting/stripping the @hermes / @claude
 // trigger in backend body text. One definition so "what counts as a Hermes
-// mention" can't drift between the activity timeline (activity-entry.ts) and the
-// Ask-the-Lab question/answer paths (routes/questions.ts).
+// mention" can't drift between its backend readers (activity-entry.ts,
+// inbox-events.ts). Ask the Lab's own @hermes copy in routes/questions.ts was
+// retired 2026-10-21 (#8238).
 //
 // DETECT_RE gates dispatch (word-boundary so '@claudette' doesn't fire);
 // STRIP_RE removes the mention from the AI prompt (global, no word-boundary so

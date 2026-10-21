@@ -13,8 +13,8 @@ import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/rout
 
 // (P2-A 2026-06-10: the per-route @hermes copy `handleClaudeMention` is gone —
 // project composers route through postActivityEntry, which owns Hermes
-// dispatch + the placeholder. questions.ts keeps its own Ask-the-Lab copy
-// until that surface converges.)
+// dispatch + the placeholder. Ask the Lab's own copy in questions.ts was
+// retired 2026-10-21, #8238.)
 
 // POST /api/milestones/:id/complete — toggle milestone completion
 // 2026-04-20 Airtable Funeral P2-2: PWA syncMilestoneToAirtable flips

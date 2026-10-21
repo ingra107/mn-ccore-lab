@@ -3,11 +3,14 @@
 //
 // The PB debrief stamps its action items with the meeting's calendar id and
 // pushes the meeting first with that id as source_id (v95). The task reads
-// joined on `t.meeting_id = m.id` only, so every such task fell to the
-// date+slug guess in resolveMeetingRef. Joining both id spaces (TASK_MEETING_JOIN) makes
-// it exact; meeting_ref must still be the joined m.id, because a link to a
-// source_id is a 404 (handleGetMeeting reads meetings.id only). Runs on the
-// migration-chain database (api/test-support/prod-schema-db.ts).
+// joined on `t.meeting_id = m.id` only, so every such task fell to a
+// date+slug guess. Joining both id spaces (TASK_MEETING_JOIN) makes it exact;
+// meeting_ref must still be the joined m.id, because a link to a source_id is a
+// 404 (handleGetMeeting reads meetings.id only). A capture staging key
+// (`mtg_<stamp>-<lane>`) joins nothing and gets NO meeting_ref: the "only
+// meeting that day" guess was deleted 2026-10-21 because it linked recordings of
+// other meetings. Runs on the migration-chain database
+// (api/test-support/prod-schema-db.ts).
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
@@ -33,7 +36,7 @@ beforeEach(() => {
   insertRow(db, 'meetings', { id: 'mtg-2026-10-09-aaaa0000', date: '2026-10-09', title: 'ADHERE-LPV meeting', source_id: null })
   task('t_src', 'cal-20261012T1300-weekly-meeting-with-dani') // debrief-written: keyed by source_id
   task('t_hub', 'mtg-2026-10-09-aaaa0000') // Hub-written: keyed by meetings.id
-  task('t_legacy', 'mtg_20261009T150000') // approval-lane id: no meetings row, bridged by date
+  task('t_legacy', 'mtg_20261009T150000-zoom') // capture staging key: no meetings row, ONE meeting that day
   task('t_none', null)
   env = { DB: d1Adapter(db) }
 })
@@ -52,12 +55,20 @@ describe('task list meeting join', () => {
     expect(src.meeting_id).toBe('cal-20261012T1300-weekly-meeting-with-dani') // stored value untouched
   })
 
-  it('keeps the id-keyed task, still bridges the legacy id, and returns one row per task', async () => {
+  it('keeps the id-keyed task and returns one row per task', async () => {
     const rows = await list()
     expect(rows.map((r) => r.id).sort()).toEqual(['t_hub', 't_legacy', 't_none', 't_src'])
     expect(rows.find((r) => r.id === 't_hub').meeting_ref).toBe('mtg-2026-10-09-aaaa0000')
-    expect(rows.find((r) => r.id === 't_legacy').meeting_ref).toBe('mtg-2026-10-09-aaaa0000')
     expect(rows.find((r) => r.id === 't_none').meeting_ref ?? null).toBeNull()
+  })
+
+  it('never links an mtg_ capture key to the only meeting that day (#1593)', async () => {
+    const legacy = (await list()).find((r) => r.id === 't_legacy')
+    expect(legacy.meeting_ref ?? null).toBeNull()
+    expect(legacy.meeting_title ?? null).toBeNull()
+    expect(legacy.meeting_id).toBe('mtg_20261009T150000-zoom') // origin still stated
+    const one = await (await handleGetTask('t_legacy', env)).json() as any
+    expect(one.data.meeting_ref ?? null).toBeNull()
   })
 
   it('?meeting=<meetings.id> also returns the tasks keyed by its source_id', async () => {
