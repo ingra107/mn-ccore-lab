@@ -4,12 +4,8 @@ Hermes is the MN-CCORE Lab Hub's built-in AI research assistant. Team members ca
 
 ## How to Use Hermes
 
-### Ask the Lab (Primary)
-1. Go to **Ask the Lab** in the Hub portal
-2. Post a question that includes `@hermes` (e.g., "What statistical approach should we use for the vasopressor escalation analysis? @hermes")
-3. Hermes responds within 20-40 seconds
-4. The response appears with a gold sparkle badge
-5. You can reply with another `@hermes` mention for follow-up — Hermes sees the full conversation thread
+### Ask the Lab (retired 2026-10-21)
+Ask the Lab no longer dispatches Hermes: an `@hermes` in a question or answer creates no AI request (#8238; one question ever used it). Ask Hermes on a task, project or meeting instead.
 
 ### Task Comments
 1. Open any task's detail view

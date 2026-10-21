@@ -120,8 +120,8 @@ export default function AskTheLab() {
         ) : filteredQuestions.length === 0 ? (
           <EmptyStateComponent
             icon={<EmptyStateArt variant="decisions" />}
-            title={searchQuery ? 'No matching questions' : 'Ask the lab — or @hermes'}
-            subtitle={searchQuery ? 'Try different search terms.' : 'Post a research question for teammates, or tag @hermes in the body to get an AI response. Every question becomes a searchable record.'}
+            title={searchQuery ? 'No matching questions' : 'Ask the lab'}
+            subtitle={searchQuery ? 'Try different search terms.' : 'Post a research question for teammates. Every question becomes a searchable record.'}
             action={!searchQuery ? { label: 'Ask a question', onClick: () => setShowCreate(true) } : undefined}
           />
         ) : (
@@ -394,7 +394,8 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             onSubmit={handleSubmitAnswer}
             submitting={createAnswerMut.isPending}
             uploadContext={{ type: 'answer', id: questionId, entityType: 'question' }}
-            placeholder="Write your answer… (use @hermes for AI)"
+            placeholder="Write your answer…"
+            noHermes
             rows={2}
             alwaysShowToolbar
             submitLabel="Reply"
@@ -476,15 +477,18 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
         className="flex flex-col gap-3.5"
       >
         <Field label="Question" required htmlFor="question-text" noContainer>
-          {/* SmartCompose (D14) — @-mention dropdown surfaces @hermes in the
-              team list. The modal footer's "Ask the Lab" button drives the
-              form (hideSubmitButton); Cmd+Enter submits via the form keydown. */}
+          {/* SmartCompose (D14). Ask the Lab @hermes retired 2026-10-21 (#8238):
+              an @hermes here creates no AI request, so noHermes keeps it out of
+              the dropdown and the command badge. The modal footer's "Ask the
+              Lab" button drives the form (hideSubmitButton); Cmd+Enter submits
+              via the form keydown. */}
           <SmartCompose
             value={questionText}
             onChange={setQuestionText}
             onSubmit={async () => submitQuestion()}
             uploadContext={{ type: 'question', id: 'new', entityType: 'question' }}
-            placeholder="What do you want to know? (use @hermes for AI)"
+            placeholder="What do you want to know?"
+            noHermes
             rows={3}
             alwaysShowToolbar
             hideSubmitButton

@@ -67,8 +67,11 @@ export function PendingMeetingsCard({ tasks, band = true }: PendingMeetingsCardP
             {/* Title + captured timestamp */}
             <div style={{ flex: '1 1 220px', minWidth: 0 }}>
               <div style={{ fontWeight: 500, color: 'var(--sk-t1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {/* meeting_title is the raw capture title; fall back to the task
-                    name with the "Meeting: … [pending approval]" wrapper stripped */}
+                {/* A pending capture's meeting_id is an mtg_ staging key, which
+                    joins no meetings row, so meeting_title is null here and the
+                    task name (its "Meeting: … [pending approval]" wrapper
+                    stripped) is what shows. meeting_title only wins if the task
+                    ever joins a meeting exactly (TASK_MEETING_JOIN). */}
                 {task.meeting_title || cleanMeetingTitle(task.title)}
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginTop: 2 }}>

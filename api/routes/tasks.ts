@@ -10,7 +10,7 @@ import { eventDateRefusal } from './products';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
-import { resolveMeetingRef, TASK_MEETING_COLS, TASK_MEETING_JOIN, type MeetingLike } from '../lib/meeting-ref';
+import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
@@ -180,7 +180,7 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const rows = filterFixtures(result.results, 'title', includeFixtures);
-  return json({ data: await decorateMeetingRefs(env, rows), count: rows.length });
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/tasks/:id/blocking — the tasks that list :id in their blocked_by
@@ -197,48 +197,7 @@ export async function handleGetBlockingTasks(id: string, env: Env): Promise<Resp
      ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC`
   ).bind(id, id).all();
   const rows = filterFixtures(result.results, 'title', false);
-  return json({ data: await decorateMeetingRefs(env, rows), count: rows.length });
-}
-
-/**
- * Fill in the meeting a task came from, for rows TASK_MEETING_JOIN missed (#108).
- *
- * The join (api/lib/meeting-ref.ts) sets `meeting_ref` to the joined meetings.id
- * for every task keyed by a meeting's id or source_id (#1593). What is left is a
- * meeting_id that names no meetings row; resolveMeetingRef bridges those by the
- * date and title slug embedded in the id.
- *
- * Sets `meeting_ref` (the canonical id — what a link should target) and
- * backfills `meeting_title`/`meeting_date`. Deliberately does NOT touch
- * `meeting_id`: that is the stored value PB replicates, and rewriting it on the
- * wire would make the Hub disagree with brain.db about what is stored.
- *
- * One extra query per list read, over a table of a few dozen rows, and only
- * when some task actually carries a meeting_id.
- */
-async function decorateMeetingRefs(
-  env: Env,
-  rows: Record<string, unknown>[],
-): Promise<Record<string, unknown>[]> {
-  // Only pay for the meetings lookup when some row actually needs bridging; a
-  // joined row already carries meeting_ref = m.id, so clients have ONE field to
-  // read either way.
-  const needsBridge = rows.some((r) => r.meeting_id && !r.meeting_ref);
-  let meetings: MeetingLike[] = [];
-  if (needsBridge) {
-    try {
-      const res = await env.DB.prepare('SELECT id, title, date FROM meetings').all<MeetingLike>();
-      meetings = res.results ?? [];
-    } catch (e) {
-      console.error('decorateMeetingRefs: meetings lookup failed (badges degrade, nothing breaks):', e);
-      return rows;
-    }
-  }
-  return rows.map((r) => {
-    if (!r.meeting_id || r.meeting_ref) return r;
-    const hit = resolveMeetingRef(r.meeting_id as string, meetings);
-    return hit ? { ...r, meeting_ref: hit.id, meeting_title: hit.title, meeting_date: hit.date } : r;
-  });
+  return json({ data: rows, count: rows.length });
 }
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
@@ -304,11 +263,9 @@ export async function handleGetTask(id: string, env: Env): Promise<Response> {
     `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
-  // Same meeting-ref bridge as the list read, so the detail panel resolves the
-  // meeting too — otherwise a task would badge its meeting in the row and lose
-  // it the moment you opened the task.
-  const [decorated] = await decorateMeetingRefs(env, [task]);
-  return json({ data: decorated });
+  // meeting_ref comes from TASK_MEETING_JOIN, the same join as the list read,
+  // so the row and the detail panel always agree on the meeting.
+  return json({ data: task });
 }
 
 // GET /api/action-items and POST /api/action-items/:id/toggle (handleActionItems,

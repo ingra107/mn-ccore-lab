@@ -52,14 +52,17 @@ interface MentionInputProps {
    *  the text: an absolutely positioned badge sat on top of whatever was typed
    *  in the field's bottom-right corner (Today compose, 2026-10-10). */
   commandBadge?: 'below' | 'none'
+  /** Do not suggest, tint or badge @hermes: this surface does not dispatch it
+   *  (Ask the Lab, #8238). See commandTagsFor in lib/mentionCommandTags.ts. */
+  noHermes?: boolean
 }
 
 /** The command @-tag at the start of `value` (e.g. "@quickchat ..."), or null.
  *  Shared by MentionInput's own badge row and SmartCompose's toolbar slot so
  *  the two cannot disagree on what counts as a recognized command. */
-function useDetectedCommand(value: string) {
+function useDetectedCommand(value: string, noHermes = false) {
   const isPi = useAuth().user.isPi
-  const commandTags = useMemo(() => commandTagsFor(isPi), [isPi])
+  const commandTags = useMemo(() => commandTagsFor(isPi, noHermes), [isPi, noHermes])
   return useMemo(() => {
     const m = value.match(COMMAND_TAG_PREFIX_RE)
     if (!m) return null
@@ -68,8 +71,8 @@ function useDetectedCommand(value: string) {
 }
 
 /** The "command recognized" pill. Renders in normal flow, never absolute. */
-export function CommandBadge({ value }: { value: string }) {
-  const cmd = useDetectedCommand(value)
+export function CommandBadge({ value, noHermes = false }: { value: string; noHermes?: boolean }) {
+  const cmd = useDetectedCommand(value, noHermes)
   if (!cmd) return null
   return (
     <span
@@ -135,12 +138,13 @@ export default function MentionInput({
   dropdownPosition = 'above',
   maxRows,
   commandBadge = 'below',
+  noHermes = false,
 }: MentionInputProps) {
   const { data: teamSlugs = [] } = useTeamSlugs()
   // Launch tags (@quickchat/@workon) are PI-only commands; for anyone else
   // they are plain text (lib/mentionCommandTags.ts PI_ONLY_COMMAND_TAGS).
   const isPi = useAuth().user.isPi
-  const commandTags = useMemo(() => commandTagsFor(isPi), [isPi])
+  const commandTags = useMemo(() => commandTagsFor(isPi, noHermes), [isPi, noHermes])
   const [mentionOpen, setMentionOpen] = useState(false)
   const [mentionFilter, setMentionFilter] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -153,14 +157,14 @@ export default function MentionInput({
     // Exact match on a known command @-tag (base OR a Hermes model variant,
     // #891): suppress person autocomplete so the dropdown doesn't compete
     // with the command-routing UI signal.
-    if (isExactCommandTag(lower)) return []
+    if (isExactCommandTag(lower, noHermes)) return []
     if (!lower) return teamSlugs
     return teamSlugs.filter(
       (t) =>
         t.slug.toLowerCase().includes(lower) ||
         t.name.toLowerCase().includes(lower)
     )
-  }, [teamSlugs, mentionFilter])
+  }, [teamSlugs, mentionFilter, noHermes])
 
   // Command @-tags whose key starts with the current filter -- shown above the
   // person suggestions so @hermes/@quickchat/@workon/@backlog are discoverable
@@ -171,7 +175,7 @@ export default function MentionInput({
   // gated inside filterCommandTags on the filter string itself containing
   // '-' -- see mentionCommandTags.ts for why that keeps them invisible while
   // typing "@herm"/"@hermes".
-  const filteredCommands = useMemo(() => filterCommandTags(mentionFilter, isPi), [mentionFilter, isPi])
+  const filteredCommands = useMemo(() => filterCommandTags(mentionFilter, isPi, noHermes), [mentionFilter, isPi, noHermes])
 
   // Commands first, people after -- the single list keyboard nav + render walk.
   const mentionOptions: MentionOption[] = useMemo(
@@ -465,7 +469,7 @@ export default function MentionInput({
           text (see the commandBadge prop). */}
       {commandBadge === 'below' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-          <CommandBadge value={value} />
+          <CommandBadge value={value} noHermes={noHermes} />
         </div>
       )}
 

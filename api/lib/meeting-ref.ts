@@ -1,31 +1,32 @@
 /**
- * meeting-ref — resolve a task's `meeting_id` to a real `meetings.id`.
+ * meeting-ref — the ONE join from a task's `meeting_id` to its `meetings` row.
  *
  * #108 follow-up. Nick: "i would LOVE if the from a meeting with the icon was
  * the link or had the short name and date and it was itself a URL hyperlink to
  * the full meeting."
  *
- * ⚠️ THE PROBLEM: `tasks.meeting_id` and `meetings.id` are DIFFERENT ID SPACES.
- * Meetings are keyed `mtg-YYYY-MM-DD-<hash>`. Tasks carry whichever id the lane
- * that created them minted:
- *   - `cal-20260731T1300-nickadams-meeting`  (meeting_extraction — calendar id)
- *   - `mtg_20260731T182205`                  (meeting_approval — PB timestamp id)
- *   - `mtg-2026-07-31-acc249c0`              (canonical — joins natively)
+ * `tasks.meeting_id` holds one of three id forms:
+ *   - `mtg-YYYY-MM-DD-<hash>`         a meetings.id (Hub-written)
+ *   - `cal-<stamp>-<slug>`, hash8 ids  a meetings.source_id (the PB debrief
+ *                                       pushes the meeting first, v95)
+ *   - `mtg_<stamp>-<lane>`             a PB capture staging key (meeting-approval
+ *                                       and meeting-match lanes); names no
+ *                                       meetings row at all
  *
- * Measured against prod 2026-08-03: of 152 tasks with a meeting_id, only 8 join
- * on equality, and all 8 come from a single April meeting. So the plain
- * `LEFT JOIN meetings ON t.meeting_id = m.id` yields NULL for ~95% of them, and
- * every UI that gated on the joined title silently rendered nothing.
+ * The first two join exactly below. The third gets NO meeting link: the read-time
+ * bridge that guessed it from "the only meeting that day" (decorateMeetingRefs /
+ * resolveMeetingRef) was deleted 2026-10-21 (PB backlog #1593). A capture staging
+ * key is often a recording of a DIFFERENT meeting that day. On prod the bridge
+ * linked 66 of the 152 mtg_ rows: 21 correctly (accepted approvals, each to its
+ * own meeting) and 45 wrongly (40 declined approvals, 3 meeting_match questions,
+ * 2 accepted approvals still waiting on a calendar match). Deleting it fixed the
+ * 45 and blanked the 21, which Nick accepted ("Delete the bridge"). A task that
+ * does not join keeps its meeting ORIGIN (meetingOrigin.isFromMeeting reads
+ * source / meeting_id) and shows no link, because a wrong link is worse than none.
  *
- * Every one of those ids embeds the meeting's DATE, and the `cal-` form also
- * embeds a slug of its title. That is enough to resolve most of them without
- * touching the data. This is a read-side bridge, deliberately conservative: it
- * returns null rather than guess, because a wrong link is worse than none.
- *
- * Since #1593 (2026-10-14) the SQL join above resolves every source_id-keyed
- * task, so this bridge only sees rows the join missed: on prod that is the 151
- * `mtg_<stamp>` rows the meeting-approval and meeting-match lanes wrote (147
- * approval tasks, 4 questions), which name no meetings row at all.
+ * Getting the 21 back the exact way (not built): when an accepted capture is
+ * debriefed, record the resulting cal-/hash8 meeting id against the approval
+ * task. That needs a new field, so it is a schema change (PB findings ledger).
  */
 
 /**
@@ -45,112 +46,9 @@
  * meetings table per task row, on the Hub's hottest read and the PB pull.
  * tasks.meeting-join.test.ts asserts both the one-row rule and the query plan.
  * Measured on prod 2026-10-14: 169 live tasks match by source_id, 0 by id.
- * Rows the join misses fall to resolveMeetingRef below.
+ * A row the join misses has meeting_ref NULL, and nothing fills it in.
  */
 export const TASK_MEETING_REF_SQL =
   '(COALESCE((SELECT id FROM meetings WHERE id = t.meeting_id), (SELECT id FROM meetings WHERE source_id = t.meeting_id)))';
 export const TASK_MEETING_JOIN = `LEFT JOIN meetings m ON m.id = ${TASK_MEETING_REF_SQL}`;
 export const TASK_MEETING_COLS = 'm.id AS meeting_ref, m.title AS meeting_title, m.date AS meeting_date';
-
-export interface MeetingLike {
-  id: string;
-  title: string | null;
-  date: string | null;
-}
-
-/**
- * Lowercase dashed slug, mirroring how a `cal-` id encodes a title.
- *
- * Two variants, because the encoder lives in another repo and we only have its
- * OUTPUT to go on. Real sample: "Nick/Adams Meeting" → `nickadams-meeting`, so
- * that encoder DROPS punctuation rather than treating it as a word separator.
- * Rather than bet the resolution on one observation, we generate both readings
- * and match either — punctuation-dropped ("nickadams-meeting") and
- * punctuation-as-separator ("nick-adams-meeting").
- */
-export function slugifyTitle(title: string): string {
-  // Punctuation dropped — matches the observed encoder.
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]+/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
-}
-
-/** The permissive variant: punctuation treated as a word separator. */
-export function slugifyTitleLoose(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, '-');
-}
-
-/**
- * The civil date encoded in a task's meeting_id, or null.
- *
- * `mtg-2026-07-31-...` → 2026-07-31 (already civil)
- * `cal-20260731T1300-...` / `mtg_20260731T182205` → 2026-07-31 (compact)
- */
-export function deriveMeetingDate(meetingId: string): string | null {
-  const civil = meetingId.match(/^mtg-(\d{4}-\d{2}-\d{2})/);
-  if (civil) return civil[1];
-  const compact = meetingId.match(/^(?:cal-|mtg_)(\d{4})(\d{2})(\d{2})/);
-  if (compact) return `${compact[1]}-${compact[2]}-${compact[3]}`;
-  return null;
-}
-
-/** The title slug embedded in a `cal-<timestamp>-<slug>` id, or null. */
-export function deriveTitleSlug(meetingId: string): string | null {
-  const m = meetingId.match(/^cal-\d{8}(?:T\d{3,4})?-(.+)$/);
-  return m ? m[1].toLowerCase() : null;
-}
-
-/**
- * Resolve a task's meeting_id to a canonical meetings.id, or null.
- *
- * Ladder, most to least certain:
- *   1. exact id match
- *   2. only one meeting that day
- *   3. same day AND the title slug matches
- * Anything else returns null — an ambiguous day with no title signal is not a
- * link we are willing to render.
- */
-export function resolveMeetingRef(
-  meetingId: string | null | undefined,
-  meetings: MeetingLike[],
-): MeetingLike | null {
-  if (!meetingId) return null;
-
-  const exact = meetings.find((m) => m.id === meetingId);
-  if (exact) return exact;
-
-  const date = deriveMeetingDate(meetingId);
-  if (!date) return null;
-
-  const sameDay = meetings.filter((m) => m.date === date);
-  if (sameDay.length === 0) return null;
-  if (sameDay.length === 1) return sameDay[0];
-
-  const slug = deriveTitleSlug(meetingId);
-  if (!slug) return null;
-
-  const slugsOf = (m: MeetingLike) =>
-    m.title ? [slugifyTitle(m.title), slugifyTitleLoose(m.title)] : [];
-
-  const exactTitle = sameDay.filter((m) => slugsOf(m).includes(slug));
-  // Only accept an UNAMBIGUOUS title match — two meetings that slugify the same
-  // give us no way to choose, and a wrong link is worse than none.
-  if (exactTitle.length === 1) return exactTitle[0];
-  if (exactTitle.length > 1) return null;
-
-  // The embedded slug is TRUNCATED at a fixed width, so a longer title never
-  // matches exactly: "LHS Ambulatory Discovery - SME Discussion" is carried as
-  // `lhs-ambulatory-discovery`, and "Pulmonary HSR Group Meeting" as
-  // `pulmonary-hsr-group-meet`. Fall back to a PREFIX match, still requiring it
-  // to pick exactly one meeting that day. Guarded by a minimum length so a stubby
-  // slug cannot prefix-match half the calendar.
-  if (slug.length < 8) return null;
-  const prefixed = sameDay.filter((m) => slugsOf(m).some((s) => s.startsWith(slug)));
-  return prefixed.length === 1 ? prefixed[0] : null;
-}

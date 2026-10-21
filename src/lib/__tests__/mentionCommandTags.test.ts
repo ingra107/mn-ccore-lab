@@ -67,6 +67,18 @@ describe('launch tags are PI-only (2026-10-09)', () => {
     expect(filterCommandTags('q', true).map(([k]) => k)).toEqual(['quickchat'])
     expect(filterCommandTags('w', true).map(([k]) => k)).toEqual(['workon'])
   })
+  it('noHermes drops @hermes and its variants everywhere, and nothing else (#8238)', () => {
+    expect(Object.keys(commandTagsFor(true, true)).sort()).toEqual(['backlog', 'quickchat', 'workon'])
+    expect(Object.keys(commandTagsFor(false, true))).toEqual(['backlog'])
+    expect(filterCommandTags('herm', true, true)).toEqual([])
+    expect(filterCommandTags('hermes-', true, true)).toEqual([])
+    expect(filterCommandTags('', true, true).map(([k]) => k)).toEqual(['quickchat', 'workon', 'backlog'])
+    // A fully typed @hermes is plain text there: it must not close the person list.
+    expect(isExactCommandTag('hermes', true)).toBe(false)
+    expect(isExactCommandTag('hermes-opus', true)).toBe(false)
+    expect(isExactCommandTag('backlog', true)).toBe(true)
+  })
+
   it('commandTagsFor drops only the launch tags for a non-PI', () => {
     expect(Object.keys(commandTagsFor(false)).sort()).toEqual(['backlog', 'hermes'])
     expect(commandTagsFor(true)).toBe(KNOWN_COMMAND_TAGS)

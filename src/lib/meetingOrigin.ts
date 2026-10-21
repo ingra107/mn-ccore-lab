@@ -6,8 +6,8 @@
 //
 // ⚠️ THE TWO QUESTIONS ARE SEPARATE, AND CONFLATING THEM IS WHY NOTHING RENDERED.
 //
-// `meeting_title` does not exist on the `tasks` table — it is produced by
-// `LEFT JOIN meetings m ON t.meeting_id = m.id` in api/routes/tasks.ts. But
+// `meeting_title` does not exist on the `tasks` table — it is produced by a
+// join to `meetings` (today TASK_MEETING_JOIN in api/lib/meeting-ref.ts). But
 // `tasks.meeting_id` and `meetings.id` are DIFFERENT ID SPACES: meetings are
 // keyed `mtg-YYYY-MM-DD-<hash>`, while tasks carry `cal-<...>` (calendar
 // extraction) or `mtg_<compact-timestamp>` (meeting approval). Measured against
@@ -43,8 +43,9 @@ export interface MeetingOriginFields {
   meeting_id?: string | null
   meeting_title?: string | null
   /**
-   * The CANONICAL meetings.id, resolved server-side by api/lib/meeting-ref.
-   * Present only when the meeting was actually identified, which is exactly the
+   * The CANONICAL meetings.id, joined server-side (api/lib/meeting-ref
+   * TASK_MEETING_JOIN, exact matches only, no guessing). Present only when the
+   * meeting was actually identified, which is exactly the
    * condition for rendering a link. `meeting_id` is the raw stored value and is
    * NOT a safe link target — it dangles on most rows.
    */

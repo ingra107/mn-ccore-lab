@@ -47,11 +47,22 @@ export const HERMES_MODEL_VARIANT_TAGS: Record<string, CommandTagDef> = {
 // badge, and useLaunchCommands lets the text post as ordinary text.
 export const PI_ONLY_COMMAND_TAGS: readonly string[] = ['quickchat', 'workon']
 
+/** True for `hermes` and its model variants (`hermes-opus`, ...). */
+function isHermesTag(key: string): boolean {
+  return key === 'hermes' || key in HERMES_MODEL_VARIANT_TAGS
+}
+
 /** The base command tags this viewer can use (KNOWN_COMMAND_TAGS, minus the
- *  PI-only launch tags for a non-PI). */
-export function commandTagsFor(isPi: boolean): Record<string, CommandTagDef> {
-  if (isPi) return KNOWN_COMMAND_TAGS
-  return Object.fromEntries(Object.entries(KNOWN_COMMAND_TAGS).filter(([k]) => !PI_ONLY_COMMAND_TAGS.includes(k)))
+ *  PI-only launch tags for a non-PI).
+ *
+ *  `noHermes` drops @hermes for a surface that does not dispatch it (Ask the
+ *  Lab, retired 2026-10-21, #8238): a composer that suggests or badges a tag
+ *  has promised the user it works, so a surface where it does not must not
+ *  show it at all. */
+export function commandTagsFor(isPi: boolean, noHermes = false): Record<string, CommandTagDef> {
+  if (isPi && !noHermes) return KNOWN_COMMAND_TAGS
+  return Object.fromEntries(Object.entries(KNOWN_COMMAND_TAGS).filter(([k]) =>
+    (isPi || !PI_ONLY_COMMAND_TAGS.includes(k)) && !(noHermes && isHermesTag(k))))
 }
 
 const ALL_COMMAND_TAGS: Record<string, CommandTagDef> = {
@@ -66,8 +77,10 @@ const ALL_COMMAND_TAGS: Record<string, CommandTagDef> = {
  *  already there. Extending it to the model variants (#891) keeps that
  *  parity: without this, completing "@hermes-opus" would leave the dropdown
  *  open on a stale single-item list instead of routing the command. */
-export function isExactCommandTag(filter: string): boolean {
-  return filter.toLowerCase() in ALL_COMMAND_TAGS
+export function isExactCommandTag(filter: string, noHermes = false): boolean {
+  const lower = filter.toLowerCase()
+  if (noHermes && isHermesTag(lower)) return false
+  return lower in ALL_COMMAND_TAGS
 }
 
 /** Command entries eligible for the mention dropdown for the current typed
@@ -79,11 +92,11 @@ export function isExactCommandTag(filter: string): boolean {
  *    once the filter itself contains the `-` (checked via the filter
  *    string's own prefix, not a separate mode flag) -- so there is no code
  *    path that can show them before the '-' key is pressed. */
-export function filterCommandTags(filter: string, isPi: boolean): Array<[string, CommandTagDef]> {
+export function filterCommandTags(filter: string, isPi: boolean, noHermes = false): Array<[string, CommandTagDef]> {
   const lower = filter.toLowerCase()
   if (lower in ALL_COMMAND_TAGS) return []
-  const entries = Object.entries(commandTagsFor(isPi)).filter(([key]) => key.startsWith(lower))
-  if (lower.startsWith('hermes-')) {
+  const entries = Object.entries(commandTagsFor(isPi, noHermes)).filter(([key]) => key.startsWith(lower))
+  if (!noHermes && lower.startsWith('hermes-')) {
     entries.push(...Object.entries(HERMES_MODEL_VARIANT_TAGS).filter(([key]) => key.startsWith(lower)))
   }
   return entries

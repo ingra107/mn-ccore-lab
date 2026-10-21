@@ -111,6 +111,10 @@ interface BaseProps {
   /** Extra controls in the toolbar row, right after the built-in chips and
    *  before the Post button (Today's "send to home" toggle). */
   toolbarExtra?: React.ReactNode
+  /** This surface does not dispatch @hermes (Ask the Lab, #8238): the mention
+   *  dropdown, highlight tint and command badge leave it out, because showing
+   *  it promises the user it works (the same class as ownLaunchRouting above). */
+  noHermes?: boolean
 }
 
 interface TaskModeProps extends BaseProps {
@@ -153,6 +157,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     launchContext,
     ownLaunchRouting = false,
     toolbarExtra,
+    noHermes = false,
   } = props
 
   const [meLocked, setMeLocked] = useState(false)
@@ -445,6 +450,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         maxRows={maxRows}
         // The badge goes in the toolbar row below, never over the text.
         commandBadge="none"
+        noHermes={noHermes}
         // .smart-compose-field sets the placeholder color (index.css); an
         // inline style cannot reach ::placeholder.
         className="smart-compose-field"
@@ -580,7 +586,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           {/* Spacer */}
           <span style={{ flex: 1 }} />
           {/* "Command recognized" badge (e.g. Quick Chat launch) */}
-          <CommandBadge value={val} />
+          <CommandBadge value={val} noHermes={noHermes} />
           {/* ⌘⏎ hint */}
           {!hideKbdHint && val.trim().length > 0 && (
             <kbd className="kbd-hint" style={{
