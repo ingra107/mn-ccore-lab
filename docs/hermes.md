@@ -45,12 +45,21 @@ Meeting comments are team-visible by default (a meeting page is a shared surface
   private answer always stays in its thread.
 - An `@hermes` comment on an artifact rewrites that artifact, which the team
   can read. Even a private comment's text is folded into the new version.
+- Since 2026-10-21, when Nick asks Hermes privately on a task, Hermes can make
+  three changes to that task: link it to a project (only if it has none,
+  chosen from the live project list), add a note to its description, and add
+  a key link to an email or Google Doc it opened while answering. Every change
+  is listed at the end of the answer with how to undo it; anything that did
+  not apply says "Not done". Asks from team members, or from Nick in a
+  team-visible thread, cannot change anything. The note lands in the task
+  description, which the project team can read.
 
 ## What Hermes Cannot Do
 - Access external databases or PubMed directly
 - Send email (it can only draft, for Nick) or create calendar events
 - Access files on Nick's computer
-- Make changes to the Hub (it can only respond to questions)
+- Make changes to the Hub, except the three task changes above on Nick's own
+  private asks
 
 ## Tips
 - Be specific — "What statistical test for comparing two survival curves?" beats "Help with stats"
