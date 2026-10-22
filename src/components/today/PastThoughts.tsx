@@ -3,12 +3,23 @@
 // thoughts"). The thoughts live only in this browser (lib/dailyThoughts.ts).
 // Hidden when there are none. Muted tier only: no accent, no box; the newest
 // few show and the rest sit behind "Show N more" (progressive disclosure).
+// Collapsed by default behind a caret header with a count (Nick, 2026-10-22:
+// "make it so this can be collapsed and should default to collapsed"). The fold
+// is device-local, under the same `collapsible-*` key family CollapsibleSection
+// uses (shared/userPrefKeys.ts lists fold state as device-local on purpose).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 import { readRecentThoughts, DAILY_THOUGHTS_EVENT, type DailyThought } from '../../lib/dailyThoughts'
 import { todayKey } from '../../lib/taskGrouping'
 
 const SHOWN = 5
+const FOLD_KEY = 'collapsible-past-thoughts'
+
+function readOpen(): boolean {
+  try { return localStorage.getItem(FOLD_KEY) === 'true' } catch { return false }
+}
 const WEEKDAY = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
 const CLOCK = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
 
@@ -23,6 +34,14 @@ function whenLabel(t: DailyThought, today: string): string {
 export function PastThoughts() {
   const [thoughts, setThoughts] = useState<DailyThought[]>(() => readRecentThoughts())
   const [showAll, setShowAll] = useState(false)
+  const [open, setOpen] = useState(readOpen)
+  const listId = useId()
+
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    try { localStorage.setItem(FOLD_KEY, String(next)) } catch { /* storage off: the fold just will not persist */ }
+  }
 
   useEffect(() => {
     const reread = () => setThoughts(readRecentThoughts())
@@ -42,20 +61,31 @@ export function PastThoughts() {
 
   return (
     <section className="tk-past-thoughts" aria-label="Past thoughts" data-testid="past-thoughts">
-      <div className="tk-past-thoughts-head">Past thoughts</div>
-      <ul>
-        {visible.map((t, i) => (
-          <li key={`${t.at}-${i}`} data-testid="past-thought">
-            <span className="tk-past-thoughts-when">{whenLabel(t, today)}</span>
-            <span className="tk-past-thoughts-text">{t.content}</span>
-          </li>
-        ))}
-      </ul>
-      {hidden > 0 && (
-        <button type="button" className="tk-past-thoughts-more" onClick={() => setShowAll(true)}>
-          Show {hidden} more
-        </button>
-      )}
+      <button
+        type="button"
+        className="tk-past-thoughts-head"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={toggle}
+      >
+        <ChevronRight {...ICON_PROPS} size={12} className="tk-past-thoughts-caret" data-open={open} aria-hidden="true" />
+        Past thoughts ({thoughts.length})
+      </button>
+      <div id={listId} hidden={!open}>
+        <ul>
+          {visible.map((t, i) => (
+            <li key={`${t.at}-${i}`} data-testid="past-thought">
+              <span className="tk-past-thoughts-when">{whenLabel(t, today)}</span>
+              <span className="tk-past-thoughts-text">{t.content}</span>
+            </li>
+          ))}
+        </ul>
+        {hidden > 0 && (
+          <button type="button" className="tk-past-thoughts-more" onClick={() => setShowAll(true)}>
+            Show {hidden} more
+          </button>
+        )}
+      </div>
     </section>
   )
 }

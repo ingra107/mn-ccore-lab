@@ -30,6 +30,7 @@ const DEVICE_LOCAL: Record<string, string> = {
   'components/RoundPrompt.tsx': 'prompt dismissed in this browser',
   'components/dashboard/ProjectHealthCard.tsx': 'card list/heatmap toggle (candidate to sync; ledger)',
   'components/tasks/TaskBoardView.tsx': 'board column fold state',
+  'components/today/PastThoughts.tsx': 'fold state of one section',
   'components/today/ProfileSetupPrompt.tsx': 'prompt snooze in this browser',
   'components/today/rail/ProjectsCard.tsx': 'rail show-all toggle (candidate to sync; ledger)',
   'hooks/useAuth.ts': 'first-paint cache of the directory and slug',

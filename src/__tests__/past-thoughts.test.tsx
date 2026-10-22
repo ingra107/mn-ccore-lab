@@ -23,7 +23,10 @@ function clearThoughtKeys() {
   }
 }
 
-beforeEach(clearThoughtKeys)
+const FOLD = 'collapsible-past-thoughts'
+const openFold = () => window.localStorage.setItem(FOLD, 'true')
+
+beforeEach(() => { clearThoughtKeys(); window.localStorage.removeItem(FOLD) })
 
 describe('readRecentThoughts', () => {
   it('reads the last 7 days, newest first, and skips older days and junk', () => {
@@ -54,6 +57,7 @@ describe('PastThoughts', () => {
   })
 
   it('shows a new capture as soon as it is saved, newest first', async () => {
+    openFold()
     seed(civilDatePlusDays(todayKey(), -1), [{ at: '2026-10-13T12:00:00.000Z', kind: 'task', content: 'older thought' }])
     const host = await mount(<div className="tk"><PastThoughts /></div>, {
       ready: h => h.querySelector('[data-testid="past-thought"]'),
@@ -66,6 +70,7 @@ describe('PastThoughts', () => {
   })
 
   it('shows five and puts the rest behind "Show N more"', async () => {
+    openFold()
     const today = todayKey()
     seed(today, Array.from({ length: 7 }, (_, i) => ({
       at: `2026-10-14T1${i}:00:00.000Z`, kind: 'note', content: `t${i}`,
@@ -80,5 +85,31 @@ describe('PastThoughts', () => {
     act(() => more.click())
     await waitFor(() => host.querySelectorAll('[data-testid="past-thought"]').length === 7 || null, 'all seven')
     expect(host.querySelector('.tk-past-thoughts-more')).toBeNull()
+  })
+
+  it('is collapsed by default, shows a count, and toggles open and closed', async () => {
+    seed(todayKey(), [
+      { at: '2026-10-14T10:00:00.000Z', kind: 'note', content: 'a' },
+      { at: '2026-10-14T11:00:00.000Z', kind: 'note', content: 'b' },
+    ])
+    const host = await mount(<div className="tk"><PastThoughts /></div>, {
+      ready: h => h.querySelector('.tk-past-thoughts-head'),
+      label: 'PastThoughts (fold)',
+    })
+    const head = host.querySelector<HTMLButtonElement>('.tk-past-thoughts-head')!
+    expect(head.tagName).toBe('BUTTON')
+    expect(head.textContent).toBe('Past thoughts (2)')
+    expect(head.getAttribute('aria-expanded')).toBe('false')
+    const list = host.querySelector<HTMLElement>('#' + CSS.escape(head.getAttribute('aria-controls')!))!
+    expect(list.hidden).toBe(true)
+
+    act(() => head.click())
+    await waitFor(() => (list.hidden ? null : true), 'opened')
+    expect(head.getAttribute('aria-expanded')).toBe('true')
+    expect(window.localStorage.getItem(FOLD)).toBe('true')
+
+    act(() => head.click())
+    await waitFor(() => (list.hidden ? true : null), 'closed')
+    expect(head.getAttribute('aria-expanded')).toBe('false')
   })
 })
