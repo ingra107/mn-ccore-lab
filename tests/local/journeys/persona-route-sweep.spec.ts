@@ -47,8 +47,17 @@ const PERSONAS = [
   { name: 'member with empty lists', email: 'sweepempty@umn.edu', slug: 'sweep-empty', tasks: false },
 ]
 
-test.describe.configure({ mode: 'parallel' })
-
+// NOT parallel (#8995). The deploy gate once failed here on a 500 from
+// PUT /api/user-prefs/... : "D1_ERROR: Failed to parse body as JSON, got: Error:
+// internal error; reference = ..." out of a plain membership SELECT. That is the
+// local miniflare/workerd D1 emulator faulting while requests overlap (workerd
+// #7657, workers-sdk #14916, glidecomp #477), not Hub code, and prod D1 does not
+// run it. Parallel mode put each persona in its own worker, walking the same
+// routes in lockstep, so both members' PUTs and reads hit the one dev server
+// together, and each worker's beforeAll ran `wrangler d1 execute` on the file the
+// dev server holds. Tests in one file run in order in one worker: one browser at
+// a time, one seed. The fault was not reproduced in 32 sweeps either way, so this
+// lowers exposure and is not a proven cure.
 test.beforeAll(() => {
   test.setTimeout(120_000) // each wrangler call is ~5-10 s cold
   for (const p of PERSONAS) {
