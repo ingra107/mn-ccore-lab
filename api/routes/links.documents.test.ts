@@ -174,6 +174,8 @@ describe('a task document: archive -> sync -> writer replay -> restore', () => {
     }), USER)
     expect(slot.status).toBe('accepted')
     seedLink('link_gmail', { type: 'gmail_thread', canonical_url: GMAIL, short_title: 'Thread', sort_order: 5 })
+    // A mailbox link classifies as `web`; it is still Gmail (2026-10-22, live page).
+    seedLink('link_gmail_box', { type: 'web', canonical_url: 'https://mail.google.com/mail/?authuser=umn#drafts', short_title: 'Drafts', sort_order: 6 })
     const taskDoc = db.prepare("SELECT id FROM links WHERE owner_table = 'tasks' AND owner_id = ? AND canonical_url = ?").get(TASK, DOC) as { id: string }
     const id = taskDoc.id
     const count0 = liveCount('tasks', TASK)

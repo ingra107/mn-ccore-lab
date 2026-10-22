@@ -435,7 +435,9 @@ const NOT_A_DOCUMENT_TYPES = ['gmail_thread', 'gmail_draft'] as const;
  * role comes back: a task's archived row belongs in the project's Archived
  * group. Two exclusions at read time, so the client cannot render what it
  * never receives:
- *   - Gmail threads/drafts (NOT_A_DOCUMENT_TYPES);
+ *   - Gmail threads/drafts (NOT_A_DOCUMENT_TYPES), and any other mail.google.com
+ *     URL: a mailbox link (e.g. the drafts folder) classifies as `web`, and on
+ *     2026-10-22 two of them reached "From tasks" on the live page;
  *   - any URL the project already holds, in any role or derived (`heldUrls`):
  *     a promoted COPY shows once, under "On every task", and a URL the project
  *     archived is the project's to restore.
@@ -455,6 +457,7 @@ async function fetchProjectTaskLinks(
           WHERE l.owner_table = 'tasks' AND l.deleted_at IS NULL
             AND t.project_id = ? AND t.deleted_at IS NULL
             AND l.type NOT IN (${NOT_A_DOCUMENT_TYPES.map(() => '?').join(', ')})
+            AND l.canonical_url NOT LIKE 'https://mail.google.com/%'
           ORDER BY l.created_at ASC, l.id ASC`,
       )
       .bind(projectId, ...NOT_A_DOCUMENT_TYPES)
