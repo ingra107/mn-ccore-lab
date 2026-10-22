@@ -59,7 +59,7 @@ export const HUB_TABLES = [
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
-  'trajectories', 'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watchlist', 'workflow_templates',
+  'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watchlist', 'workflow_templates',
 ] as const
 
 export type HubTable = (typeof HUB_TABLES)[number]
@@ -499,7 +499,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   pb_sessions: LAB, pomodoro_sessions: LAB, processed_mutations: LAB, product_author_positions: LAB,
   product_event_roles: LAB, product_kinds: LAB, product_stages: LAB, project_home_seed: LAB, publications: LAB,
   pubmed_sync_log: LAB, research_digest: LAB, research_narratives: LAB, schema_migrations: LAB,
-  sessions: LAB, team_members: LAB, trainee_milestones: LAB, trajectories: LAB, user_calendar_events: LAB,
+  sessions: LAB, team_members: LAB, trainee_milestones: LAB, user_calendar_events: LAB,
   user_calendar_feeds: LAB, workflow_templates: LAB,
 }
 
