@@ -2,17 +2,18 @@
 
 WHY THIS EXISTS
 ---------------
-`secrets.ps1` exports CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID into the
-shell. That token is scoped for Pages deploys and lacks D1 scope. When both
-env vars are present, wrangler prefers them over the OAuth credentials at
-~/.wrangler/config/default.toml (which DO have `d1 (write)` scope). The result
-is a 401 / 403 / 7403 / "Authentication error code 10000" on any `wrangler d1`
-call — misdiagnosed as "blocked" four times across sessions despite a standing
-memory rule. This module makes the strip structural, not remembered.
+The Pages-deploy token lacks D1 scope. When it sits in the env as
+CLOUDFLARE_API_TOKEN (or the legacy CF_API_TOKEN), wrangler prefers it over
+the OAuth credentials at ~/.wrangler/config/default.toml (which DO have
+`d1 (write)` scope), and any `wrangler d1` call fails 401 / 403 / 7403 /
+"Authentication error code 10000" — misdiagnosed as "blocked" eight times.
+secrets.ps1 exported it under that name until 2026-08-02; it now exports
+PB_CLOUDFLARE_PAGES_API_TOKEN (PB #884), but any shell can still carry the
+reserved name. This module makes the strip structural, not remembered.
 
 It is the Python twin of the `scripts/wrangler-d1` shell shim. Both ALWAYS
-strip the two env vars and run wrangler from the Hub repo root (so the
-repo-local wrangler@^4 devDependency resolves).
+strip the same token, key and account variables and run wrangler from the Hub
+repo root (so the repo-local wrangler@^4 devDependency resolves).
 
 PUBLIC API
 ----------
@@ -47,7 +48,10 @@ from typing import Any, Sequence
 DEFAULT_DB = os.environ.get("PB_D1_DATABASE", "mnccore-lab")
 
 # The env vars that shadow OAuth and must be stripped before every wrangler run.
-_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+# Same list as scripts/wrangler-d1's unsets; the legacy CF_* names joined the
+# shim on 2026-10-19 (509e29de) after one of them shadowed OAuth there.
+_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID",
+                  "CF_API_TOKEN", "CF_API_KEY", "CF_ACCOUNT_ID", "CLOUDFLARE_API_KEY")
 
 
 def format_wrangler_error(returncode: int, stdout: str | None,
