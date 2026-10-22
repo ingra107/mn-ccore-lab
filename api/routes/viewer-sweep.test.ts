@@ -159,6 +159,9 @@ function seedLaneB() {
   // Nick's pin on the hidden project (GET/POST/DELETE /api/pins): Casey may
   // neither read nor remove it.
   insertRow(db, 'watchlist', { id: 'w-sweep-pin', member_slug: 'nick-ingraham', entity_type: 'project', entity_id: PROJ })
+  // schema-v143 view preferences are private to their owner: Casey may
+  // neither read nor change Nick's (GET/PUT/DELETE /api/user-prefs).
+  insertRow(db, 'user_prefs', { member_slug: 'nick-ingraham', key: 'labprefs', value_json: JSON.stringify({ note: MARK }) })
   // schema-v127 folders are private to their owner: Nate's on the hidden
   // project, and Nick's on Casey's OWN project, which she can see but whose
   // other members' folders she may neither read nor change.
@@ -227,6 +230,7 @@ const hiddenRows = () => JSON.stringify([
     ['links', 'owner_id', TASK], ['links', 'owner_id', PROJ], ['file_attachments', 'entity_id', PROJ], ['file_attachments', 'entity_id', TASK],
     ['project_state_log', 'project_id', PROJ], ['file_activity_daily', 'project_id', PROJ], ['ai_requests', 'project_slug', PROJ_SLUG],
     ['watchlist', 'entity_id', PROJ], ['project_member_folders', 'project_id', PROJ],
+    ['user_prefs', 'member_slug', 'nick-ingraham'],
   ] as const).map(([t, col, v]) => db.prepare(`SELECT * FROM ${t} WHERE ${col} = ? ORDER BY 1`).all(v)),
 ])
 

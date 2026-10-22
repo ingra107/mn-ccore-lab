@@ -25,7 +25,6 @@ const ResponsiveGridLayout = WidthProvider(Responsive)
 
 interface DashboardGridProps {
   section: string
-  userSlug?: string
   cards: GridCard[]
   /** Called with cardId when the user clicks the card body. */
   onCardClick?: (id: string) => void
@@ -37,7 +36,6 @@ interface DashboardGridProps {
 
 export default function DashboardGrid({
   section,
-  userSlug,
   cards,
   onCardClick,
   renderCard,
@@ -47,7 +45,7 @@ export default function DashboardGrid({
   const [prevCardsKey, setPrevCardsKey] = useState(cardsKey)
 
   const [layouts, setLayouts] = useState<Layouts>(() => {
-    const saved = loadSavedLayouts(section, userSlug)
+    const saved = loadSavedLayouts(section)
     return saved ? reconcileLayouts(cards, saved) : buildDefaultLayouts(cards)
   })
   const [currentBp, setCurrentBp] = useState<keyof typeof DASHBOARD_GRID_ROW_HEIGHT>('lg')
@@ -123,9 +121,9 @@ export default function DashboardGrid({
         }
       }
       setLayouts(next)
-      saveLayouts(section, userSlug, next)
+      saveLayouts(section, next)
     },
-    [section, userSlug],
+    [section],
   )
 
   const wrapRef = useRef<HTMLDivElement>(null)

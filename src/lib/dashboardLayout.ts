@@ -1,4 +1,5 @@
 import type { Layout, Layouts } from 'react-grid-layout'
+import { readUserPref, writeUserPref } from '../hooks/useUserPref'
 
 // Breakpoints are measured against the grid CONTAINER width (not window),
 // because react-grid-layout's WidthProvider sizes against the inner element.
@@ -48,26 +49,18 @@ export interface GridCard {
   defaultH?: number
 }
 
-const LAYOUT_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v2'
-const LEGACY_STORAGE_PREFIX = 'mnccore-dashboard-layouts-v1'
-
-function keyFor(prefix: string, section: string, userSlug: string | undefined) {
-  return `${prefix}:${userSlug || 'anon'}:${section}`
-}
-
-function storageKey(section: string, userSlug: string | undefined) {
-  return keyFor(LAYOUT_STORAGE_PREFIX, section, userSlug)
-}
-
-function legacyStorageKey(section: string, userSlug: string | undefined) {
-  return keyFor(LEGACY_STORAGE_PREFIX, section, userSlug)
-}
+// Each grid section's layout is one per-person pref, 'dashboard.layout.<section>'
+// (useUserPref, PB #911), so the Lab overview is arranged the same on every
+// device. The old per-browser keys (mnccore-dashboard-layouts-v1/v2:<slug>:
+// <section>) are seeded once by useUserPref, which calls scaleLegacyLayouts for
+// a v1 one. Breakpoints partition by width, so a laptop and a phone each read
+// their own breakpoint's list out of the same value.
 
 /**
  * Multiply a v1 (whole-card) layout up into v2 cells. A dashboard Nick already
  * arranged keeps its arrangement across the split instead of reflowing.
  */
-function scaleLegacyLayouts(saved: Layouts): Layouts {
+export function scaleLegacyLayouts(saved: Layouts): Layouts {
   const out: Layouts = {}
   ;(Object.keys(saved) as Breakpoint[]).forEach(bp => {
     const cols = DASHBOARD_GRID_COLS[bp]
@@ -87,39 +80,35 @@ function scaleLegacyLayouts(saved: Layouts): Layouts {
   return out
 }
 
-function parseLayouts(raw: string | null): Layouts | null {
-  if (!raw) return null
-  const parsed = JSON.parse(raw)
-  return parsed && typeof parsed === 'object' ? (parsed as Layouts) : null
+const layoutKey = (section: string) => `dashboard.layout.${section}` as const
+
+/** The saved layouts for a section (the signed-in person's pref), or null. */
+export function loadSavedLayouts(section: string): Layouts | null {
+  const stored = readUserPref(layoutKey(section))
+  return stored && typeof stored === 'object' && !Array.isArray(stored) ? (stored as Layouts) : null
 }
 
-export function loadSavedLayouts(section: string, userSlug: string | undefined): Layouts | null {
-  try {
-    const current = parseLayouts(localStorage.getItem(storageKey(section, userSlug)))
-    if (current) return current
-    const legacy = parseLayouts(localStorage.getItem(legacyStorageKey(section, userSlug)))
-    return legacy ? scaleLegacyLayouts(legacy) : null
-  } catch {
-    /* fall through to null */
-  }
-  return null
+export function saveLayouts(section: string, layouts: Layouts) {
+  writeUserPref(layoutKey(section), layouts)
 }
 
-export function saveLayouts(section: string, userSlug: string | undefined, layouts: Layouts) {
-  try {
-    localStorage.setItem(storageKey(section, userSlug), JSON.stringify(layouts))
-  } catch {
-    /* ignore quota errors */
-  }
+export function resetLayouts(section: string) {
+  writeUserPref(layoutKey(section), undefined)
 }
 
-export function resetLayouts(section: string, userSlug: string | undefined) {
-  try {
-    localStorage.removeItem(storageKey(section, userSlug))
-    localStorage.removeItem(legacyStorageKey(section, userSlug))
-  } catch {
-    /* ignore */
-  }
+/** The Lab overview's grid sections (Dashboard.tsx renders one DashboardGrid each). */
+export const DASHBOARD_SECTIONS = ['pinned', 'primary', 'secondary'] as const
+
+/**
+ * Settings > Reset Dashboard Layout: every Lab overview pref back to its
+ * default (layouts, which cards show, pinned cards, the tab), on the server,
+ * so the reset holds on every device.
+ */
+export function resetDashboardPrefs() {
+  for (const section of DASHBOARD_SECTIONS) resetLayouts(section)
+  writeUserPref('dashboard.cards', undefined)
+  writeUserPref('dashboard.pinned', undefined)
+  writeUserPref('dashboard.tab', undefined)
 }
 
 /**

@@ -19,6 +19,7 @@ import InlineSelect from '../../components/InlineSelect'
 import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
+import { resetDashboardPrefs } from '../../lib/dashboardLayout'
 import LauncherSettingsPanel from '../../components/LauncherSettingsPanel'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
@@ -68,8 +69,8 @@ function DensityControl() {
   )
 }
 
-// Phase 2 (2026-06-18): Today default view. Persisted in localStorage
-// 'mnccore.today.defaultView'. Default = 'timeline'. In-session toggle
+// Phase 2 (2026-06-18): Today default view. A per-person pref on the server
+// ('today.defaultView', useUserPref; PB #911). Default = 'timeline'. In-session toggle
 // is ephemeral; this setting controls what view opens on a fresh load.
 function TodayDefaultViewControl() {
   const { defaultView, setDefault } = useTodayView()
@@ -469,6 +470,9 @@ export default function SettingsPage() {
                 confirmLabel="Reset?"
                 ariaLabel="Reset dashboard layout"
                 onConfirm={() => {
+                  // The layout, cards, pins and tab live on the server (every device);
+                  // the card click counts and any old per-browser keys live here.
+                  resetDashboardPrefs()
                   const keys = Object.keys(localStorage).filter(k =>
                     k.startsWith('dashboard-') || k.startsWith('mnccore-dashboard') || k === 'dashboardCards' || k === 'dashboardRole'
                   )

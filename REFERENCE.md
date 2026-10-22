@@ -53,6 +53,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | project_comments | DROPPED 2026-06-10 | schema-v78 (was `comments` table); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | research_digest | 1683 (2026-09-14) | Daily PubMed digest papers; `pub_date` is `YYYY` / `YYYY-MM` / `YYYY-MM-DD` at PubMed's precision (#127). No reading state since schema-v137 |
 | digest_paper_state | dynamic | Per-person Save / Dismiss on a digest paper (schema-v136); 'new' = no row; a member reads only their own rows (table-scope) |
+| user_prefs | dynamic | Per-person view preferences that follow the person to every device (schema-v143, PB #911): `(member_slug, key)` PK, `value_json`. Keys = `shared/userPrefKeys.ts` only (Lab preferences, saved views, Today default view + due window, table config, Lab overview cards/pins/tab/layouts); device-local settings (theme, density, sidebar, fold state) are not on the list. Owner-only (table-scope). UI: `src/hooks/useUserPref.ts`. Never pulled to brain.db |
 | digest_comments | dynamic | Notes on a digest paper; `task_id` = the task a note became (Make task, schema-v136) |
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
@@ -162,6 +163,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 ### Search & Settings
 - GET /api/search?q=, /api/settings, /api/workflow-templates
 - POST /api/settings, /api/workflow-templates
+- GET /api/user-prefs, PUT + DELETE /api/user-prefs/:key (`{ value }`): the caller's own view preferences (schema-v143); an unlisted key answers 400, a non-member 403
 
 ### Notifications
 - GET /api/notifications, GET /api/notifications/count

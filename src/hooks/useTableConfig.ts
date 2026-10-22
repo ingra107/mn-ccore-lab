@@ -1,4 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useCallback } from 'react'
+import { useUserPref } from './useUserPref'
+
+// useTableConfig -- a table's sort, column widths, column order and filters,
+// one per-person pref per table ('tableConfig.<tableId>', useUserPref): the
+// same on every device the person signs in on (PB #911). Widths are pixels,
+// so they follow too (Nick asked for an identical view). The store sends the
+// value 300 ms after the last change, so a column drag is one write.
 
 interface SortConfig {
   key: string
@@ -13,50 +20,32 @@ interface TableConfig {
   columnWidths: Record<string, number>
   columnOrder?: string[]
   filters: Record<string, string>
+  /** Shape version; a stored config from another shape reads as the defaults. */
+  _v?: number
 }
 
 const CONFIG_VERSION = 2
 
-function loadConfig(tableId: string, defaults: TableConfig): TableConfig {
-  try {
-    const raw = localStorage.getItem(`table-config-${tableId}`)
-    if (!raw) return defaults
-    const parsed = JSON.parse(raw)
-    if (parsed._v !== CONFIG_VERSION) return defaults
-    return {
-      sortKey: parsed.sortKey ?? defaults.sortKey,
-      sortAsc: parsed.sortAsc ?? defaults.sortAsc,
-      sorts: parsed.sorts ?? defaults.sorts,
-      columnWidths: parsed.columnWidths ?? defaults.columnWidths,
-      columnOrder: parsed.columnOrder ?? defaults.columnOrder,
-      filters: parsed.filters ?? defaults.filters,
-    }
-  } catch {
-    return defaults
-  }
-}
-
-function saveConfig(tableId: string, config: TableConfig) {
-  try {
-    localStorage.setItem(
-      `table-config-${tableId}`,
-      JSON.stringify({ ...config, _v: CONFIG_VERSION }),
-    )
-  } catch {
-    // localStorage full or unavailable
+function readConfig(stored: unknown, defaults: TableConfig): TableConfig {
+  const parsed = (stored && typeof stored === 'object' ? stored : {}) as Partial<TableConfig>
+  if (parsed._v !== CONFIG_VERSION) return defaults
+  return {
+    sortKey: parsed.sortKey ?? defaults.sortKey,
+    sortAsc: parsed.sortAsc ?? defaults.sortAsc,
+    sorts: parsed.sorts ?? defaults.sorts,
+    columnWidths: parsed.columnWidths ?? defaults.columnWidths,
+    columnOrder: parsed.columnOrder ?? defaults.columnOrder,
+    filters: parsed.filters ?? defaults.filters,
+    _v: CONFIG_VERSION,
   }
 }
 
 export function useTableConfig(tableId: string, defaults: TableConfig) {
-  const [config, setConfig] = useState<TableConfig>(() => loadConfig(tableId, defaults))
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Debounced save on every config change
-  useEffect(() => {
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => saveConfig(tableId, config), 300)
-    return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [tableId, config])
+  const validate = useCallback((stored: unknown) => readConfig(stored, defaults), [defaults])
+  const [config, setStored, reset] = useUserPref<TableConfig>(`tableConfig.${tableId}`, defaults, validate)
+  const setConfig = useCallback((update: (prev: TableConfig) => TableConfig) => {
+    setStored((prev) => ({ ...update(prev), _v: CONFIG_VERSION }))
+  }, [setStored])
 
   /** Regular click: replace sort entirely (single-column sort) */
   const setSortKey = useCallback((key: string) => {
@@ -67,7 +56,7 @@ export function useTableConfig(tableId: string, defaults: TableConfig) {
       }
       return { ...prev, sortKey: key, sortAsc: true, sorts: [{ key, asc: true }] }
     })
-  }, [])
+  }, [setConfig])
 
   /** Shift+Click: add as secondary sort (max 2 levels) */
   const addSecondarySort = useCallback((key: string) => {
@@ -96,40 +85,35 @@ export function useTableConfig(tableId: string, defaults: TableConfig) {
         sortAsc: newSorts[0].asc,
       }
     })
-  }, [])
+  }, [setConfig])
 
   const setColumnWidth = useCallback((col: string, width: number) => {
     setConfig(prev => ({
       ...prev,
       columnWidths: { ...prev.columnWidths, [col]: width },
     }))
-  }, [])
+  }, [setConfig])
 
   const setColumnWidths = useCallback((widths: Record<string, number>) => {
     setConfig(prev => ({
       ...prev,
       columnWidths: widths,
     }))
-  }, [])
+  }, [setConfig])
 
   const setColumnOrder = useCallback((order: string[]) => {
     setConfig(prev => ({
       ...prev,
       columnOrder: order,
     }))
-  }, [])
+  }, [setConfig])
 
   const setFilter = useCallback((key: string, value: string) => {
     setConfig(prev => ({
       ...prev,
       filters: { ...prev.filters, [key]: value },
     }))
-  }, [])
-
-  const reset = useCallback(() => {
-    setConfig(defaults)
-    try { localStorage.removeItem(`table-config-${tableId}`) } catch { /* noop */ }
-  }, [tableId, defaults])
+  }, [setConfig])
 
   return {
     config,

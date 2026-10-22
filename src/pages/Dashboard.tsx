@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
 import { Button } from '../components/ui/Button'
-import { resetLayouts } from '../lib/dashboardLayout'
+import { DASHBOARD_SECTIONS, resetLayouts } from '../lib/dashboardLayout'
+import { useUserPref, useUserPrefsStatus } from '../hooks/useUserPref'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { useMeetingsApi, useRecentTasks, useExpiringRegulatory, usePublications } from '../hooks/useApiData'
@@ -94,17 +95,20 @@ const CARD_REGISTRY = [
   { id: 'file-activity', label: 'File Activity', component: FileActivityCard, defaultVisible: false },
 ] as const
 
-const STORAGE_KEY = 'mnccore-dashboard-cards'
-const PINNED_KEY = 'mnccore-dashboard-pinned'
-const DEFAULTS_VERSION_KEY = 'mnccore-dashboard-version'
+// Which cards show, which are pinned and the active tab are per-person prefs
+// ('dashboard.cards' / 'dashboard.pinned' / 'dashboard.tab', useUserPref), so
+// the Lab overview looks the same on every device (PB #911). The card click
+// counts stay in this browser: they are usage telemetry, not a choice.
+// A stored set that still names a retired card (the Cross-Project Insights
+// card, id 'insights', left 2026-10-13) is ignored: the card lists filter on
+// the registry and reconcileLayouts() drops layout entries for unknown cards.
 const CLICKS_KEY = 'mnccore-dashboard-clicks'
-const TAB_KEY = 'mnccore-dashboard-tab'
-const CURRENT_DEFAULTS_VERSION = 4 // bump to reset localStorage to new defaults
-// Do NOT bump it to retire a card: that wipes every viewer's saved layout and
-// pins. The Cross-Project Insights card (id 'insights') left the registry on
-// 2026-10-13 (its content is Lab overview > Pipeline > Connections); a stored
-// set or layout that still names it is ignored: the card lists filter on the
-// registry and reconcileLayouts() drops layout entries for unknown cards.
+const NO_PINS: string[] = []
+
+const asIdList = (stored: unknown): string[] =>
+  Array.isArray(stored) ? stored.filter((s): s is string => typeof s === 'string') : NO_PINS
+const asTab = (stored: unknown): DashboardTab =>
+  TAB_CONFIG.some(t => t.id === stored) ? (stored as DashboardTab) : 'overview'
 
 // ── Adaptive sorting helpers ──────────────────────────────
 
@@ -120,40 +124,6 @@ function recordCardClick(cardId: string) {
   const counts = getClickCounts()
   counts[cardId] = (counts[cardId] || 0) + 1
   localStorage.setItem(CLICKS_KEY, JSON.stringify(counts))
-}
-
-function getSavedTab(): DashboardTab {
-  try {
-    const stored = localStorage.getItem(TAB_KEY) as DashboardTab
-    if (stored && TAB_CONFIG.some(t => t.id === stored)) return stored
-  } catch { /* use default */ }
-  return 'overview'
-}
-
-function getPinnedCards(): Set<string> {
-  try {
-    const stored = localStorage.getItem(PINNED_KEY)
-    if (stored) return new Set(JSON.parse(stored))
-  } catch { /* use defaults */ }
-  return new Set()
-}
-
-function getVisibleCards(roleCards?: string[]): Set<string> {
-  try {
-    // Reset localStorage if defaults version changed
-    const storedVersion = localStorage.getItem(DEFAULTS_VERSION_KEY)
-    if (storedVersion && Number(storedVersion) < CURRENT_DEFAULTS_VERSION) {
-      localStorage.removeItem(STORAGE_KEY)
-      localStorage.removeItem(PINNED_KEY)
-      localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
-    }
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) return new Set(JSON.parse(stored))
-  } catch { /* use defaults */ }
-  // Role-based defaults when no localStorage preferences exist
-  localStorage.setItem(DEFAULTS_VERSION_KEY, String(CURRENT_DEFAULTS_VERSION))
-  if (roleCards) return new Set(roleCards)
-  return new Set(CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id))
 }
 
 export default function Dashboard() {
@@ -192,16 +162,27 @@ export default function Dashboard() {
 
   const [showMore, setShowMore] = useState(false)
   const [showCustomize, setShowCustomize] = useState(false)
-  const [visibleCards, setVisibleCards] = useState<Set<string>>(() => getVisibleCards(roleCards))
-  const [pinnedCards, setPinnedCards] = useState<Set<string>>(getPinnedCards)
-  const [activeTab, setActiveTab] = useState<DashboardTab>(getSavedTab)
+  // Role-based defaults when the person has never chosen cards.
+  const defaultCards = useMemo(
+    () => roleCards ?? CARD_REGISTRY.filter(c => c.defaultVisible).map(c => c.id),
+    [roleCards],
+  )
+  const [visibleList, setVisibleList] = useUserPref<string[]>('dashboard.cards', defaultCards, asIdList)
+  const [pinnedList, setPinnedList] = useUserPref<string[]>('dashboard.pinned', NO_PINS, asIdList)
+  const [activeTab, setActiveTab] = useUserPref<DashboardTab>('dashboard.tab', 'overview', asTab)
+  const visibleCards = useMemo(() => new Set(visibleList), [visibleList])
+  const pinnedCards = useMemo(() => new Set(pinnedList), [pinnedList])
+  // The grids read their saved layout once, at mount. Remount them when the
+  // first server read answers, so a layout arranged on the other laptop shows.
+  const prefsStatus = useUserPrefsStatus()
+  const [layoutResets, setLayoutResets] = useState(0)
+  const gridRev = `${prefsStatus === 'loading' ? 'cached' : 'server'}-${layoutResets}`
   const [clickCounts, setClickCounts] = useState<Record<string, number>>(getClickCounts)
   const adaptive = useMemo(() => Object.values(clickCounts).some(c => c > 2), [clickCounts])
 
   const handleTabChange = useCallback((tab: DashboardTab) => {
     setActiveTab(tab)
-    localStorage.setItem(TAB_KEY, tab)
-  }, [])
+  }, [setActiveTab])
 
   const handleCardInteraction = useCallback((cardId: string) => {
     recordCardClick(cardId)
@@ -214,35 +195,15 @@ export default function Dashboard() {
   }, [])
 
   const toggleCard = useCallback((id: string) => {
-    setVisibleCards(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]))
-      return next
-    })
-    // Also unpin if hiding a card
-    setPinnedCards(prev => {
-      if (prev.has(id) && visibleCards.has(id)) {
-        // Card is being toggled off — remove from pinned
-        const next = new Set(prev)
-        next.delete(id)
-        localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
-        return next
-      }
-      return prev
-    })
-  }, [visibleCards])
+    const hiding = visibleCards.has(id)
+    setVisibleList(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]))
+    // Hiding a card also unpins it.
+    if (hiding && pinnedCards.has(id)) setPinnedList(prev => prev.filter(c => c !== id))
+  }, [visibleCards, pinnedCards, setVisibleList, setPinnedList])
 
   const togglePin = useCallback((id: string) => {
-    setPinnedCards(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
-      return next
-    })
-  }, [])
+    setPinnedList(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]))
+  }, [setPinnedList])
 
   // Filter by active tab, then sort adaptively
   const sortByUsage = useCallback((cards: typeof CARD_REGISTRY[number][]) => {
@@ -284,9 +245,6 @@ export default function Dashboard() {
       secondaryGridCards: unpinnedSecondary.map(c => ({ id: c.id })),
     }
   }, [tabFilteredRegistry, visibleCards, pinnedCards, sortByUsage])
-
-  // Stable slug for layout persistence per user
-  const userSlug = user?.slug || undefined
 
   // The lab's one telling number (color-back pick 2): papers published. Same
   // count the Publication Pipeline card shows; links to that filtered list.
@@ -330,12 +288,11 @@ export default function Dashboard() {
   ), [togglePin])
 
   const resetLayout = useCallback(() => {
-    resetLayouts('pinned', userSlug)
-    resetLayouts('primary', userSlug)
-    resetLayouts('secondary', userSlug)
-    // Force a remount by toggling a key — cheapest way to reload RGL defaults
-    window.location.reload()
-  }, [userSlug])
+    for (const section of DASHBOARD_SECTIONS) resetLayouts(section)
+    // Remount the grids so they read the defaults. Not a page reload: that
+    // would cancel the reset before it reached the server.
+    setLayoutResets(n => n + 1)
+  }, [])
 
   return (
     <DashboardMountedContext.Provider value={mounted}>
@@ -660,8 +617,8 @@ export default function Dashboard() {
               </button>
             </div>
             <DashboardGrid
+              key={`pinned-${gridRev}`}
               section="pinned"
-              userSlug={userSlug}
               cards={pinnedGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
@@ -675,8 +632,8 @@ export default function Dashboard() {
           <div>
             <h2 className="sr-only">Dashboard cards</h2>
             <DashboardGrid
+              key={`primary-${gridRev}`}
               section="primary"
-              userSlug={userSlug}
               cards={primaryGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
@@ -709,8 +666,8 @@ export default function Dashboard() {
               <>
                 <div className="mt-4">
                   <DashboardGrid
+                    key={`secondary-${gridRev}`}
                     section="secondary"
-                    userSlug={userSlug}
                     cards={secondaryGridCards}
                     onCardClick={handleCardInteraction}
                     renderCard={renderCard}

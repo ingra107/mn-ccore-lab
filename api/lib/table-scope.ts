@@ -59,7 +59,7 @@ export const HUB_TABLES = [
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
-  'trajectories', 'user_calendar_events', 'user_calendar_feeds', 'watchlist', 'workflow_templates',
+  'trajectories', 'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watchlist', 'workflow_templates',
 ] as const
 
 export type HubTable = (typeof HUB_TABLES)[number]
@@ -310,6 +310,16 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   digest_paper_state: {
     kind: 'scoped', key: ['paper_id', 'member_slug'], dependsOn: [],
     where: (v) => (v.kind !== 'person' ? '0' : `digest_paper_state.member_slug = ${sqlList([v.slug])}`),
+  },
+
+  // A person's view preferences (schema-v143, PB #911): their Lab
+  // preferences, saved views, Today and table settings, Lab overview layout.
+  // Owner only, the digest_paper_state rule: no PI arm, a person's view is
+  // nobody else's. Nobody reads none. The PB key gets the raw handle, so
+  // api/routes/userPrefs.ts names member_slug itself on every statement.
+  user_prefs: {
+    kind: 'scoped', key: ['member_slug', 'key'], dependsOn: [],
+    where: (v) => (v.kind !== 'person' ? '0' : `user_prefs.member_slug = ${sqlList([v.slug])}`),
   },
 
   // Quoted: scripts/check-activity-reads.mjs counts every bare mention of this
