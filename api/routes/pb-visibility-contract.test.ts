@@ -30,11 +30,13 @@ import {
 } from './projects'
 import { handleGetProjectListing, handleSetProjectListing } from './project-join'
 import { serviceViewer } from '../lib/viewer-db'
+// #151: project documents are `links` rows (project_documents retired, v146).
 import {
-  handleGetProjectDocuments,
-  handleCreateProjectDocument,
-  handleDeleteProjectDocument,
-} from './project-documents'
+  handleGetProjectLinks,
+  handleCreateProjectLink,
+  handleUpdateLink,
+  handlePromoteLink,
+} from './links'
 import {
   handleGetSubmissions,
   handleCreateSubmission,
@@ -215,7 +217,15 @@ function seedSide(db: InstanceType<typeof Database>, r: Ref, category: string): 
     id: r.rev, project_id: r.id, round: 1, status: 'in_progress', journal: `${r.mark} journal`,
   })
   insertRow(db, 'reviewer_comments', { id: r.rcomm, revision_id: r.rev, comment_text: `${r.mark} comment` })
-  insertRow(db, 'project_documents', { id: r.doc, project_id: r.id, title: `${r.mark} doc`, url: 'https://x/doc' })
+  // #151: a project-owned document and a task-owned one, each carrying the mark.
+  insertRow(db, 'links', {
+    id: `link_${r.doc}`, owner_table: 'projects', owner_id: r.id, type: 'web',
+    canonical_url: `https://x.test/${r.doc}`, short_title: `${r.mark} doc`,
+  })
+  insertRow(db, 'links', {
+    id: `link_task_${r.doc}`, owner_table: 'tasks', owner_id: r.task, type: 'web',
+    canonical_url: `https://x.test/task/${r.doc}`, short_title: `${r.mark} task doc`,
+  })
   insertRow(db, 'activity_entries', {
     id: `ae-proj-${r.slug}`, entity_type: 'project', entity_id: r.id, project_id: r.id, kind: 'update',
     actor_slug: 'nate-mesfin', body: `${r.mark} project update`,
@@ -301,8 +311,9 @@ const patternACases: PatternACase[] = [
     call: (c, r, env) => handleGetProjectUpdates(r.slug, c.get(), env),
   },
   {
-    label: 'GET /api/projects/:slug/documents (handleGetProjectDocuments)',
-    call: (c, r, env) => handleGetProjectDocuments(r.slug, c.get(), env),
+    // #151: the project's documents, its tasks' documents and the kinds.
+    label: 'GET /api/projects/:slug/links (handleGetProjectLinks)',
+    call: (c, r, env) => handleGetProjectLinks(r.slug, c.get(), env, c.viewer?.pi ?? true),
   },
   {
     label: 'GET /api/submissions?project_id= (handleGetSubmissions)',
@@ -460,15 +471,31 @@ const patternWriteCases: PatternWriteCase[] = [
     touches: ['activity_entries'],
     call: (c, r, env) => handlePostProjectUpdate(r.slug, c.post({ content: 'hi' }), c.user, env),
   },
+  // #151: the project-page document writes. A hidden project, project link or
+  // task link answers as an unknown one (404): the caller's handle never returns it.
   {
-    label: 'POST /api/projects/:slug/documents (handleCreateProjectDocument)',
-    touches: ['project_documents'],
-    call: (c, r, env) => handleCreateProjectDocument(r.slug, c.post({ title: 'T', url: 'https://x' }), c.user, env),
+    label: 'POST /api/projects/:slug/links (handleCreateProjectLink)',
+    blockedStatus: 404,
+    touches: ['links'],
+    call: (c, r, env) => handleCreateProjectLink(r.slug, c.post({ url: 'https://example.com/new-doc', kind: 'protocol' }), c.user, env),
   },
   {
-    label: 'POST /api/projects/:slug/documents/:docId/delete (handleDeleteProjectDocument)',
-    touches: ['project_documents'],
-    call: (c, r, env) => handleDeleteProjectDocument(r.doc, c.post({}), env),
+    label: 'POST /api/links/:id (handleUpdateLink) on a project link',
+    blockedStatus: 404,
+    touches: ['links'],
+    call: (c, r, env) => handleUpdateLink(`link_${r.doc}`, c.post({ kind: 'dataset' }), c.user, env),
+  },
+  {
+    label: 'POST /api/links/:id (handleUpdateLink) archives a task link',
+    blockedStatus: 404,
+    touches: ['links'],
+    call: (c, r, env) => handleUpdateLink(`link_task_${r.doc}`, c.post({ role: 'archive' }), c.user, env),
+  },
+  {
+    label: 'POST /api/links/:id/promote (handlePromoteLink)',
+    blockedStatus: 404,
+    touches: ['links'],
+    call: (c, r, env) => handlePromoteLink(`link_task_${r.doc}`, c.post({}), c.user, env),
   },
   // Task subresource writes
   {

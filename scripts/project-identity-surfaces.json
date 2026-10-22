@@ -50,7 +50,6 @@
       {"table": "submission_events", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "regulatory_items", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "manuscript_revisions", "column": "project_id", "kind": "fk", "policy": "typed_required"},
-      {"table": "project_documents", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "project_publications", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "pomodoro_sessions", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "action_items", "column": "project_id", "kind": "fk", "policy": "typed_required"},

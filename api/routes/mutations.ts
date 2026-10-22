@@ -44,7 +44,7 @@ const ALLOWED_TABLES = new Set([
   // ALLOWED_TABLES must include them or applyInsert's FK_SLUG_FIELDS loop is
   // dead code (processOne rejects unknown tables before reaching applyInsert).
   'submission_events', 'conference_submissions', 'regulatory_items',
-  'manuscript_revisions', 'project_documents', 'deadline_dependencies',
+  'manuscript_revisions', 'deadline_dependencies',
   // Phase 2 typed-links (2026-06-20): polymorphic link ownership per task/project.
   // schema-v88-links-table.sql + pb-schema 0.7.0 field-authority.
   'links',
@@ -71,7 +71,8 @@ const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
 //
 //   deleted_at only (no updated_at):  day_capacity, submission_events
 //   neither:  project_state_log, manuscript_revisions, deadline_dependencies,
-//             conference_submissions, regulatory_items, project_documents
+//             conference_submissions, regulatory_items
+//             (project_documents retired, schema-v146, PB #151)
 
 // Tables that support soft-delete (have deleted_at column).
 const DELETE_CAPABLE_TABLES = new Set([
@@ -1404,7 +1405,7 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
       // swallowed it. Same statement as handleDeleteProject (projects.ts).
       const stmts = [
         // comments/project_updates dropped (schema-v78, 2026-06-10).
-        gated('DELETE FROM project_documents WHERE project_id = ?', mut.record_id),
+        // project_documents dropped (schema-v146, PB #151).
         gated('DELETE FROM milestones WHERE project_id = ?', mut.record_id),
         gated('DELETE FROM conference_submissions WHERE project_id = ?', mut.record_id),
         gated('DELETE FROM submission_events WHERE project_id = ?', mut.record_id),

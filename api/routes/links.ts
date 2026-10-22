@@ -29,8 +29,15 @@
 //
 // GET /api/projects/:slug/links -- frontend sub-resource (B3 Task 8, 2026-06-21)
 //
-// Returns the project's own live links.
-// Response: { links: StoredLink[] }
+// Returns the project's own live links, plus (#151) the documents its tasks
+// hold and the kind vocabulary.
+// Response: { links: StoredLink[], taskLinks: TaskOwnedLink[], kinds: LinkKind[] }
+//
+// #151 (2026-10-22): a project document is a `links` row. Tier = owner_table
+// ("On every task" = project-owned, "From tasks" = task-owned); kind = the
+// links.kind FK into link_kinds (NULL = Unfiled); role key/archive means the
+// same for both owners: archive stops a link propagating beyond its owner,
+// and the owner keeps it.
 //
 // Decision doc: Peripheral-Brain/Context/Decisions/2026-06-20-links-table.md
 
@@ -40,7 +47,8 @@ import { withoutPiOnlyLinks } from '../lib/pi-only-project-fields';
 import { json, error, isPiRequest, assertProjectVisible, generateId, getValidationFlags } from '../helpers';
 import { assertEnumDomain } from '../lib/enum-domains';
 import { nowInstant } from '../lib/time';
-import { applyUpdate } from './mutations';
+import { applyInsert, applyUpdate } from './mutations';
+import { normalizeLink } from '../../shared/pbLinks.generated';
 
 // Columns returned to the sync pull leg -- matches brain.db links columns that
 // are identity-mapped to Hub (omits brain.db-local bookkeeping: sync_status,
@@ -50,6 +58,9 @@ const LINKS_SELECT_COLS = [
   'canonical_url', 'short_title', 'source_raw', 'sort_order',
   'deleted_at', 'seq', 'last_mutation_id',
   'created_at', 'updated_at',
+  // schema-v145 (#151): the semantic kind, FK into link_kinds. PB mig 153
+  // caches it; apply v145 to prod BEFORE a Worker that selects it.
+  'kind',
 ].join(', ');
 
 export async function handleGetLinks(url: URL, request: Request, env: Env): Promise<Response> {
@@ -134,8 +145,10 @@ export async function handleGetLinks(url: URL, request: Request, env: Env): Prom
 // Consumers: TaskDetailPanel / ProjectDetail / KeyLinksEditor.
 // created_at/updated_at ride along so the project page can date each link
 // (Nick 2026-08-25: "all links and documents and artifacts with time stamps").
+// kind + owner_table (#151): the project page labels and filters by kind, and
+// tells a project-owned row from a task-owned one.
 const FE_LINKS_COLS =
-  'id, role, type, canonical_url, short_title, sort_order, created_at, updated_at';
+  'id, owner_table, role, type, kind, canonical_url, short_title, sort_order, created_at, updated_at';
 
 // Shared query helper: fetch live (non-deleted) links for one owner, ordered
 // by sort_order then id for a stable display sequence.
@@ -386,8 +399,8 @@ export async function handleGetTaskLinks(
   // LIVE (it renders, dated, on the project page) but it has been superseded, so
   // it must not follow the project onto every task -- which is how the July R1
   // reviewer-response doc and the retired R1 checklist were still showing on an
-  // August R2 task. Mirrors scripts/today/sections.py, which already asks
-  // get_links(..., role='key') for exactly this reason.
+  // August R2 task. PB's twin is BrainDB.current_project_links (#151), its one
+  // role-filtered read (the TODAY.md renderer this used to cite is retired).
   //
   // Derived links (primary_folder / github_url / box_url) are NOT filtered:
   // they are computed from live project fields, so they are current by
@@ -395,11 +408,79 @@ export async function handleGetTaskLinks(
   const projectExplicit = (projectData?.explicit ?? []).filter(
     (row) => (row.role ?? 'key') === 'key',
   );
+  // One document, one chip (#151 W6): a project link whose URL the task also
+  // holds itself (a promoted COPY, or the same URL filed twice) is shown once,
+  // as the task's own. Every task surface (TaskDetailPanel, TaskDetailDrawer,
+  // MyTasks InlineDetail) reads this endpoint, so this is the one dedup site.
+  // The task's own rows are never filtered, by role or otherwise: a task keeps
+  // its archived links.
+  const taskUrls = new Set(taskLinks.map((l) => l.canonical_url as string));
   const projectLinks = projectData
     ? buildProjectLinks(projectData.fields, projectExplicit, isPi)
+        .filter((l) => !taskUrls.has(l.canonical_url as string))
     : [];
 
   return json({ links: isPi ? taskLinks : withoutPiOnlyLinks(taskLinks), projectLinks });
+}
+
+// Gmail threads and drafts are a task's correspondence, never one of the
+// project's documents (Nick, 2026-10-22 desk G1: "Keep them off").
+const NOT_A_DOCUMENT_TYPES = ['gmail_thread', 'gmail_draft'] as const;
+
+/**
+ * The documents a project's live tasks hold, for its "From tasks" tier (#151).
+ *
+ * Read through the caller's handle (env.DB), so a task the caller may not read
+ * contributes nothing. Done tasks count: a document outlives its task. Every
+ * role comes back: a task's archived row belongs in the project's Archived
+ * group. Two exclusions at read time, so the client cannot render what it
+ * never receives:
+ *   - Gmail threads/drafts (NOT_A_DOCUMENT_TYPES);
+ *   - any URL the project already holds, in any role or derived (`heldUrls`):
+ *     a promoted COPY shows once, under "On every task", and a URL the project
+ *     archived is the project's to restore.
+ */
+async function fetchProjectTaskLinks(
+  env: Env,
+  projectId: string,
+  heldUrls: ReadonlySet<string>,
+): Promise<Record<string, unknown>[]> {
+  const cols = FE_LINKS_COLS.split(', ').map((c) => `l.${c}`).join(', ');
+  let rows: Record<string, unknown>[];
+  try {
+    const res = await env.DB
+      .prepare(
+        `SELECT ${cols}, l.owner_id AS task_id, t.title AS task_title
+           FROM links l JOIN tasks t ON t.id = l.owner_id
+          WHERE l.owner_table = 'tasks' AND l.deleted_at IS NULL
+            AND t.project_id = ? AND t.deleted_at IS NULL
+            AND l.type NOT IN (${NOT_A_DOCUMENT_TYPES.map(() => '?').join(', ')})
+          ORDER BY l.created_at ASC, l.id ASC`,
+      )
+      .bind(projectId, ...NOT_A_DOCUMENT_TYPES)
+      .all<Record<string, unknown>>();
+    rows = res.results ?? [];
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) return [];
+    throw e;
+  }
+  return rows.filter((r) => !heldUrls.has(r.canonical_url as string));
+}
+
+/** The kind vocabulary (schema-v145), in display order. A new kind is one
+ *  INSERT into link_kinds; this read and every chip pick it up with no deploy. */
+async function fetchLinkKinds(env: Env): Promise<Record<string, unknown>[]> {
+  try {
+    const res = await env.DB
+      .prepare('SELECT key, label, sort_order FROM link_kinds ORDER BY sort_order ASC, key ASC')
+      .all<Record<string, unknown>>();
+    return res.results ?? [];
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) return [];
+    throw e;
+  }
 }
 
 // GET /api/projects/:slug/links
@@ -430,9 +511,18 @@ export async function handleGetProjectLinks(
   if (block) return block;
 
   const explicit = await fetchOwnerLinks(env, 'projects', project.id);
-  const links = buildProjectLinks(project, explicit, isPi);
+  // Held = every URL the project shows in any role, derived included; the
+  // PI-only filter applies after, so a member's view shadows the same rows.
+  const all = buildProjectLinks(project, explicit, true);
+  const held = new Set(all.map((l) => l.canonical_url as string));
+  const links = isPi ? all : withoutPiOnlyLinks(all);
+  const [taskRows, kinds] = await Promise.all([
+    fetchProjectTaskLinks(env, project.id, held),
+    fetchLinkKinds(env),
+  ]);
+  const taskLinks = isPi ? taskRows : withoutPiOnlyLinks(taskRows);
 
-  return json({ links });
+  return json({ links, taskLinks, kinds });
 }
 
 // GET /api/projects/links — bulk project-links (backlog #147)
@@ -527,112 +617,374 @@ export async function handleGetAllProjectLinks(
   return json({ projects: result });
 }
 
-// POST /api/links/:id/role -- archive or restore one project link (#2089)
+// ── Link writes from the Hub UI (#2089, #151) ─────────────────────────────────
 //
-// Body: { role: 'key' | 'archive' }. Response: { data: <canonical links row> }.
+// Three routes, all through applyInsert / applyUpdate with a `hub_ui:` origin
+// (the artifact-link-mirror.ts precedent). Neither runs processOne's gate
+// stack, which is why:
+//   - `role` is checked against the generated links.role domain (#2093) here,
+//     explicitly and unconditionally;
+//   - `kind` is NOT checked by code at all. links.kind REFERENCES
+//     link_kinds(key) (schema-v145), so D1 refuses an unknown kind on this
+//     path, on /api/mutations and on raw SQL alike. kindRefused() turns that
+//     refusal into a 400 a person can read.
 //
-// The project page's Links card calls this from its per-row archive / restore
-// control. Before it, archiving a link was `BrainDB.set_link_role()` from
-// Python only (Nick, 2026-08-25, asked to archive from the page he is on).
+// Authorization: the caller must be able to read the link's owner. A project
+// link is gated by assertProjectVisible on its project; a task link by the
+// task being readable through the caller's handle AND, when it has one, its
+// project being visible (#151: task owners may archive their own documents).
+
+type LinkRow = {
+  id: string; owner_table: string; owner_id: string; role: string;
+  canonical_url: string; type: string; short_title: string; source_raw: string | null;
+  kind: string | null;
+};
+
+const LINK_ROW_COLS = 'id, owner_table, owner_id, role, canonical_url, type, short_title, source_raw, kind';
+
+async function liveLink(env: Env, linkId: string): Promise<LinkRow | null> {
+  return env.DB
+    .prepare(`SELECT ${LINK_ROW_COLS} FROM links WHERE id = ? AND deleted_at IS NULL LIMIT 1`)
+    .bind(linkId)
+    .first<LinkRow>();
+}
+
+/** The project a link belongs to: its owner for a project link, the task's
+ *  project for a task link (null when the task has none). `block` is the
+ *  response to return when the caller may not touch this owner. */
+async function guardLinkOwner(
+  request: Request, env: Env, row: LinkRow,
+): Promise<{ block: Response | null; projectId: string | null }> {
+  if (row.owner_table === 'projects') {
+    return { block: await assertProjectVisible(request, env, row.owner_id), projectId: row.owner_id };
+  }
+  // Read through the caller's handle: a task the caller may not read is a 404.
+  const task = await env.DB
+    .prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL')
+    .bind(row.owner_id)
+    .first<{ project_id: string | null }>();
+  if (!task) return { block: error('Link not found', 404), projectId: null };
+  if (!task.project_id) return { block: null, projectId: null };
+  return { block: await assertProjectVisible(request, env, task.project_id), projectId: task.project_id };
+}
+
+function isForeignKeyFailure(e: unknown): boolean {
+  return /FOREIGN KEY constraint failed|SQLITE_CONSTRAINT_FOREIGNKEY/.test(e instanceof Error ? e.message : String(e));
+}
+
+function isUniqueFailure(e: unknown): boolean {
+  return /UNIQUE constraint failed|SQLITE_CONSTRAINT_UNIQUE/.test(e instanceof Error ? e.message : String(e));
+}
+
+function kindRefused(kind: unknown): Response {
+  return error(`${JSON.stringify(kind)} is not a link kind (see GET /api/projects/:slug/links "kinds")`, 400);
+}
+
+function mutationRefused(res: { status: string; reason?: string }): Response {
+  const message = `mutation ${res.status}: ${res.reason ?? ''}`;
+  return json({ error: message, rejected: res.status, message }, 409);
+}
+
+/** kind from a body: absent -> undefined (leave it), null/'' -> null (Unfiled),
+ *  a string -> itself (the FK decides), anything else -> a 400. */
+function bodyKind(body: Record<string, unknown>): { kind?: string | null; bad?: Response } {
+  if (!('kind' in body)) return {};
+  const k = body.kind;
+  if (k === null || k === '') return { kind: null };
+  if (typeof k === 'string') return { kind: k };
+  return { bad: kindRefused(k) };
+}
+
+async function patchLink(
+  env: Env, user: AuthUser, linkId: string, patch: Record<string, unknown>, origin: string,
+): Promise<Awaited<ReturnType<typeof applyUpdate>>> {
+  const flags = await getValidationFlags(env);
+  return applyUpdate(env, {
+    mutation_id: generateId('mut'),
+    origin_machine: `hub_ui:${origin}`,
+    table: 'links',
+    op: 'update',
+    record_id: linkId,
+    base_seq: null,
+    base_row_hash: null,
+    patch,
+    depends_on: null,
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  }, user, flags);
+}
+
+async function insertProjectLink(
+  env: Env, user: AuthUser, projectId: string,
+  fields: { type: string; canonical_url: string; short_title: string; source_raw: string | null; kind: string | null },
+  origin: string,
+): Promise<Awaited<ReturnType<typeof applyInsert>>> {
+  const maxRow = await env.DB
+    .prepare(`SELECT COALESCE(MAX(sort_order), -1) AS m FROM links
+               WHERE owner_table = 'projects' AND owner_id = ? AND deleted_at IS NULL`)
+    .bind(projectId)
+    .first<{ m: number }>();
+  const payload: Record<string, unknown> = {
+    owner_table: 'projects',
+    owner_id: projectId,
+    role: 'key',
+    type: fields.type,
+    canonical_url: fields.canonical_url,
+    short_title: fields.short_title,
+    source_raw: fields.source_raw,
+    sort_order: (maxRow?.m ?? -1) + 1,
+  };
+  if (fields.kind !== null) payload.kind = fields.kind;
+  return applyInsert(env, {
+    mutation_id: generateId('mut'),
+    origin_machine: `hub_ui:${origin}`,
+    table: 'links',
+    op: 'insert',
+    record_id: `link_${generateId()}`,
+    base_seq: null,
+    base_row_hash: null,
+    payload,
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  }, user);
+}
+
+/** The project's live row for a URL, preferring role='key'. */
+async function projectRowFor(env: Env, projectId: string, url: string): Promise<LinkRow | null> {
+  return env.DB
+    .prepare(
+      `SELECT ${LINK_ROW_COLS} FROM links
+        WHERE owner_table = 'projects' AND owner_id = ? AND canonical_url = ? AND deleted_at IS NULL
+        ORDER BY CASE role WHEN 'key' THEN 0 ELSE 1 END LIMIT 1`,
+    )
+    .bind(projectId, url)
+    .first<LinkRow>();
+}
+
+async function feRow(env: Env, linkId: string): Promise<unknown> {
+  return env.DB.prepare(`SELECT ${FE_LINKS_COLS} FROM links WHERE id = ?`).bind(linkId).first();
+}
+
+// POST /api/links/:id -- change one link's role and/or kind (#2089, #151)
+// (also mounted at the pre-#151 path POST /api/links/:id/role for one release)
 //
-// Three checks, in the order a wrong write would slip through them:
-//   1. `role` must be in the generated links.role domain (#2093), so a typo
-//      (`keys`) is a 400 rather than a row every `role='key'` reader drops.
-//   2. The link must be PROJECT-owned. `archive` on a task link is a legal
-//      value but a silent tombstone: no surface renders a task's archived
-//      links, and handleGetTaskLinks filters to role='key'. PB's
-//      set_link_role refuses the same case; a domain can never catch it.
-//   3. The caller must be able to see the owning project (same gate as
-//      handleUpdateProject, the project page's other link writer).
+// Body: { role?: 'key' | 'archive', kind?: string | null }. Response:
+// { data: <canonical links row> }.
 //
-// Write path: applyUpdate with a `hub_ui:` origin, the precedent of
-// artifact-link-mirror.ts (applyInsert). applyMutation is typed to
-// tasks/projects, and applyUpdate does not run processOne's enum gate, so
-// check 1 runs here explicitly and unconditionally.
-export async function handleSetLinkRole(
+// role has ONE meaning for both owners (#151): archive = the link stops
+// propagating beyond its owner, and the owner keeps it. A project link
+// archived leaves its tasks' cards (handleGetTaskLinks inherits key rows
+// only); a task link archived stays on its own task (no owner read filters
+// its own rows by role) and moves to the project page's Archived group. So a
+// task link may be archived and restored here; restoring sets the TASK row
+// back to key, and never makes it a project link (promote is its own route).
+// The refusal that stood here ("a task has no archived group") guarded a
+// state #151 renders, and is deleted, as is PB's twin in
+// _refuse_invalid_link_write.
+//
+// Checks: role in the generated domain (#2093); the caller may touch the
+// owner (guardLinkOwner); a role move that would collide with a live row of
+// the same owner + role + URL is a 409 (idx_links_owner_role_url), never a
+// silent delete of either row; an unknown kind is a 400 (the FK).
+export async function handleUpdateLink(
   linkId: string,
   request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  let body: { role?: unknown };
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
     return error('JSON body required', 400);
   }
-  const fields: Record<string, unknown> = { role: body?.role };
-  const enumErr = assertEnumDomain('links', fields);
-  if (enumErr) return error(enumErr, 400);
-  const role = fields.role as string;
-
-  const row = await env.DB
-    .prepare('SELECT id, owner_table, owner_id, role, canonical_url FROM links WHERE id = ? AND deleted_at IS NULL LIMIT 1')
-    .bind(linkId)
-    .first<{ id: string; owner_table: string; owner_id: string; role: string; canonical_url: string }>();
-  if (!row) return error('Link not found', 404);
-  if (row.owner_table !== 'projects') {
-    return error(
-      'Only a project link can be archived or restored: a task has no archived group, so an archived task link would vanish',
-      400,
-    );
+  if (!body || typeof body !== 'object') return error('JSON body required', 400);
+  const patch: Record<string, unknown> = {};
+  if ('role' in body) {
+    const fields: Record<string, unknown> = { role: body.role };
+    const enumErr = assertEnumDomain('links', fields);
+    if (enumErr) return error(enumErr, 400);
+    patch.role = fields.role;
   }
-  const block = await assertProjectVisible(request, env, row.owner_id);
+  const k = bodyKind(body);
+  if (k.bad) return k.bad;
+  if (k.kind !== undefined) patch.kind = k.kind;
+  if (Object.keys(patch).length === 0) return error('Body names role and/or kind', 400);
+
+  const row = await liveLink(env, linkId);
+  if (!row) return error('Link not found', 404);
+  const { block } = await guardLinkOwner(request, env, row);
   if (block) return block;
 
-  if (row.role === role) {
-    const current = await env.DB.prepare(`SELECT ${FE_LINKS_COLS} FROM links WHERE id = ?`).bind(linkId).first();
-    return json({ data: current });
+  if ('role' in patch && patch.role === row.role) delete patch.role;
+  if ('kind' in patch && (patch.kind ?? null) === (row.kind ?? null)) delete patch.kind;
+  if (Object.keys(patch).length === 0) return json({ data: await feRow(env, linkId) });
+
+  if ('role' in patch) {
+    // The pre-check gives the plain message; the catch below covers a
+    // concurrent writer. Neither row is ever deleted to make room.
+    const clash = await env.DB
+      .prepare(
+        `SELECT id FROM links
+          WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ?
+            AND deleted_at IS NULL AND id != ? LIMIT 1`,
+      )
+      .bind(row.owner_table, row.owner_id, patch.role as string, row.canonical_url, linkId)
+      .first<{ id: string }>();
+    if (clash) return roleClash(patch.role as string, row.owner_table);
   }
 
-  // idx_links_owner_role_url is UNIQUE on (owner_table, owner_id, role,
-  // canonical_url) over live rows. Restoring X after the same URL was re-added
-  // as a new key row, or archiving a second copy of an already-archived URL,
-  // would violate it. Say so as a 409 the page can show, rather than letting
-  // the constraint error reach app.onError as a bare 500. The pre-check gives
-  // the plain message; the catch below covers a concurrent writer.
-  const clash = await env.DB
-    .prepare(
-      `SELECT id FROM links
-        WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ?
-          AND deleted_at IS NULL AND id != ? LIMIT 1`,
-    )
-    .bind(row.owner_table, row.owner_id, role, row.canonical_url, linkId)
-    .first<{ id: string }>();
-  if (clash) return roleClash(role);
-
-  const flags = await getValidationFlags(env);
   let res: Awaited<ReturnType<typeof applyUpdate>>;
   try {
-    res = await applyUpdate(env, {
-      mutation_id: generateId('mut'),
-      origin_machine: 'hub_ui:handleSetLinkRole',
-      table: 'links',
-      op: 'update',
-      record_id: linkId,
-      base_seq: null,
-      base_row_hash: null,
-      patch: { role },
-      depends_on: null,
-      client_ts: nowInstant(),
-      issued_at: nowInstant(),
-    }, user, flags);
+    res = await patchLink(env, user, linkId, patch, 'handleUpdateLink');
   } catch (e) {
-    if (/SQLITE_CONSTRAINT|UNIQUE constraint failed/.test(e instanceof Error ? e.message : String(e))) {
-      return roleClash(role);
-    }
+    if (isForeignKeyFailure(e)) return kindRefused(patch.kind);
+    if (isUniqueFailure(e)) return roleClash(String(patch.role ?? row.role), row.owner_table);
     throw e;
   }
   if (res.status !== 'accepted' && res.status !== 'merged_clean') {
-    const message = `mutation ${res.status}: ${res.reason ?? ''}`;
-    return json({ error: message, rejected: res.status, message }, 409);
+    if (/FOREIGN KEY/.test(res.reason ?? '')) return kindRefused(patch.kind);
+    return mutationRefused(res);
   }
   return json({ data: res.canonical_payload ?? null });
 }
 
-function roleClash(role: string): Response {
+// POST /api/links/:id/promote -- put a task's document on its project (#151)
+//
+// COPY (Nick's pick): the task keeps its own row, untouched; the project gets
+// a role='key' row with the same type / canonical_url / short_title / kind,
+// so the document shows "On every task". Idempotent on the live natural key:
+//   - the project already holds the URL at key -> that row, no write;
+//   - the project holds it archived -> that row flips back to key;
+//   - else a new project row.
+// Response: { data: <the project row>, created: boolean }.
+export async function handlePromoteLink(
+  linkId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const row = await liveLink(env, linkId);
+  if (!row) return error('Link not found', 404);
+  if (row.owner_table !== 'tasks') return error('Only a task link can be promoted to its project', 400);
+  const { block, projectId } = await guardLinkOwner(request, env, row);
+  if (block) return block;
+  if (!projectId) return error('This task has no project to promote the link to', 400);
+
+  const existing = await projectRowFor(env, projectId, row.canonical_url);
+  if (existing && existing.role === 'key') {
+    return json({ data: await feRow(env, existing.id), created: false });
+  }
+  if (existing) {
+    const res = await patchLink(env, user, existing.id, { role: 'key' }, 'handlePromoteLink');
+    if (res.status !== 'accepted' && res.status !== 'merged_clean') return mutationRefused(res);
+    return json({ data: await feRow(env, existing.id), created: false });
+  }
+  let res: Awaited<ReturnType<typeof applyInsert>>;
+  try {
+    res = await insertProjectLink(env, user, projectId, {
+      type: row.type, canonical_url: row.canonical_url, short_title: row.short_title,
+      source_raw: row.source_raw, kind: row.kind ?? null,
+    }, 'handlePromoteLink');
+  } catch (e) {
+    // A concurrent promote of the same URL took the natural key first.
+    if (isUniqueFailure(e)) {
+      const won = await projectRowFor(env, projectId, row.canonical_url);
+      if (won) return json({ data: await feRow(env, won.id), created: false });
+    }
+    throw e;
+  }
+  if (res.status !== 'accepted' && res.status !== 'merged_clean') return mutationRefused(res);
+  const id = (res.canonical_payload?.id as string | undefined) ?? null;
+  return json({ data: id ? await feRow(env, id) : res.canonical_payload ?? null, created: true }, 201);
+}
+
+// POST /api/projects/:slug/links -- add a document to a project (#151)
+//
+// Body: { url: string, title?: string, kind?: string | null }. The project
+// page's "Add document" form, which replaces the retired project_documents
+// form (schema-v146 drops that table). The URL is normalized on the Worker
+// with the same generated contract PB uses (shared/pbLinks.generated.ts), so
+// a Hub-added row and a PB-added one collapse on the natural key. Layout B has
+// no project-only tier, so the row is role='key': it shows "On every task".
+// Idempotent: a URL the project holds at key gets only its kind set (when the
+// body names one); one it holds archived flips back to key.
+// Response: { data: <the project row>, created: boolean }.
+export async function handleCreateProjectLink(
+  slugOrId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return error('JSON body required', 400);
+  }
+  if (!body || typeof body !== 'object') return error('JSON body required', 400);
+  const url = typeof body.url === 'string' ? body.url.trim() : '';
+  if (!url) return error('url is required', 400);
+  const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : null;
+  const k = bodyKind(body);
+  if (k.bad) return k.bad;
+
+  const project = await env.DB
+    .prepare('SELECT id FROM projects WHERE (slug = ? OR id = ?) AND deleted_at IS NULL LIMIT 1')
+    .bind(slugOrId, slugOrId)
+    .first<{ id: string }>();
+  if (!project) return error('Project not found', 404);
+  const block = await assertProjectVisible(request, env, project.id);
+  if (block) return block;
+
+  const link = normalizeLink(url, { titleHint: title });
+  if (!link) return error(`${JSON.stringify(url)} holds no recognizable link`, 400);
+  // A Gmail URL that names no thread and no draft addresses nothing (PB #1867;
+  // the normalizer files it as plain `web`). Same refusal PB's add_link makes.
+  if (/^https?:\/\/mail\.google\.com\//i.test(link.canonical_url)
+      && link.type !== 'gmail_thread' && link.type !== 'gmail_draft') {
+    return error('That Gmail URL names no thread or draft', 400);
+  }
+
+  const existing = await projectRowFor(env, project.id, link.canonical_url);
+  try {
+    if (existing) {
+      const patch: Record<string, unknown> = {};
+      if (existing.role !== 'key') patch.role = 'key';
+      if (k.kind !== undefined && (k.kind ?? null) !== (existing.kind ?? null)) patch.kind = k.kind;
+      if (Object.keys(patch).length > 0) {
+        const res = await patchLink(env, user, existing.id, patch, 'handleCreateProjectLink');
+        if (res.status !== 'accepted' && res.status !== 'merged_clean') {
+          if (/FOREIGN KEY/.test(res.reason ?? '')) return kindRefused(k.kind);
+          return mutationRefused(res);
+        }
+      }
+      return json({ data: await feRow(env, existing.id), created: false });
+    }
+    const res = await insertProjectLink(env, user, project.id, {
+      type: link.type, canonical_url: link.canonical_url, short_title: link.short_title,
+      source_raw: link.source_raw ?? null, kind: k.kind ?? null,
+    }, 'handleCreateProjectLink');
+    if (res.status !== 'accepted' && res.status !== 'merged_clean') {
+      if (/FOREIGN KEY/.test(res.reason ?? '')) return kindRefused(k.kind);
+      return mutationRefused(res);
+    }
+    const id = (res.canonical_payload?.id as string | undefined) ?? null;
+    return json({ data: id ? await feRow(env, id) : res.canonical_payload ?? null, created: true }, 201);
+  } catch (e) {
+    if (isForeignKeyFailure(e)) return kindRefused(k.kind);
+    if (isUniqueFailure(e)) {
+      const won = await projectRowFor(env, project.id, link.canonical_url);
+      if (won) return json({ data: await feRow(env, won.id), created: false });
+    }
+    throw e;
+  }
+}
+
+function roleClash(role: string, ownerTable: string): Response {
+  const owner = ownerTable === 'tasks' ? 'task' : 'project';
   const message = role === 'archive'
     ? 'This URL is already in the archived group'
-    : 'Another current link on this project already has this URL';
+    : `Another current link on this ${owner} already has this URL`;
   return json({ error: message, rejected: 'error', message }, 409);
 }

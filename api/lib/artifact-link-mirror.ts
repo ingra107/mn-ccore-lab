@@ -64,7 +64,9 @@ export type ArtifactLinkMirrorResult =
  * NB (#199c): calling applyInsert directly BYPASSES processOne's gate stack —
  * ALLOWED_TABLES / TABLE_FIELDS / assertProtectedNotNull / assertEnumDomain.
  * Safe today: all 8 payload cols below are whitelisted, and the one enum-domained
- * links field (`role`, #2093) is the literal 'key' here. But a future `links` column omitted from the whitelist would fail
+ * links field (`role`, #2093) is the literal 'key' here. `kind` (schema-v145) is
+ * not sent (NULL = Unfiled) and needs no gate: the link_kinds FK holds on this
+ * path too. But a future `links` column omitted from the whitelist would fail
  * SILENTLY at D1 here (status 'failed', no validation error). Keep this payload
  * in lockstep with the links mutation schema, or route through processOne.
  */
@@ -80,10 +82,12 @@ export async function mirrorArtifactLink(
   if (!canonical) return 'skipped_no_id';
 
   try {
-    // Idempotency pre-check on the live natural key.
+    // Idempotency pre-check on the live natural key, in ANY role (#151): an
+    // artifact the owner archived stays archived when a comment re-posts its
+    // URL, rather than a role='key' copy re-appearing beside it.
     const existing = await env.DB.prepare(
       `SELECT id FROM links
-         WHERE owner_table = ? AND owner_id = ? AND role = 'key'
+         WHERE owner_table = ? AND owner_id = ?
            AND canonical_url = ? AND deleted_at IS NULL
          LIMIT 1`,
     ).bind(ownerTable, ownerId, canonical).first<{ id: string }>();

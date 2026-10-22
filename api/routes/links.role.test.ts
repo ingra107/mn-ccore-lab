@@ -1,7 +1,7 @@
-// links.role.test.ts -- POST /api/links/:id/role (#2089 archive/restore, #2093 domain)
+// links.role.test.ts -- POST /api/links/:id[/role] (#2089 archive/restore, #2093 domain, #151)
 //
 // The route's own decisions are under test: the generated links.role domain,
-// the project-owner-only rule a domain can never express, the visibility gate,
+// the owner visibility gate (project, or the task and its project, #151),
 // and the exact mutation it hands the write path. applyUpdate itself is mocked
 // -- its CAS/commit behaviour has its own suites (mutations.*.test.ts).
 
@@ -9,16 +9,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env, AuthUser } from '../helpers';
 
 const applyUpdate = vi.fn();
-vi.mock('./mutations', () => ({ applyUpdate: (...args: unknown[]) => applyUpdate(...args) }));
+const applyInsert = vi.fn();
+vi.mock('./mutations', () => ({
+  applyUpdate: (...args: unknown[]) => applyUpdate(...args),
+  applyInsert: (...args: unknown[]) => applyInsert(...args),
+}));
 
-import { handleSetLinkRole } from './links';
+import { handleUpdateLink as handleSetLinkRole } from './links';
 import enumDomains from '../enum-domains.generated.json';
 
 const USER: AuthUser = { email: 'ingra107@umn.edu', slug: 'nick-ingraham', isPi: true };
 
 type Row = Record<string, unknown>;
 
-function makeEnv(links: Record<string, Row>, projects: Record<string, Row> = {}): Env {
+function makeEnv(links: Record<string, Row>, projects: Record<string, Row> = {}, tasks: Record<string, Row> = {}): Env {
   const prepare = (sql: string) => {
     let vals: unknown[] = [];
     const stmt = {
@@ -26,6 +30,7 @@ function makeEnv(links: Record<string, Row>, projects: Record<string, Row> = {})
       first: async () => {
         if (/FROM links/i.test(sql)) return links[vals[0] as string] ?? null;
         if (/FROM projects/i.test(sql)) return projects[vals[0] as string] ?? null;
+        if (/FROM tasks/i.test(sql)) return tasks[vals[0] as string] ?? null;
         return null;
       },
       all: async () => ({ results: [] }),
@@ -85,10 +90,47 @@ describe('handleSetLinkRole', () => {
     expect(applyUpdate).not.toHaveBeenCalled();
   });
 
-  it('refuses a task-owned link: archive there is a silent tombstone', async () => {
-    const res = await handleSetLinkRole('link_T', req({ role: 'archive' }), USER, makeEnv({ link_T: TASK_LINK }, PROJECTS));
-    expect(res.status).toBe(400);
+  // #151: archive means "stops propagating beyond its owner; the owner keeps
+  // it" for BOTH owners, and the project page renders a task's archived row,
+  // so the old task refusal is gone. The task gate is the task's own
+  // visibility through the caller's handle, then its project's.
+  it('archives a task-owned link the caller can read, on a project they are on (#151)', async () => {
+    const res = await handleSetLinkRole('link_T', req({ role: 'archive' }), USER,
+      makeEnv({ link_T: TASK_LINK }, PROJECTS, { task_A: { project_id: 'proj_A' } }));
+    expect(res.status).toBe(200);
+    expect(applyUpdate.mock.calls[0][1]).toMatchObject({ record_id: 'link_T', patch: { role: 'archive' } });
+  });
+
+  it('404s a task-owned link whose task the caller cannot read', async () => {
+    const res = await handleSetLinkRole('link_T', req({ role: 'archive' }), { ...USER, isPi: false },
+      makeEnv({ link_T: TASK_LINK }, PROJECTS, {}));
+    expect(res.status).toBe(404);
     expect(applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it('403s a task-owned link whose task sits on a project the caller is not on', async () => {
+    const res = await handleSetLinkRole('link_T', req({ role: 'archive' }), { ...USER, isPi: false },
+      makeEnv({ link_T: TASK_LINK }, {}, { task_A: { project_id: 'proj_A' } }));
+    expect(res.status).toBe(403);
+    expect(applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it('sets kind alone, passing the value through for the FK to judge', async () => {
+    const res = await handleSetLinkRole('link_P', req({ kind: 'protocol' }), USER, makeEnv({ link_P: PROJECT_LINK }, PROJECTS));
+    expect(res.status).toBe(200);
+    expect(applyUpdate.mock.calls[0][1].patch).toEqual({ kind: 'protocol' });
+  });
+
+  it('turns a link_kinds FK refusal into a 400, never a 500', async () => {
+    applyUpdate.mockRejectedValue(new Error('D1_ERROR: FOREIGN KEY constraint failed: SQLITE_CONSTRAINT (extended: SQLITE_CONSTRAINT_FOREIGNKEY)'));
+    const res = await handleSetLinkRole('link_P', req({ kind: 'nope' }), USER, makeEnv({ link_P: PROJECT_LINK }, PROJECTS));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toMatch(/not a link kind/);
+  });
+
+  it('400s a body naming neither role nor kind', async () => {
+    const res = await handleSetLinkRole('link_P', req({}), USER, makeEnv({ link_P: PROJECT_LINK }, PROJECTS));
+    expect(res.status).toBe(400);
   });
 
   it('404s a missing or tombstoned link', async () => {

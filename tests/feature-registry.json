@@ -2938,9 +2938,9 @@
     },
     {
       "id": "project-key-documents",
-      "component": "src/pages/project/ProjectDocuments.tsx",
+      "component": "src/components/ProjectLinkLibrary.tsx",
       "type": "ui",
-      "description": "Key Documents section on project detail page",
+      "description": "Project documents on the project Links card: On every task / From tasks tiers, kind chips, Add document (#151; project_documents retired)",
       "test_file": "tests/inspection.spec.ts",
       "test_name": "FEATURE: Key Documents section on project detail page",
       "covered": true

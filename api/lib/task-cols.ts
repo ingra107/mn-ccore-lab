@@ -130,7 +130,6 @@ export const FK_SLUG_FIELDS: Record<string, string[]> = {
   conference_submissions: ['project_id'],
   regulatory_items: ['project_id'],
   manuscript_revisions: ['project_id'],
-  project_documents: ['project_id'],
   // products (schema-v124): a slug project ref canonicalizes like tasks; an
   // unresolvable one becomes NULL and the NOT NULL column refuses the insert.
   products: ['project_id'],

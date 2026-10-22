@@ -211,6 +211,12 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 272 as of 2026-10-21 -- a person's view preferences, schema-v143 (+3,
     // PB #911): GET /api/user-prefs, PUT + DELETE /api/user-prefs/:key
     // (api/routes/userPrefs.ts).
+    // 272 as of 2026-10-22 -- project documents on links (net 0, PB #151):
+    //   -3 GET + POST /api/projects/:slug/documents and POST
+    //   /api/projects/:slug/documents/:docId/delete (project_documents retired,
+    //   schema-v146); +3 POST /api/projects/:slug/links (add a document),
+    //   POST /api/links/:id (role and/or kind) and POST /api/links/:id/promote.
+    //   POST /api/links/:id/role stays one release on the same handler.
     expect(ROUTE_REGISTRY).toHaveLength(272)
   })
 
@@ -229,6 +235,8 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
       'GET /api/milestones', 'POST /api/milestones/:id/note', 'GET /api/projects/:slug/revisions',
       'GET /api/deadline-cascade', 'GET /api/regulatory',
       'POST /api/pb/capture', 'POST /api/regulatory',
+      'GET /api/projects/:slug/documents', 'POST /api/projects/:slug/documents',
+      'POST /api/projects/:slug/documents/:docId/delete',
     ]
     const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
     for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)
