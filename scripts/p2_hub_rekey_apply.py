@@ -67,16 +67,17 @@ HUB_REPO = Path("C:/Users/ingra107/mn-ccore-lab")
 SQL_TEMPLATE = HUB_REPO / "scratch" / "p2-hub-rekey.sql"
 D1_DB_NAME = "mnccore-lab"
 
-# `secrets.ps1` exports CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (Pages-scoped,
-# no D1 access), which SHADOWS the D1-capable OAuth creds at
-# ~/.wrangler/config/default.toml whenever both are set -- every `wrangler d1`
+# A Pages-scoped CLOUDFLARE_API_TOKEN in the env (secrets.ps1 exported one until
+# 2026-08-02; it now uses PB_CLOUDFLARE_PAGES_*, PB #884) SHADOWS the D1-capable
+# OAuth creds at ~/.wrangler/config/default.toml -- every `wrangler d1`
 # call then 7403s ("Authentication error code 10000"). This script's raw
 # subprocess.run(..., shell=True) calls below predate scripts/wrangler_d1.py's
 # strip (added 2026-05-24) and were never migrated onto it; found + fixed
 # 2026-07-22 while closing PB backlog #752 (not previously hit only because
 # this script has GATES unmet and has never actually been run --execute).
 # Mirrors scripts/wrangler_d1.py::_stripped_env / scripts/wrangler-d1's strip.
-_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID",
+                  "CF_API_TOKEN", "CF_API_KEY", "CF_ACCOUNT_ID", "CLOUDFLARE_API_KEY")
 
 
 def _stripped_wrangler_env() -> dict[str, str]:

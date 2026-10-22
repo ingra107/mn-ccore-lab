@@ -150,7 +150,7 @@ Nick's CLI         Team's Hub
 
 ### Wrangler / D1 auth — ALWAYS go through the sanctioned entry point (2026-05-24)
 
-**Never raw `npx wrangler d1`.** Use `scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT 1"` (shell) or `from wrangler_d1 import run_d1; run_d1(command="SELECT 1", json=True)` (Python). Both unset `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` first. The DB is `mnccore-lab` (no dash). `.githooks/pre-commit` blocks a raw d1 execute/export outside `.github/workflows/` and the wrapper files (put `wrangler-d1-allowed` on a docs line to exempt it). Why: the Pages-scoped env token lacks D1 scope and shadows the OAuth creds, which read as "blocked" four times. Detail: `docs/claude-md-detail.md` "Wrangler / D1 auth: the sanctioned entry point".
+**Never raw `npx wrangler d1`.** Use `scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT 1"` (shell) or `from wrangler_d1 import run_d1; run_d1(command="SELECT 1", json=True)` (Python). Both unset `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` first. The DB is `mnccore-lab` (no dash). `.githooks/pre-commit` blocks a raw d1 execute/export outside `.github/workflows/` and the wrapper files (put `wrangler-d1-allowed` on a docs line to exempt it). Why: a Pages-scoped token in the env lacks D1 scope and shadows the OAuth creds, which read as "blocked" eight times. Detail: `docs/claude-md-detail.md` "Wrangler / D1 auth: the sanctioned entry point".
 
 ### Cross-repo Schema Coordination (rule from R10 incident)
 
