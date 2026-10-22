@@ -22,7 +22,7 @@ Historical material in `docs/archived/` — safe to ignore unless explicitly spe
 
 ## Quick Reference: Deploy row
 
-| Deploy | **Manual, and CLAUDE RUNS IT — do NOT ask Nick to deploy.** Pushing to `origin/main` does NOT deploy; Claude runs the deploy itself. From repo root, in the **Bash tool**: `npm run deploy:pages:gated` (= identity gate, activity-reads lint, API typecheck, `npm run build`, the member page sweep `npm run test:journeys:sweep:gate`, then `wrangler pages deploy dist --project-name mn-ccore-lab --branch main` and the prod probe). The sweep picks its own free ports, builds a fresh local D1 per run under `.wrangler/journey-gate/run-<pid>`, and serves the built `dist/` with `vite preview` (the same files the deploy ships), so it runs from a fresh worktree and beside a dev stack; a sweep failure blocks the deploy. Run by hand, it needs `npm run build` first. **Wrangler is already authenticated at the system/env level** — confirm with `npx wrangler whoami` (returns token scopes), then just run the deploy. `$CLOUDFLARE_API_TOKEN` not appearing in bash's own env is a red herring; wrangler finds it. **Do NOT** invoke `powershell.exe` from Bash or `sed`/grep the token out of `secrets.ps1` — both are auto-mode-classifier-DENIED and waste a turn. ⚠️ **This ban is about EXTRACTING/PRINTING the `CLOUDFLARE_API_TOKEN` only — it does NOT mean "don't touch API keys."** Two different keys: the deploy token (wrangler finds it automatically) vs the app **`X-API-Key` = `PB_API_KEY`**, which is ALREADY an env var in the Bash tool. To empirically verify a gated `/api/*` endpoint, use `PB_API_KEY` IN-PLACE: `curl -H "Authorization: Bearer $PB_API_KEY" https://mn-ccore-lab.pages.dev/api/...` (shell expands it, value never prints — no leak; server checks `env.PB_API_KEY` in `api/middleware/api-key-auth.ts`). Prefer this 30-second empirical proof over a deductive "needs the key" caveat. **Do NOT** `wrangler login`. Get Nick's go first only if the change is risky, then run it yourself. |
+| Deploy | **Manual, and CLAUDE RUNS IT — do NOT ask Nick to deploy.** Pushing to `origin/main` does NOT deploy; Claude runs the deploy itself. From repo root, in the **Bash tool**: `npm run deploy:pages:gated` (= identity gate, activity-reads lint, API typecheck, `npm run build`, the member page sweep `npm run test:journeys:sweep:gate`, then `wrangler pages deploy dist --project-name mn-ccore-lab --branch main` and the prod probe). The sweep picks its own free ports, builds a fresh local D1 per run under `.wrangler/journey-gate/run-<pid>`, and serves the built `dist/` with `vite preview` (the same files the deploy ships), so it runs from a fresh worktree and beside a dev stack; a sweep failure blocks the deploy. Run by hand, it needs `npm run build` first. **Wrangler is already authenticated at the system/env level** — confirm with `npx wrangler whoami` (returns token scopes), then just run the deploy. `$CLOUDFLARE_API_TOKEN` absent from bash's env is expected; wrangler uses its OAuth login. **Do NOT** invoke `powershell.exe` from Bash or `sed`/grep the token out of `secrets.ps1` — both are auto-mode-classifier-DENIED and waste a turn. ⚠️ **This ban is about EXTRACTING/PRINTING the `CLOUDFLARE_API_TOKEN` only — it does NOT mean "don't touch API keys."** Two different keys: the deploy token (wrangler finds it automatically) vs the app **`X-API-Key` = `PB_API_KEY`**, which is ALREADY an env var in the Bash tool. To empirically verify a gated `/api/*` endpoint, use `PB_API_KEY` IN-PLACE: `curl -H "Authorization: Bearer $PB_API_KEY" https://mn-ccore-lab.pages.dev/api/...` (shell expands it, value never prints — no leak; server checks `env.PB_API_KEY` in `api/middleware/api-key-auth.ts`). Prefer this 30-second empirical proof over a deductive "needs the key" caveat. **Do NOT** `wrangler login`. Get Nick's go first only if the change is risky, then run it yourself. |
 
 ## Quick Reference: D1 database (prod) row
 
@@ -56,16 +56,18 @@ Historical material in `docs/archived/` — safe to ignore unless explicitly spe
 
 ### Wrangler / D1 auth — ALWAYS go through the sanctioned entry point (2026-05-24)
 
-`secrets.ps1` exports `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Those are
-Pages-deploy-scoped and **lack D1 scope**; when present they SHADOW the OAuth
-creds at `~/.wrangler/config/default.toml` (which DO have `d1 (write)`). Result:
+The Pages-deploy token **lacks D1 scope**; when it sits in the env as
+`CLOUDFLARE_API_TOKEN` (or legacy `CF_API_TOKEN`) it SHADOWS the OAuth creds at
+`~/.wrangler/config/default.toml` (which DO have `d1 (write)`). Result:
 401 / 403 / 7403 / "Authentication error code 10000" on any `wrangler d1` call —
-misdiagnosed as "blocked" **four times** across sessions despite a standing
-memory rule. The fix is now a primitive, not a note (codex ethos #4).
+misdiagnosed as "blocked" **eight times**. `secrets.ps1` exported it under that
+name until 2026-08-02 and now exports `PB_CLOUDFLARE_PAGES_API_TOKEN` (PB #884);
+any shell can still carry the reserved name. The fix is a primitive, not a note
+(codex ethos #4).
 
 **ALL wrangler D1 calls go through the sanctioned entry point. Never raw
-`npx wrangler d1`.** Both forms unconditionally `unset CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID` and run wrangler from the repo root:
+`npx wrangler d1`.** Both forms unconditionally unset `CLOUDFLARE_API_TOKEN`,
+`CLOUDFLARE_ACCOUNT_ID` and the legacy `CF_*` names, and run wrangler from the repo root:
 
 - **Shell / command line:** `scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT 1"`
 - **Python (incl. PB's `sync.py`):** `from wrangler_d1 import run_d1; run_d1(command="SELECT 1", json=True)`

@@ -54,7 +54,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:  # run as a file, sys.path[0] is already scripts/
     sys.path.insert(0, str(_HERE))
-from wrangler_d1 import format_wrangler_error, is_cold_token_failure, resolve_wrangler  # noqa: E402 -- stdlib-only sibling
+from wrangler_d1 import _SHADOWING_ENV, format_wrangler_error, is_cold_token_failure, resolve_wrangler  # noqa: E402 -- stdlib-only sibling
 SURFACES_JSON = _HERE / "project-identity-surfaces.json"
 STORE_KEY = "hub_d1"
 DB = "mnccore-lab"
@@ -95,13 +95,14 @@ def _wrangler_cmd() -> list[str]:
     return resolve_wrangler(_HERE.parent)
 
 
-# Env vars that secrets.ps1 exports locally for Pages deploys (Pages-scoped, NO
-# D1 scope). When present they SHADOW the D1-capable OAuth creds at
-# ~/.wrangler/config/default.toml → every `wrangler d1` call 7403s. Misdiagnosed
-# as "deploy token lost D1 access" SIX times (PB memory
-# feedback_wrangler-home-auth-works + agent_knowledge wrangler-d1-sanctioned-entry-
-# point). The strip makes the local fix STRUCTURAL, mirroring scripts/wrangler_d1.py.
-_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+# _SHADOWING_ENV (imported from wrangler_d1, the one list): env vars that, when a
+# local shell carries them (a Pages-scoped token, NO D1 scope), SHADOW the
+# D1-capable OAuth creds at ~/.wrangler/config/default.toml, so every `wrangler d1`
+# call fails 7403 / 10000. secrets.ps1 exports the Pages token as
+# PB_CLOUDFLARE_PAGES_* since 2026-08-02 (PB #884), but any shell can still carry
+# the reserved or legacy CF_* names. Misdiagnosed as "deploy token lost D1 access"
+# SIX times (PB memory feedback_wrangler-home-auth-works). Imported, not copied,
+# so this gate strips exactly what scripts/wrangler_d1.py and the shim strip.
 
 
 def _is_ci() -> bool:
