@@ -754,7 +754,9 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
       taskRow: { project_id: 'proj_001' },
       projectRow: { id: 'proj_001' },
       taskLinks: [{ id: 'lnk_file', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
-      projectLinks: [{ id: 'lnk_pfile', role: 'key', type: 'local_file', canonical_url: DOCX, short_title: 'CLIF letter', sort_order: 0 }],
+      // A different file than the task's: a project link whose URL the task
+      // holds is dropped from the card by design (#151 W6, one chip per document).
+      projectLinks: [{ id: 'lnk_pfile', role: 'key', type: 'local_file', canonical_url: DOCX.replace('.docx', ' (signed).docx'), short_title: 'CLIF letter', sort_order: 0 }],
     })
     const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
     expect(member).not.toContain('CLIF letter of support')
@@ -767,13 +769,14 @@ describe('handleGetProjectLinks — derived project-field links in links', () =>
 
   it('P7: a non-PI caller gets no EXPLICIT local_folder row, on the task or its project; a PI does', async () => {
     const LOCAL = '~/Box/Research/K proposal/.K-Grant/RPPR/'
-    const folderRow = (id: string) => ({ id, role: 'key', type: 'local_folder', canonical_url: LOCAL, short_title: 'RPPR folder', sort_order: 0 })
+    // Distinct URLs per owner: a shared URL is shown once, as the task's (#151 W6).
+    const folderRow = (id: string, url = LOCAL) => ({ id, role: 'key', type: 'local_folder', canonical_url: url, short_title: 'RPPR folder', sort_order: 0 })
     const docRow = { id: 'lnk_doc', role: 'key', type: 'google_doc', canonical_url: 'https://docs.google.com/document/d/abc', short_title: 'Doc', sort_order: 1 }
     const env = makeEnv({
       taskRow: { project_id: 'proj_001' },
       projectRow: { id: 'proj_001' },
       taskLinks: [folderRow('lnk_tf'), docRow],
-      projectLinks: [folderRow('lnk_pf')],
+      projectLinks: [folderRow('lnk_pf', `${LOCAL}final/`)],
     })
     const member = await (await handleGetTaskLinks('task_001', makeRequest(), env, false)).text()
     expect(member).not.toContain(LOCAL)

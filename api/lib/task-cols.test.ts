@@ -24,7 +24,8 @@ describe('FK_SLUG_FIELDS — Z3.2 expansion', () => {
     // Floor: tasks (existing) + 7 sibling tables that hold a projects-FK.
     const expectedTables = [
       'tasks', 'submission_events', 'conference_submissions',
-      'regulatory_items', 'manuscript_revisions', 'project_documents',
+      'regulatory_items', 'manuscript_revisions',
+      // project_documents retired (schema-v146, PB #151)
       // deadline_dependencies intentionally absent: no project_id column (Z4.3 exempt)
     ]
     for (const t of expectedTables) {

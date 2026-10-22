@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { AuthUser, Env } from '../helpers';
-import { handleSetLinkRole } from './links';
+import { handleUpdateLink as handleSetLinkRole } from './links';
 import { prodSchemaDb, d1Adapter, seedProjectHome } from '../test-support/prod-schema-db';
 
 const USER: AuthUser = { email: 'x@umn.edu', slug: 'x', isPi: false };

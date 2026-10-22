@@ -234,7 +234,6 @@ describe('R1 project delete: every child table is cleared in the same commit', (
   // Required columns come from the migrated schema; each child row is keyed
   // to proj_x (deleted) or proj_keep (must survive).
   const CHILD_SEED: Record<string, string> = {
-    project_documents: "(id, project_id, title, url) VALUES ('c1', 'proj_x', 't', 'u'), ('c2', 'proj_keep', 't', 'u')",
     milestones: "(id, project_id, title) VALUES ('c1', 'proj_x', 't'), ('c2', 'proj_keep', 't')",
     conference_submissions: "(id, project_id, conference, submission_type, title) VALUES ('c1', 'proj_x', 'c', 'abstract', 't'), ('c2', 'proj_keep', 'c', 'abstract', 't')",
     submission_events: "(id, project_id, event_type, event_date) VALUES ('c1', 'proj_x', 'submitted', '2026-01-01'), ('c2', 'proj_keep', 'submitted', '2026-01-01')",

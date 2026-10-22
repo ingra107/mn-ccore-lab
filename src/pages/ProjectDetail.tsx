@@ -25,8 +25,8 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks, useProjectPublications } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useSetProjectLinkRole } from '../hooks/useMutations'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinkLibrary, useProjectPublications } from '../hooks/useApiData'
+import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useUpdateLink, usePromoteLink, useAddProjectLink } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
@@ -68,7 +68,6 @@ import ActivityStream, { type StreamFilter } from '../components/project/Activit
 import ProjectDecisions from './project/ProjectDecisions'
 import ProjectDependencies from './project/ProjectDependencies'
 import SmartCompose from '../components/SmartCompose'
-import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 import { CATEGORY_OPTIONS } from '../constants/categories'
 import { LABEL_STYLE } from '../components/ui/labelStyle'
@@ -244,10 +243,13 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Revisions for this project
   const { data: revisions = [] } = useRevisions(project.slug)
-  // Full links table (every role). Task views get the role='key' subset from
+  // Full links table (every role), the project's tasks' documents and the
+  // kind vocabulary (#151). Task views get the role='key' project subset from
   // handleGetTaskLinks; this page is the one surface that shows the archive.
-  const { data: storedLinks, isLoading: linksLoading } = useProjectLinks(project.slug)
-  const setLinkRole = useSetProjectLinkRole(project.slug)
+  const { data: linkLibrary, isLoading: linksLoading } = useProjectLinkLibrary(project.slug)
+  const updateLink = useUpdateLink(project.slug)
+  const promoteLink = usePromoteLink(project.slug)
+  const addProjectLink = useAddProjectLink(project.slug)
 
   // Tab counts (PD-12)
   const { data: papers = [] } = useProjectPapers(project.slug)
@@ -977,11 +979,15 @@ isAuthenticated && (project.slug ?? project.id) && (
   const linksEl = (
             <ProjectLinkLibrary
               hideFolder
-              links={storedLinks}
+              links={linkLibrary?.links}
+              taskLinks={linkLibrary?.taskLinks ?? []}
+              kinds={linkLibrary?.kinds ?? []}
               isLoading={linksLoading}
               slotUrls={[project.key_link_1, project.key_link_2, project.key_link_3]}
-              onSetRole={(link, role) => setLinkRole.mutate({ linkId: link.id, role })}
-              documents={<ProjectDocuments projectSlug={project.slug} />}
+              onSetRole={(link, role) => updateLink.mutate({ linkId: link.id, role })}
+              onSetKind={(link, kind) => updateLink.mutate({ linkId: link.id, kind })}
+              onPromote={(link) => promoteLink.mutate(link.id)}
+              onAdd={(input) => addProjectLink.mutate(input)}
               pinnedEditor={
                 <KeyLinksEditor
                   hideLabel

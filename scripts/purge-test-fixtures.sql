@@ -33,7 +33,7 @@
 -- meeting_id set (action_items table DROPPED, backlog #742, 2026-07-16 —
 -- see api/schema-v99-drop-action-items.sql), so they're already covered
 -- by the tasks-title-pattern DELETE below.
--- milestones + project_documents reference projects.
+-- milestones reference projects.
 
 -- Activity entries for test tasks (replaces task_comments + task_updates, schema-v78)
 DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id IN (
@@ -92,7 +92,7 @@ DELETE FROM agenda_items WHERE meeting_id IN (
     LOWER(title) LIKE 'deep-audit-%'
 );
 
--- Project-related children. milestones + project_documents reference projects.
+-- Project-related children. milestones reference projects.
 -- comments dropped (schema-v78, 2026-06-10) — activity_entries handles it.
 DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id IN (
   SELECT id FROM projects WHERE
@@ -106,12 +106,7 @@ DELETE FROM milestones WHERE project_id IN (
     LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
     LOWER(title) LIKE 'deep-audit-%'
 );
-DELETE FROM project_documents WHERE project_id IN (
-  SELECT id FROM projects WHERE
-    LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'deep-audit-%'
-);
+-- (project_documents DELETE removed: table dropped, schema-v146, PB #151)
 
 -- ── Parent deletes ───────────────────────────────────────────────────
 -- lab_questions (lab_answers cascades automatically)

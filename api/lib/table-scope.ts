@@ -50,12 +50,12 @@ export const HUB_TABLES = [
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations', 'lab_answers',
-  'lab_questions', 'lab_settings', 'launch_log', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
+  'lab_questions', 'lab_settings', 'launch_log', 'link_kinds', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
   'product_funding', 'product_kinds', 'product_stages', 'products', 'project_dependencies', 'project_home_seed',
-  'project_documents', 'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
+  'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
@@ -422,7 +422,6 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   manuscript_revisions: byProject('manuscript_revisions', 'project_id', 'id', false),
   regulatory_items: byProject('regulatory_items', 'project_id', 'id', false),
   submission_events: byProject('submission_events', 'project_id', 'id', false),
-  project_documents: byProject('project_documents', 'project_id', 'id', false),
   // The Browse listing (schema-v139: one-line description, hidden switch)
   // follows its project for direct reads and writes. A non-member reads the
   // description only through the project_directory view (HUB_VIEWS below).
@@ -494,7 +493,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   _meta: LAB, agent_knowledge: LAB, bug_reports: LAB, day_capacity: LAB, deadline_dependencies: LAB,
   decisions: LAB, digest_comments: LAB, dispatch_queue: LAB, expertise_tags: LAB,
   inbox_events: LAB, kg_entities: LAB, kg_relation_type_registry: LAB, kg_relations: LAB,
-  lab_settings: LAB, launch_log: LAB, member_featured_publications: LAB, memory_facts: LAB,
+  lab_settings: LAB, launch_log: LAB, link_kinds: LAB, member_featured_publications: LAB, memory_facts: LAB,
   mentee_milestones: LAB, notifications: LAB, open_science_resources: LAB,
   pb_sessions: LAB, pomodoro_sessions: LAB, processed_mutations: LAB, product_author_positions: LAB,
   product_event_roles: LAB, product_kinds: LAB, product_stages: LAB, project_home_seed: LAB, publications: LAB,

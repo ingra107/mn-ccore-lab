@@ -136,7 +136,6 @@ function seedLaneB() {
   insertRow(db, 'links', { id: 'lnk-sweep-task', owner_table: 'tasks', owner_id: TASK, type: 'doc', canonical_url: 'https://x.test/t', short_title: `${MARK} link` })
   insertRow(db, 'links', { id: 'lnk-sweep-proj', owner_table: 'projects', owner_id: PROJ, type: 'doc', canonical_url: 'https://x.test/p', short_title: `${MARK} plink` })
   insertRow(db, 'milestones', { id: 'ms-sweep', project_id: PROJ, title: `${MARK} milestone`, target_date: TODAY })
-  insertRow(db, 'project_documents', { id: 'pd-sweep', project_id: PROJ, title: `${MARK} doc`, url: 'https://x.test/d' })
   insertRow(db, 'regulatory_items', { id: 'reg-sweep', project_id: PROJ, item_type: 'irb', title: `${MARK} irb`, renewal_due: TODAY, expiration_date: TODAY })
   insertRow(db, 'manuscript_revisions', { id: REVISION, project_id: PROJ, journal: `${MARK} journal`, notes: `${MARK}` })
   insertRow(db, 'reviewer_comments', { id: 'rc-sweep', revision_id: REVISION, comment_text: `${MARK} reviewer` })
@@ -222,7 +221,7 @@ const hiddenRows = () => JSON.stringify([
   ...([
     ['task_subtasks', 'task_id', TASK], ['task_files', 'task_id', TASK], ['task_handoffs', 'task_id', TASK],
     ['hub_pomodoro_slots', 'task_id', TASK], ['commitments', 'task_id', TASK], ['artifacts', 'task_id', TASK],
-    ['milestones', 'project_id', PROJ], ['project_documents', 'project_id', PROJ], ['regulatory_items', 'project_id', PROJ],
+    ['milestones', 'project_id', PROJ], ['regulatory_items', 'project_id', PROJ],
     ['manuscript_revisions', 'project_id', PROJ], ['submission_events', 'project_id', PROJ],
     ['conference_submissions', 'project_id', PROJ], ['ideas', 'project_id', PROJ], ['inbox', 'project_id', PROJ],
     ['contributions', 'project_slug', PROJ_SLUG], ['lab_questions', 'project_slug', PROJ_SLUG], ['hub_decisions', 'project_slug', PROJ_SLUG],

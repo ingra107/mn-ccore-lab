@@ -212,11 +212,10 @@ describe('Fix 3: applyDelete cascades for projects table', () => {
   const projId = 'proj_01cascade_test_proj_000001'
   const otherProj = 'proj_01cascade_test_control_01'
 
-  it('deletes project_documents/milestones/activity_entries and NULLs live tasks.project_id, for this project only', async () => {
+  it('deletes milestones/activity_entries and NULLs live tasks.project_id, for this project only', async () => {
     insertRow(db, 'projects', { id: projId, slug: 'test-project', title: 'Test Project' })
     insertRow(db, 'projects', { id: otherProj, slug: 'control-project', title: 'Control Project' })
     for (const [p, tag] of [[projId, 'mine'], [otherProj, 'ctl']]) {
-      insertRow(db, 'project_documents', { id: `doc_${tag}`, project_id: p, title: 'd', url: 'https://example.com/d' })
       insertRow(db, 'milestones', { id: `ms_${tag}`, project_id: p, title: 'm' })
       insertRow(db, 'activity_entries', { id: `ae_${tag}`, entity_type: 'project', entity_id: p, project_id: p, kind: 'comment', actor_slug: 'nick-ingraham', body: 'c' })
     }
@@ -229,7 +228,6 @@ describe('Fix 3: applyDelete cascades for projects table', () => {
     expect(result.status).toBe('accepted')
     expect(row('projects', projId)).toMatchObject({ last_mutation_id: 'mut_cascade_test_003' })
     expect(row('projects', projId)?.deleted_at).not.toBeNull()
-    expect(ids('project_documents')).toEqual(['doc_ctl'])
     expect(ids('milestones')).toEqual(['ms_ctl'])
     expect(ids('activity_entries').filter((i) => i.startsWith('ae_'))).toEqual(['ae_ctl'])
     // Live tasks are soft-orphaned (kept, project_id NULL); a tombstoned task
