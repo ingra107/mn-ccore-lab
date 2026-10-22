@@ -39,7 +39,6 @@ beforeEach(() => {
   db = prodSchemaDb()
   insertRow(db, 'projects', { id: PID, slug: SLUG, title: 'Test Project', category: 'MNCCORE' })
   insertRow(db, 'projects', { id: OTHER, slug: 'cascade-other', title: 'Other Project', category: 'MNCCORE' })
-  insertRow(db, 'project_documents', { id: 'doc_c1', project_id: PID, title: 'Protocol', url: 'https://x/doc' })
   insertRow(db, 'milestones', { id: 'ms_c1', project_id: PID, title: 'IRB' })
   insertRow(db, 'regulatory_items', { id: 'reg_c1', project_id: PID, item_type: 'irb', title: 'IRB approval' })
   insertRow(db, 'project_dependencies', { from_project_id: OTHER, to_project_id: PID })
@@ -57,7 +56,6 @@ function makeRequest(): Request {
 const count = (sql: string, ...v: unknown[]) => (db.prepare(sql).get(...v) as { n: number }).n
 function children() {
   return {
-    docs: count('SELECT COUNT(*) AS n FROM project_documents WHERE project_id = ?', PID),
     milestones: count('SELECT COUNT(*) AS n FROM milestones WHERE project_id = ?', PID),
     regulatory: count('SELECT COUNT(*) AS n FROM regulatory_items WHERE project_id = ?', PID),
     deps: count('SELECT COUNT(*) AS n FROM project_dependencies WHERE to_project_id = ?', PID),
@@ -65,7 +63,7 @@ function children() {
     linkedTasks: count('SELECT COUNT(*) AS n FROM tasks WHERE project_id = ?', PID),
   }
 }
-const ALL_PRESENT = { docs: 1, milestones: 1, regulatory: 1, deps: 1, activity: 1, linkedTasks: 1 }
+const ALL_PRESENT = { milestones: 1, regulatory: 1, deps: 1, activity: 1, linkedTasks: 1 }
 const deletedAt = (id: string) => (db.prepare('SELECT deleted_at FROM projects WHERE id = ?').get(id) as { deleted_at: string | null }).deleted_at
 const receipts = () => count("SELECT COUNT(*) AS n FROM processed_mutations WHERE table_name = 'projects' AND record_id = ?", PID)
 
@@ -80,7 +78,7 @@ describe('handleDeleteProject — cascade-clean is one atomic batch (B-CRIT-05)'
 
     expect(response.status).toBe(200)
     expect(body.data.deleted).toBe(PID)
-    expect(children()).toEqual({ docs: 0, milestones: 0, regulatory: 0, deps: 0, activity: 0, linkedTasks: 0 })
+    expect(children()).toEqual({ milestones: 0, regulatory: 0, deps: 0, activity: 0, linkedTasks: 0 })
     // The task survives, unlinked (soft-orphan, not a delete).
     expect(db.prepare('SELECT project_id, deleted_at FROM tasks WHERE id = ?').get(TASK)).toEqual({ project_id: null, deleted_at: null })
     expect(deletedAt(PID)).not.toBeNull()
@@ -101,7 +99,7 @@ describe('handleDeleteProject — cascade-clean is one atomic batch (B-CRIT-05)'
     // and continued the soft-delete. The batch is ATOMIC, so one broken statement
     // (e.g. the pre-Slice-D from_slug reference) rolls back the WHOLE cascade
     // and, since 2026-10-11, the soft-delete with it. Here the regulatory_items
-    // statement fails AFTER project_documents and milestones already ran inside
+    // statement fails AFTER milestones and conference_submissions already ran inside
     // the same batch: both must be back, and the project must still be live.
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const env = { DB: d1Adapter(db, { failSql: /DELETE FROM regulatory_items/, failTimes: 1 }) } as unknown as Env

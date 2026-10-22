@@ -93,7 +93,6 @@ import { handleGetImpact, handleGetAllCascades } from './routes/deadline-cascade
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
 import { handleGetExpiringItems, handleUpdateRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
-import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
@@ -103,7 +102,7 @@ import { testDbRequested } from './lib/test-mode';
 import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
-import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleSetLinkRole } from './routes/links';
+import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
@@ -852,13 +851,6 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleGetProjectActivity(c.req.param('slug'), R(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/projects/:slug/documents',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleGetProjectDocuments(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2088,20 +2080,6 @@ defineRoute({
 });
 defineRoute({
   method: 'POST',
-  path: '/api/projects/:slug/documents',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/projects/:slug/documents/:docId/delete',
-  auth: 'authed',
-  entity: 'projects',
-  handler: (c) => handleDeleteProjectDocument(c.req.param('docId'), R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/projects/:slug',
   auth: 'authed',
   entity: 'projects',
@@ -2252,14 +2230,40 @@ defineRoute({
   entity: 'links',
   handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c), c.get('isPi') === true),
 });
-// Archive / restore one project link from the project page (#2089).
-// Body { role }; project-owned links only; gated by assertProjectVisible.
+// Add a document to a project from its page (#151): a project-owned role='key'
+// links row, normalized on the Worker. Replaces the project_documents form.
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/links',
+  auth: 'authed',
+  entity: 'links',
+  handler: (c) => handleCreateProjectLink(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+// Change one link's role (archive / restore) and/or kind (#2089, #151). Body
+// { role?, kind? }. Project- or task-owned; gated by the owning project's
+// visibility. `/role` stays mounted on the same handler for one release so a
+// cached pre-#151 frontend keeps working (remove in the next Hub release).
+defineRoute({
+  method: 'POST',
+  path: '/api/links/:id',
+  auth: 'authed',
+  entity: 'links',
+  handler: (c) => handleUpdateLink(c.req.param('id'), R(c), USER(c), E(c)),
+});
 defineRoute({
   method: 'POST',
   path: '/api/links/:id/role',
   auth: 'authed',
   entity: 'links',
-  handler: (c) => handleSetLinkRole(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleUpdateLink(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// Promote a task's document onto its project (#151): COPY, the task keeps its row.
+defineRoute({
+  method: 'POST',
+  path: '/api/links/:id/promote',
+  auth: 'authed',
+  entity: 'links',
+  handler: (c) => handlePromoteLink(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
 // Tasks — specific-before-generic

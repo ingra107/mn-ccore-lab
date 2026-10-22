@@ -1140,29 +1140,8 @@ export function useProjectUpdates(slug: string) {
   })
 }
 
-// ── Project Documents ───────────────────────────────────────
-
-export interface ProjectDocumentRow {
-  id: string
-  project_id: string
-  title: string
-  url: string
-  doc_type: 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link'
-  created_at: string
-  created_by: string | null
-}
-
-export function useProjectDocuments(slug: string) {
-  return useQuery({
-    queryKey: ['project-documents', slug],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: ProjectDocumentRow[] }>(`/api/projects/${slug}/documents`)
-      return data.data ?? []
-    },
-    staleTime: 60 * 1000,
-    enabled: !!slug,
-  })
-}
+// Project Documents (project_documents) retired by #151: a project document is
+// a `links` row with a kind; see useProjectLinkLibrary.
 
 // ── Team Pulse ──────────────────────────────────────────────
 
@@ -1591,7 +1570,8 @@ export function useMenteeOverview() {
 
 export interface StoredLink {
   id: string
-  /** 'key' = current, 'archive' = superseded (project page only, never on tasks). */
+  /** 'key' = current, 'archive' = stops propagating beyond its owner (the owner
+   *  keeps it; #151), 'derived' = synthesised from project columns. */
   role: string
   type: string
   canonical_url: string
@@ -1600,6 +1580,27 @@ export interface StoredLink {
   /** ISO strings from D1; optional so older cached payloads still typecheck. */
   created_at?: string | null
   updated_at?: string | null
+  /** 'tasks' | 'projects' (#151); absent on derived rows. */
+  owner_table?: string
+  /** link_kinds key (schema-v145); null/absent = Unfiled. */
+  kind?: string | null
+  /** On a project page's task-owned row: the task holding it. */
+  task_id?: string
+  task_title?: string | null
+}
+
+/** One row of the link_kinds vocabulary (schema-v145). */
+export interface LinkKind {
+  key: string
+  label: string
+  sort_order: number
+}
+
+/** GET /api/projects/:slug/links, whole (#151). */
+export interface ProjectLinkLibraryPayload {
+  links: StoredLink[]
+  taskLinks: StoredLink[]
+  kinds: LinkKind[]
 }
 
 export interface TaskLinksPayload {
@@ -1626,6 +1627,23 @@ export function useTaskLinks(taskId: string | null) {
     queryFn: () => fetchTaskLinks(taskId),
     staleTime: 60 * 1000,
     enabled: !!taskId,
+  })
+}
+
+export async function fetchProjectLinkLibrary(slug: string | null): Promise<ProjectLinkLibraryPayload> {
+  if (!slug) return { links: [], taskLinks: [], kinds: [] }
+  const data = await fetchJson<Partial<ProjectLinkLibraryPayload>>(`/api/projects/${slug}/links`)
+  return { links: data.links ?? [], taskLinks: data.taskLinks ?? [], kinds: data.kinds ?? [] }
+}
+
+/** The project page's whole Links card: its own links, its tasks' documents and
+ *  the kind vocabulary (#151). Same endpoint as useProjectLinks, own cache key. */
+export function useProjectLinkLibrary(slug: string | null) {
+  return useQuery({
+    queryKey: ['project-link-library', slug],
+    queryFn: () => fetchProjectLinkLibrary(slug),
+    staleTime: 60 * 1000,
+    enabled: !!slug,
   })
 }
 

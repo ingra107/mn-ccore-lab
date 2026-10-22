@@ -110,14 +110,19 @@ function slotLinks(row: Record<string, unknown>): SlotLink[] {
  *    NOT EXISTS, not OR IGNORE: the partial UNIQUE on the live natural key
  *    would otherwise abort the WHOLE batch, slot write included, and OR IGNORE
  *    would also hide a NOT NULL or CHECK failure. Two slots that normalize to
- *    one canonical make one row (the first slot holding it wins).
+ *    one canonical make one row (the first slot holding it wins). The NOT
+ *    EXISTS spans EVERY role (#151): a URL the owner archived stays archived
+ *    when a later slot write replays the slots, instead of growing a second,
+ *    role='key' copy beside it (which would put it back on every task).
  *  - Bring the live row for each slot canonical into line with its slot:
  *    sort_order = slot - 1 always (the editor compacts the slots on remove),
  *    short_title = the slot's description when it has one (a title edit
  *    reaches the row). Only rows that differ are touched, so an unchanged
  *    slot write bumps no seq.
  *  - Tasks only: tombstone the canonical a slot held BEFORE, when no slot
- *    holds it AFTER. What is protected: a role='key' link whose canonical no
+ *    holds it AFTER, in ANY role (#151: the slot's row may have been archived
+ *    since; clearing the slot removes it, archived or not, rather than leaving
+ *    an archived row live after its slot is gone). What is protected: a role='key' link whose canonical no
  *    slot ever held (a "More links" row) is never touched. What is NOT: the
  *    live natural key admits one role='key' row per canonical, so pinning a
  *    "More links" URL into a slot makes that same row the slot's row, and
@@ -150,7 +155,7 @@ export function slotLinkStatements(
         `INSERT INTO links (id, owner_table, owner_id, role, type, canonical_url, short_title, source_raw, sort_order, last_mutation_id)
          SELECT ?, ?, ?, 'key', ?, ?, ?, ?, ?, ?
          WHERE ${landed.sql}
-           AND NOT EXISTS (SELECT 1 FROM links WHERE owner_table = ? AND owner_id = ? AND role = 'key' AND canonical_url = ? AND deleted_at IS NULL)`,
+           AND NOT EXISTS (SELECT 1 FROM links WHERE owner_table = ? AND owner_id = ? AND canonical_url = ? AND deleted_at IS NULL)`,
       ).bind(
         `link_${generateId()}`, ownerTable, ownerId, l.type, l.canonical_url, l.short_title,
         l.source_raw, l.slot - 1, mutationId,
@@ -184,7 +189,7 @@ export function slotLinkStatements(
         db.prepare(
           `UPDATE links SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
            WHERE ${landed.sql}
-             AND owner_table = 'tasks' AND owner_id = ? AND role = 'key' AND canonical_url = ? AND deleted_at IS NULL`,
+             AND owner_table = 'tasks' AND owner_id = ? AND canonical_url = ? AND deleted_at IS NULL`,
         ).bind(mutationId, ...landed.vals, ownerId, url),
       );
     }

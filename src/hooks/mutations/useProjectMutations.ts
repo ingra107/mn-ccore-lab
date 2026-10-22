@@ -11,7 +11,7 @@ import {
   type PublicationRole,
 } from '../../lib/api'
 import type { Project, Publication } from '../../data/types'
-import type { Comment, ProjectDocumentRow, StoredLink } from '../useApiData'
+import type { Comment, ProjectLinkLibraryPayload, StoredLink } from '../useApiData'
 import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
@@ -245,131 +245,102 @@ export function usePostProjectUpdate(projectSlug: string, productId: string | nu
   })
 }
 
-// ── Project link role (archive / restore, #2089) ───────────
+// ── Project page link writes (#2089, #151) ─────────────────
 
-/** Archive or restore one of a project's `links` rows from its project page.
- *  Optimistic: the row moves between the current list and the Archived group
- *  at once and rolls back if the Worker refuses. Task cards inherit a project's
- *  role='key' links, so their caches are invalidated too. */
-export function useSetProjectLinkRole(projectSlug: string) {
+type LibraryPayload = ProjectLinkLibraryPayload
+
+/** Every cache a link write can change: this project's library, the bulk
+ *  per-project map and every task card (task cards inherit a project's key
+ *  links, and a task link's own role/kind shows on its card). */
+function invalidateLinkCaches(queryClient: QueryClient, projectSlug: string) {
+  queryClient.invalidateQueries({ queryKey: ['project-link-library', projectSlug] })
+  queryClient.invalidateQueries({ queryKey: ['project-links', projectSlug] })
+  queryClient.invalidateQueries({ queryKey: ['all-project-links'] })
+  queryClient.invalidateQueries({ queryKey: ['task-links'] })
+}
+
+/** Set one link's role (archive / restore) and/or kind, project- OR task-owned
+ *  (#151: a task document archives from the project page; the task keeps it).
+ *  Optimistic on the project page's library cache; rolls back and says why. A
+ *  409 is usually a same-URL collision, which a silent revert would leave Nick
+ *  guessing at. */
+export function useUpdateLink(projectSlug: string) {
   const queryClient = useQueryClient()
   const { showError } = useUndoToast()
-  const key = ['project-links', projectSlug]
+  const key = ['project-link-library', projectSlug]
 
   return useMutation({
-    mutationFn: (input: { linkId: string; role: 'key' | 'archive' }) =>
-      fetchApi<StoredLink>(`/api/links/${encodeURIComponent(input.linkId)}/role`, {
+    mutationFn: (input: { linkId: string; role?: 'key' | 'archive'; kind?: string | null }) => {
+      const body: Record<string, unknown> = {}
+      if (input.role !== undefined) body.role = input.role
+      if (input.kind !== undefined) body.kind = input.kind
+      return fetchApi<StoredLink>(`/api/links/${encodeURIComponent(input.linkId)}`, {
         method: 'POST',
-        body: JSON.stringify({ role: input.role }),
-      }),
+        body: JSON.stringify(body),
+      })
+    },
 
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: key })
-      const previous = queryClient.getQueryData<StoredLink[]>(key)
+      const previous = queryClient.getQueryData<LibraryPayload>(key)
       if (previous) {
-        queryClient.setQueryData<StoredLink[]>(
-          key,
-          previous.map((l) =>
-            l.id === input.linkId ? { ...l, role: input.role, updated_at: nowInstant() } : l,
-          ),
-        )
+        const apply = (l: StoredLink): StoredLink => l.id !== input.linkId ? l : {
+          ...l,
+          ...(input.role !== undefined ? { role: input.role, updated_at: nowInstant() } : {}),
+          ...(input.kind !== undefined ? { kind: input.kind } : {}),
+        }
+        queryClient.setQueryData<LibraryPayload>(key, {
+          ...previous,
+          links: previous.links.map(apply),
+          taskLinks: previous.taskLinks.map(apply),
+        })
       }
       return { previous }
     },
 
-    // Roll back AND say why: a 409 here is usually a same-URL collision
-    // ("Another current link on this project already has this URL"), which a
-    // silent revert would leave Nick guessing at.
     onError: (err, input, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous)
       const why = err instanceof Error && err.message ? err.message : 'request failed'
-      showError(`Could not ${input.role === 'archive' ? 'archive' : 'restore'} link — ${why}`)
+      const what = input.role === 'archive' ? 'archive' : input.role === 'key' ? 'restore' : 'label'
+      showError(`Could not ${what} link — ${why}`)
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key })
-      queryClient.invalidateQueries({ queryKey: ['all-project-links'] })
-      queryClient.invalidateQueries({ queryKey: ['task-links'] })
-    },
+    onSettled: () => invalidateLinkCaches(queryClient, projectSlug),
   })
 }
 
-// ── Project Document mutations ─────────────────────────────
-
-export function useAddProjectDocument(projectSlug: string) {
+/** Promote a task's document onto its project (COPY: the task keeps its row). */
+export function usePromoteLink(projectSlug: string) {
   const queryClient = useQueryClient()
-
+  const { showError } = useUndoToast()
   return useMutation({
-    mutationFn: (input: { title: string; url: string; doc_type?: string }) =>
-      fetchApi<ProjectDocumentRow>(`/api/projects/${projectSlug}/documents`, {
+    mutationFn: (linkId: string) =>
+      fetchApi<StoredLink>(`/api/links/${encodeURIComponent(linkId)}/promote`, { method: 'POST' }),
+    onError: (err) => {
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not promote link — ${why}`)
+    },
+    onSettled: () => invalidateLinkCaches(queryClient, projectSlug),
+  })
+}
+
+/** Add a document to the project from its page (replaces the project_documents
+ *  form, #151). The Worker normalizes the URL; the row shows "On every task". */
+export function useAddProjectLink(projectSlug: string) {
+  const queryClient = useQueryClient()
+  const { showError } = useUndoToast()
+  return useMutation({
+    mutationFn: (input: { url: string; title?: string; kind?: string | null }) =>
+      fetchApi<StoredLink>(`/api/projects/${encodeURIComponent(projectSlug)}/links`, {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: ['project-documents', projectSlug] })
-      const previous = queryClient.getQueryData<ProjectDocumentRow[]>(['project-documents', projectSlug])
-
-      const optimistic: ProjectDocumentRow = {
-        id: `temp-${Date.now()}`,
-        project_id: projectSlug,
-        title: input.title,
-        url: input.url,
-        doc_type: (input.doc_type as ProjectDocumentRow['doc_type']) || 'link',
-        created_at: nowInstant(),
-        created_by: null,
-      }
-
-      queryClient.setQueryData<ProjectDocumentRow[]>(
-        ['project-documents', projectSlug],
-        [optimistic, ...(previous || [])]
-      )
-
-      return { previous }
+    onError: (err) => {
+      const why = err instanceof Error && err.message ? err.message : 'request failed'
+      showError(`Could not add document — ${why}`)
     },
-
-    onError: (_err, _input, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['project-documents', projectSlug], context.previous)
-      }
-    },
-
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-documents', projectSlug] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
-}
-
-export function useDeleteProjectDocument(projectSlug: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (docId: string) =>
-      // fetchApi, not raw fetch: a refused write must reject so onError
-      // rolls back and the failed-write toast shows (lib/writeFailures).
-      fetchApi(`/api/projects/${projectSlug}/documents/${docId}/delete`, { method: 'POST' }),
-
-    onMutate: async (docId) => {
-      await queryClient.cancelQueries({ queryKey: ['project-documents', projectSlug] })
-      const previous = queryClient.getQueryData<ProjectDocumentRow[]>(['project-documents', projectSlug])
-
-      queryClient.setQueryData<ProjectDocumentRow[]>(
-        ['project-documents', projectSlug],
-        (previous || []).filter(d => d.id !== docId)
-      )
-
-      return { previous }
-    },
-
-    onError: (_err, _docId, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['project-documents', projectSlug], context.previous)
-      }
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-documents', projectSlug] })
+      invalidateLinkCaches(queryClient, projectSlug)
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

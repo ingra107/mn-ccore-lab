@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  useProjectUpdates, useComments, useRevisions, useProjectLinks, useProjectPapers,
-  useProjectPublications, useTasks, useInsightSuggestions, useProjectDocuments, useConferences,
+  useProjectUpdates, useComments, useRevisions, useProjectLinkLibrary, useProjectPapers,
+  useProjectPublications, useTasks, useInsightSuggestions, useConferences,
 } from './useApiData'
 import { useProjectFiles } from './useProjectFiles'
 import { useProjectProducts } from './useProjectProducts'
@@ -47,13 +47,12 @@ export function useProjectDetailQueries(slug: string | undefined): void {
   const late = !!slug && releasedFor === slug
   const lateRef = late ? ref : ''
   useRevisions(lateRef)
-  useProjectLinks(lateRef)
+  useProjectLinkLibrary(lateRef)
   useProjectPapers(lateRef)
   useProjectPublications(late ? slug : undefined)
   useProjectFiles(late ? slug : undefined)
   useProjectProducts(late ? (slug ?? null) : null)
   useMyProjectFolder(late ? slug : undefined)
   useInsightSuggestions(lateRef)
-  useProjectDocuments(lateRef)
   useConferences(lateRef)
 }

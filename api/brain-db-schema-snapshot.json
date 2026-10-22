@@ -145,6 +145,7 @@
       "canonical_url",
       "created_at",
       "deleted_at",
+      "kind",
       "owner_id",
       "owner_table",
       "role",
