@@ -120,6 +120,48 @@ describe('skipped', () => {
     vi.advanceTimersByTime(SEND_WINDOW_MS)
     expect(sent).toEqual([])
   })
+
+  // Through the real window listener attachSender installs: the browser fires
+  // an ErrorEvent with error=null, so the listener passes the message string.
+  describe('window listener', () => {
+    const fireWindowError = (message: string, error: unknown = null) => {
+      const ev = Object.assign(new Event('error'), { message, error })
+      window.dispatchEvent(ev)
+    }
+    beforeEach(() => {
+      vi.stubGlobal('window', Object.assign(new EventTarget(), { location: { pathname: '/portal/meetings/m1' } }))
+    })
+    afterEach(() => {
+      detachSender()
+      vi.unstubAllGlobals()
+    })
+
+    it('a ResizeObserver loop notice is not reported, in either browser wording', () => {
+      attachSender((items) => sent.push(items))
+      fireWindowError('ResizeObserver loop completed with undelivered notifications.')
+      fireWindowError('ResizeObserver loop limit exceeded')
+      vi.advanceTimersByTime(SEND_WINDOW_MS)
+      expect(sent).toEqual([])
+    })
+
+    it('a real window error is still reported, with its path', () => {
+      attachSender((items) => sent.push(items))
+      fireWindowError('Uncaught TypeError: x is undefined', new TypeError('x is undefined'))
+      fireWindowError('Script error.')
+      vi.advanceTimersByTime(1_000)
+      expect(sent.flat()).toEqual([
+        expect.objectContaining({ message: 'TypeError: x is undefined', kind: 'window', path: '/portal/meetings/m1', count: 1 }),
+        expect.objectContaining({ message: 'Script error.', kind: 'window', count: 1 }),
+      ])
+    })
+
+    it('the same wording from a caught Error is still reported (only the bare window notice is skipped)', () => {
+      attachSender((items) => sent.push(items))
+      capture(new Error('ResizeObserver loop limit exceeded'), 'caught', now)
+      vi.advanceTimersByTime(1_000)
+      expect(sent.flat()).toHaveLength(1)
+    })
+  })
 })
 
 describe('request size (keepalive body quota is 64 KB)', () => {
