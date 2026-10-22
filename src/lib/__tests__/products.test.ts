@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   addProduct,
+  declinedRung,
   groupByKind,
+  isDeclined,
+  listStageView,
   ladderFor,
   productKindLabel,
   productLabel,
@@ -11,6 +14,7 @@ import {
   setProductHome,
   setProductStage,
   sortProducts,
+  withoutDeclined,
   type ProductKind,
   type ProductRow,
 } from '../products'
@@ -159,5 +163,30 @@ describe('productsOfKinds (the Manuscripts page\'s kind tabs)', () => {
   it('leaves out products of projects this screen does not hold', () => {
     const rows = productsOfKinds(byProject, projects, ['grant_application'])
     expect(rows.some((r) => r.product.id === 'h-g')).toBe(false)
+  })
+})
+
+describe('declining a product (Nick 2026-10-22)', () => {
+  const talkLadder = [
+    { stage: 'invited', label: 'Invited', ordinal: 10, is_terminal: 0 },
+    { stage: 'declined', label: 'Declined', ordinal: 40, is_terminal: 1 },
+  ]
+  const talk = (id: string, stage: string) => row(id, { kind: 'talk', kind_label: 'Talk', stage, stage_label: stage })
+
+  it('finds the declined rung on a ladder that has one, and none on a ladder that lacks it', () => {
+    expect(declinedRung(talkLadder)?.stage).toBe('declined')
+    expect(declinedRung(ladderFor(kinds, 'manuscript'))).toBeUndefined()
+  })
+
+  it('drops declined products from the list cell and keeps the rest', () => {
+    const live = talk('prd_a', 'invited')
+    const gone = talk('prd_b', 'declined')
+    expect(isDeclined(gone)).toBe(true)
+    expect(withoutDeclined([live, gone])).toEqual([live])
+    // two products, one declined: a ladder, not chips
+    expect(listStageView([live, gone])).toBe('ladder')
+    // all declined: nothing to show
+    expect(listStageView([gone])).toBe('none')
+    expect(listStageView([live, talk('prd_c', 'invited')])).toBe('chips')
   })
 })

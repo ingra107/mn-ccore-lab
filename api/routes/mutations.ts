@@ -1216,6 +1216,28 @@ async function decideAndCommitUpdate(
       current, { ...current, ...mut.patch }, mut.mutation_id, landed,
     ));
   }
+  // A delete by status (PB's outbox sends status='deleted' as an update) is the
+  // same delete: decline the event product it leaves with no live task.
+  if (
+    mut.table === 'tasks' && (mut.patch as Record<string, unknown> | undefined)?.status === 'deleted' &&
+    !current.deleted_at && !Object.prototype.hasOwnProperty.call(mut.patch ?? {}, 'deleted_at')
+  ) {
+    dependents.push((landed) => [
+      env.DB.prepare(declineOrphanedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, mut.record_id, ...landed.vals),
+    ]);
+  }
+  // The inverse: a restore (a live status on a tombstoned task, or an explicit
+  // deleted_at null) undoes the decline its delete caused.
+  const restoringTask =
+    mut.table === 'tasks' && !!current.deleted_at &&
+    ((mut.patch as Record<string, unknown> | undefined)?.status !== undefined
+      ? (mut.patch as Record<string, unknown>).status !== 'deleted'
+      : (mut.patch as Record<string, unknown> | undefined)?.deleted_at === null);
+  if (restoringTask) {
+    dependents.push((landed) => [
+      env.DB.prepare(restoreDeclinedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, String(current.last_mutation_id), ...landed.vals),
+    ]);
+  }
   const committed = await commitRowWrite(
     env, mut, current, await applyPatch(env, mut, current), outcome,
     {
@@ -1232,6 +1254,10 @@ async function decideAndCommitUpdate(
   // which machine's completion lands first. Fires for both PB-push and
   // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
   // direct D1 write, not routed through the mutation protocol).
+  if (mut.table === 'tasks' && !current.deleted_at && (mut.patch as Record<string, unknown> | undefined)?.status === 'deleted') {
+    await traceEventProduct(env, mut.record_id, user, 'declined', mut.mutation_id);
+  }
+  if (restoringTask) await traceEventProduct(env, mut.record_id, user, 'invited', mut.mutation_id);
   await advanceProjectMovement(env, mut, current);
   // Advance a PROJECT's own last_meaningful_movement on its own content
   // edits (no-op for task mutations — see the table==='projects' guard).
@@ -1252,6 +1278,67 @@ async function decideAndCommitUpdate(
  */
 export function orphanProjectTasksSql(): string {
   return "UPDATE tasks SET project_id = NULL, product_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL";
+}
+
+/**
+ * A task delete's product statement. A talk (or moderated session) product is
+ * minted for one task by handleCreateTask (the `talk` spec). When that task is
+ * deleted and nothing else live sits on the product, the product is declined in
+ * the SAME batch, so a deleted invitation does not leave a chip nobody can
+ * explain (Nick 2026-10-22: deleted the task, the talk chip stayed). Limited to
+ * the event kinds, whose ladders carry `declined`, and to a product still
+ * Invited or Preparing: a delivered talk stays delivered, and a manuscript or
+ * grant product outlives its tasks. Never the home product. The decline is
+ * STAMPED: products.last_mutation_id is set to the task delete's mutation id,
+ * which no other writer puts there (every product write stamps its own id), so
+ * restoreDeclinedEventProductSql can tell this decline from one Nick made by
+ * hand. Bind: this mutation id, the task id, the task id again; gated on the
+ * task write having landed.
+ */
+export function declineOrphanedEventProductSql(landedSql: string): string {
+  return `UPDATE products SET stage = 'declined', stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
+    WHERE id = (SELECT product_id FROM tasks WHERE id = ?)
+      AND deleted_at IS NULL AND is_home = 0
+      AND kind IN ('talk', 'session_moderator') AND stage IN ('invited', 'preparing')
+      AND NOT EXISTS (SELECT 1 FROM tasks o WHERE o.product_id = products.id AND o.id <> ? AND o.deleted_at IS NULL)
+      AND ${landedSql}`;
+}
+
+/**
+ * The symmetric half of declineOrphanedEventProductSql: restoring a task puts
+ * its event product back to Invited only when the product is Declined AND its
+ * last_mutation_id is the mutation that deleted THIS task (the stamp the
+ * auto-decline wrote). A decline Nick made by hand, at any time, carries his own
+ * mutation id and stays. Bind: the restore's mutation id (the new stamp), the
+ * task id, the task's last_mutation_id before the restore (= its delete's id).
+ */
+export function restoreDeclinedEventProductSql(landedSql: string): string {
+  return `UPDATE products SET stage = 'invited', stage_entered_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?
+    WHERE id = (SELECT product_id FROM tasks WHERE id = ?)
+      AND deleted_at IS NULL AND kind IN ('talk', 'session_moderator') AND stage = 'declined'
+      AND last_mutation_id = ?
+      AND ${landedSql}`;
+}
+
+/** One activity line for an automatic decline or restore of an event product.
+ *  Non-fatal, and only when the product carries this mutation's stamp, so a line
+ *  is written exactly when this write changed it. */
+async function traceEventProduct(
+  env: Env, taskId: string, user: AuthUser, stage: 'declined' | 'invited', mutationId: string,
+): Promise<void> {
+  try {
+    const p = await env.DB.prepare(
+      `SELECT p.id, p.title, p.kind FROM products p
+        WHERE p.id = (SELECT product_id FROM tasks WHERE id = ?) AND p.stage = ? AND p.last_mutation_id = ?`,
+    ).bind(taskId, stage, mutationId).first<{ id: string; title: string | null; kind: string }>();
+    if (!p) return;
+    const what = stage === 'declined'
+      ? `Declined ${p.kind} "${p.title ?? p.id}": its last task was deleted`
+      : `Restored ${p.kind} "${p.title ?? p.id}" to Invited: its task was restored`;
+    await logActivity(env, 'task', what, user.email, p.id, 'product');
+  } catch (e) {
+    console.warn('traceEventProduct failed (non-fatal):', e);
+  }
 }
 
 export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
@@ -1298,6 +1385,7 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
       env.DB.prepare(`${sql} AND ${landed.sql}`).bind(...vals, ...landed.vals);
     if (mut.table === 'tasks') {
       return [
+        env.DB.prepare(declineOrphanedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, mut.record_id, ...landed.vals),
         // Design C (v77): unified-timeline rows for this task.
         // task_comments/task_updates dropped (schema-v78, 2026-06-10).
         gated("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?", mut.record_id),
@@ -1354,6 +1442,10 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
     { extraWhere: ' AND deleted_at IS NULL', dependents },
   );
   if (committed === CAS_MISS) return CAS_MISS;
+
+  if (mut.table === 'tasks') {
+    await traceEventProduct(env, mut.record_id, user, 'declined', mut.mutation_id);
+  }
 
   // Record actor attribution for the delete — mirrors the logActivity calls in
   // handleDeleteTask / handleDeleteProject (route-level). PB-origin deletes bypass

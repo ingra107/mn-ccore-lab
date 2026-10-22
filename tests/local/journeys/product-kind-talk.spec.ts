@@ -94,3 +94,47 @@ test('the add-product "+" offers Talk on its own ladder', async ({ page }) => {
   expect(await page.getByTestId('product-add-stage').locator('option').allTextContents()).toEqual(LADDER)
   await page.getByTestId('product-add-form').screenshot({ path: `${SHOTS}/05-add-product-talk.png` })
 })
+
+test('Decline drops an invited talk from the strip; the toast undoes it (Nick 2026-10-22)', async ({ page }) => {
+  const slug = (await slugOf(page, TITLE))!
+  // A second talk, so the first is not the project's last product.
+  const add = await page.request.post(`/api/projects/${slug}/products`, {
+    headers: PI, data: { action: 'add', kind: 'talk', stage: 'invited', name: 'Meeting of the Minds' },
+  })
+  expect(add.ok()).toBe(true)
+  const dropId = ((await add.json()) as { product: { id: string } }).product.id
+
+  await page.goto(`/portal/projects/${slug}`, { waitUntil: 'load' })
+  const section = page.getByTestId('project-products')
+  await expect(section).toBeVisible({ timeout: 20_000 })
+  await section.getByTestId(`product-chip-${dropId}`).click()
+  await page.getByTestId(`product-decline-${dropId}`).click()
+
+  // Gone from the strip, declined in the data.
+  await expect(section.getByTestId(`product-chip-${dropId}`)).toHaveCount(0)
+  await expect.poll(async () => (await productsOf(page, slug)).find((p) => p.id === dropId)?.stage).toBe('declined')
+  await page.screenshot({ path: `${SHOTS}/06-talk-declined-undo-toast.png` })
+
+  // Undo puts it back on Invited.
+  await page.getByRole('button', { name: /undo/i }).click()
+  await expect.poll(async () => (await productsOf(page, slug)).find((p) => p.id === dropId)?.stage).toBe('invited')
+})
+
+test('Drop removes a product with no declined rung after the undo window (Nick 2026-10-22)', async ({ page }) => {
+  const slug = (await slugOf(page, TITLE))!
+  const add = await page.request.post(`/api/projects/${slug}/products`, {
+    headers: PI, data: { action: 'add', kind: 'manuscript', stage: 'idea', name: 'Dropped paper' },
+  })
+  expect(add.ok()).toBe(true)
+  const dropId = ((await add.json()) as { product: { id: string } }).product.id
+
+  await page.goto(`/portal/projects/${slug}`, { waitUntil: 'load' })
+  const section = page.getByTestId('project-products')
+  await expect(section).toBeVisible({ timeout: 20_000 })
+  await section.getByTestId(`product-chip-${dropId}`).click()
+  await page.getByTestId(`product-drop-${dropId}`).click()
+  await expect(section.getByTestId(`product-chip-${dropId}`)).toHaveCount(0)
+  await page.screenshot({ path: `${SHOTS}/07-product-dropped-undo-toast.png` })
+  // Still live inside the 5 s window; gone from the read after it.
+  await expect.poll(async () => (await productsOf(page, slug)).some((p) => p.id === dropId), { timeout: 15_000 }).toBe(false)
+})

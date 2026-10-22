@@ -4,14 +4,17 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { formatPublicationDate, formatShortDate } from '../../lib/dateUtils'
 import {
   useAddProduct,
+  useDropProduct,
   useProjectProducts,
   useSetProductEvent,
   useSetProductHome,
   useSetProductStage,
 } from '../../hooks/useProjectProducts'
 import {
+  declinedRung,
   eventDateInputError,
   groupByKind,
+  isDeclined,
   ladderFor,
   NO_ROLES,
   nickRoleLabel,
@@ -72,7 +75,9 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
   const roles = data?.roles ?? NO_ROLES
   const selected = products.find((p) => p.id === openId) ?? null
   // The open product always has its chip, even when it is past the cap.
-  let shown = products.slice(0, MAX_CHIPS)
+  // A declined product leaves the strip (Nick 2026-10-22); it stays in the
+  // "+N more" list and shows its chip again while it is the open one.
+  let shown = products.filter((p) => !isDeclined(p)).slice(0, MAX_CHIPS)
   if (selected && !shown.some((p) => p.id === selected.id)) shown = [...shown.slice(0, MAX_CHIPS - 1), selected]
   const hidden = products.length - shown.length
   const wide = useWide()
@@ -179,6 +184,7 @@ export default function ProjectProducts({ slug, stats, selectedId = null, onSele
             slug={slug}
             canEdit={canEdit}
             showHomeControl={products.length > 1}
+            onDropped={() => setOpenId(null)}
           />
         </div>
       )}
@@ -308,7 +314,7 @@ function InlineLadder({
 }
 
 function ProductDetail({
-  product, products, kinds, roles, slug, canEdit, showHomeControl,
+  product, products, kinds, roles, slug, canEdit, showHomeControl, onDropped,
 }: {
   product: ProductRow
   products: ProductRow[]
@@ -317,10 +323,13 @@ function ProductDetail({
   slug: string
   canEdit: boolean
   showHomeControl: boolean
+  onDropped: () => void
 }) {
   const ladder = ladderFor(kinds, product.kind)
   const setHome = useSetProductHome(slug)
   const idx = ladder.findIndex((s) => s.stage === product.stage)
+  const declined = declinedRung(ladder)
+  const drop = useDropProduct()
   const parent = product.grew_from_id ? products.find((p) => p.id === product.grew_from_id) : undefined
 
   const move = useStageMover(product, ladder, slug)
@@ -404,6 +413,28 @@ function ProductDetail({
         })}
       </div>
 
+      {canEdit && (!declined || isDeclined(product)) && products.length > 1 && product.is_home !== 1 && (
+        <button
+          type="button"
+          className="pp-link pp-decline"
+          onClick={() => { drop({ slug, productId: product.id, productName: productKindLabel(product) }); onDropped() }}
+          title="Remove it from the project. Undo is on the toast."
+          data-testid={`product-drop-${product.id}`}
+        >
+          Drop
+        </button>
+      )}
+      {canEdit && declined && !isDeclined(product) && (
+        <button
+          type="button"
+          className="pp-link pp-decline"
+          onClick={() => { move(declined.stage); onDropped() }}
+          title="Drop it from your lists. Undo is on the toast."
+          data-testid={`product-decline-${product.id}`}
+        >
+          Decline
+        </button>
+      )}
       {idx < 0 && (
         // The stage, or its kind, is no longer on a live ladder: say what it is.
         <div className="pp-dim pp-facts" data-testid="product-stage-offladder">

@@ -7,6 +7,7 @@ import {
   addProduct,
   publishedAPaper,
   describeProduct,
+  dropProduct,
   NO_ROLES,
   setProductEvent,
   setProductHome,
@@ -78,6 +79,48 @@ function patchCached(
     const byProject: Record<string, ProductRow[]> = {}
     for (const [pid, list] of Object.entries(bulk.byProject)) byProject[pid] = list.map(one)
     qc.setQueryData<ProductsByProject>(BULK_KEY, { ...bulk, byProject })
+  }
+}
+
+/** Take one product out of the cached lists; returns what to put back. */
+function removeCached(qc: ReturnType<typeof useQueryClient>, slug: string, productId: string) {
+  const cur = qc.getQueryData<ProjectProducts>(key(slug))
+  const bulk = qc.getQueryData<ProductsByProject>(BULK_KEY)
+  if (cur) qc.setQueryData<ProjectProducts>(key(slug), { ...cur, products: cur.products.filter((p) => p.id !== productId) })
+  if (bulk) {
+    const byProject: Record<string, ProductRow[]> = {}
+    for (const [pid, list] of Object.entries(bulk.byProject)) byProject[pid] = list.filter((p) => p.id !== productId)
+    qc.setQueryData<ProductsByProject>(BULK_KEY, { ...bulk, byProject })
+  }
+  return () => {
+    if (cur) qc.setQueryData(key(slug), cur)
+    if (bulk) qc.setQueryData(BULK_KEY, bulk)
+  }
+}
+
+/** Drop a product (Nick 2026-10-22). A drop is a soft delete with no restore
+ *  route, so undo is a delayed commit, as for a deleted task (TaskDetailPanel):
+ *  the product leaves every list now, the write goes out after 5 s, and Undo
+ *  inside the window cancels it so nothing ever reaches D1. A refusal (the home
+ *  product, a project's last product) refetches the truth and says why. */
+export function useDropProduct() {
+  const qc = useQueryClient()
+  const { showError, showUndo } = useUndoToast()
+  return (v: { slug: string; productId: string; productName: string }) => {
+    const restore = removeCached(qc, v.slug, v.productId)
+    let committed = false
+    const timer = setTimeout(() => {
+      committed = true
+      dropProduct(v.slug, v.productId)
+        .catch((err) => showError(`Could not drop ${v.productName} — ${reason(err)}`))
+        .finally(() => refresh(qc, v.slug))
+    }, 5000)
+    showUndo(`Dropped ${v.productName}`, () => {
+      if (committed) return
+      clearTimeout(timer)
+      restore()
+      refresh(qc, v.slug)
+    })
   }
 }
 

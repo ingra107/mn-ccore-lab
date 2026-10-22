@@ -326,6 +326,13 @@ export function setProductStage(
   })
 }
 
+/** Drop a product of any kind (soft delete). The Worker re-homes its live tasks
+ *  (schema-v125 trg_products_tombstone_repoint) and refuses the home product and
+ *  a project's last live product, in words. */
+export function dropProduct(slug: string, productId: string): Promise<WrittenProduct> {
+  return write(slug, { action: 'drop', product_id: productId })
+}
+
 /** Marking a product home hands the marker over: schema-v125's
  *  trg_products_home_handoff demotes the old home in the same statement. */
 export function setProductHome(slug: string, productId: string): Promise<WrittenProduct> {
@@ -429,10 +436,31 @@ export function homeOf(products: readonly ProductRow[] | undefined): ProductRow 
   return products.find((p) => p.is_home === 1) ?? (products.length === 1 ? products[0] : null)
 }
 
+/** The stage a product lands on when Nick drops it (Nick 2026-10-22: "how do i
+ *  delete this talk ... i want to drop it somehow"). Talk and moderated session
+ *  ladders carry it (schema-v132, v141); a kind without the rung cannot be declined. */
+export const DECLINED_STAGE = 'declined'
+
+export function isDeclined(p: Pick<ProductRow, 'stage'>): boolean {
+  return p.stage === DECLINED_STAGE
+}
+
+/** The ladder's declined rung, or undefined when the kind has none. */
+export function declinedRung(ladder: readonly ProductStage[]): ProductStage | undefined {
+  return ladder.find((s) => s.stage === DECLINED_STAGE)
+}
+
+/** Products still in play: a declined one is dropped from the list cell and the
+ *  project strip, and stays in the grouped list and on its Talks tab. */
+export function withoutDeclined<T extends Pick<ProductRow, 'stage'>>(products: readonly T[]): T[] {
+  return products.filter((p) => !isDeclined(p))
+}
+
 /** The Projects list stage cell: chips for 2+ products, a ladder for one
- *  (Nick, bracket 2026-10-11), nothing when the project has none. */
+ *  (Nick, bracket 2026-10-11), nothing when the project has none. Declined
+ *  products do not count: the cell shows what is still in play. */
 export function listStageView(products: readonly ProductRow[] | undefined): 'none' | 'ladder' | 'chips' {
-  const n = products?.length ?? 0
+  const n = products ? withoutDeclined(products).length : 0
   return n === 0 ? 'none' : productViewMode(n)
 }
 

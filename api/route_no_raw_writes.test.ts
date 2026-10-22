@@ -139,6 +139,8 @@ const EXECUTORS: Record<string, { runs: number; tables: string[]; reason: string
 const BUILDERS: Record<string, string> = {
   applyPatch: 'builds the `UPDATE <table> SET ...` (no WHERE) that commitRowWrite completes and runs',
   decideAndCommitDelete: 'builds the soft-delete SET clause and the gated child-cascade dependents for commitRowWrite',
+  declineOrphanedEventProductSql: 'builds the statement that declines a talk or moderated-session product left with no live task; decideAndCommitDelete and decideAndCommitUpdate gate it into the task delete batch, so it commits or rolls back with the task write',
+  restoreDeclinedEventProductSql: 'builds the statement that puts an event product back to Invited when the task delete that declined it is undone; gated into the task update batch like its decline twin',
   orphanProjectTasksSql: 'builds the project-delete task statement (project_id and product_id cleared together) that decideAndCommitDelete gates into its batch; Archive/2026-10-12-v130-retired-seedless-scripts/probe-v124-products.ts (archived) ran the same text on local D1',
 }
 

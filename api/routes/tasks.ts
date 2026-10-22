@@ -478,6 +478,42 @@ export function parseEventSpec(v: unknown): Record<string, string | null> | stri
   return { kind, title, venue, event_date: eventDate, nick_event_role: role };
 }
 
+/**
+ * The Gmail message ids a create carries. The Email Tasks Apps Script sends
+ * `related_message_ids` as a newline-separated list of Gmail message ids
+ * (scripts/integrations/updated-email-tasks.js formatMessageIds); a comma is
+ * accepted too. Empty and padded entries are dropped.
+ */
+export function messageIdTokens(raw: unknown): string[] {
+  if (typeof raw !== 'string') return [];
+  return raw.split(/[\n\r,]+/).map((t) => t.trim()).filter(Boolean);
+}
+
+/**
+ * The soft-deleted task that already carries any of these message ids, or
+ * null. Exact token match, never a thread match: a new reply on the same
+ * thread has a new message id and still creates (Nick 2026-10-22, "Skip only
+ * the same message"). Only DELETED rows count: one email can yield several live
+ * tasks (the script's prompt allows it), so a live match must fall through to
+ * the normal create, where the I18 title dedupe handles a true duplicate.
+ * What it stops is the Apps Script's seen-list forgetting a deleted task's
+ * email and minting a new task and talk product (the script now also skips
+ * those messages itself; this is the backstop for any other producer).
+ * One OR'ed query, oldest first, so the answer is deterministic.
+ */
+export async function taskForDeletedMessageIds(env: Env, ids: string[]): Promise<{ id: string } | null> {
+  const tokens = ids.slice(0, 50);
+  if (tokens.length === 0) return null;
+  const hay = "char(10) || replace(replace(related_message_ids, char(13), char(10)), ',', char(10)) || char(10)";
+  const any = tokens.map(() => `instr(${hay}, char(10) || ? || char(10)) > 0`).join(' OR ');
+  return env.DB.prepare(
+    `SELECT id FROM tasks
+      WHERE (deleted_at IS NOT NULL OR status = 'deleted')
+        AND related_message_ids IS NOT NULL AND (${any})
+      ORDER BY created_at ASC, id ASC LIMIT 1`
+  ).bind(...tokens).first<{ id: string }>();
+}
+
 export async function handleCreateTask(
   request: Request,
   user: AuthUser,
@@ -521,6 +557,13 @@ export async function handleCreateTask(
     return error(`Invalid kind "${body.kind}". Must be one of ${TASK_KINDS.join('/')}.`, 400);
   }
   const kind: TaskKind = body.kind ?? DEFAULT_TASK_KIND;
+
+  // A message whose task was deleted is not minted again. Answers with the id
+  // only, never the row: this lookup has no project-visibility check.
+  const deletedMatch = await taskForDeletedMessageIds(env, messageIdTokens(body.related_message_ids));
+  if (deletedMatch) {
+    return json({ data: { id: deletedMatch.id }, deduped: 'same_message' }, 200);
+  }
 
   // Validate assignee exists in team_members — reject bogus slugs before
   // they pollute the DB. Deep-audit Suite 8 found 'not_a_real_person_xyz'

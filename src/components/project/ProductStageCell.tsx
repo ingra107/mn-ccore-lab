@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import InlineSelect from '../InlineSelect'
 import { PATHS } from '../../constants/paths'
 import { useSetProductStage } from '../../hooks/useProjectProducts'
-import { ladderFor, listStageView, productKindLabel, sortProducts, type ProductKind, type ProductRow } from '../../lib/products'
+import { ladderFor, listStageView, productKindLabel, sortProducts, withoutDeclined, type ProductKind, type ProductRow } from '../../lib/products'
 
 // The Projects list's Stage cell (Nick, bracket 2026-10-11: "chips if there
 // are multiple products but a ladder if there's only one"):
@@ -22,8 +22,9 @@ export default function ProductStageCell({
 }: { slug: string; products: ProductRow[] | undefined; kinds: ProductKind[] }) {
   const view = listStageView(products)
   if (view === 'none') return <span className="sr-m">—</span>
-  if (view === 'chips') return <ProductChips slug={slug} products={sortProducts(products!)} />
-  return <ProductLadder slug={slug} product={products![0]} kinds={kinds} testId={`list-stage-ladder-${slug}`} />
+  const live = withoutDeclined(products!)
+  if (view === 'chips') return <ProductChips slug={slug} products={sortProducts(live)} />
+  return <ProductLadder slug={slug} product={live[0]} kinds={kinds} testId={`list-stage-ladder-${slug}`} />
 }
 
 /** One product's ladder: dots plus the stage word, a select that writes the

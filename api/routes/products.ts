@@ -240,6 +240,25 @@ export async function handleProjectProductWrite(
         base_row_hash: await hashTouched({ stage: body.from_stage }, ['stage']),
       } : {}),
     });
+  } else if (body.action === 'drop') {
+    // Soft-delete a product of ANY kind (Nick 2026-10-22: "how do i delete
+    // this talk ... i want to drop it somehow"). The same op delete that
+    // handleCreateTask's dropEventProduct uses. Tasks still on it: schema-v125
+    // trg_products_tombstone_repoint moves each LIVE task, in the same
+    // statement, to the project's home product (or its only other product, or
+    // NULL when neither exists), so no live task is left pointing at a
+    // tombstone; a tombstoned task keeps the pointer and trg_tasks_dead_product_*
+    // re-points it if it is restored. Nothing is refused for open tasks: they
+    // are not lost, only re-homed. The schema refuses the home product
+    // (product_home_live) and a live project's last live product
+    // (product_last_live); plainRefusal says both in words.
+    const product = await ownProduct(body.product_id);
+    if (!product) return error('Product not found in this project', 404);
+    recordId = product.id;
+    result = await applyMutation(env, {
+      table: 'products', record_id: product.id, op: 'delete',
+      route: PRODUCT_WRITE_ROUTE, user,
+    });
   } else if (body.action === 'home') {
     const product = await ownProduct(body.product_id);
     if (!product) return error('Product not found in this project', 404);
@@ -413,7 +432,7 @@ export async function handleProjectProductWrite(
       route: PRODUCT_WRITE_ROUTE, user,
     });
   } else {
-    return error("action must be 'stage', 'home', 'terms', 'milestone', 'describe', 'tag' or 'add'", 400);
+    return error("action must be 'stage', 'drop', 'home', 'terms', 'milestone', 'describe', 'tag' or 'add'", 400);
   }
 
   if (result.status !== 'accepted' && result.status !== 'merged_clean') {
@@ -429,7 +448,7 @@ export async function handleProjectProductWrite(
     product: {
       id: row.id ?? recordId, project_id: row.project_id, kind: row.kind, stage: row.stage,
       stage_label: label?.label ?? row.stage, stage_is_terminal: label?.is_terminal ?? 0,
-      is_home: row.is_home, seq: row.seq,
+      is_home: row.is_home, seq: row.seq, deleted_at: row.deleted_at ?? null,
       stage_entered_at: row.stage_entered_at, lineage_rank: row.lineage_rank, grew_from_id: row.grew_from_id,
       venue: row.venue ?? null, due_date: row.due_date ?? null, deadline: row.deadline ?? null,
       period_start: row.period_start ?? null, period_end: row.period_end ?? null, amount_usd: row.amount_usd ?? null,
