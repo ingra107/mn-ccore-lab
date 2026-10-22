@@ -17,8 +17,13 @@
 // reported per page load. The server upserts by (fingerprint, day), so a
 // render loop is one row with a count.
 //
-// Skipped: a stale chunk (lazyRoute.tsx reloads the page for it) and an
-// AbortError rejection (a cancelled fetch is not an error).
+// Skipped: a stale chunk (lazyRoute.tsx reloads the page for it), an
+// AbortError rejection (a cancelled fetch is not an error), and the browser's
+// "ResizeObserver loop ..." window error. The browser raises that one when an
+// observer callback resizes what it observes; it delivers the skipped
+// notifications next frame, so nothing is lost. It carries no Error and no
+// stack, so a row for it names no code to fix. (MentionInput's width observer
+// resizes its own textarea and can raise it once per width change.)
 
 import { isStaleChunkError } from './lazyRoute'
 
@@ -56,6 +61,15 @@ function describe(err: unknown): { message: string; stack?: string } {
 function isAbortError(err: unknown): boolean {
   return (err instanceof Error || (typeof DOMException !== 'undefined' && err instanceof DOMException))
     && (err as Error).name === 'AbortError'
+}
+
+/**
+ * Chrome's "ResizeObserver loop completed with undelivered notifications." and
+ * the older "ResizeObserver loop limit exceeded". The ErrorEvent's `error` is
+ * null, so attachSender's listener passes the bare message string.
+ */
+function isResizeObserverLoop(err: unknown): boolean {
+  return typeof err === 'string' && err.startsWith('ResizeObserver loop')
 }
 
 function topFrame(stack: string | undefined): string {
@@ -100,6 +114,7 @@ export function capture(err: unknown, kind: ClientErrorKind, now: () => number =
   if (!sender) return
   if (isStaleChunkError(err)) return
   if (kind === 'rejection' && isAbortError(err)) return
+  if (kind === 'window' && isResizeObserverLoop(err)) return
   const { message, stack } = describe(err)
   const key = `${message}\u0000${topFrame(stack)}`
   const slot = slots.get(key)
