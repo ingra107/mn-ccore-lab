@@ -10,7 +10,7 @@
 // Returns {rows, cursor, has_more} matching the /api/sessions envelope.
 //
 // `sessions` keeps its own /api/sessions handler because it has tombstone
-// filtering (deleted_at IS NULL); the other 8 Lane 3 tables don't have
+// filtering (deleted_at IS NULL); the other Lane 3 tables don't have
 // deleted_at columns — supersession is the deletion model for them.
 //
 // Companion to:
@@ -35,7 +35,6 @@ export const LANE3_PULL_TABLES = new Set([
   'kg_entities',
   'kg_relations',
   'kg_relation_type_registry',
-  'trajectories',
 ]);
 
 

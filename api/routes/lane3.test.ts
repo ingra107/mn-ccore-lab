@@ -152,7 +152,7 @@ describe('handleLane3List', () => {
     }
   });
 
-  it('LANE3_PULL_TABLES covers the 8 non-sessions Lane 3 tables', () => {
+  it('LANE3_PULL_TABLES covers the non-sessions Lane 3 tables', () => {
     expect(LANE3_PULL_TABLES).toEqual(
       new Set([
         'agent_knowledge',
@@ -162,7 +162,6 @@ describe('handleLane3List', () => {
         'kg_entities',
         'kg_relations',
         'kg_relation_type_registry',
-        'trajectories',
       ]),
     );
     // sessions explicitly excluded — handled by /api/sessions

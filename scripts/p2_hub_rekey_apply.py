@@ -6,6 +6,9 @@
 # dropped (schema-v99, 2026-07-16, backlog #562) — REWRITE_COLUMNS below no
 # longer includes it (removed, not just flagged) since that table is
 # unconditionally gone, not merely policy-pending like comments/project_updates.
+# trajectories was dropped too (schema-v144, 2026-10-22, backlog #1552) and is
+# likewise removed from REWRITE_COLUMNS; the prose below that still names it
+# (and the second-hand rec_ key notes) describes the 2026-06 state.
 """
 P2 Hub Re-Key Apply Script
 ==========================
@@ -118,7 +121,9 @@ REWRITE_COLUMNS = [
     ("file_activity_daily", "project_id", None),
     ("hub_decisions", "project_slug", None),
     ("paper_project_links", "project_slug", None),
-    ("trajectories", "project_id", None),
+    # trajectories REMOVED 2026-10-22 (PB backlog #1552) -- table dropped
+    # schema-v144; a rewrite target that no longer exists would fail every
+    # query here with "no such table: trajectories".
     ("activity_log", "related_id", "related_type = 'project'"),
 ]
 # projects.id is rewritten last; checked separately after children

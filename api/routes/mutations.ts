@@ -37,9 +37,9 @@ import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-co
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
-  // Stage 3 Phase 1 — 9 semantic tables
+  // Stage 3 Phase 1 — semantic tables (trajectories retired 2026-10-22, #1552)
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
-  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry',
   // Z3.2 (2026-05-28) — 6 project-linked tables added to FK_SLUG_FIELDS registry.
   // ALLOWED_TABLES must include them or applyInsert's FK_SLUG_FIELDS loop is
   // dead code (processOne rejects unknown tables before reaching applyInsert).
@@ -77,7 +77,7 @@ const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
 const DELETE_CAPABLE_TABLES = new Set([
   'tasks', 'projects', 'inbox_events',
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
-  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry',
   // These have deleted_at but no updated_at — see TABLES_WITH_UPDATED_AT
   'day_capacity', 'submission_events',
   // links: full soft-delete (deleted_at + updated_at both present; schema-v88).
@@ -92,7 +92,7 @@ const DELETE_CAPABLE_TABLES = new Set([
 const TABLES_WITH_UPDATED_AT = new Set([
   'tasks', 'projects', 'inbox_events',
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
-  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry',
   // links carries updated_at (schema-v88); stamp it on delete.
   'links',
   'products', 'product_funding',
@@ -107,7 +107,7 @@ const STATUS_BEARING_DELETE_TABLES = new Set(['tasks', 'projects']);
 // Per-table primary key column lookup.
 // Tables with PK = 'id' (tasks, projects, inbox_events, project_state_log,
 // kg_entities, memory_facts) are omitted — they fall through to the default.
-// Composite PKs (agent_knowledge, pomodoro_sessions, kg_relations, trajectories)
+// Composite PKs (agent_knowledge, pomodoro_sessions, kg_relations)
 // use string[] — Stage 3 Phase 3 v3 (codex pass-2 N3 + M5 fix, 2026-05-07).
 // Mirrors PB scripts/db/outbox.py:_TABLE_PK_COLUMN_MAP for consistency.
 const PK_COLUMN: Record<string, string | string[]> = {
@@ -119,7 +119,6 @@ const PK_COLUMN: Record<string, string | string[]> = {
   agent_knowledge: ['category', 'topic', 'valid_from'],
   pomodoro_sessions: ['start_time', 'source'],
   kg_relations: ['source_id', 'target_id', 'relation_type'],
-  trajectories: ['task', 'created_at'],
   // links: scalar surrogate PK (link_<ULID>); explicit for documentation.
   // pkColumn() already defaults to 'id'; this entry makes the intent clear.
   links: 'id',
@@ -135,7 +134,7 @@ function isCompositePk(pk: string | string[]): pk is string[] {
 
 // Mirror of Python scripts/db/query.py::_composite_record_id.
 // PB encodes natural-key parts as base64url(JSON.stringify([part1, part2, ...]))
-// because PK fields like agent_knowledge.topic and trajectories.task are
+// because a PK field like agent_knowledge.topic is
 // unconstrained TEXT and can contain delimiter characters (codex pass-2 N3).
 //
 // Usage: Hub receives record_id, calls this to get ordered PK values back.

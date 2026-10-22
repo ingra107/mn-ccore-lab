@@ -1,9 +1,9 @@
 [
   {
     "file": "api/routes/lane3.ts",
-    "line": 49,
+    "line": 48,
     "sample": "request?: Request",
-    "reason": "PI-only pull; missing request fails CLOSED (403 Forbidden) -- lane3.ts:51-53."
+    "reason": "PI-only pull; missing request fails CLOSED (403 Forbidden) -- lane3.ts:50-52."
   },
   {
     "file": "api/routes/sessions.ts",

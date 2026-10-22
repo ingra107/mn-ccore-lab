@@ -4,7 +4,7 @@
 //
 // Tests:
 //   1. Insert + read agent_knowledge with topic = "contains | pipe" (N3 literal pipe safety)
-//   2. Insert + read trajectories with task = "task with \\ char" (N3 backslash safety)
+//   2. Insert + read agent_knowledge with topic = "topic with \\ char" (N3 backslash safety)
 //   3. Insert + read agent_knowledge with topic = "unicode_τοπικ" (N3 unicode / ensure_ascii=False)
 //   4. Insert + patch + read agent_knowledge via composite recordId (patch WHERE clause correctness)
 //   5. Delete via composite recordId; row reads back with deleted_at IS NOT NULL
@@ -146,30 +146,31 @@ describe('composite PK — N3 escape-safety', () => {
       .get('test_cat', topicWithPipe, '2026-05-07T00:00:00')).toEqual({ knowledge: 'pipe test' });
   });
 
-  it('Test 2: trajectories insert with task containing literal backslash', async () => {
-    const taskWithBackslash = 'task with \\ char';
-    const recordId = compositeRecordId(taskWithBackslash, '2026-05-07T01:00:00');
+  it('Test 2: agent_knowledge insert with topic containing literal backslash', async () => {
+    const topicWithBackslash = 'topic with \\ char';
+    const recordId = compositeRecordId('bs_cat', topicWithBackslash, '2026-05-07T01:00:00');
 
     const m = mut({
-      table: 'trajectories',
+      table: 'agent_knowledge',
       op: 'insert',
       record_id: recordId,
       payload: {
-        task: taskWithBackslash,
-        created_at: '2026-05-07T01:00:00',
-        steps: 'step1',
-        outcome: 'success',
+        category: 'bs_cat',
+        topic: topicWithBackslash,
+        valid_from: '2026-05-07T01:00:00',
+        knowledge: 'backslash test',
+        confidence: 'high',
       },
     });
 
     const result = await noBuffer(() => applyInsert(env, m, FAKE_USER));
 
     expect(result.status).toBe('accepted');
-    const rows = rowsOf('trajectories');
+    const rows = rowsOf('agent_knowledge');
     expect(rows).toHaveLength(1);
-    expect(rows[0].task).toBe(taskWithBackslash); // literal backslash preserved
-    expect(rows[0].created_at).toBe('2026-05-07T01:00:00');
-    expect(rows[0].outcome).toBe('success');
+    expect(rows[0].topic).toBe(topicWithBackslash); // literal backslash preserved
+    expect(rows[0].valid_from).toBe('2026-05-07T01:00:00');
+    expect(rows[0].knowledge).toBe('backslash test');
   });
 
   it('Test 3: agent_knowledge insert with unicode topic (ensure_ascii=False)', async () => {
