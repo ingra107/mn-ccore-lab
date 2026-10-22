@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
+import { useUserPref } from './useUserPref'
 
 /**
- * DD-2 v1 — saved views scoped per-page. Filter state + sort + mode captured
- * as a single URL-param blob, saved to localStorage under a user-chosen name.
- * No D1 migration; v1 is per-device + per-browser-profile. A v2 will add a
- * D1 `saved_views` table with owner slug + sidebar pinning for cross-device
- * persistence. For the pilot on MyTasks we keep it local.
+ * DD-2 — saved views scoped per page. Filter state + sort + mode captured as
+ * a single URL-param blob, saved under a user-chosen name. Stored on the
+ * server per person (pref 'savedViews.<page>', useUserPref), so a view saved
+ * on one laptop is on the other (PB #911). Newest first, at most 25.
  */
 export interface SavedView {
   id: string
@@ -15,36 +15,18 @@ export interface SavedView {
   createdAt: number
 }
 
-const LS_KEY_PREFIX = 'mnccore.savedViews.v1.'
+const NONE: SavedView[] = []
+const MAX_VIEWS = 25
 
-function readViews(page: string): SavedView[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY_PREFIX + page)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((v): v is SavedView =>
-      v && typeof v.id === 'string' && typeof v.name === 'string' && typeof v.query === 'string'
-    )
-  } catch {
-    return []
-  }
-}
-
-function writeViews(page: string, views: SavedView[]) {
-  try { localStorage.setItem(LS_KEY_PREFIX + page, JSON.stringify(views)) } catch { /* unavailable */ }
+function validate(stored: unknown): SavedView[] {
+  if (!Array.isArray(stored)) return NONE
+  return stored.filter((v): v is SavedView =>
+    !!v && typeof v.id === 'string' && typeof v.name === 'string' && typeof v.query === 'string'
+  )
 }
 
 export function useSavedViews(page: string) {
-  const [views, setViews] = useState<SavedView[]>(() => readViews(page))
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === LS_KEY_PREFIX + page) setViews(readViews(page))
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [page])
+  const [views, setViews] = useUserPref<SavedView[]>(`savedViews.${page}`, NONE, validate)
 
   const save = useCallback((name: string, query: string): SavedView => {
     const next: SavedView = {
@@ -53,29 +35,17 @@ export function useSavedViews(page: string) {
       query,
       createdAt: Date.now(),
     }
-    setViews((prev) => {
-      const out = [next, ...prev].slice(0, 25)
-      writeViews(page, out)
-      return out
-    })
+    setViews((prev) => [next, ...prev].slice(0, MAX_VIEWS))
     return next
-  }, [page])
+  }, [setViews])
 
   const remove = useCallback((id: string) => {
-    setViews((prev) => {
-      const out = prev.filter((v) => v.id !== id)
-      writeViews(page, out)
-      return out
-    })
-  }, [page])
+    setViews((prev) => prev.filter((v) => v.id !== id))
+  }, [setViews])
 
   const rename = useCallback((id: string, name: string) => {
-    setViews((prev) => {
-      const out = prev.map((v) => v.id === id ? { ...v, name: name.trim() || v.name } : v)
-      writeViews(page, out)
-      return out
-    })
-  }, [page])
+    setViews((prev) => prev.map((v) => v.id === id ? { ...v, name: name.trim() || v.name } : v))
+  }, [setViews])
 
   return { views, save, remove, rename }
 }

@@ -82,12 +82,19 @@ export function prodSchemaDb(): InstanceType<typeof Database> {
  * row has no stage of its own (schema-v133 dropped projects.stage): a test
  * that wants the home at another rung says so here. A test that writes its
  * own seed row first is left alone.
+ *
+ * A project row with no `status` key gets 'active', as every create route
+ * sends one (schema-v142 refuses a project insert with no status, or with
+ * the legacy column default 'Active'). A test that names a status keeps it.
  */
 export function insertRow(
   db: InstanceType<typeof Database>, table: string, row: Record<string, unknown>,
   home?: ProjectHome,
 ): Record<string, unknown> {
-  if (table === 'projects') seedProjectHome(db, row, home)
+  if (table === 'projects') {
+    seedProjectHome(db, row, home)
+    if (!('status' in row)) row = { status: 'active', ...row }
+  }
   const cols = Object.keys(row)
   const info = db.prepare(
     `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,

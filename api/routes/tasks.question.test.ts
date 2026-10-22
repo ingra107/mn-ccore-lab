@@ -26,7 +26,7 @@ import { describe, it, expect } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyInsert, applyUpdate, applyMutation } from './mutations'
 import { handleGetTasks } from './tasks'
-import { normalizeQuestionJsonFields, questionRowError, questionConsumerCloseError } from '../lib/task-question'
+import { normalizeQuestionJsonFields, questionRowError, questionConsumedError, questionPatchError } from '../lib/task-question'
 import type { AuthUser, Env } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow, receiptOf } from '../test-support/prod-schema-db'
 
@@ -91,6 +91,10 @@ function seedQuestion(db: Db, id: string, extra: Record<string, unknown> = {}) {
 
 const ANSWER = { v: 1, choice: 'c1', via: 'hub', at: '2026-09-17T18:00:00Z' }
 
+/** The PB consumer's receipt for an answer (schema-v114): a close carries it. */
+const receiptFor = (answer: { at: string }, consumer = 'meeting_match') =>
+  JSON.stringify({ v: 1, consumer, at: '2026-09-17T19:00:00Z', answer_at: answer.at, evidence: 'test' })
+
 // ── 1. answered is not done ─────────────────────────────────────────────────
 
 describe('a question cannot close unanswered (question_unanswered)', () => {
@@ -133,7 +137,9 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
   // answered question is accepted. That encoded the old design, in which the
   // Hub could close a question and PB's question_state then read it as
   // `consumed`, so the approved build never ran. Changed deliberately: a
-  // Hub-UI (hub_ui:) close is now refused; the PB consumer closes it.
+  // Hub-UI (hub_ui:) close is now refused; the PB consumer closes it. Since
+  // schema-v142 the refusal is question_unconsumed, unconditional: a Hub-UI
+  // write can never carry the receipt a close needs.
   it('status=done from the Hub UI on an ANSWERED question is refused (the PB consumer closes it)', async () => {
     const { db, writes, env } = makeDB()
     const id = 'task_01question_answered_done_03'
@@ -146,11 +152,11 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
     })
     expect(r.status).toBe('error')
     expectReceipt(db, r.mutation_id, 'error', id)
-    expect(r.reason).toMatch(/^apply error: question_consumer_close_only:/)
+    expect(r.reason).toMatch(/^apply error: question_unconsumed:/)
     expect(rowOf(db, id)?.status).toBe('todo')
   })
 
-  it('status=done from PB (the consumer) on an answered question is accepted', async () => {
+  it('status=done from PB (the consumer) with its receipt on an answered question is accepted', async () => {
     const { db, writes, env } = makeDB()
     const id = 'task_01question_answered_done_pb'
     seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
@@ -158,12 +164,29 @@ describe('a question cannot close unanswered (question_unanswered)', () => {
     const r = await applyUpdate(env, {
       mutation_id: 'mut_q_pbclose_0001', origin_machine: 'home', table: 'tasks', op: 'update',
       record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
-      patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
+      patch: { status: 'done', completed: 1, completed_at: nowInstant(), question_consumed_json: receiptFor(ANSWER) },
+      client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
     expectReceipt(db, r.mutation_id, 'accepted', id)
     expect(rowOf(db, id)?.status).toBe('done')
     expect(rowOf(db, id)?.completed).toBe(1)
+  })
+
+  // #8842 (schema-v142): the receipt rule no longer reads a lab_settings flag,
+  // so a flag-read failure (getValidationFlags falls back to all-OFF) cannot
+  // turn it off. applyUpdate here gets NO flags at all.
+  it('status=done from PB WITHOUT a receipt is refused, with no flags passed (question_unconsumed)', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01question_pbclose_noreceipt'
+    seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
+
+    await expect(applyUpdate(env, {
+      mutation_id: 'mut_q_pbclose_0002', origin_machine: 'home', table: 'tasks', op: 'update',
+      record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
+    }, NICK)).rejects.toThrow(/^question_unconsumed:/)
+    expect(rowOf(db, id)?.status).toBe('todo')
   })
 
   it('the Hub UI may still retire a question (status=deleted on an answered question)', async () => {
@@ -408,6 +431,95 @@ describe('a kind=question insert requires question_spec_json (question_spec_miss
   })
 })
 
+// ── 4b. a row's question-ness is fixed at insert (#8842, question_kind_immutable) ──
+//
+// questionConsumedError judges a close by the row's effective kind. If a write
+// could turn a question into a task, the receipt rule would not see the close
+// that follows. applyPatch refuses the flip in words; schema-v142 refuses it
+// in D1 for a writer that bypasses applyPatch.
+
+describe('a task cannot move into or out of kind=question (question_kind_immutable)', () => {
+  const upd = (db: Db, id: string, mid: string, patch: Record<string, unknown>, origin = 'home') => ({
+    mutation_id: mid, origin_machine: origin, table: 'tasks', op: 'update' as const,
+    record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
+    patch, client_ts: nowInstant(), issued_at: nowInstant(),
+  })
+
+  it('one write that turns a question into a done task is refused', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01kind_flip_onewrite_0001'
+    seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
+    await expect(applyUpdate(env, upd(db, id, 'mut_kind_flip_0001', {
+      kind: 'task', question_spec_json: null, question_answer_json: null,
+      status: 'done', completed: 1, completed_at: nowInstant(),
+    }), NICK)).rejects.toThrow(/^question_kind_immutable:/)
+    expect(rowOf(db, id)).toMatchObject({ kind: 'question', status: 'todo' })
+  })
+
+  it('a two-write flip (kind first, then close) is refused at write 1', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01kind_flip_twowrite_0002'
+    seedQuestion(db, id, { question_answer_json: JSON.stringify(ANSWER) })
+    // From the Hub UI path, as a person tapping through would send it.
+    const r = await applyMutation(env, {
+      table: 'tasks', record_id: id, op: 'update',
+      patch: { kind: 'task', question_spec_json: null, question_answer_json: null },
+      route: 'test', user: NICK,
+    })
+    expect(r.status).toBe('error')
+    expect(r.reason).toMatch(/^apply error: question_kind_immutable:/)
+    expect(rowOf(db, id)?.kind).toBe('question')
+    // Write 2 then meets the receipt rule on a row that is still a question.
+    const r2 = await applyMutation(env, {
+      table: 'tasks', record_id: id, op: 'update',
+      patch: { status: 'done', completed: 1, completed_at: nowInstant() },
+      route: 'test', user: NICK,
+    })
+    expect(r2.reason).toMatch(/^apply error: question_unconsumed:/)
+    expect(rowOf(db, id)?.status).toBe('todo')
+  })
+
+  it('an existing task cannot become a question, even with a spec', async () => {
+    const { db, env } = makeDB()
+    const id = 'task_01kind_task_to_q_0003'
+    seedQuestion(db, id, { kind: 'task', source: 'manual', question_spec_json: null })
+    await expect(applyUpdate(env, upd(db, id, 'mut_kind_flip_0003', { kind: 'question', question_spec_json: SPEC }), NICK))
+      .rejects.toThrow(/^question_kind_immutable:/)
+    expect(rowOf(db, id)).toMatchObject({ kind: 'task', question_spec_json: null })
+  })
+
+  it('task <-> milestone stays legal, and re-sending kind=question on a question is not a change', async () => {
+    const { db, env } = makeDB()
+    const t = 'task_01kind_milestone_0004'
+    seedQuestion(db, t, { kind: 'task', source: 'manual', question_spec_json: null })
+    expect((await applyUpdate(env, upd(db, t, 'mut_kind_ms_0004a', { kind: 'milestone' }), NICK)).status).toBe('accepted')
+    expect(rowOf(db, t)?.kind).toBe('milestone')
+    expect((await applyUpdate(env, upd(db, t, 'mut_kind_ms_0004b', { kind: 'task' }), NICK)).status).toBe('accepted')
+    expect(rowOf(db, t)?.kind).toBe('task')
+    const q = 'task_01kind_same_q_0004'
+    seedQuestion(db, q, { title: 'Another question' })
+    expect((await applyUpdate(env, upd(db, q, 'mut_kind_same_0004', { kind: 'question', priority: 'high' }), NICK)).status).toBe('accepted')
+  })
+
+  it('an insert of kind=question is still accepted (the rule is about existing rows)', () => {
+    expect(questionPatchError({}, { kind: 'question', question_spec_json: SPEC })).toBeNull()
+  })
+
+  it('schema-v142 refuses a raw D1 flip in either direction; task <-> milestone passes', () => {
+    const { db } = makeDB()
+    const q = 'task_01kind_raw_q_0005'
+    seedQuestion(db, q)
+    expect(() => db.prepare("UPDATE tasks SET kind = 'task', question_spec_json = NULL WHERE id = ?").run(q))
+      .toThrow(/question_kind_immutable/)
+    const t = 'task_01kind_raw_t_0005'
+    seedQuestion(db, t, { kind: 'task', title: 'Raw task', source: 'manual', question_spec_json: null })
+    expect(() => db.prepare("UPDATE tasks SET kind = 'question', question_spec_json = ? WHERE id = ?").run(SPEC, t))
+      .toThrow(/question_kind_immutable/)
+    db.prepare("UPDATE tasks SET kind = 'milestone' WHERE id = ?").run(t)
+    expect(rowOf(db, t)?.kind).toBe('milestone')
+  })
+})
+
 // ── 5. GET /api/tasks?kind= ─────────────────────────────────────────────────
 
 describe('GET /api/tasks?kind=question', () => {
@@ -486,7 +598,7 @@ describe('#8842 R4: the refusal names the retire path that works', () => {
     const r = await applyMutation(env, { table: 'tasks', record_id: id, op: 'delete', route: 'test', user: NICK })
     expect(r.status).toBe('accepted')
     expectReceipt(db, r.mutation_id, 'accepted', id)
-    expect(questionConsumerCloseError({ kind: 'question', status: 'todo' }, { kind: 'question', status: 'done' }, 'hub_ui:x'))
+    expect(questionConsumedError({ kind: 'question', status: 'todo' }, { kind: 'question', status: 'done' }, { status: 'done' }, 'hub_ui:x'))
       .toMatch(/delete the task \(op=delete\)/)
   })
 })
@@ -497,7 +609,8 @@ describe('#8842 R4: the refusal names the retire path that works', () => {
 // plan or runbook ("Approve: MECHANIC ..."), is a kind='question' row, and PB's
 // evidence gate (scripts/db/approve_completion.py) runs only on PB's own close.
 // The ONLY thing that keeps a Hub Done tap from closing an approval with no
-// evidence and no build is questionConsumerCloseError. This pins that contract
+// evidence and no build is questionConsumedError's receipt rule
+// (question_unconsumed; unconditional since schema-v142). This pins that contract
 // for the approval shape PB depends on; loosening the close rule for questions
 // breaks #2219 on the PB side, not only #8842.
 describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
@@ -514,7 +627,7 @@ describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
     })
   const YES_ANSWER = { v: 1, choice: 'yes', via: 'hub', at: '2026-10-05T18:00:00Z' }
 
-  it('a Hub-UI done on an ANSWERED runbook approval is refused (question_consumer_close_only)', async () => {
+  it('a Hub-UI done on an ANSWERED runbook approval is refused (question_unconsumed)', async () => {
     const { db, writes, env } = makeDB()
     const id = 'task_01approve_runbook_hubtap1'
     seedApproval(db, id, { question_answer_json: JSON.stringify(YES_ANSWER) })
@@ -524,7 +637,7 @@ describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('error')
-    expect(r.reason).toMatch(/^apply error: question_consumer_close_only:/)
+    expect(r.reason).toMatch(/^apply error: question_unconsumed:/)
     expect(rowOf(db, id)?.status).toBe('todo')
     expect(writes).toHaveLength(0)
   })
@@ -539,7 +652,7 @@ describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
       route: 'test', user: NICK,
     })
     expect(r.status).toBe('error')
-    expect(r.reason).toMatch(/^apply error: question_(unanswered|consumer_close_only):/)
+    expect(r.reason).toMatch(/^apply error: question_(unanswered|unconsumed):/)
     expect(rowOf(db, id)?.status).toBe('todo')
   })
 
@@ -550,7 +663,8 @@ describe('PB #2219: a Hub tap cannot close an Approve: question', () => {
     const r = await applyUpdate(env, {
       mutation_id: 'mut_approve_pbclose_0001', origin_machine: 'home', table: 'tasks', op: 'update',
       record_id: id, base_seq: seqOf(db, id), base_row_hash: null,
-      patch: { status: 'done', completed: 1, completed_at: nowInstant() }, client_ts: nowInstant(), issued_at: nowInstant(),
+      patch: { status: 'done', completed: 1, completed_at: nowInstant(), question_consumed_json: receiptFor(YES_ANSWER, 'fix_approval') },
+      client_ts: nowInstant(), issued_at: nowInstant(),
     }, NICK)
     expect(r.status).toBe('accepted')
     expect(rowOf(db, id)?.status).toBe('done')

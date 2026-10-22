@@ -35,6 +35,7 @@ import { handleGetProjectDirectory, handleRequestToJoin, handleGetJoinRequests, 
 import { joinQuestionMinter } from './lib/project-join';
 import { handleGetMyFolder, handleSetMyFolder, handleClearMyFolder } from './routes/project-member-folders';
 import { handleGetPins, handleCreatePin, handleDeletePin } from './routes/pins';
+import { handleGetUserPrefs, handlePutUserPref, handleDeleteUserPref } from './routes/userPrefs';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleUpdateMeetingMeta, handleMeetingPrep, handleGenerateAgenda, handlePrepMeetingFromEvent, handleGrantMeetingProject, handleRevokeMeetingProject, handleMeetingAccess } from './routes/meetings';
 import { handleGetPublications, handleGetStats } from './routes/publications';
@@ -1051,6 +1052,32 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleDeletePin(c.req.param('project'), USER(c), E(c)),
+});
+
+// A person's view preferences (schema-v143, PB #911): the keys listed in
+// shared/userPrefKeys.ts, owner only, so the same view follows them to every
+// device. The member is DIGEST_MEMBER's rule: a signed-in member's own slug,
+// the PB key's Nick, null for anyone else. api/routes/userPrefs.ts.
+defineRoute({
+  method: 'GET',
+  path: '/api/user-prefs',
+  auth: 'authed',
+  entity: 'settings',
+  handler: (c) => handleGetUserPrefs(E(c), DIGEST_MEMBER(c)),
+});
+defineRoute({
+  method: 'PUT',
+  path: '/api/user-prefs/:key',
+  auth: 'authed',
+  entity: 'settings',
+  handler: (c) => handlePutUserPref(c.req.param('key'), R(c), E(c), DIGEST_MEMBER(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/user-prefs/:key',
+  auth: 'authed',
+  entity: 'settings',
+  handler: (c) => handleDeleteUserPref(c.req.param('key'), E(c), DIGEST_MEMBER(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

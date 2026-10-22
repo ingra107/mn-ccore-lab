@@ -47,8 +47,6 @@ function seed(recursive = false) {
   db = prodSchemaDb()
   if (recursive) db.pragma('recursive_triggers = ON')
   db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run(JSON.stringify([NICK]))
-  // The receipt rule ON, as prod runs it: the trigger's close must carry one.
-  db.prepare("UPDATE lab_settings SET value = '1' WHERE key = 'hub_validate_question_consumed'").run()
   _resetPiEmailsCacheForTests()
   _resetValidationFlagsCache()
   insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick Ingraham', slug: 'nick-ingraham', role: 'PI', member_type: 'director', email: NICK, photo_url: 'https://x.test/nick.jpg' })

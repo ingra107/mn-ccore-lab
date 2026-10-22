@@ -43,11 +43,11 @@ describe('POST /api/settings', () => {
 
   it('refuses pi_emails and the hub_validate_* flags', async () => {
     db.prepare("INSERT OR REPLACE INTO lab_settings (key, value) VALUES ('pi_emails', '[\"pi@umn.edu\"]')").run()
-    const flagBefore = value('hub_validate_question_consumed')
+    const flagBefore = value('hub_validate_enums')
     expect((await handleUpdateSettings(post({ pi_emails: '["me@umn.edu"]' }), env)).status).toBe(400)
-    expect((await handleUpdateSettings(post({ hub_validate_question_consumed: '0' }), env)).status).toBe(400)
+    expect((await handleUpdateSettings(post({ hub_validate_enums: '0' }), env)).status).toBe(400)
     expect(value('pi_emails')).toBe('["pi@umn.edu"]')
-    expect(value('hub_validate_question_consumed')).toBe(flagBefore)
+    expect(value('hub_validate_enums')).toBe(flagBefore)
   })
 
   it('refuses the whole write when one key is bad, so a good key in the same body is not written', async () => {

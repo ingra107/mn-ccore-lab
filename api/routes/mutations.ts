@@ -31,7 +31,7 @@ import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
-import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumerCloseError, questionConsumedError, questionAnswerFrozenError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
 
@@ -508,6 +508,21 @@ async function processOne(
     const idem = await recordProcessedAtomic(env, mut, r);
     return idem ?? r;
   }
+  // #8939: a project is born with a status its creator named. The column
+  // DEFAULT is still the legacy 'Active' (bootstrap-schema.sql), and
+  // assertProtectedNotNull passes an ABSENT key, so a status-less insert
+  // would land 'Active'. schema-v142 refuses that in D1
+  // (project_status_missing); this refuses it here in words first. An
+  // explicit 'Active' is NOT refused here: with hub_validate_enums ON the
+  // enum gate below rewrites it to 'active' (the dead-letter-wave guard);
+  // with the flag read failed, v142 refuses it.
+  if (mut.table === 'projects' && mut.op === 'insert' && mut.payload
+      && (mut.payload as Record<string, unknown>).status == null) {
+    const r = mutErr(mut.mutation_id, 'envelope_invalid',
+      'a project insert names its status (active | waiting_external | blocked | done)');
+    const idem = await recordProcessedAtomic(env, mut, r);
+    return idem ?? r;
+  }
 
   // Validate fields against table whitelist
   const fields = mut.op === 'insert' ? mut.payload : mut.patch;
@@ -718,12 +733,10 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     const pErr = questionPatchError({}, mut.payload as Record<string, unknown>);
     if (pErr) return mutErr(mut.mutation_id, questionRefusalCode(pErr), pErr);
     // #8842 R4: an insert has no current row; a question born 'done' needs
-    // the consumer receipt like any other close (flag-gated), and a Hub-UI
-    // insert may not carry one.
+    // the consumer receipt like any other close, and a Hub-UI insert may not
+    // carry one.
     const payload = mut.payload as Record<string, unknown>;
-    const consumedErr = questionConsumedError(
-      {}, payload, payload, mut.origin_machine, flags?.question_consumed ?? false,
-    );
+    const consumedErr = questionConsumedError({}, payload, payload, mut.origin_machine);
     if (consumedErr) return mutErr(mut.mutation_id, questionRefusalCode(consumedErr), consumedErr);
   }
 
@@ -1205,7 +1218,7 @@ async function decideAndCommitUpdate(
     ));
   }
   const committed = await commitRowWrite(
-    env, mut, current, await applyPatch(env, mut, current, flags), outcome,
+    env, mut, current, await applyPatch(env, mut, current), outcome,
     {
       ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
@@ -1603,7 +1616,7 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  * records those as `apply error:`.
  */
 async function applyPatch(
-  env: Env, mut: Mutation, current: Record<string, unknown>, flags?: ValidationFlags,
+  env: Env, mut: Mutation, current: Record<string, unknown>,
 ): Promise<SqlFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
@@ -1747,17 +1760,13 @@ async function applyPatch(
     // L-Q23: what this write carries -- a changed spec, an unknown choice.
     const pErr = questionPatchError(current, effectivePatch);
     if (pErr) throw new RefusalError(questionRefusalCode(pErr), pErr);
-    // #8842 R4 interim: a Hub-UI write may not close a question as done; the
-    // PB consumer does that after acting on the answer. What the check trusts
-    // and cannot stop: api/lib/task-question.ts questionConsumerCloseError.
-    const closeErr = questionConsumerCloseError(current, { ...current, ...effectivePatch }, mut.origin_machine);
-    if (closeErr) throw new RefusalError(questionRefusalCode(closeErr), closeErr);
     // #8842 R4: the consumer receipt -- only the PB consumer writes it, only
-    // with the close, bound to the answer; with the flag ON a question cannot
-    // enter 'done' without it. api/lib/task-question.ts questionConsumedError.
+    // with the close, bound to the answer; a question cannot enter 'done'
+    // without it, so a Hub-UI close (which may not carry one) is refused.
+    // What the check trusts and cannot stop: api/lib/task-question.ts
+    // questionConsumedError.
     const consumedErr = questionConsumedError(
       current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine,
-      flags?.question_consumed ?? false,
     );
     if (consumedErr) throw new RefusalError(questionRefusalCode(consumedErr), consumedErr);
   }
