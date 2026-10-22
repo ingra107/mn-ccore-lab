@@ -5,6 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import iconButton from './eslint-rules/icon-button.mjs'
+import bodyText from './eslint-rules/body-text.mjs'
 
 // Time discipline R20/R21 (Increment 1A, 2026-05-23). The ONE definition of
 // these two rules; until 2026-10-07 they were two regex copies
@@ -129,6 +130,14 @@ export default defineConfig([
     ignores: ['src/**/*.test.tsx', 'src/**/__tests__/**', 'src/components/ui/Button.tsx'],
     plugins: { icon: { rules: { 'icon-button': iconButton } } },
     rules: { 'icon/icon-button': 'error' },
+  },
+  // Free text (description / notes / content) renders through <BodyText> so
+  // links are clickable. Rule text: eslint-rules/body-text.mjs.
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/*.test.tsx', 'src/**/__tests__/**'],
+    plugins: { body: { rules: { 'body-text': bodyText } } },
+    rules: { 'body/body-text': 'error' },
   },
   // Time discipline, product AND test files under src/ + api/.
   {

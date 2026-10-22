@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
+import BodyText from '../../components/BodyText'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
@@ -789,7 +790,7 @@ function MilestoneRow({
                     marginBottom: '8px',
                   }}
                 >
-                  {item.description}
+                  <BodyText text={item.description} />
                 </p>
               )}
               {item.notes && (
@@ -806,7 +807,7 @@ function MilestoneRow({
                   <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--sk-t3)', display: 'block', marginBottom: '4px' }}>
                     Notes
                   </span>
-                  {item.notes}
+                  <BodyText text={item.notes} />
                 </div>
               )}
               {!item.description && !item.notes && (

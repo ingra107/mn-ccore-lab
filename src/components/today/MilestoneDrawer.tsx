@@ -9,6 +9,7 @@
 
 import { useState } from 'react'
 import { isTaskDone } from '../../lib/taskGrouping'
+import BodyText from '../BodyText'
 import { useProjects, useProjectLinks, useTasks } from '../../hooks/useApiData'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { ProjectOpenTaskCards } from '../project/ProjectOpenTaskCards'
@@ -118,7 +119,7 @@ export function MilestoneDrawer({ task, project, onToggleComplete }: {
       {task.description ? (
         <div style={{ marginBottom: 4 }}>
           <CollapsibleBody maxLines={3} fontSize={12} contentKey={task.description}>
-            <div style={{ color: INK_MUTED }}>{stripMeetingMarker(task.description)}</div>
+            <BodyText text={stripMeetingMarker(task.description)} style={{ display: 'block', color: INK_MUTED }} />
           </CollapsibleBody>
         </div>
       ) : null}

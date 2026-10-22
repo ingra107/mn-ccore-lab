@@ -363,6 +363,7 @@ export default function Pulse() {
                       lineHeight: 1.3,
                     }}
                   >
+                    {/* eslint-disable-next-line body/body-text -- wall-display scene, no pointer input; system-written activity line */}
                     {formatBrandName(a.description)}
                   </span>
                 </motion.li>

@@ -5,6 +5,7 @@ import Link from '@tiptap/extension-link'
 import { useCallback, useEffect, useRef } from 'react'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Heading2 } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { plainTextNodes } from '../lib/plainTextNodes'
 
 interface RichTextEditorProps {
   content: string | null
@@ -23,7 +24,7 @@ function parseContent(json: string | null, plainText?: string | null): JSONConte
     try { return JSON.parse(json) } catch { /* fall through */ }
   }
   if (plainText) {
-    return { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: plainText }] }] }
+    return { type: 'doc', content: [{ type: 'paragraph', content: plainTextNodes(plainText) }] }
   }
   return { type: 'doc', content: [] }
 }

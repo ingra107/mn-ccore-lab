@@ -31,6 +31,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import SectionHead from '../components/ui/SectionHead'
+import BodyText from '../components/BodyText'
 
 // All = one digest date; Unprocessed and Saved each span every date.
 type StatusFilter = 'all' | 'unprocessed' | 'saved'
@@ -505,6 +506,7 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
               aria-label={`Open ${noteCount} note${noteCount === 1 ? '' : 's'}`}
             >
               <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{firstNameFor(latest.author_slug)}</span>{' '}
+              {/* eslint-disable-next-line body/body-text -- preview inside a <button>; a nested anchor is invalid, the full note opens on click */}
               <span style={{ color: 'var(--ink)' }}>{latest.content}</span>
               <span style={{ color: 'var(--muted)' }}> · {formatRelativeTime(latest.created_at)}</span>
             </button>
@@ -606,7 +608,7 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
                         className="text-xs sm:text-sm"
                         style={{ color: 'var(--ink)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}
                       >
-                        {c.content}
+                        <BodyText text={c.content} />
                       </p>
                     </div>
                     <NoteTaskAction noteId={c.id} paperId={paper.id} taskId={c.task_id} taskVisible={c.task_visible === 1} />

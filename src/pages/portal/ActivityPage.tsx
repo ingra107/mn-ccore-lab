@@ -245,6 +245,7 @@ export default function ActivityPage() {
                         )}
                         <p className={`text-xs flex-1 min-w-0${isExpanded ? ' break-words' : ' truncate'}`} style={{ color: 'var(--ink)', lineHeight: 1.35 }}>
                           {person && <span style={{ fontWeight: 500 }}>{firstNameFor(item.actor!)} </span>}
+                          {/* eslint-disable-next-line body/body-text -- system-written activity line, truncated one-liner */}
                           {item.description}
                         </p>
                         {/* S5: drop the redundant type pill when a type filter is active. */}

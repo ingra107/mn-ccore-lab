@@ -3,6 +3,7 @@ import { portalTitle } from '../../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, ThumbsUp, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import BodyText from '../../components/BodyText'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { FaceDisc } from '../../components/today/skin'
@@ -1039,7 +1040,7 @@ function IdeaRowView({
             {idea.description && (
               <div style={{ gridColumn: '1 / -1' }}>
                 <div style={FIELD_LABEL_STYLE}>Description</div>
-                <div style={{ whiteSpace: 'pre-wrap' }}>{idea.description}</div>
+                <div><BodyText text={idea.description} /></div>
               </div>
             )}
             {idea.research_area && (

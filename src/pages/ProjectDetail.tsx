@@ -1058,6 +1058,7 @@ isAuthenticated && (project.slug ?? project.id) && (
                             {attributor} · {rel}
                           </div>
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {/* eslint-disable-next-line body/body-text -- one-line preview in a row that navigates to the full stream, where links render */}
                             {item.content}
                           </div>
                         </div>
