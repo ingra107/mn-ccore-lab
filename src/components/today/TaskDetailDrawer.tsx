@@ -13,6 +13,7 @@ import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from '../tasks/MeetingOriginTag'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
+import BodyText from '../BodyText'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../UndoToast'
@@ -253,7 +254,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         <div style={{ marginTop: 12, marginBottom: 4 }}>
           {/* Rule 72: 3 lines; "more"/"less" only when it overflows (#8635). */}
           <CollapsibleBody maxLines={3} fontSize={12} contentKey={task.description}>
-            <div style={{ color: INK_MUTED }}>{stripMeetingMarker(task.description)}</div>
+            <BodyText text={stripMeetingMarker(task.description)} style={{ display: 'block', color: INK_MUTED }} />
           </CollapsibleBody>
         </div>
       ) : (

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { GrantsSection, MenteesSection, PublicationsSection } from '../components/LabPageLayout'
 import MemberFeaturedPublications from '../components/MemberFeaturedPublications'
 import Breadcrumb from '../components/Breadcrumb'
+import BodyText from '../components/BodyText'
 import { Handshake, CheckCircle2, X, Plus } from 'lucide-react'
 import SectionDivider from '../components/SectionDivider'
 import MenteeDashboard from '../components/MenteeDashboard'
@@ -437,7 +438,7 @@ export default function MemberPage() {
                   </div>
                   {project.description && (
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--slate)' }}>
-                      {project.description}
+                      <BodyText text={project.description} />
                     </p>
                   )}
                 </div>

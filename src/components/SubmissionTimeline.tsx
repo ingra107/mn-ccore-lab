@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Field from './ui/Field'
+import BodyText from './BodyText'
 import {
   Send,
   MessageSquare,
@@ -401,7 +402,7 @@ function TimelineEvent({
         {/* Notes */}
         {event.notes && (
           <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 'var(--sp-xs) 0 0', lineHeight: 1.5 }}>
-            {event.notes}
+            <BodyText text={event.notes} />
           </p>
         )}
       </div>

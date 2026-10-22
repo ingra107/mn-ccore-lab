@@ -31,7 +31,11 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 // the handler's exists-check + copied-path toast make that recoverable,
 // while truncation was silently wrong on EVERY spaced path. Trailing
 // punctuation/whitespace is trimmed after match.
-const URL_RE = /(https?:\/\/\S+|file:\/\/\/\S+|[A-Za-z]:[\\/][^\n<>"|?*]+)/g
+// The first alternative is a markdown link `[text](https://...)` (http/https
+// only, so `[x](javascript:...)` never matches); a `!` before `[` is an image
+// and is left for activityRender's image pre-pass.
+const URL_RE = /((?<!!)\[[^\]\n]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/\S+|file:\/\/\/\S+|[A-Za-z]:[\\/][^\n<>"|?*]+)/g
+const MD_LINK_RE = /^\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)$/
 const TRAILING_PUNCT_RE = /[\s.,;:!?)\]}>'"]+$/
 
 interface Props {
@@ -83,6 +87,25 @@ export default function LinkifiedText({ text, className, style }: Props) {
   while ((match = re.exec(text)) !== null) {
     const start = match.index
     let matched = match[0]
+    const md = MD_LINK_RE.exec(matched)
+    if (md) {
+      if (start > lastIdx) parts.push(text.slice(lastIdx, start))
+      parts.push(
+        <a
+          key={`md-${start}`}
+          href={md[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          title={md[2]}
+          style={{ color: 'var(--job-accent)', textDecoration: 'underline' }}
+        >
+          {md[1]}
+        </a>
+      )
+      lastIdx = start + matched.length
+      continue
+    }
     // N1.19 — bare paths are LINE-bounded (so spaced folder names survive),
     // which over-captured trailing prose into the chip. Punctuation-then-
     // space ('. ', ', ', '; ') is a prose boundary that essentially never

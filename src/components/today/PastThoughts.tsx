@@ -13,6 +13,7 @@ import { ChevronRight } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { readRecentThoughts, DAILY_THOUGHTS_EVENT, type DailyThought } from '../../lib/dailyThoughts'
 import { todayKey } from '../../lib/taskGrouping'
+import BodyText from '../BodyText'
 
 const SHOWN = 5
 const FOLD_KEY = 'collapsible-past-thoughts'
@@ -76,7 +77,7 @@ export function PastThoughts() {
           {visible.map((t, i) => (
             <li key={`${t.at}-${i}`} data-testid="past-thought">
               <span className="tk-past-thoughts-when">{whenLabel(t, today)}</span>
-              <span className="tk-past-thoughts-text">{t.content}</span>
+              <span className="tk-past-thoughts-text"><BodyText text={t.content} /></span>
             </li>
           ))}
         </ul>

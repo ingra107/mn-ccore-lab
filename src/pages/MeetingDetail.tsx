@@ -35,6 +35,7 @@ import { useMarkSeen } from '../hooks/useEntitySeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
 import MarkdownView from '../components/MarkdownView'
+import BodyText from '../components/BodyText'
 import { emDashifyTitle } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useAuth } from '../hooks/useAuth'
@@ -853,7 +854,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       </Button>
       <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
+        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}><BodyText text={item.content} /></p>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Added by {item.added_by}
           {item.document_url && (

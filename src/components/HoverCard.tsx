@@ -6,6 +6,7 @@ import { formatRelativeTime } from '../lib/dateUtils'
 import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
+import BodyText from './BodyText'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -185,7 +186,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
           className="text-[11px] leading-relaxed line-clamp-2"
           style={{ color: 'var(--muted)', fontWeight: 400, margin: 0 }}
         >
-          {data.description}
+          <BodyText text={data.description} />
         </p>
       )}
 

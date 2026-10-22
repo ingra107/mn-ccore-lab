@@ -1,4 +1,5 @@
 import StatRow from '../components/ui/StatRow'
+import BodyText from '../components/BodyText'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -230,7 +231,7 @@ export default function MeetingPrep() {
                   {agendaItems.map((item, i) => (
                     <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? `1px solid var(--sk-line)` : 'none' }}>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
-                      <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink)' }}><BodyText text={item.content} /></span>
                     </div>
                   ))}
                 </div>
@@ -301,6 +302,7 @@ export default function MeetingPrep() {
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
+                      {/* eslint-disable-next-line body/body-text -- system-written activity line (names linked by nameSlugsInText), not authored body text */}
                       <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{nameSlugsInText(act.description)}</span>
                     </div>
                   )
