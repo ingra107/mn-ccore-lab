@@ -1,4 +1,7 @@
-// QuestionsCard — "Needs you": kind='question' rows waiting on Nick's answer.
+// QuestionsCard — "Needs you": kind='question' rows waiting on Nick's answer,
+// plus the ones he answered that nothing has acted on yet (2026-10-22: before
+// this, an answered-but-unconsumed row showed on no Hub surface at all; three
+// sat open in prod D1 for 9-34 days, one of them a "Build it" approval).
 //
 // A question is a task a PB producer minted because a process is stuck on
 // his answer (design: PB Scratch/plans/sequential-petting-sky.md). Mounted
@@ -23,8 +26,8 @@ import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
-import { nowInstant } from '../../lib/time'
-import { parseQuestionSpec } from '../../lib/taskGrouping'
+import { nowInstant, parseDbUtc } from '../../lib/time'
+import { parseQuestionAnswer, parseQuestionSpec, questionCardState } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
 interface QuestionsCardProps {
@@ -39,7 +42,18 @@ export function QuestionsCard({ tasks: all, band = true }: QuestionsCardProps) {
   // JoinRequestsCard, where Nate decides too; its question row exists for
   // Nick's Telegram card alone, so it is not shown here a second time.
   const tasks = all.filter((t) => t.source !== 'project_join')
-  if (tasks.length === 0) return null
+  // Three states, each read off the row (questionCardState). Waiting rows are
+  // his turn; answered rows stay on the card until the PB lane acts, so an
+  // answer nothing picked up cannot drop off every surface; acted-on rows are
+  // one dim line each, today only, so he sees the loop close.
+  const waiting = tasks.filter((t) => questionCardState(t) === 'waiting')
+  const answered = tasks
+    .filter((t) => questionCardState(t) === 'answered')
+    .sort((a, b) => answeredAt(a) - answeredAt(b))
+  const acted = tasks.filter((t) => questionCardState(t) === 'acted')
+  // Acted-on rows alone are not a reason to show the gold card: nothing on it
+  // would want him.
+  if (waiting.length === 0 && answered.length === 0) return null
 
   const card = (
     <div className="tk">
@@ -47,15 +61,82 @@ export function QuestionsCard({ tasks: all, band = true }: QuestionsCardProps) {
         <div className="tk-attn-h">
           <span className="tk-attn-dot" aria-hidden="true" />
           Needs you
-          <span className="tk-cnt">{tasks.length}</span>
+          {waiting.length > 0 && <span className="tk-cnt">{waiting.length}</span>}
         </div>
-        {tasks.map((task) => (
+        {waiting.map((task) => (
           <QuestionRow key={task.id} task={task} />
         ))}
+        {answered.length > 0 && (
+          <div className="tk-qrow" data-testid="q-answered">
+            <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginBottom: 4 }}>
+              Answered, not acted on yet
+            </div>
+            {answered.map((task) => (
+              <AnsweredRow key={task.id} task={task} />
+            ))}
+          </div>
+        )}
+        {acted.length > 0 && (
+          <div className="tk-qrow" data-testid="q-acted" style={{ fontSize: 11.5, color: 'var(--sk-t3)' }}>
+            {acted.map((task) => (
+              <div key={task.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Acted on today · {parseQuestionSpec(task)?.prompt ?? task.title}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )
   return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{card}</div> : card
+}
+
+/** When the answer landed, as epoch ms (Infinity when unreadable, so it sorts last). */
+function answeredAt(t: TaskRow): number {
+  const ms = parseDbUtc(parseQuestionAnswer(t)?.at).getTime()
+  return isNaN(ms) ? Infinity : ms
+}
+
+/** Whole days since the answer landed; null when its time is unreadable. */
+function answerAgeDays(t: TaskRow): number | null {
+  const ms = answeredAt(t)
+  return Number.isFinite(ms) ? Math.max(0, Math.floor((Date.now() - ms) / 86400000)) : null
+}
+
+/** An answer this old with nothing acted on is going stale: the lane that
+ *  should read it has not run, or no lane reads this question's source. */
+const STALE_ANSWER_DAYS = 2
+
+function AnsweredRow({ task }: { task: TaskRow }) {
+  const spec = parseQuestionSpec(task)
+  const answer = parseQuestionAnswer(task)
+  const label = answer
+    ? (answer.choice === 'other' ? (answer.text ?? 'Other') : (spec?.choices.find((c) => c.key === answer.choice)?.label ?? answer.choice))
+    : 'an unreadable answer'
+  const days = answerAgeDays(task)
+  const age = days == null ? '' : days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`
+  const stale = days != null && days >= STALE_ANSWER_DAYS
+
+  return (
+    <div data-testid={`q-answered-${task.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '3px 0' }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ color: 'var(--sk-t2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {spec?.prompt ?? task.title}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--sk-t3)' }}>
+          You answered “{label}”
+          {age && (
+            <>
+              {' · '}
+              <span data-testid="q-answered-age" style={stale ? { color: 'var(--job-stale)', fontWeight: 500 } : undefined}>
+                {age}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function QuestionRow({ task }: { task: TaskRow }) {

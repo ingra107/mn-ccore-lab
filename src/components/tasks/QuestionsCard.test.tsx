@@ -10,6 +10,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../UndoToast'
 import { QuestionsCard } from './QuestionsCard'
+import { nowInstant } from '../../lib/time'
 import type { TaskRow } from '../../lib/api'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
@@ -145,6 +146,52 @@ describe('QuestionsCard', () => {
     setter.call(textarea, 'It was the Pulmonary HSR Group Meeting')
     textarea.dispatchEvent(new Event('input', { bubbles: true }))
     await until(() => !(host.querySelector('[data-testid="q-submit"]') as HTMLButtonElement).disabled, 'submit enabled after text')
+  })
+
+  it('keeps an answered, unacted question on the card with its answer and age, and no way to clear it', async () => {
+    const at = new Date(Date.now() - 10 * 86400000).toISOString()
+    const { host } = mountCard([
+      makeQuestionTask({ id: 'q-wait' }),
+      makeQuestionTask({ id: 'q-ans', question_answer_json: JSON.stringify({ v: 1, choice: 'c1', via: 'hub', at }) }),
+    ])
+    await until(() => host.querySelector('[data-testid="q-answered-q-ans"]') != null, 'answered row')
+    const row = host.querySelector('[data-testid="q-answered-q-ans"]')!
+    expect(host.textContent).toContain('Answered, not acted on yet')
+    expect(row.textContent).toContain('You answered “Pulmonary HSR Group Meeting”')
+    expect(row.querySelector('[data-testid="q-answered-age"]')!.textContent).toBe('10 days ago')
+    // Clearing an answer a consumer may already be acting on reopens the
+    // question and invites a second effect, so the answered row has no button.
+    expect(row.querySelector('button')).toBeNull()
+    // The count is the waiting rows only: the answered one is not his turn.
+    expect(host.querySelector('.tk-cnt')!.textContent).toBe('1')
+  })
+
+  it('lists a row acted on today as one dim line beside a live question', async () => {
+    const answer = { v: 1, choice: 'c1', via: 'hub', at: '2026-10-22T10:00:00Z' }
+    const { host } = mountCard([
+      makeQuestionTask({ id: 'q-wait' }),
+      makeQuestionTask({
+        id: 'q-done',
+        status: 'done',
+        question_answer_json: JSON.stringify(answer),
+        question_consumed_json: JSON.stringify({ v: 1, consumer: 'meeting_match', at: nowInstant(), answer_at: answer.at, evidence: 'linked' }),
+      }),
+    ])
+    await until(() => host.querySelector('[data-testid="q-acted"]') != null, 'acted line')
+    expect(host.querySelector('[data-testid="q-acted"]')!.textContent).toBe('Acted on today · Which meeting was this?')
+    expect(host.querySelectorAll('[data-testid="q-submit"]').length).toBe(1)
+  })
+
+  it('renders nothing when the only rows were acted on', async () => {
+    const answer = { v: 1, choice: 'c1', via: 'hub', at: '2026-10-22T10:00:00Z' }
+    const { host } = mountCard([makeQuestionTask({
+      status: 'done',
+      question_answer_json: JSON.stringify(answer),
+      question_consumed_json: JSON.stringify({ v: 1, consumer: 'meeting_match', at: nowInstant(), answer_at: answer.at, evidence: 'linked' }),
+    })])
+    await new Promise((r) => setTimeout(r, 30))
+    expect(host.querySelector('[aria-label="Needs you"]')).toBeNull()
+    expect(host.textContent).not.toContain('Acted on today')
   })
 
   it('submits the answer object with no status field', async () => {

@@ -39,7 +39,6 @@ import { FaceDisc } from '../components/today/skin'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import CategoryIcon from '../components/CategoryIcon'
-import WatchButton from '../components/WatchButton'
 import { ProjectOpenTaskCards } from '../components/project/ProjectOpenTaskCards'
 import TaskGridView from '../components/tasks/TaskGridView'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
@@ -615,7 +614,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               {copied ? <Check {...ICON_PROPS} size={14} /> : <Link2 {...ICON_PROPS} size={14} />}
             </Button>
-            <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
             {/* Action menu (archive / delete / duplicate) — PD-7 */}
             <div style={{ position: 'relative' }}>
               <Button size="icon"

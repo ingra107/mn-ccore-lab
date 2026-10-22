@@ -41,7 +41,6 @@ import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
 import { FaceDisc } from '../components/today/skin'
-import WatchButton from '../components/WatchButton'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
 import HoverCard from '../components/HoverCard'
@@ -384,7 +383,6 @@ export default function MeetingDetail() {
                   ))}
                 </select>
                 <LabToggle meeting={meeting} updateMeta={updateMeta} />
-                <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
                 {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
                 <Link
                   to={PATHS.meetingPrep(meeting.id)}

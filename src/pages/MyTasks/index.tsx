@@ -31,7 +31,7 @@ const TaskBoardView = lazyRoute(() => import('../../components/tasks/TaskBoardVi
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
-import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, todayKey } from '../../lib/taskGrouping'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -190,10 +190,12 @@ export default function UnifiedMyTasks() {
     [tasksQuery.data],
   )
   // "Needs you" questions (kind='question', schema v111) — see QuestionsCard.
+  // The local day is a dep so yesterday's acted-on row drops after midnight.
+  const questionDay = todayKey()
   const questionTasks = useMemo(
-    () => allTasks.filter(isQuestionWaiting),
+    () => allTasks.filter((t) => isQuestionOnCard(t, questionDay)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tasksQuery.data],
+    [tasksQuery.data, questionDay],
   )
   // #97: answered approvals (accepted/declined) are dropped too — see
   // isApprovalTriaged. Previously only 'pending' was excluded, so a triaged

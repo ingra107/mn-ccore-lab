@@ -9,6 +9,7 @@
 
 import type { TaskRow } from './api'
 import { isMilestone, isQuestion } from '../../shared/taskKinds'
+import { parseDbUtc } from './time'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
@@ -196,6 +197,114 @@ export function parseQuestionAnswer(t: { question_answer_json?: string | null })
   }
 }
 
+/** `tasks.question_consumed_json`, parsed: the receipt the PB lane that acted
+ *  on the answer writes in the same patch as the close (schema v114). */
+export interface QuestionReceipt {
+  consumer: string
+  at: string
+  answer_at: string
+  evidence: string
+}
+
+/**
+ * The lanes allowed to write a consumer receipt. Hand-mirrored from PB
+ * scripts/db/enums.py::QUESTION_CONSUMERS (the Hub has no generated copy of
+ * that enum yet); a receipt naming any other consumer reads as not acted on,
+ * exactly as PB's ConsumerReceipt refuses it.
+ */
+export const QUESTION_CONSUMERS: ReadonlySet<string> = new Set([
+  'fix_approval', 'meeting_match', 'nightly_work_product',
+  'project_join', 'response_required', 'upstream_brief',
+])
+/** PB enums.QUESTION_ANSWER_VIA. */
+const QUESTION_ANSWER_VIA: ReadonlySet<string> = new Set(['hub', 'telegram', 'policy'])
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v)
+const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.trim() !== ''
+/** Python's `v != 1` treats True as 1 and 1.0 as 1; mirror that. */
+const isVersion1 = (v: unknown) => v === undefined || v === 1 || v === true
+
+type Strict<T> = { ok: true; value: T | null } | { ok: false }
+
+/** PB spec._loads: null stays null, an object passes through, text is parsed,
+ *  junk is an error (never a silent null). */
+function loadsColumn(raw: unknown): { ok: true; value: unknown } | { ok: false } {
+  if (raw === null || raw === undefined || isObj(raw)) return { ok: true, value: raw ?? null }
+  if (typeof raw !== 'string') return { ok: false }
+  try { return { ok: true, value: JSON.parse(raw) } } catch { return { ok: false } }
+}
+
+/** PB state.Answer.from_json: null = unanswered, a bad shape is an error. */
+function strictAnswer(raw: unknown): Strict<QuestionAnswer> {
+  const l = loadsColumn(raw)
+  if (!l.ok) return { ok: false }
+  const d = l.value
+  if (d === null) return { ok: true, value: null }
+  if (!isObj(d) || !isVersion1(d.v)) return { ok: false }
+  const { choice, via, at, text } = d
+  if (!nonEmpty(choice) || typeof via !== 'string' || !QUESTION_ANSWER_VIA.has(via) || !nonEmpty(at)) return { ok: false }
+  if (text !== null && text !== undefined && typeof text !== 'string') return { ok: false }
+  if (choice === 'other' && !nonEmpty(text)) return { ok: false }
+  return { ok: true, value: { v: 1, choice, via: via as QuestionAnswer['via'], at, text: (text as string | null | undefined) ?? undefined } }
+}
+
+/** PB state.ConsumerReceipt.from_json: null = not consumed, a bad shape or an
+ *  unknown consumer is an error. */
+function strictReceipt(raw: unknown): Strict<QuestionReceipt> {
+  const l = loadsColumn(raw)
+  if (!l.ok) return { ok: false }
+  const d = l.value
+  if (d === null) return { ok: true, value: null }
+  if (!isObj(d) || !isVersion1(d.v)) return { ok: false }
+  const { consumer, at, answer_at, evidence } = d
+  if (typeof consumer !== 'string' || !QUESTION_CONSUMERS.has(consumer)) return { ok: false }
+  if (!nonEmpty(at) || !nonEmpty(answer_at) || !nonEmpty(evidence)) return { ok: false }
+  return { ok: true, value: { consumer, at, answer_at, evidence } }
+}
+
+/** A consumer receipt that PB would accept, or null (absent or invalid). */
+export function parseQuestionReceipt(t: { question_consumed_json?: string | null }): QuestionReceipt | null {
+  const r = strictReceipt(t.question_consumed_json)
+  return r.ok ? r.value : null
+}
+
+/**
+ * Where a question sits on the "Needs you" card, derived from the row's own
+ * columns (no flag of its own, so it cannot disagree with them). An exact
+ * mirror of PB scripts/questions/state.py::question_state, with PB's
+ * 'consumed' named 'acted' and PB's 'anomaly' as null:
+ *   - 'waiting'  — no answer, row open: Nick's turn.
+ *   - 'answered' — a valid answer, row open: the PB lane has not acted yet.
+ *                  Before 2026-10-22 nothing showed this state, so an answer
+ *                  nothing acted on vanished from every surface.
+ *   - 'acted'    — done, with a receipt from a known consumer whose answer_at
+ *                  is this answer's `at`.
+ *   - null       — anomaly or off the card: not a question, an answer or
+ *                  receipt that does not parse, deleted, or closed without a
+ *                  matching receipt.
+ */
+export type QuestionCardState = 'waiting' | 'answered' | 'acted'
+
+const CLOSED_STATUSES = new Set(['done', 'deleted'])
+
+export function questionCardState(t: {
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+}): QuestionCardState | null {
+  if (!isQuestionTask(t)) return null
+  const answer = strictAnswer(t.question_answer_json)
+  if (!answer.ok) return null
+  const status = t.status ?? ''
+  if (!CLOSED_STATUSES.has(status)) return answer.value === null ? 'waiting' : 'answered'
+  if (answer.value === null || status !== 'done') return null
+  const receipt = strictReceipt(t.question_consumed_json)
+  if (!receipt.ok || receipt.value === null || receipt.value.answer_at !== answer.value.at) return null
+  return 'acted'
+}
+
 /**
  * A question row still waiting on Nick: unanswered, and not closed out from
  * under it (a consumer can close a question row directly on a terminal
@@ -208,10 +317,29 @@ export function isQuestionWaiting(t: {
   question_answer_json?: string | null
   status?: string | null
 }): boolean {
-  return isQuestionTask(t)
-    && t.question_answer_json == null
-    && t.status !== 'done'
-    && t.status !== 'deleted'
+  return questionCardState(t) === 'waiting'
+}
+
+/**
+ * The rows the "Needs you" card is handed: every question still waiting or
+ * answered-but-not-acted-on, plus those acted on today (the receipt's local
+ * day). An older acted-on row is history, not news.
+ */
+export function isQuestionOnCard(t: {
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+}, today: string = todayKey()): boolean {
+  const state = questionCardState(t)
+  if (state === 'waiting' || state === 'answered') return true
+  if (state !== 'acted') return false
+  return localDayKey(parseDbUtc(parseQuestionReceipt(t)!.at)) === today
+}
+
+function localDayKey(d: Date): string {
+  if (isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 /** Today's date as YYYY-MM-DD string in browser local time. */

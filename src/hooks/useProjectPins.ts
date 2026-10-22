@@ -10,9 +10,6 @@
 // pin). A network failure, 401/403 or 5xx is not an answer about the pin, so
 // that slug stays in the key and the next load retries it (lib/pinImport.ts).
 // The key is removed only when nothing is left to retry.
-//
-// Not to be confused with useWatchlist (localStorage 'mnccore-watchlist-v1',
-// the WatchButton): that is a separate, browser-local feature.
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'

@@ -361,7 +361,7 @@ export default function MemberPage() {
       ]}
     >
       {/* View Trajectory + Watch: members only, hidden for signed-out visitors */}
-      {slug && <MemberProfileActions slug={slug} teamBase={teamBase} name={member.name} />}
+      {slug && <MemberProfileActions slug={slug} teamBase={teamBase} />}
 
       <GrantsSection grants={grants} id="grants" title="Funding" />
       {trainees.length > 0 && <MenteesSection mentees={trainees} id="trainees" title="Trainees" />}

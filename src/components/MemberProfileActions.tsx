@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { TrendingUp } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
-import WatchButton from './WatchButton'
 
-// The member page's "View Trajectory" and "Watch" buttons. They are tools for
-// signed-in members (a watchlist is a member's own), so a signed-out visitor
-// on the public /team/:slug sees neither (prod check 2026-10-11). The same
-// component serves /portal/team/:slug, where the viewer is signed in.
-export default function MemberProfileActions({ slug, teamBase, name }: { slug: string; teamBase: string; name: string }) {
+// The member page's "View Trajectory" button. It is a tool for signed-in
+// members, so a signed-out visitor on the public /team/:slug does not see it
+// (prod check 2026-10-11). The same component serves /portal/team/:slug, where
+// the viewer is signed in. (The per-browser Watch button that sat beside it was
+// retired 2026-10-22, PB #911: nothing ever read the list it kept.)
+export default function MemberProfileActions({ slug, teamBase }: { slug: string; teamBase: string }) {
   const { isAuthenticated } = useAuth()
   if (!isAuthenticated) return null
   return (
@@ -17,7 +17,6 @@ export default function MemberProfileActions({ slug, teamBase, name }: { slug: s
         <TrendingUp {...ICON_PROPS} size={12} />
         View Trajectory
       </Link>
-      <WatchButton id={slug} type="person" label={name} slug={slug} />
     </div>
   )
 }

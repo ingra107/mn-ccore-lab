@@ -1,5 +1,5 @@
-// The public member page (/team/:slug) hides "View Trajectory" and "Watch"
-// from a signed-out visitor (prod check 2026-10-11); a signed-in member sees both.
+// The public member page (/team/:slug) hides "View Trajectory" from a
+// signed-out visitor (prod check 2026-10-11); a signed-in member sees it.
 import { describe, it, expect, afterEach } from 'vitest'
 import type { ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -34,7 +34,7 @@ afterEach(() => {
   mounted = []
 })
 
-const actions = <MemberProfileActions slug="casey-eddington" teamBase="/team" name="Casey Eddington" />
+const actions = <MemberProfileActions slug="casey-eddington" teamBase="/team" />
 
 describe('MemberProfileActions', () => {
   it('shows nothing to a signed-out visitor', async () => {
@@ -48,11 +48,11 @@ describe('MemberProfileActions', () => {
     expect(h.textContent).toBe('')
   })
 
-  it('shows View Trajectory and Watch to a signed-in member', async () => {
+  it('shows View Trajectory to a signed-in member, and no Watch button (retired, PB #911)', async () => {
     const h = await mount(actions, true)
     const link = h.querySelector('a')!
     expect(link.getAttribute('href')).toBe('/team/casey-eddington/trajectory')
     expect(h.textContent).toContain('View Trajectory')
-    expect(h.textContent).toContain('Watch')
+    expect(h.textContent).not.toContain('Watch')
   })
 })

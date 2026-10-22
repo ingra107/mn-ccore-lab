@@ -63,7 +63,7 @@ import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionWaiting, civilDatePlusDays } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, civilDatePlusDays } from '../../lib/taskGrouping'
 import { isStalledProject, projectMovedAt } from '../../lib/taskConstants'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
@@ -126,9 +126,14 @@ export default function TodayPage() {
   )
   // "Needs you" questions (kind='question', schema v111) are surfaced in
   // QuestionsCard, above PendingMeetingsCard — same double-render guard.
+  // Waiting AND answered-not-acted-on (isQuestionOnCard), so an answer no
+  // PB lane has picked up stays visible instead of vanishing.
+  // The local day is a dep: an acted-on row shows only on its own day, so
+  // the list must recompute after midnight, not only when the data changes.
+  const questionDay = todayKey()
   const questionTasks: TaskRow[] = useMemo(
-    () => (tasksQuery.data ?? []).filter(isQuestionWaiting),
-    [tasksQuery.data],
+    () => (tasksQuery.data ?? []).filter((t) => isQuestionOnCard(t, questionDay)),
+    [tasksQuery.data, questionDay],
   )
   // #97: ANSWERED approvals (accepted/declined) drop out entirely — they are
   // triage artifacts, not work. See isApprovalTriaged for why this is filtered

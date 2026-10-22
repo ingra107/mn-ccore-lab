@@ -597,7 +597,7 @@ test.describe('PROJECT — Full exploration', () => {
     }
   })
 
-  test('Project detail → 5 tabs → inline status edit → post update → watch', async ({ page, request }) => {
+  test('Project detail → 5 tabs → inline status edit → post update', async ({ page, request }) => {
     const slug = (await (await request.get(`${BASE}/api/projects`)).json()).data?.[0]?.slug
     if (!slug) { test.skip(); return }
 
@@ -613,10 +613,6 @@ test.describe('PROJECT — Full exploration', () => {
         await page.screenshot({ path: `review/daily-project-${tab.toLowerCase()}.png` })
       }
     }
-
-    // Watch button
-    const watch = page.locator('button:has-text("Watch"), button:has-text("Unwatch")')
-    console.log(`Watch button: ${await watch.first().isVisible().catch(() => false)}`)
   })
 })
 

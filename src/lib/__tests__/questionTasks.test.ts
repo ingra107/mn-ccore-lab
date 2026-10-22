@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isQuestionTask, isQuestionWaiting, parseQuestionSpec, parseQuestionAnswer } from '../taskGrouping'
+import { isQuestionTask, isQuestionWaiting, isQuestionOnCard, questionCardState, parseQuestionSpec, parseQuestionAnswer } from '../taskGrouping'
 
 // schema v111 / PB mig 130 (2026-09-17): kind='question' rows waiting on
 // Nick's answer. See taskGrouping.ts and PB Scratch/plans/sequential-petting-sky.md.
@@ -46,6 +46,63 @@ describe('isQuestionWaiting', () => {
 
   it('is false for a non-question task', () => {
     expect(isQuestionWaiting({ kind: 'task', question_answer_json: null, status: 'todo' })).toBe(false)
+  })
+})
+
+// 2026-10-22: an answered question nothing had acted on showed on no surface.
+const ANSWER = '{"v":1,"choice":"c1","via":"hub","at":"2026-10-12T11:46:51.313Z"}'
+const receipt = (at: string) => JSON.stringify({ v: 1, consumer: 'fix_approval', at, answer_at: '2026-10-12T11:46:51.313Z', evidence: 'x' })
+
+describe('questionCardState', () => {
+  it('reads the three states off the row', () => {
+    expect(questionCardState({ kind: 'question', question_answer_json: null, status: 'todo' })).toBe('waiting')
+    expect(questionCardState({ kind: 'question', question_answer_json: ANSWER, status: 'todo' })).toBe('answered')
+    expect(questionCardState({ kind: 'question', question_answer_json: ANSWER, status: 'in_progress' })).toBe('answered')
+    expect(questionCardState({
+      kind: 'question', question_answer_json: ANSWER, question_consumed_json: receipt('2026-10-12T12:00:00Z'), status: 'done',
+    })).toBe('acted')
+  })
+
+  it('keeps deleted rows, receipt-less closes and non-questions off the card', () => {
+    expect(questionCardState({ kind: 'question', question_answer_json: ANSWER, status: 'deleted' })).toBeNull()
+    expect(questionCardState({ kind: 'question', question_answer_json: ANSWER, status: 'done' })).toBeNull()
+    expect(questionCardState({ kind: 'question', question_answer_json: null, status: 'done' })).toBeNull()
+    expect(questionCardState({ kind: 'task', question_answer_json: null, status: 'todo' })).toBeNull()
+  })
+
+  it('reads the answer the way PB does: JSON null is unanswered, junk is neither', () => {
+    expect(questionCardState({ kind: 'question', question_answer_json: 'null', status: 'todo' })).toBe('waiting')
+    for (const junk of ['{bad', '{}', '', '[]', '{"v":1,"choice":"other","via":"hub","at":"x"}', '{"v":1,"choice":"c1","via":"email","at":"x"}']) {
+      expect(questionCardState({ kind: 'question', question_answer_json: junk, status: 'todo' }), junk).toBeNull()
+    }
+  })
+
+  it('counts acted only for a known consumer whose answer_at matches the answer', () => {
+    const row = (consumed: string) => ({ kind: 'question', question_answer_json: ANSWER, question_consumed_json: consumed, status: 'done' })
+    expect(questionCardState(row(receipt('2026-10-12T12:00:00Z')))).toBe('acted')
+    expect(questionCardState(row(JSON.stringify({ v: 1, consumer: 'fix_approval', at: 'x', answer_at: '2026-10-01T00:00:00Z', evidence: 'x' })))).toBeNull()
+    expect(questionCardState(row(JSON.stringify({ v: 1, consumer: 'a_person', at: 'x', answer_at: '2026-10-12T11:46:51.313Z', evidence: 'x' })))).toBeNull()
+    expect(questionCardState(row(JSON.stringify({ v: 1, consumer: 'fix_approval', at: 'x', answer_at: '2026-10-12T11:46:51.313Z' })))).toBeNull()
+    expect(questionCardState(row('null'))).toBeNull()
+  })
+})
+
+describe('isQuestionOnCard', () => {
+  it('holds waiting and answered rows however old the answer', () => {
+    expect(isQuestionOnCard({ kind: 'question', question_answer_json: null, status: 'todo' }, '2026-10-22')).toBe(true)
+    expect(isQuestionOnCard({ kind: 'question', question_answer_json: ANSWER, status: 'todo' }, '2026-10-22')).toBe(true)
+  })
+
+  it('holds an acted-on row only on the local day its receipt landed', () => {
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const acted = { kind: 'question', question_answer_json: ANSWER, question_consumed_json: receipt(now.toISOString()), status: 'done' }
+    expect(isQuestionOnCard(acted, today)).toBe(true)
+    expect(isQuestionOnCard(acted, '1999-01-01')).toBe(false)
+  })
+
+  it('drops deleted rows', () => {
+    expect(isQuestionOnCard({ kind: 'question', question_answer_json: ANSWER, status: 'deleted' }, '2026-10-22')).toBe(false)
   })
 })
 

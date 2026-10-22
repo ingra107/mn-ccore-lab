@@ -37,7 +37,6 @@ const DEVICE_LOCAL: Record<string, string> = {
   'hooks/useLauncherInstalled.ts': 'whether this machine has the launcher',
   'hooks/useOnboarding.ts': 'onboarding steps seen in this browser',
   'hooks/useProjectPins.ts': 'retry list of the one-time pin import (pins are on the server)',
-  'hooks/useWatchlist.ts': 'watch button list (open question for Nick: sync or retire)',
   'lib/dailyThoughts.ts': 'per-browser day blob, read once for migration',
   'pages/Dashboard.tsx': 'card click counts (usage telemetry)',
   'pages/MyTasks/views/LanesView.tsx': 'lane fold state',
