@@ -8,8 +8,9 @@
  * so a member's @quickchat from a phone ran on Nick's machine.
  *
  * Drives the REAL worker (full middleware stack, real migrated schema): a
- * member session is refused and writes nothing; the PI session and the PB API
- * key still create; the pending feed answers only the PI and the API key.
+ * member session is refused and writes nothing; the PI session (CF Access JWT)
+ * creates; the PB API key and the test-mode identity are refused on create/refire (2026-10-22, a leaked key must not queue
+ * a session) but still claims; the pending feed answers only the PI and the key.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -37,14 +38,25 @@ beforeEach(() => {
   env = { DB: d1Adapter(db), TEST_MODE_KEY: TEST_KEY, PB_API_KEY: API_KEY, REQUIRE_AUTH: '1' } as unknown as Env
 })
 
+/** An unsigned CF Access-shaped JWT: decodes, never verifies (local-dev env only). */
+function fakeJwt(email: string): string {
+  const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  return `${b64({ alg: 'RS256', kid: 'k' })}.${b64({ email })}.c2ln`
+}
+
+// who: 'apikey' | 'jwt:<email>' (a CF Access session, the UI identity) | '<email>' (test-mode identity)
 async function call(method: string, path: string, who: 'apikey' | string, body?: unknown) {
   const headers: Record<string, string> = {}
+  let e = env
   if (who === 'apikey') headers.Authorization = `Bearer ${API_KEY}`
-  else { headers['X-Test-Mode-Key'] = TEST_KEY; headers['X-Test-User'] = who }
+  else if (who.startsWith('jwt:')) {
+    headers['Cf-Access-Jwt-Assertion'] = fakeJwt(who.slice(4))
+    e = { DB: env.DB, PB_API_KEY: API_KEY, HUB_LOCAL_DEV: '1' } as unknown as Env
+  } else { headers['X-Test-Mode-Key'] = TEST_KEY; headers['X-Test-User'] = who }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const res = await worker.fetch(
     new Request(`https://hub.test${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }),
-    env, CTX,
+    e, CTX,
   )
   return { status: res.status, text: await res.text() }
 }
@@ -67,16 +79,50 @@ describe('POST /api/launch-log is PI-only', () => {
     expect(launches()).toBe(1)
   })
 
-  it('the PI session creates a launch', async () => {
-    const r = await call('POST', '/api/launch-log', PI_EMAIL, { tag: 'quickchat', seed: 'pi text', origin: 'mobile' })
+  it('the PI session (CF Access JWT) creates a launch', async () => {
+    const r = await call('POST', '/api/launch-log', `jwt:${PI_EMAIL}`, { tag: 'quickchat', seed: 'pi text', origin: 'mobile' })
     expect(r.status).toBe(201)
     expect(launches()).toBe(1)
   })
 
-  it('the PB API key creates a launch', async () => {
-    const r = await call('POST', '/api/launch-log', 'apikey', { tag: 'workon', seed: 'k', origin: 'computer', project_slug: 'p' })
-    expect(r.status).toBe(201)
+  it('the PB API key is refused (403) on create and writes nothing', async () => {
+    for (const origin of ['computer', 'mobile']) {
+      const r = await call('POST', '/api/launch-log', 'apikey', { tag: 'workon', seed: 'k', origin, project_slug: 'p' })
+      expect(r.status).toBe(403)
+    }
+    expect(launches()).toBe(0)
+  })
+
+  it('the PB API key cannot refire a launch into a new row', async () => {
+    insertRow(db, 'launch_log', { id: 'lnch_k', tag: 'quickchat', seed: 'x', origin: 'mobile', status: 'completed', requested_by: PI_EMAIL, expires_at: '2999-01-01 00:00:00' })
+    const r = await call('POST', '/api/launch-log/lnch_k/refire', 'apikey')
+    expect(r.status).toBe(403)
     expect(launches()).toBe(1)
+  })
+
+  it('the test-mode identity is refused even as the PI email (shared secret, not a person)', async () => {
+    for (const origin of ['computer', 'mobile']) {
+      const r = await call('POST', '/api/launch-log', PI_EMAIL, { tag: 'quickchat', seed: 't', origin })
+      expect(r.status).toBe(403)
+    }
+    insertRow(db, 'launch_log', { id: 'lnch_t', tag: 'quickchat', seed: 'x', origin: 'mobile', status: 'completed', requested_by: PI_EMAIL, expires_at: '2999-01-01 00:00:00' })
+    expect((await call('POST', '/api/launch-log/lnch_t/refire', PI_EMAIL)).status).toBe(403)
+    expect(launches()).toBe(1)
+  })
+
+  it('the PI session (UI identity) still creates and refires', async () => {
+    const c = await call('POST', '/api/launch-log', `jwt:${PI_EMAIL}`, { tag: 'workon', seed: 'ui', origin: 'computer', project_slug: 'p' })
+    expect(c.status).toBe(201)
+    const id = (JSON.parse(c.text) as { data: { id: string } }).data.id
+    const r = await call('POST', `/api/launch-log/${id}/refire`, `jwt:${PI_EMAIL}`)
+    expect(r.status).toBe(201)
+    expect(launches()).toBe(2)
+  })
+
+  it('the PB API key still claims a pending launch', async () => {
+    insertRow(db, 'launch_log', { id: 'lnch_c', tag: 'quickchat', seed: 'x', origin: 'mobile', status: 'pending', requested_by: PI_EMAIL, expires_at: '2999-01-01 00:00:00' })
+    const r = await call('POST', '/api/launch-log/lnch_c/claim', 'apikey')
+    expect(r.status).toBe(200)
   })
 })
 

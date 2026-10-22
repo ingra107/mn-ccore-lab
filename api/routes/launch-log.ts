@@ -16,8 +16,11 @@ const PAGE_ROUTE_MAX = 512; // stored page_route cap (a pathname + short query) 
 // Any signed-in member could create one, so a member's @quickchat from a phone
 // started a session on Nick's machine seeded with the member's text. Refusing
 // the write here (refire goes through this function too) means that row can
-// no longer exist. isPi is the route's isPiRequest result: a PI email
-// session or the PB API key.
+// no longer exist. isPi is true ONLY for a PI email session (CF Access JWT):
+// the route passes `isPi && apiKeyValid !== true`, so the shared PB API key is
+// refused here (2026-10-22). A leaked key must not queue a seeded session on
+// the PI's machine. The key still claims, updates status and lists (those are
+// separate handlers); the PB desk launch no longer mints a row (resolve_launch.py).
 export async function handleCreateLaunch(request: Request, user: AuthUser, env: Env, isPi: boolean): Promise<Response> {
   if (!isPi) return error('Forbidden — launches start a session on the PI\'s machine; PI access only', 403);
   const b = await request.json() as {

@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import type { Env } from './types';
 import { slugClaimCheck } from './lib/project-slug';
 import { taskTitleTakenCheck } from './lib/task-dedup-sql';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, isTestModeRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
 import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
@@ -2853,9 +2853,13 @@ defineRoute({
 });
 
 // Launch log writes
-defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), c.get('isPi') === true) });
+// A launch starts a session on the PI's machine, so only a PERSON may queue one:
+// a PI email JWT. The shared PB API key and the shared TEST_MODE_KEY identity are refused.
+const personPi = (c: Context<AppEnv>) =>
+  c.get('isPi') === true && c.get('apiKeyValid') !== true && !isTestModeRequest(R(c), E(c));
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), personPi(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), c.get('isPi') === true) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), personPi(c)) });
 // PI/API-key gated in-handler (isPiRequest — same idiom as /api/bug-reports
 // above, not the /api/pb/* path middleware). Backlog #250: closes the gap
 // where any team member holding (or guessing) the opaque lnch_ id could

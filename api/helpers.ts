@@ -158,6 +158,14 @@ async function resolveAuthUser(request: Request, env: Env): Promise<AuthUser | n
   return { ...identity, slug: await resolveSlug(env, identity.email) };
 }
 
+/** True when the request carries the shared TEST_MODE_KEY secret (the test-user
+ *  identity path in readAuthIdentity). A shared secret, not a person: callers
+ *  that must be a person (launch create/refire) refuse it. */
+export function isTestModeRequest(request: Request, env: Env): boolean {
+  const testModeKey = (env as unknown as { TEST_MODE_KEY?: string }).TEST_MODE_KEY;
+  return !!testModeKey && request.headers.get('X-Test-Mode-Key') === testModeKey;
+}
+
 async function readAuthIdentity(request: Request, env: Env): Promise<Omit<AuthUser, 'slug'> | null> {
   // Test-mode auth bypass — uses the same TEST_MODE_KEY secret that gates
   // the DB_TEST swap, but is INDEPENDENT of the swap so the audit can hit
