@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
+import { useUserPref } from './useUserPref'
 
 /**
- * T-29 Lab Preferences — per-user thresholds for staleness / "Needs your
- * attention" surfaces. Stored in localStorage (not D1) since these are
- * individual triage preferences, not shared lab config.
+ * T-29 Lab Preferences — per-person thresholds for staleness / "Needs your
+ * attention" surfaces. Individual triage preferences, not shared lab config,
+ * so each person has their own; stored on the server (pref 'labprefs',
+ * useUserPref) so they are the same on every device the person signs in on
+ * (PB #911: these change WHAT is flagged stale).
  *
  * P2-9 (2026-06-09) — ONE staleness mechanism. "Stale" everywhere means
  * days-since-meaningful-movement, but with sensible per-domain default
@@ -21,28 +24,11 @@ export interface LabPrefs {
   projectStaleDays: number
 }
 
-const LS_KEY = 'mnccore.labprefs.v1'
 const DEFAULTS: LabPrefs = {
   manuscriptsReviewDays: 7,
   manuscriptsStaleDays: 30,
   taskStaleDays: 10,
   projectStaleDays: 30,
-}
-
-function readPrefs(): LabPrefs {
-  try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (!raw) return DEFAULTS
-    const parsed = JSON.parse(raw) as Partial<LabPrefs>
-    return {
-      manuscriptsReviewDays: clampInt(parsed.manuscriptsReviewDays, DEFAULTS.manuscriptsReviewDays),
-      manuscriptsStaleDays: clampInt(parsed.manuscriptsStaleDays, DEFAULTS.manuscriptsStaleDays),
-      taskStaleDays: clampInt(parsed.taskStaleDays, DEFAULTS.taskStaleDays),
-      projectStaleDays: clampInt(parsed.projectStaleDays, DEFAULTS.projectStaleDays),
-    }
-  } catch {
-    return DEFAULTS
-  }
 }
 
 function clampInt(v: unknown, fallback: number): number {
@@ -51,31 +37,23 @@ function clampInt(v: unknown, fallback: number): number {
   return Math.min(365, Math.floor(n))
 }
 
-export function useLabPrefs() {
-  const [prefs, setPrefs] = useState<LabPrefs>(() => readPrefs())
+/** A stored value (any shape, any build) as well-formed prefs. */
+function validate(stored: unknown): LabPrefs {
+  const p = (stored && typeof stored === 'object' ? stored : {}) as Partial<LabPrefs>
+  return {
+    manuscriptsReviewDays: clampInt(p.manuscriptsReviewDays, DEFAULTS.manuscriptsReviewDays),
+    manuscriptsStaleDays: clampInt(p.manuscriptsStaleDays, DEFAULTS.manuscriptsStaleDays),
+    taskStaleDays: clampInt(p.taskStaleDays, DEFAULTS.taskStaleDays),
+    projectStaleDays: clampInt(p.projectStaleDays, DEFAULTS.projectStaleDays),
+  }
+}
 
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => { if (e.key === LS_KEY) setPrefs(readPrefs()) }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [])
+export function useLabPrefs() {
+  const [prefs, setPrefs, reset] = useUserPref<LabPrefs>('labprefs', DEFAULTS, validate)
 
   const update = useCallback((patch: Partial<LabPrefs>) => {
-    setPrefs((prev) => {
-      const next = { ...prev, ...patch }
-      next.manuscriptsReviewDays = clampInt(next.manuscriptsReviewDays, DEFAULTS.manuscriptsReviewDays)
-      next.manuscriptsStaleDays = clampInt(next.manuscriptsStaleDays, DEFAULTS.manuscriptsStaleDays)
-      next.taskStaleDays = clampInt(next.taskStaleDays, DEFAULTS.taskStaleDays)
-      next.projectStaleDays = clampInt(next.projectStaleDays, DEFAULTS.projectStaleDays)
-      try { localStorage.setItem(LS_KEY, JSON.stringify(next)) } catch { /* unavailable */ }
-      return next
-    })
-  }, [])
-
-  const reset = useCallback(() => {
-    try { localStorage.removeItem(LS_KEY) } catch { /* unavailable */ }
-    setPrefs(DEFAULTS)
-  }, [])
+    setPrefs((prev) => validate({ ...prev, ...patch }))
+  }, [setPrefs])
 
   return { prefs, update, reset, defaults: DEFAULTS }
 }

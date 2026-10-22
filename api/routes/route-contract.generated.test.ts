@@ -208,7 +208,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // /api/ai-requests/:id/release (caller: PB hub_ai_listener.py).
     // 269 as of 2026-10-14 -- POST /api/ai-requests/:id/alert-sent (+1): the
     // exhaustion alert stays owed until the listener acks it (cold review F8).
-    expect(ROUTE_REGISTRY).toHaveLength(269)
+    // 272 as of 2026-10-21 -- a person's view preferences, schema-v143 (+3,
+    // PB #911): GET /api/user-prefs, PUT + DELETE /api/user-prefs/:key
+    // (api/routes/userPrefs.ts).
+    expect(ROUTE_REGISTRY).toHaveLength(272)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
