@@ -29,7 +29,7 @@
 //   non-question  a spec or answer only on a kind='question' row
 //             -> question_field_on_non_question
 // plus questionPatchError (what the write carries): question_spec_immutable,
-// question_choice_unknown.
+// question_choice_unknown, question_kind_immutable.
 //
 // Every error string opens with its code and a colon, the same shape
 // applyPatch's `lmm_invalid:` uses, so a caller can match on the code.
@@ -58,12 +58,12 @@ export const QUESTION_ERROR_CODES = {
   question_spec_immutable: 'question_rule',
   question_choice_unknown: 'question_rule',
   question_answer_frozen: 'question_rule',
+  question_kind_immutable: 'question_rule',
   question_spec_missing: 'question_shape',
   question_spec_invalid: 'question_shape',
   question_answer_invalid: 'question_shape',
   question_telegram_invalid: 'question_shape',
   question_unanswered: 'question_consumer',
-  question_consumer_close_only: 'question_consumer',
   question_consumed_hub_ui: 'question_consumer',
   question_consumed_invalid: 'question_consumer',
   question_unconsumed: 'question_consumer',
@@ -235,6 +235,15 @@ function specChoiceKeys(spec: unknown): Set<string> | null {
  *                   keys (or `other`). Judged only when the write carries the
  *                   answer, so an old row is never refused for an answer it
  *                   already holds.                   -> question_choice_unknown
+ *   kind fixed      on an EXISTING row, a write may not move it into or out
+ *                   of kind='question' (#8842). questionConsumedError judges
+ *                   a close by the effective kind, so a flip question->task
+ *                   (one write, or two) would walk a close past the receipt
+ *                   rule. task<->milestone stays legal; re-sending the same
+ *                   kind is not a change. Retire the row (op=delete) and mint
+ *                   a new one instead. schema-v142 refuses the same flip in
+ *                   D1 for any writer that bypasses applyPatch.
+ *                                                    -> question_kind_immutable
  *
  * `current` is {} on insert; `patch` is the write's own (normalized) fields.
  */
@@ -243,6 +252,15 @@ export function questionPatchError(
   patch: Record<string, unknown>,
 ): QuestionError | null {
   const has = (c: string) => Object.prototype.hasOwnProperty.call(patch, c);
+
+  // An insert passes current = {}; only an existing row has a kind to keep.
+  if (has('kind') && Object.keys(current).length > 0) {
+    const wasQuestion = (current.kind ?? 'task') === 'question';
+    const isQuestion = (patch.kind ?? 'task') === 'question';
+    if (wasQuestion !== isQuestion) {
+      return `question_kind_immutable: a task's question-ness is fixed when it is created (kind ${String(current.kind ?? 'task')} -> ${String(patch.kind ?? 'task')} refused); retire it (op=delete) and mint a new row instead`;
+    }
+  }
 
   const storedSpec = current.question_spec_json;
   if (
@@ -299,48 +317,12 @@ export function questionAnswerFrozenError(
 /** Origin prefix applyMutation stamps on every Hub-UI write (mutations.ts). */
 export const HUB_UI_ORIGIN_PREFIX = 'hub_ui:';
 
-/**
- * #8842 R4 interim containment (Level 2; the Level-1 fix, a consumer-only
- * receipt column, is planned separately). "Answered is not done: the CONSUMER
- * closes the row" was a rule nothing enforced: a person could tick Done on an
- * answered question in the Hub and PB's question_state would then read it as
- * `consumed`, so /process would never build what the answer approved.
- *
- * Refuses a Hub-UI write that moves a question from any open status to
- * 'done'. Retiring a moot question stays allowed through op=delete (and
- * through status 'deleted' once it is answered; questionRowError refuses
- * that on an unanswered one).
- *
- * What it trusts: `origin_machine` is `hub_ui:<route>` for every Hub-UI
- * write, because Hub routes write tasks only through applyMutation, which
- * stamps it server-side (route_no_raw_writes.test.ts bans raw task writes in
- * the routes). What it cannot stop: /api/mutations takes origin_machine from
- * the caller. That endpoint is PI / API-key only (handleMutations
- * isPiRequest), so only PB or Nick's own key can send a non-hub_ui origin,
- * and PB is the consumer. A PI caller that labels a Hub-UI close as 'home'
- * gets through; so does a raw D1 write.
- */
-export function questionConsumerCloseError(
-  current: Record<string, unknown>,
-  effective: Record<string, unknown>,
-  originMachine: string | undefined,
-): QuestionError | null {
-  if (!(originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) return null;
-  const isQuestion = (current.kind ?? 'task') === 'question' || effective.kind === 'question';
-  if (!isQuestion) return null;
-  if (current.status === 'done' || effective.status !== 'done') return null;
-  // Names only what works from every state: op=delete (the Hub's Delete
-  // button). status='deleted' is refused on an UNANSWERED question by
-  // questionRowError, so it is not offered here.
-  return "question_consumer_close_only: a question is closed by the PB consumer after it acts on the answer; to retire it instead, delete the task (op=delete)";
-}
-
 /** The consumer-receipt column (schema-v114, PB mig 135, #8842 R4). */
 export const QUESTION_CONSUMED_COL = 'question_consumed_json';
 
 /**
- * #8842 R4, the construction that replaces questionConsumerCloseError's
- * inference. PB reads a question as `consumed` only from a receipt the
+ * #8842 R4: consumption is a written fact, not an inference from `status`.
+ * PB reads a question as `consumed` only from a receipt the
  * consumer wrote in the same patch as the close (PB scripts/questions/
  * state.py question_state), never from `status`. This keeps the receipt
  * honest at the one write path:
@@ -352,27 +334,34 @@ export const QUESTION_CONSUMED_COL = 'question_consumed_json';
  *      parses to {v:1, consumer, at, answer_at, evidence} with non-empty
  *      strings, and its answer_at equals the effective answer's `at`, so a
  *      receipt cannot vouch for an answer it never saw -> question_consumed_invalid
- *   3. `enforceClose` (lab_settings hub_validate_question_consumed): a
- *      question may ENTER 'done' only when the same write carries a receipt.
+ *   3. a question may ENTER 'done' only when the same write carries a
+ *      receipt. Unconditional since Hub v142 (it was behind lab_settings
+ *      hub_validate_question_consumed, which a flag-read failure turned
+ *      off); it subsumes the Hub-UI-close refusal it replaced, because a
+ *      hub_ui: write can never carry a receipt (rule 1).
  *                                                       -> question_unconsumed
  *
  * `current` is {} on insert. `patch` is the mutation's own fields (not the
- * effective row): rules 1 and 3 are about what THIS write carries.
+ * effective row): rules 1 and 3 are about what THIS write carries. Rule 3
+ * reads `effective.kind`, which is the stored kind on an existing row:
+ * questionPatchError refuses a write that moves a row into or out of
+ * 'question' (question_kind_immutable), so a kind flip cannot get a close
+ * past this rule, and schema-v142 refuses the flip in D1 too.
  * Deletion (status 'deleted', op=delete) is untouched: retiring is not
  * consuming, and PB reads a deleted question as `anomaly`, never `consumed`.
  *
- * What it trusts: the same as questionConsumerCloseError -- origin_machine
- * is stamped server-side for Hub-UI writes; /api/mutations is PI / API-key
- * only. A PI caller that labels itself 'home' and fabricates a receipt gets
- * through, and so does a raw D1 write. Level 2 (one chokepoint); Level 1
- * would need per-writer authorization in D1, which does not exist.
+ * What it trusts: origin_machine is `hub_ui:<route>` for every Hub-UI write,
+ * stamped server-side by applyMutation (route_no_raw_writes.test.ts bans raw
+ * task writes in the routes); /api/mutations is PI / API-key only. A PI
+ * caller that labels itself 'home' and fabricates a receipt gets through,
+ * and so does a raw D1 write. Level 2 (one chokepoint); Level 1 would need
+ * per-writer authorization in D1, which does not exist.
  */
 export function questionConsumedError(
   current: Record<string, unknown>,
   effective: Record<string, unknown>,
   patch: Record<string, unknown>,
   originMachine: string | undefined,
-  enforceClose: boolean,
 ): QuestionError | null {
   const carries = Object.prototype.hasOwnProperty.call(patch, QUESTION_CONSUMED_COL);
   if (carries && (originMachine ?? '').startsWith(HUB_UI_ORIGIN_PREFIX)) {
@@ -407,7 +396,6 @@ export function questionConsumedError(
     }
   }
   if (
-    enforceClose &&
     isQuestion &&
     effective.status === 'done' &&
     current.status !== 'done' &&
