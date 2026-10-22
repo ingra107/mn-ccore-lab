@@ -492,9 +492,8 @@ export function assertProtectedNotNull(
  *   hub_validate_conflict_hash
  *   hub_validate_completion_tombstone
  *   hub_dedup_adoptable
- *   hub_validate_question_consumed  (#8842 R4, schema-v114, seeded OFF: a
- *     question may enter 'done' only with the PB consumer's receipt in the
- *     same write; ON only after both PB machines run the receipt writer)
+ * (hub_validate_question_consumed, #8842 R4, was retired at schema-v142: its
+ * rule is unconditional now, because this all-OFF fallback turned it off.)
  *
  * DEPLOY POSTURE (original rollout): seeded OFF in prod; validators dormant
  * (zero behavior change) until each flag is flipped ON via a single UPDATE
@@ -511,7 +510,6 @@ export interface ValidationFlags {
   conflict_hash: boolean;
   completion_tombstone: boolean;
   dedup: boolean;
-  question_consumed: boolean;
 }
 
 const VALIDATION_FLAGS_DEFAULT: ValidationFlags = {
@@ -519,7 +517,6 @@ const VALIDATION_FLAGS_DEFAULT: ValidationFlags = {
   conflict_hash: false,
   completion_tombstone: false,
   dedup: false,
-  question_consumed: false,
 };
 
 const VALIDATION_FLAG_KEYS: Record<keyof ValidationFlags, string> = {
@@ -527,7 +524,6 @@ const VALIDATION_FLAG_KEYS: Record<keyof ValidationFlags, string> = {
   conflict_hash: 'hub_validate_conflict_hash',
   completion_tombstone: 'hub_validate_completion_tombstone',
   dedup: 'hub_dedup_adoptable',
-  question_consumed: 'hub_validate_question_consumed',
 };
 
 let validationFlagsCache: { flags: ValidationFlags; fetchedAt: number } | null = null;

@@ -16,7 +16,7 @@ const USER: AuthUser = { email: 'x@umn.edu', slug: 'x', isPi: false };
 function setup() {
   const db = prodSchemaDb();
   const cols = db.prepare('PRAGMA table_info(projects)').all() as Array<{ name: string; notnull: number; dflt_value: unknown; pk: number }>;
-  const vals: Record<string, unknown> = { id: 'proj_A', slug: 'a', title: 'A', category: 'CLIF' };
+  const vals: Record<string, unknown> = { id: 'proj_A', slug: 'a', title: 'A', category: 'CLIF', status: 'active' };
   for (const c of cols) if (c.notnull && c.dflt_value == null && !c.pk && !(c.name in vals)) vals[c.name] = 'x';
   const keys = Object.keys(vals);
   seedProjectHome(db, vals);

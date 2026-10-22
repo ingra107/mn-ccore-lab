@@ -296,6 +296,21 @@ describe('question refusals: three codes, judged on the Hub row', () => {
     expect(r.reason).toMatch(/^apply error: question_field_on_non_question:/);
   });
 
+  // #8842 (schema-v142): these two were legal under L-Q23. A kind flip lets a
+  // close skip the receipt rule (questionConsumedError judges the effective
+  // kind), so a row's question-ness is now fixed at insert.
+  it('making an existing task a question, even with a valid spec -> question_kind_immutable', async () => {
+    const r = refused(await send(upd('task_T', { kind: 'question', question_spec_json: SPEC })), 'question_rule');
+    expect(r.reason).toMatch(/^apply error: question_kind_immutable:/);
+    expect(taskRow('task_T').kind).toBe('task');
+  });
+
+  it('demoting a question while clearing its spec -> question_kind_immutable', async () => {
+    const r = refused(await send(upd('task_Q', { kind: 'task', question_spec_json: null })), 'question_rule');
+    expect(r.reason).toMatch(/^apply error: question_kind_immutable:/);
+    expect(taskRow('task_Q').kind).toBe('question');
+  });
+
   it('closing an unanswered question -> question_consumer (loud, as today)', async () => {
     const r = refused(await send(upd('task_Q', { status: 'deleted' })), 'question_consumer');
     expect(r.reason).toMatch(/^apply error: question_unanswered:/);
@@ -330,17 +345,7 @@ describe('question writes that stay legal', () => {
     expect((await send(upd('task_Q', { question_spec_json: SPEC }))).status).toBe('accepted');
   });
 
-  it("making a task a question with a valid spec is accepted", async () => {
-    const r = await send(upd('task_T', { kind: 'question', question_spec_json: SPEC }));
-    expect(r.status).toBe('accepted');
-  });
-
   it('a Telegram handle on an ordinary (meeting_approval) task is accepted', async () => {
     expect((await send(upd('task_T', { question_telegram_json: JSON.stringify({ chat_id: 1, message_id: 2 }) }))).status).toBe('accepted');
-  });
-
-  it('demoting a question while clearing its spec is accepted', async () => {
-    const r = await send(upd('task_Q', { kind: 'task', question_spec_json: null }));
-    expect(r.status).toBe('accepted');
   });
 });

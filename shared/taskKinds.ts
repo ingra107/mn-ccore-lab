@@ -46,7 +46,8 @@ export function isQuestion(t: { kind?: string | null } | null | undefined): bool
 
 /**
  * #8842 R4: the PB consumer closes a question after it acts on the answer;
- * the API refuses a Hub-UI close (question_consumer_close_only). So a
+ * the API refuses a close that does not carry the consumer's receipt
+ * (question_unconsumed), and a Hub-UI write never carries one. So a
  * question row does not offer Done, unless it is already done (then the
  * select still has to show its value).
  */

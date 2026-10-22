@@ -415,7 +415,7 @@ describe('(f) V3 adoptable dedup', () => {
         }
       },
     })
-    const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true, question_consumed: false }
+    const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true }
     const mut: Mutation = {
       mutation_id: 'mut_f3', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_loser3', base_seq: null, base_row_hash: null,
@@ -451,7 +451,7 @@ describe('(f) V3 adoptable dedup', () => {
         }
       },
     })
-    const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true, question_consumed: false }
+    const flags: ValidationFlags = { enums: false, conflict_hash: false, completion_tombstone: false, dedup: true }
     const mut: Mutation = {
       mutation_id: 'mut_f4', origin_machine: 'work', table: 'tasks', op: 'insert',
       record_id: 'task_loser4', base_seq: null, base_row_hash: null,
