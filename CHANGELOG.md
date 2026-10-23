@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-10-23 — Bug sweep #148/#149, shared date picker everywhere, submodule deploy gate
+
+Bulk Due date on My Tasks, Deadlines and project pages opens the shared `InlineDatePicker` (#148); the picker gains year jumps and Grants dates use it. Needs you's "N snoozed" line opens the snoozed questions (#149). Portal dropdowns are placed before paint. Keyed toasts replace instead of stacking, with chained Undo. My Tasks reads "All caught up" when only done tasks remain; the Digest count line names its day. Ask the Lab leaves every menu (code removal on branch `retire-ask-the-lab`, merging after a 24h dogfood). `predeploy:submodules` refuses a `pb-schema/` checkout off its recorded commit: deploys had been building against 0.19.0 while main recorded 0.20.0 (`links.kind`).
+
 ## 2026-10-22 — The Lane-3 `trajectories` table retires (PB backlog #1552)
 
 The Hub stops accepting or serving `trajectories`: it leaves `/api/mutations` (`ALLOWED_TABLES`, the soft-delete sets, the composite-PK map) and `GET /api/lane3/:table` (`LANE3_PULL_TABLES`; the route answers 400 "not eligible" for it). Nothing on PB has written it since 2026-04-09 and its readers were removed in June and August. The composite-PK backslash test now runs on `agent_knowledge.topic`, the other natural-key table. `scripts/p2_hub_rekey_apply.py` no longer rewrites it. Not the trainee-trajectory feature (`/api/team/:slug/trajectory`), which stays. This is the code half; schema-v144 drops the D1 table, its indexes and seq triggers, and lands with `api/lib/table-scope.ts` after the PB migration and the pb-schema bump.

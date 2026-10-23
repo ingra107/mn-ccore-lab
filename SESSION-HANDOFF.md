@@ -1,3 +1,28 @@
+# ▶▶ 2026-10-23 (work): BUG QUEUE EMPTY + LIVE SWEEP CLEAN. main `b7eb372b` live (probe PASS). **Schema v146.** **Routes 272 on main; 266 on branch `retire-ask-the-lab`.**
+
+## What shipped (all deployed)
+- **#148** bulk Due date = the shared `InlineDatePicker` on My Tasks (`67fc56d3`) and on the shared `BulkActionToolbar` (Deadlines, project pages; `de65395d`, bulk action `snooze` became `due`). Selection stays open so `+7d` keeps stepping.
+- **#149** Needs you: "N snoozed" opens the snoozed list (answerable, Bring back now); 1-day snooze reads "For today" (`5550f69b`).
+- Dropdowns placed before paint, no top-left first frame (`usePortalDropdown` layout effect, `faeec0ea`).
+- My Tasks: only-done list reads "All caught up" (`69e82c5f`); Digest count line names its day (`7326240c`).
+- Ask the Lab out of ⌘K, phone More and onboarding (`40a50450`).
+- Grants dates use the shared picker; picker gained year jumps « » and Shift+PageUp/Down (`8ebeff36`).
+- Keyed toasts: `showUndo/showSuccess(..., key)` replace instead of stacking; a replaced Undo chains back to the first state (`61c6c6c5`). ⌘K Backlog Wave failure is an error toast (`1a603398`).
+- **Deploy gate `predeploy:submodules`** (`b7eb372b`): the `pb-schema/` checkout sat at 0.19.0 while main recorded 0.20.0, so deploys shipped a `links` field list without `kind`. Gate fails on any submodule off its recorded commit.
+- Six older queue rows (#137 #138 #143 #144 #146 #147) were already fixed at HEAD; resolved after a live re-check.
+
+## Landmines added
+- **`pb-schema/` is read at BUILD time** (mutations.ts imports TABLE_FIELDS from the checkout). Run `git submodule update` after any pull; the deploy gate now refuses a stale one.
+- **Keyed toast Undo chains**: a replaced Undo runs newest-first then earlier ones. Only use a key when successive toasts are steps of one action.
+- Bulk `onBulkAction('due', date | '')` replaced `'snooze'`; `''` clears.
+
+## Open
+- **Branch `retire-ask-the-lab` (`85862427`)**: page, 6 routes, hooks and tests removed. Merge + deploy after the 24h dogfood (PB task due 2026-10-24). PB decision doc `Context/Decisions/2026-10-23-ask-the-lab-retirement.md`.
+- NEEDS-NICK: migration dropping `lab_questions` / `lab_answers` (1 + 0 rows); remove their table-scope, project-slug and viewer-sweep entries in the same change.
+- `tests/feature-registry.json` summary block is stale (says 347; 328 features); regenerate with `scripts/inspection-scanner.py`.
+
+---
+
 # ▶▶ 2026-10-10 (work): SITE AUDIT + ERROR LEDGER LIVE. main `efc09ad3`, Worker `1cfeeec8`, every Pages probe PASS. **Schema v123** (`hub_errors`, applied test + prod). **Routes 268.**
 
 Full record: PB `Projects/peripheral-brain-system/SESSION-HANDOFF.md`, top section dated 2026-10-10.
