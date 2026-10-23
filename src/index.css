@@ -2061,6 +2061,7 @@ button[aria-label="Deselect task"]::before {
 .meeting-action-bar-date-host .sr-trig:focus-visible,.bulk-date-host .sr-trig:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
 .meeting-action-bar-date-host .sr-car,.bulk-date-host .sr-car{display:none}
 .meeting-action-bar-date{display:inline-flex;align-items:center;padding:4px 9px;border-radius:var(--r-ctl);font-size:12px;font-weight:500;color:var(--sk-t1);background:var(--sk-card);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.bulk-date{display:inline-flex;align-items:center;padding:3px 9px;border-radius:var(--r-ctl);font-size:11px;color:var(--sk-t1);box-shadow:inset 0 0 0 1px var(--sk-line2)}
 /* SelectBox (TaskRow `selectBox`): a 14px accent square, out of sight until the
    row is hovered or focused, or a selection is open; always there on touch.
    `opacity`, not `visibility`, so it stays in the tab order. It keeps its width

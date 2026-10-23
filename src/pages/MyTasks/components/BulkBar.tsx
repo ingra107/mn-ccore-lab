@@ -87,7 +87,7 @@ export function BulkBar({ count, onClear, onPlanToday, commonDue, onSetDue, onCo
           <InlineDatePicker
             value={commonDue}
             onChange={onSetDue}
-            display={<span style={{ padding: '3px 9px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', color: INK }}>Due date ▾</span>}
+            display={<span className="bulk-date">Due date ▾</span>}
           />
         </span>
         {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
