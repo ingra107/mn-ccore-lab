@@ -72,7 +72,6 @@ test.describe('API — Read Endpoints', () => {
     ['/api/digest/dates', 200, 'Digest dates'],
     ['/api/updates/recent', 200, 'Recent updates'],
     ['/api/narratives', 200, 'Research narratives'],
-    ['/api/questions', 200, 'Ask the Lab questions'],
     ['/api/expertise', 200, 'Expertise tags'],
     ['/api/stats', 200, 'Lab stats'],
     ['/api/submissions/active', 200, 'Active submissions'],
@@ -142,11 +141,6 @@ test.describe('API — Write Endpoints', () => {
     expect(res.status()).toBe(201)
   })
 
-  test('API POST: Create question (Ask the Lab)', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/questions`, { data: { question: 'INSPECTION question — delete', context: 'test question body', project_slug: null } })
-    expect(res.status(), `Questions POST returned ${res.status()}: ${await res.text()}`).toBe(201)
-  })
-
   test('API POST: Post project update', async ({ request }) => {
     const projects = await (await request.get(`${BASE}/api/projects`)).json()
     const slug = projects.data?.[0]?.slug
@@ -205,7 +199,6 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.projects, 'Projects', ['My projects', 'New Project']],
     [P.manuscripts, 'Manuscripts', ['Manuscripts']],
     [P.ideas, 'Ideas', ['Ideas Board', 'New Idea']],
-    [P.ask, 'Ask the Lab', ['Ask the Lab', 'New Question']],
     [P.decisions, 'Decisions', ['Decision Log', 'Log Decision']],
     [P.digest, 'Research Digest', ['Research Digest']],
     [P.search, 'Search', ['Search']],

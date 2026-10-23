@@ -46,7 +46,6 @@ export const PATHS = {
   library: `${PORTAL_PREFIX}/library`,
   digestTab: `${PORTAL_PREFIX}/library?tab=digest`,
   manuscripts: `${PORTAL_PREFIX}/manuscripts`,
-  ask: `${PORTAL_PREFIX}/ask`,
   decisions: `${PORTAL_PREFIX}/decisions`,
   narratives: `${PORTAL_PREFIX}/narratives`,
   search: `${PORTAL_PREFIX}/search`,

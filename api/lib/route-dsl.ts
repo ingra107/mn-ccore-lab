@@ -37,7 +37,6 @@ export type EntityName =
   | 'deadline-cascade'
   | 'files'
   | 'notifications'
-  | 'questions'
   | 'decisions'
   | 'ideas'
   | 'mentee-milestones'

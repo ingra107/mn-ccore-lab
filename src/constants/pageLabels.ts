@@ -30,7 +30,6 @@ export const PORTAL_PAGE_LABELS: Record<string, string> = {
   [PATHS.launches]: 'My Launches',
   [PATHS.search]: 'Search',
   [PATHS.decisions]: 'Decisions',
-  [PATHS.ask]: 'Ask the Lab',
   [PATHS.narratives]: 'Research Narratives',
 }
 

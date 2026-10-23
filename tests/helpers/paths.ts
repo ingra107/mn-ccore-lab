@@ -30,7 +30,6 @@ export const P = {
   artifact: (id: string) => `/portal/artifacts/${id}`,
   manuscripts: '/portal/manuscripts',
   ideas: '/portal/projects?tab=ideas',
-  ask: '/portal/ask',
   decisions: '/portal/decisions',
   narratives: '/portal/narratives',
   digest: '/portal/library?tab=digest',

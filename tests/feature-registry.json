@@ -291,15 +291,6 @@
       "covered": true
     },
     {
-      "id": "api-get-questions",
-      "component": "api/routes/questions.ts",
-      "type": "api",
-      "description": "GET /api/questions — Ask the Lab questions",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Ask the Lab questions",
-      "covered": true
-    },
-    {
       "id": "api-get-expertise",
       "component": "api/routes/expertise.ts",
       "type": "api",
@@ -489,15 +480,6 @@
       "covered": true
     },
     {
-      "id": "api-post-questions-create",
-      "component": "api/routes/questions.ts",
-      "type": "api",
-      "description": "POST /api/questions — create question",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API POST: Create question",
-      "covered": true
-    },
-    {
       "id": "api-post-project-updates",
       "component": "api/routes/projects.ts",
       "type": "api",
@@ -612,15 +594,6 @@
       "description": "POST /api/expertise — add expertise tag",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "API POST: Add expertise tag",
-      "covered": true
-    },
-    {
-      "id": "api-post-questions-answer",
-      "component": "api/routes/questions.ts",
-      "type": "api",
-      "description": "POST /api/questions/:id/answers — answer a question",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API POST: Answer a question (Ask the Lab)",
       "covered": true
     },
     {
@@ -792,15 +765,6 @@
       "description": "Ideas page renders",
       "test_file": "tests/inspection.spec.ts",
       "test_name": "PAGE: Ideas (/ideas) renders",
-      "covered": true
-    },
-    {
-      "id": "page-render-ask",
-      "component": "src/pages/portal/AskTheLab.tsx",
-      "type": "render",
-      "description": "Ask the Lab page renders",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "PAGE: Ask the Lab (/ask) renders",
       "covered": true
     },
     {
@@ -2376,15 +2340,6 @@
       "description": "Create Project modal form submission",
       "test_file": "tests/inspection.spec.ts",
       "test_name": "PAGE: Projects renders (New Project button)",
-      "covered": true
-    },
-    {
-      "id": "form-ask-question",
-      "component": "src/pages/portal/AskTheLab.tsx",
-      "type": "form",
-      "description": "Submit question form on Ask the Lab page",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API POST: Create question",
       "covered": true
     },
     {

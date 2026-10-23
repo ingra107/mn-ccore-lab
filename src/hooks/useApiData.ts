@@ -27,8 +27,6 @@ import {
   fetchDependencies,
   fetchProjectDependencies,
   fetchExpertise,
-  fetchQuestions,
-  fetchQuestionDetail,
   fetchRevisions,
   fetchRevisionComments,
   fetchManuscriptsAttention,
@@ -56,8 +54,6 @@ import type {
   CalendarEvent,
   DependencyRow,
   ExpertiseTag,
-  QuestionRow,
-  QuestionDetail,
   RevisionRow,
   ReviewerCommentRow,
   MenteeMilestoneRow,
@@ -1452,31 +1448,6 @@ export function useExpertise(slug?: string) {
     },
     staleTime: STALE_TIME,
     enabled: slug !== undefined ? !!slug : true,
-  })
-}
-
-// ── Questions (Ask the Lab) ──────────────────────────────────
-
-export function useQuestions(filters?: { status?: string; project_slug?: string }) {
-  return useQuery({
-    queryKey: ['questions', filters],
-    queryFn: async () => {
-      const res = await fetchQuestions(filters)
-      return res.data as QuestionRow[]
-    },
-    staleTime: 60 * 1000,
-  })
-}
-
-export function useQuestionDetail(id: string) {
-  return useQuery({
-    queryKey: ['question', id],
-    queryFn: async () => {
-      const res = await fetchQuestionDetail(id)
-      return res.data as QuestionDetail
-    },
-    staleTime: 30 * 1000,
-    enabled: !!id,
   })
 }
 

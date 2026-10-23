@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createConference, updateConference, deleteConference } from '../../lib/api'
+import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, setMemberFeaturedPublications, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createConference, updateConference, deleteConference } from '../../lib/api'
 import { MEMBER_FEATURED_QUERY_KEY, rowToPublication } from '../useApiData'
 import { rollbackSnapshots } from './utils'
 import { INLINE_ERROR_META } from '../../lib/writeFailures'
@@ -412,50 +412,6 @@ export function useSetMemberFeaturedPublications(memberSlug: string) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [MEMBER_FEATURED_QUERY_KEY, memberSlug] })
-    },
-  })
-}
-
-// ── Question mutations (Ask the Lab) ─────────────────────────
-
-export function useCreateQuestion() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (input: { question: string; context?: string; project_slug?: string }) =>
-      createQuestion(input),
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
-}
-
-export function useCreateAnswer(questionId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (content: string) => createAnswer(questionId, content),
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] })
-      queryClient.invalidateQueries({ queryKey: ['question', questionId] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
-    },
-  })
-}
-
-export function useAcceptAnswer(questionId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (answerId: string) => acceptAnswer(answerId),
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] })
-      queryClient.invalidateQueries({ queryKey: ['question', questionId] })
-      queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
 }

@@ -184,7 +184,6 @@ const SettingsPage = lazyRoute(() => import('./pages/portal/SettingsPage'))
 const ProfilePage = lazyRoute(() => import('./pages/portal/ProfilePage'))
 const DecisionsPage = lazyRoute(() => import('./pages/portal/DecisionsPage'))
 const NarrativesPage = lazyRoute(() => import('./pages/portal/NarrativesPage'))
-const AskTheLab = lazyRoute(() => import('./pages/portal/AskTheLab'))
 const TeamDirectoryPage = lazyRoute(() => import('./pages/portal/TeamDirectoryPage'))
 const SessionHistory = lazyRoute(() => import('./pages/portal/SessionHistory'))
 const Pulse = lazyRoute(() => import('./pages/Pulse'))
@@ -308,7 +307,7 @@ export default function App() {
                 <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
                 <Route path="/manuscripts" element={<NavigateKeepSearch to="/portal/manuscripts" />} />
                 <Route path="/ideas" element={<NavigateToTab to={PATHS.ideasTab} />} />
-                <Route path="/ask" element={<NavigateKeepSearch to="/portal/ask" />} />
+                <Route path="/ask" element={<NavigateKeepSearch to="/portal/dashboard" />} />
                 <Route path="/decisions" element={<NavigateKeepSearch to="/portal/decisions" />} />
                 <Route path="/narratives" element={<NavigateKeepSearch to="/portal/narratives" />} />
                 <Route path="/digest" element={<NavigateToTab to={PATHS.digestTab} />} />
@@ -370,7 +369,8 @@ export default function App() {
                   <Route path="/portal/library" element={<ErrorBoundary><PageErrorBoundary pageName="Library"><LibraryPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/artifacts/:id" element={<ErrorBoundary><PageErrorBoundary pageName="ArtifactPage"><ArtifactPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/manuscripts" element={<ErrorBoundary><ManuscriptsPage /></ErrorBoundary>} />
-                  <Route path="/portal/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
+                  {/* Ask the Lab retired 2026-10-23: an old link lands on Today. */}
+                  <Route path="/portal/ask" element={<NavigateKeepSearch to="/portal/dashboard" />} />
                   <Route path="/portal/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
                   <Route path="/portal/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />

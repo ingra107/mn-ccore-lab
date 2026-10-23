@@ -251,16 +251,6 @@ test.describe('API — Missing write endpoints', () => {
     expect([200, 201, 409]).toContain(res.status())
   })
 
-  test('API POST: Answer a question (Ask the Lab)', async ({ request }) => {
-    const questions = await (await request.get(`${BASE}/api/questions`)).json()
-    const id = questions.data?.[0]?.id
-    if (!id) { test.skip(); return }
-    const res = await request.post(`${BASE}/api/questions/${id}/answers`, {
-      data: { content: 'INSPECTION answer — delete', author_slug: 'nick-ingraham' }
-    })
-    expect([200, 201]).toContain(res.status())
-  })
-
   test('API POST: Create task handoff', async ({ request }) => {
     const taskId = await getFirstTaskId(request)
     if (!taskId) { test.skip(); return }

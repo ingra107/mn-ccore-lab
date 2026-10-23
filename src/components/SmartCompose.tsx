@@ -10,8 +10,7 @@
 //      to share state) plus `uploadContext` for R2 keying. SmartCompose
 //      becomes a presentation primitive — caller owns submission.
 //      Used by ProjectDetail compose (ActivityStream), MeetingDetail (notes + action items),
-//      AskTheLab, TodayPage morning
-//      thought, RightNow chat. (D14 — Phase A foundations.)
+//      TodayPage morning thought, RightNow chat. (D14 — Phase A foundations.)
 //
 // Closes Phase 38 eval Issue 8 (compose toolbar @/:/📎 were decorative)
 // and the audit-2026-04-28 D14 SmartCompose-universal sweep.

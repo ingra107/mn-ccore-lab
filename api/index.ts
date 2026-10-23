@@ -72,7 +72,6 @@ import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, 
 import { handleSimilarDecisions, handleSimilarDecisionsById } from './routes/decision-replay';
 import { handleGetNarratives } from './routes/narratives';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise } from './routes/expertise';
-import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
 // pi-analytics.ts retired 2026-05-05 (5.9) — 0 frontend callers; /api/analytics/pi-dashboard is canonical
@@ -1424,37 +1423,6 @@ defineRoute({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Questions (specific /:id/answers BEFORE catch-all /:id)
-// ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/questions',
-  auth: 'authed',
-  entity: 'questions',
-  handler: (c) => handleGetQuestions(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/questions/:id/answers',
-  auth: 'authed',
-  entity: 'questions',
-  handler: async (c) => {
-  const env = E(c);
-  const rows = await env.DB.prepare(
-    'SELECT * FROM lab_answers WHERE question_id = ? ORDER BY is_accepted DESC, created_at ASC'
-  ).bind(c.req.param('id')).all();
-  return json({ data: rows.results || [] });
-},
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/questions/:id',
-  auth: 'authed',
-  entity: 'questions',
-  handler: (c) => handleGetQuestionDetail(c.req.param('id'), E(c)),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Simple exact-match GETs
 // ─────────────────────────────────────────────────────────────────────────────
 defineRoute({
@@ -2777,29 +2745,6 @@ defineRoute({
   auth: 'authed',
   entity: 'expertise',
   handler: (c) => handleRemoveExpertise(c.req.param('id'), R(c), E(c)),
-});
-
-// Questions / Answers
-defineRoute({
-  method: 'POST',
-  path: '/api/questions',
-  auth: 'authed',
-  entity: 'questions',
-  handler: (c) => handleCreateQuestion(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/questions/:id/answers',
-  auth: 'authed',
-  entity: 'questions',
-  handler: (c) => handleCreateAnswer(c.req.param('id'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/answers/:id/accept',
-  auth: 'authed',
-  entity: 'questions',
-  handler: (c) => handleAcceptAnswer(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
 // AI requests

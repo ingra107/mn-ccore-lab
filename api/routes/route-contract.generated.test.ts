@@ -217,7 +217,11 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   schema-v146); +3 POST /api/projects/:slug/links (add a document),
     //   POST /api/links/:id (role and/or kind) and POST /api/links/:id/promote.
     //   POST /api/links/:id/role stays one release on the same handler.
-    expect(ROUTE_REGISTRY).toHaveLength(272)
+    // 266 as of 2026-10-23 -- Ask the Lab retired (-6): GET + POST
+    //   /api/questions, GET /api/questions/:id, GET + POST
+    //   /api/questions/:id/answers, POST /api/answers/:id/accept. Its @hermes
+    //   went 2026-10-21 (#8238); one question since April, no answers.
+    expect(ROUTE_REGISTRY).toHaveLength(266)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
@@ -237,6 +241,8 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
       'POST /api/pb/capture', 'POST /api/regulatory',
       'GET /api/projects/:slug/documents', 'POST /api/projects/:slug/documents',
       'POST /api/projects/:slug/documents/:docId/delete',
+      'GET /api/questions', 'POST /api/questions', 'GET /api/questions/:id',
+      'GET /api/questions/:id/answers', 'POST /api/questions/:id/answers', 'POST /api/answers/:id/accept',
     ]
     const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
     for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)
