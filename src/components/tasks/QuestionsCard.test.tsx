@@ -163,7 +163,7 @@ describe('QuestionsCard', () => {
     // Clearing an answer a consumer may already be acting on reopens the
     // question and invites a second effect, so the answered row has no button
     // that touches the answer: its only buttons are the three snoozes.
-    expect([...row.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Tomorrow', '3 days', 'Next week'])
+    expect([...row.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['For today', '3 days', 'Next week'])
     // The count is the waiting rows only: the answered one is not his turn.
     expect(host.querySelector('.tk-cnt')!.textContent).toBe('1')
   })
@@ -283,8 +283,37 @@ describe('QuestionsCard snooze', () => {
     )
     await until(() => host.querySelector('[data-testid="q-snoozed"]') != null, 'snoozed line')
     expect(host.querySelector('[data-testid="q-snoozed"]')!.textContent).toBe('2 snoozed · next back tomorrow')
-    // Snoozed rows are never drawn as questions.
+    // Snoozed rows stay folded until the line is opened.
     expect(host.querySelectorAll('[data-testid="q-submit"]').length).toBe(1)
+  })
+
+  it('#149: opening the snoozed line lists them, soonest first, answerable', async () => {
+    const tomorrow = civilDatePlusDays(todayKey(), 1)
+    const { host } = mountCard(
+      [makeQuestionTask({ id: 'q-wait' })],
+      [makeQuestionTask({ id: 'q-s1', due_date: civilDatePlusDays(todayKey(), 5) }), makeQuestionTask({ id: 'q-s2', due_date: tomorrow })],
+    )
+    await until(() => host.querySelector('[data-testid="q-snoozed"]') != null, 'snoozed line')
+    ;(host.querySelector('[data-testid="q-snoozed"]') as HTMLButtonElement).click()
+    await until(() => host.querySelector('[data-testid="q-snoozed-list"]') != null, 'snoozed list')
+    const ids = [...host.querySelectorAll('[data-testid^="q-snoozed-q-"]')].map((el) => el.getAttribute('data-testid'))
+    expect(ids).toEqual(['q-snoozed-q-s2', 'q-snoozed-q-s1'])
+    expect(host.querySelectorAll('[data-testid="q-submit"]').length).toBe(3)
+  })
+
+  it('#149: Bring back now writes due_date = today and nothing else', async () => {
+    const fetchMock = okFetch()
+    vi.stubGlobal('fetch', fetchMock)
+    const { host } = mountCard(
+      [makeQuestionTask({ id: 'q-wait' })],
+      [makeQuestionTask({ id: 'q-s1', due_date: civilDatePlusDays(todayKey(), 5) })],
+    )
+    await until(() => host.querySelector('[data-testid="q-snoozed"]') != null, 'snoozed line')
+    ;(host.querySelector('[data-testid="q-snoozed"]') as HTMLButtonElement).click()
+    await until(() => host.querySelector('[data-testid="q-unsnooze-q-s1"]') != null, 'bring back')
+    ;(host.querySelector('[data-testid="q-unsnooze-q-s1"]') as HTMLButtonElement).click()
+    await until(() => fetchMock.mock.calls.length > 0, 'POST')
+    expect(bodies(fetchMock)[0]).toEqual({ due_date: todayKey() })
   })
 
   it('snoozed rows alone do not show the card', async () => {

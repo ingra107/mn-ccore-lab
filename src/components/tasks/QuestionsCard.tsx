@@ -22,6 +22,12 @@
 // it is never sent as an answer (the Worker refuses one with
 // question_choice_is_snooze). Undo restores the previous due_date.
 //
+// #149 (2026-10-23, Nick: "you are telling me its a thing but without a way
+// to go look again"): the "N snoozed" line is a toggle. Opened, it lists each
+// snoozed row the same way the card does (answerable, re-snoozable) with its
+// return day and a "Bring back now" that writes due_date = today. The 1-day
+// snooze reads "For today", which is what it does.
+//
 // Renders null when tasks is empty (no card appears when nothing is waiting).
 //
 // Look (Today reskin, 2026-10-09): ONE warm gold attention card, title inside
@@ -62,6 +68,7 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
     .filter((t) => questionCardState(t) === 'answered')
     .sort((a, b) => answeredAt(a) - answeredAt(b))
   const acted = tasks.filter((t) => questionCardState(t) === 'acted')
+  const [showSnoozed, setShowSnoozed] = useState(false)
   // Acted-on rows alone are not a reason to show the gold card: nothing on it
   // would want him.
   if (waiting.length === 0 && answered.length === 0) return null
@@ -97,8 +104,25 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
           </div>
         )}
         {snoozed.length > 0 && (
-          <div className="tk-qrow" data-testid="q-snoozed" style={{ fontSize: 11.5, color: 'var(--sk-t3)' }}>
-            {snoozed.length} snoozed · next back {dayLabel(nextBack(snoozed))}
+          <div className="tk-qrow">
+            <button
+              type="button"
+              data-testid="q-snoozed"
+              aria-expanded={showSnoozed}
+              onClick={(e) => { e.stopPropagation(); setShowSnoozed((v) => !v) }}
+              style={{ fontSize: 11.5, color: 'var(--sk-t3)', textDecoration: 'underline', textUnderlineOffset: 2, padding: '4px 0', touchAction: 'manipulation' }}
+            >
+              {snoozed.length} snoozed · next back {dayLabel(nextBack(snoozed))}
+            </button>
+            {showSnoozed && (
+              <div data-testid="q-snoozed-list" style={{ marginTop: 4 }}>
+                {[...snoozed]
+                  .sort((a, b) => (questionSnoozedUntil(a) ?? '').localeCompare(questionSnoozedUntil(b) ?? ''))
+                  .map((task) => (
+                    <SnoozedRow key={task.id} task={task} />
+                  ))}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -125,7 +149,7 @@ function dayLabel(civil: string): string {
 }
 
 const SNOOZE_OPTIONS = [
-  { days: 1, label: 'Tomorrow' },
+  { days: 1, label: 'For today' },
   { days: 3, label: '3 days' },
   { days: 7, label: 'Next week' },
 ] as const
@@ -143,6 +167,36 @@ function useSnooze(task: TaskRow) {
       () => mutateTask({ id: task.id, fields: { due_date: previous } }),
     )
   }
+}
+
+/** A snoozed row, opened from the "N snoozed" line: when it comes back, a way
+ *  to bring it back now, and the row itself so it can be answered early. */
+function SnoozedRow({ task }: { task: TaskRow }) {
+  const { mutate: mutateTask } = useUpdateTask()
+  const { showUndo } = useUndoToast()
+  const until = questionSnoozedUntil(task)
+  const bringBack = () => {
+    const previous = task.due_date ?? null
+    mutateTask({ id: task.id, fields: { due_date: todayKey() } })
+    showUndo('Back on Needs you', () => mutateTask({ id: task.id, fields: { due_date: previous } }))
+  }
+  return (
+    <div data-testid={`q-snoozed-${task.id}`} style={{ borderTop: '1px solid var(--sk-line)', paddingTop: 6, marginTop: 6 }}>
+      <div style={{ display: 'flex', gap: 8, fontSize: 11.5, color: 'var(--sk-t3)' }}>
+        <span>Back {dayLabel(until ?? '')}</span>
+        <span aria-hidden="true">·</span>
+        <button
+          type="button"
+          data-testid={`q-unsnooze-${task.id}`}
+          onClick={(e) => { e.stopPropagation(); bringBack() }}
+          style={{ color: 'var(--sk-t2)', textDecoration: 'underline', textUnderlineOffset: 2, touchAction: 'manipulation' }}
+        >
+          Bring back now
+        </button>
+      </div>
+      {questionCardState(task) === 'waiting' ? <QuestionRow task={task} /> : <AnsweredRow task={task} />}
+    </div>
+  )
 }
 
 function SnoozeLinks({ task }: { task: TaskRow }) {
