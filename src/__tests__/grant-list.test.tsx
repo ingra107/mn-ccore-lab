@@ -1,7 +1,7 @@
-// The Grants list (components/grants/GrantList): a date cell saves when you
-// leave it or press Enter, never per keystroke (cold review minor 1: typing a
-// year in a native date input fires change for 0002, 0020, ...), Escape puts
-// it back; the PI shows by name, never as a slug (minor 5).
+// The Grants list (components/grants/GrantList): a date cell is the shared
+// date picker (2026-10-23, Nick: "fix grants date selection"; it was a native
+// mm/dd/yyyy box). It shows the year, jumps a year at a time, writes once per
+// pick and never while browsing; the PI shows by name, never as a slug.
 //
 // Real Chromium (vitest.config.ts browser mode), react-dom directly.
 
@@ -23,13 +23,6 @@ const award: GrantProduct = {
   grew_from_id: null, seq: 3, bucket: 'active', milestones: [],
 }
 
-/** What a typed character does to a native date input: the value moves and
- *  React's change handler runs (the input event). */
-function typeValue(el: HTMLInputElement, v: string) {
-  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
-  setter.call(el, v)
-  el.dispatchEvent(new Event('input', { bubbles: true }))
-}
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms))
 
 async function render() {
@@ -42,37 +35,56 @@ async function render() {
     </QueryClientProvider>,
     { ready: (h) => !!h.querySelector('[data-testid="grant-row-prd_K23"]'), label: 'GrantList' },
   )
-  const end = host.querySelector<HTMLInputElement>('[data-testid="grant-end-prd_K23"]')!
+  const end = host.querySelector<HTMLElement>('[data-testid="grant-end-prd_K23"]')!
   return { host, end, onEdit }
 }
 
+const picker = () => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Choose a date"]')
+function press(el: Element | null | undefined) {
+  if (!el) throw new Error('missing element')
+  el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+}
+async function openPicker(end: HTMLElement) {
+  end.querySelector<HTMLButtonElement>('button')!.click()
+  for (let i = 0; i < 100 && !picker(); i++) await tick(10)
+  expect(picker(), 'picker opens').toBeTruthy()
+}
+
 describe('GrantList date cells', () => {
-  it('typing a year writes nothing; leaving the field saves once', async () => {
+  it('shows the full date with its year, named for screen readers', async () => {
+    const { end } = await render()
+    const trig = end.querySelector('button')!
+    expect(trig.textContent).toContain('Nov 30, 2027')
+    expect(trig.getAttribute('aria-label')).toBe('End for K23: 2027-11-30, change date')
+  })
+
+  it('a year jump moves the calendar a year and writes nothing; a day saves once', async () => {
     const { end, onEdit } = await render()
-    end.focus()
-    for (const v of ['0002-11-30', '0020-11-30', '0202-11-30', '2028-11-30']) typeValue(end, v)
+    await openPicker(end)
+    expect(picker()!.textContent).toContain('November 2027')
+    press(picker()!.querySelector('[aria-label="Next year"]'))
     await tick()
+    expect(picker()!.textContent).toContain('November 2028')
     expect(onEdit).not.toHaveBeenCalled()
-    end.blur()
+    const day = [...picker()!.querySelectorAll('button')].find((b) => b.textContent === '30')
+    press(day)
     await tick()
     expect(onEdit).toHaveBeenCalledTimes(1)
     expect(onEdit.mock.calls[0][0].fields).toEqual({ period_end: '2028-11-30' })
   })
 
-  it('Enter saves; Escape puts the old date back and saves nothing', async () => {
+  it('Escape closes without saving; Clear saves null', async () => {
     const { end, onEdit } = await render()
-    end.focus()
-    typeValue(end, '2029-01-01')
-    end.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await openPicker(end)
+    picker()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await tick()
+    expect(picker()).toBeNull()
+    expect(onEdit).not.toHaveBeenCalled()
+    await openPicker(end)
+    press([...picker()!.querySelectorAll('button')].find((b) => b.textContent === 'Clear'))
     await tick()
     expect(onEdit).toHaveBeenCalledTimes(1)
-    typeValue(end, '2030-01-01')
-    end.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    await tick()
-    expect(end.value).toBe('2027-11-30')
-    end.blur()
-    await tick()
-    expect(onEdit).toHaveBeenCalledTimes(1)
+    expect(onEdit.mock.calls[0][0].fields).toEqual({ period_end: null })
   })
 
   it('names the PI, never the slug', async () => {

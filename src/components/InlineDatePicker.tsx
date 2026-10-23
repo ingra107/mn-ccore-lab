@@ -18,6 +18,9 @@ interface InlineDatePickerProps {
   /** Sleek rows: render the date as it reads on the row (the card due pill)
    *  inside a bare `.sr-trig` button with a hover caret. The popover is unchanged. */
   display?: React.ReactNode
+  /** The trigger's accessible name when `display` is used (e.g. "End for K23").
+   *  Without it the trigger reads "Due <date>, change date". */
+  label?: string
 }
 
 // ── date helpers (local, no UTC drift) ──────────────────────────────────────
@@ -38,7 +41,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // { value, onChange } contract is unchanged, so every consumer (ListView,
 // Deadlines, Today drawer via DateInput/DueInlineSelect, Insights, grid)
 // keeps working without edits.
-export default function InlineDatePicker({ value, onChange, tableCell, done, display }: InlineDatePickerProps) {
+export default function InlineDatePicker({ value, onChange, tableCell, done, display, label }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
 
   const now = new Date()
@@ -146,8 +149,8 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
       case 'ArrowRight': e.preventDefault(); moveCursor(1); break
       case 'ArrowUp': e.preventDefault(); moveCursor(-7); break
       case 'ArrowDown': e.preventDefault(); moveCursor(7); break
-      case 'PageUp': e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() - 1, 1)); break
-      case 'PageDown': e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() + 1, 1)); break
+      case 'PageUp': e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear() - (e.shiftKey ? 1 : 0), vm.getMonth() - (e.shiftKey ? 0 : 1), 1)); break
+      case 'PageDown': e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear() + (e.shiftKey ? 1 : 0), vm.getMonth() + (e.shiftKey ? 0 : 1), 1)); break
       case 'Enter': e.preventDefault(); commit(ymd(cursor)); break
       case 'Escape': e.preventDefault(); setOpen(false); break
       case 'Backspace': case 'Delete': e.preventDefault(); commit(null); break
@@ -161,7 +164,7 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
           type="button"
           className="sr-trig"
           onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
-          aria-label={value ? `Due ${value}, change date` : 'Set a due date'}
+          aria-label={label ? `${label}: ${value ?? 'not set'}, change date` : value ? `Due ${value}, change date` : 'Set a due date'}
           aria-haspopup="dialog"
           aria-expanded={open}
         >
@@ -249,17 +252,28 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
 
           {/* month header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            {/* Year jumps: grant dates sit a year or more out. */}
+            <Button size="icon"
+              aria-label="Previous year"
+              onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear() - 1, vm.getMonth(), 1)) }}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
+            >«</Button>
             <Button size="icon"
               aria-label="Previous month"
               onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() - 1, 1)) }}
               style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
             >‹</Button>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
+            <span style={{ flex: 1, textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
             <Button size="icon"
               aria-label="Next month"
               onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear(), vm.getMonth() + 1, 1)) }}
               style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
             >›</Button>
+            <Button size="icon"
+              aria-label="Next year"
+              onMouseDown={(e) => { e.preventDefault(); setViewMonth((vm) => new Date(vm.getFullYear() + 1, vm.getMonth(), 1)) }}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', fontSize: 14, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
+            >»</Button>
           </div>
 
           {/* weekday labels */}

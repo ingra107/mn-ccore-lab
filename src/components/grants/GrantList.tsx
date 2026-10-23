@@ -6,6 +6,8 @@ import type { ProductKind, ProductRow } from '../../lib/products'
 import { formatUsd, grantName, type GrantProduct } from '../../lib/grants'
 import { displayName } from '../../lib/nameUtils'
 import type { GrantTermFields } from '../../hooks/useGrantProducts'
+import InlineDatePicker from '../InlineDatePicker'
+import { formatMediumDate } from '../../lib/dateUtils'
 
 // The Grants page's list: one row per grant product (an R03's A0 and A1 are
 // two rows). Each shows its project and name (linked to the project page), the
@@ -121,29 +123,20 @@ function TextCell({ label, value, display, placeholder, testId, inputMode, onSav
   )
 }
 
-/** A date saves when you leave the field or press Enter, never per keystroke:
- *  a native date input fires change for each typed year digit (0002, 0020...),
- *  and each of those would be a write and an undo toast. Escape puts it back. */
+/** A grant date: the shared date picker (presets, month and year jumps,
+ *  Clear), the one every other Hub date uses. It writes only when a day,
+ *  preset or Clear is picked, so nothing saves mid-typing. The trigger shows
+ *  the year, because grant dates sit years apart. */
 function DateCell({ label, value, hint, testId, onSave }: {
   label: string; value: string | null; hint?: string; testId: string; onSave: (v: string | null) => void
 }) {
-  const [draft, setDraft] = useState(value ?? '')
-  const [shown, setShown] = useState(value)
-  if (shown !== value) { setShown(value); setDraft(value ?? '') }
-  const commit = () => {
-    const v = draft || null
-    if (v !== value) onSave(v)
-  }
   return (
-    <span className="gl-date">
-      <input
-        type="date" className="gl-input gl-date-input" aria-label={label} value={draft} data-testid={testId}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); commit() }
-          else if (e.key === 'Escape') setDraft(value ?? '')
-        }}
+    <span className="gl-date" data-testid={testId}>
+      <InlineDatePicker
+        value={value}
+        onChange={onSave}
+        label={label}
+        display={<span className={value ? 'gl-date-val' : 'gl-date-val gl-date-empty'}>{value ? formatMediumDate(value) : 'Set date'}</span>}
       />
       {hint && value && <span className="gl-hint">{hint}</span>}
     </span>
@@ -166,8 +159,12 @@ const CSS = `
 .gl-cell:hover { background: var(--sk-panel); }
 .gl-input { width: 100%; font-size: 13px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--sk-line2); background: var(--sk-card); color: var(--sk-t1); }
 .gl-date { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-.gl-date-input { width: 132px; border-color: transparent; background: transparent; color: var(--sk-t2); }
-.gl-date-input:hover, .gl-date-input:focus { border-color: var(--sk-line2); background: var(--sk-card); }
+.gl-date .sr-trig { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 6px; margin-left: -6px; border-radius: 6px; cursor: pointer; }
+.gl-date .sr-trig:hover, .gl-date .sr-trig[aria-expanded="true"] { background: var(--sk-panel); }
+.gl-date .sr-trig:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 1px; }
+.gl-date .sr-car { color: var(--sk-t3); font-size: 9px; }
+.gl-date-val { font-size: 13px; color: var(--sk-t2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gl-date-empty { color: var(--sk-t3); }
 .gl-hint { font-size: 10px; color: var(--sk-t3); padding-left: 7px; line-height: 1; }
 .gl-none { color: var(--sk-t3); }
 @media (max-width: 760px) {
@@ -178,13 +175,5 @@ const CSS = `
   .gl-row > [role="cell"]:nth-child(3) { grid-column: 2; grid-row: 2; justify-self: end; }
   .gl-row > [role="cell"]:nth-child(4), .gl-row > [role="cell"]:nth-child(5) { grid-column: auto; }
   .gl-row > [role="cell"]:nth-child(6) { grid-column: 1 / -1; }
-}
-/* index.css forces 16px on every phone input (the iOS no-zoom rule), and at
-   16px a blank date input's 'mm/dd/yyyy' ran under the calendar icon in 132px.
-   On a phone the field takes its own natural width, so it always fits. The
-   floor is for iOS WebKit, where an empty date input has almost no intrinsic
-   width and would shrink to a sliver with nothing to tap. */
-@media (max-width: 768px) {
-  .gl-date-input { width: auto; min-width: min(9.5em, 100%); max-width: 100%; }
 }
 `
