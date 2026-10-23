@@ -19,7 +19,7 @@ import { useUndoToast } from '../components/UndoToast'
 import { Button } from '../components/ui/Button'
 import { getPersonInfo } from '../data/team'
 import { firstNameFor } from '../lib/personLabel'
-import { formatMediumDate, formatPublicationDate, formatRelativeTime } from '../lib/dateUtils'
+import { formatMediumDate, formatPublicationDate, formatRelativeTime, formatShortDate } from '../lib/dateUtils'
 import { withAlpha } from '../lib/taskGrouping'
 import { FaceDisc } from '../components/today/skin'
 import FilterLinks from '../components/ui/FilterLinks'
@@ -915,7 +915,9 @@ export default function Digest() {
         />
       </div>
       <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-        {statusCounts.saved} saved · {statusCounts.dismissed} dismissed · {statusCounts.new} unread · {statusCounts.all} total
+        {/* These counts are one digest day's. Name the day, so they do not read
+            as contradicting the cross-date Unprocessed/Saved tab counts. */}
+        {activeDate ? `${formatShortDate(activeDate)} digest: ` : ''}{statusCounts.new} unread of {statusCounts.all} · {statusCounts.saved} saved · {statusCounts.dismissed} dismissed
       </span>
     </div>
   ) : null
