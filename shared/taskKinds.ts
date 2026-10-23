@@ -55,3 +55,19 @@ export function statusOptionsFor<T extends { value: string }>(options: readonly 
   if (kind !== 'question' || status === 'done') return [...options];
   return options.filter((o) => o.value !== 'done');
 }
+
+/**
+ * SQL for "this row is an ordinary task, not a question for Nick". A question
+ * is waiting on an answer, not on work: it shows only on the Today "Needs you"
+ * card, and its due_date is the snooze date, so it must stay out of every task
+ * list, count, overdue view and digest. Add this to any server query that
+ * lists or counts open work. Pass the table alias ('t') when the query has one.
+ * NULL kind reads as 'task' (the column is NOT NULL DEFAULT 'task', but old
+ * test fixtures and PB-local rows may omit it).
+ */
+export function notQuestionSql(alias = ''): string {
+  const p = alias ? `${alias}.` : '';
+  return `COALESCE(${p}kind, 'task') <> 'question'`;
+}
+export const NOT_QUESTION_SQL = notQuestionSql();
+export const NOT_QUESTION_SQL_T = notQuestionSql('t');

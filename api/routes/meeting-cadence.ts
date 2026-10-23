@@ -2,6 +2,7 @@ import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { postedCountSince, legacyEchoExclude } from '../lib/posted-activity';
+import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
 
 // GET /api/meetings/cadence-check — analyze if next meeting is needed
 export async function handleCadenceCheck(env: Env): Promise<Response> {
@@ -31,7 +32,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
     postedCountSince(env, sinceDate),
 
     env.DB.prepare(
-      "SELECT COUNT(*) as c FROM tasks WHERE completed = 0 AND status != 'done'"
+      `SELECT COUNT(*) as c FROM tasks WHERE completed = 0 AND status != 'done' AND ${NOT_QUESTION_SQL}`
     ).first<{ c: number }>(),
 
     env.DB.prepare(
@@ -43,7 +44,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
     ).bind(nextMeeting.id).first<{ c: number }>(),
 
     env.DB.prepare(
-      "SELECT COUNT(*) as c FROM tasks WHERE status = 'blocked'"
+      `SELECT COUNT(*) as c FROM tasks WHERE status = 'blocked' AND ${NOT_QUESTION_SQL}`
     ).first<{ c: number }>(),
   ]);
 

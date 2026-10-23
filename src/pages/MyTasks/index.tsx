@@ -67,7 +67,7 @@ export default function UnifiedMyTasks() {
   // told from another member's, so no notice yet; the query already scopes.
   const viewingOther = assigneeParam && userSlug && assigneeParam !== userSlug ? assigneeParam : null
   const scopeSlug = assigneeParam || userSlug
-  const tasksQuery = useTasks(scopeSlug ? { assignee: scopeSlug } : undefined)
+  const tasksQuery = useTasks(scopeSlug ? { assignee: scopeSlug, includeQuestions: true } : { includeQuestions: true })
   const projectsQuery = useProjects()
 
   const [view, setView] = useState<ViewMode>(() => parseViewMode(searchParams.get('view')))

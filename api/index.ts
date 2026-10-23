@@ -1,3 +1,4 @@
+import { NOT_QUESTION_SQL } from '../shared/taskKinds';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from './types';
@@ -3238,7 +3239,7 @@ export default withErrorLedger<Env>({
 
           // Get their pending action items
           const actions = await recipientDb.prepare(
-            'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
+            `SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 AND ${NOT_QUESTION_SQL} ORDER BY due_date ASC`
           ).bind(member.slug).all<{ title: string | null; description: string | null; due_date: string | null }>();
 
           // Get unread notifications

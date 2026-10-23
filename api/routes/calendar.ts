@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 
 // GET /api/calendar/events?start=&end=
 //
@@ -28,7 +29,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
     // possible).
     env.DB.prepare('SELECT DISTINCT id, date, title, type, (owner_slug IS ?) AS mine FROM meetings WHERE date >= ? AND date <= ? ORDER BY date, mine DESC, id')
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
-    env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND t.assignee = ? ORDER BY t.due_date`)
+    env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND t.assignee = ? ORDER BY t.due_date`)
       .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; due_date: string; assignee: string; status: string; priority: string }>(),
     // The legacy grants join is gone (2026-10-12): a grant's dates are its
     // product's now; a grant milestone is a milestone task.

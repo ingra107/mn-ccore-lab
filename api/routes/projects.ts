@@ -10,6 +10,7 @@ import { applyMutation } from './mutations';
 import { replySummaryColumns, activityVisibilityGate, activityHiddenClause, postActivityEntry, sourceKeyFrom } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
 import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
+import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
 
 // (P2-A 2026-06-10: the per-route @hermes copy `handleClaudeMention` is gone —
 // project composers route through postActivityEntry, which owns Hermes
@@ -464,7 +465,7 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
     env.DB.prepare("SELECT related_id, MAX(timestamp) as latest FROM activity_log WHERE related_type = 'project' GROUP BY related_id").all<{ related_id: string; latest: string }>(),
     // project comments → activity_entries kind='comment', entity_type='project'
     env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='comment' AND hidden_at IS NULL GROUP BY project_id").all<{ project_id: string; latest: string }>(),
-    env.DB.prepare('SELECT project_id, COUNT(*) as pending_count, SUM(CASE WHEN due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count FROM tasks WHERE completed = 0 AND deleted_at IS NULL GROUP BY project_id').bind(nowIso).all<{ project_id: string; pending_count: number; overdue_count: number }>(),
+    env.DB.prepare(`SELECT project_id, COUNT(*) as pending_count, SUM(CASE WHEN due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count FROM tasks WHERE completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} GROUP BY project_id`).bind(nowIso).all<{ project_id: string; pending_count: number; overdue_count: number }>(),
     env.DB.prepare("SELECT project_id, MIN(target_date) as next_target FROM milestones WHERE status IN ('pending', 'in_progress') AND target_date IS NOT NULL GROUP BY project_id").all<{ project_id: string; next_target: string }>(),
   ]);
 

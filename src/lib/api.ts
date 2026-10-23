@@ -1,4 +1,4 @@
-import type { TaskKind } from '../../shared/taskKinds'
+import { isQuestion, type TaskKind } from '../../shared/taskKinds'
 import type { PublicationRole } from '../../shared/publicationRoles'
 /**
  * Typed API client for MN-CCORE D1 backend.
@@ -521,7 +521,7 @@ export function addProjectComment(id: string, comment: { content: string; author
 
 // ── Tasks endpoints ──────────────────────────────────────────
 
-export function fetchTasks(params?: {
+export async function fetchTasks(params?: {
   assignee?: string
   status?: string
   priority?: string
@@ -533,8 +533,17 @@ export function fetchTasks(params?: {
   completed_since?: string
   /** Only these task ids (server cap 50). */
   ids?: string[]
+  /**
+   * Questions for Nick (kind='question') ride the same table but are NOT work:
+   * they belong on the Today "Needs you" card only, and their due_date is a
+   * snooze date. Off by default, so no task list, count or overdue view can
+   * show one by forgetting a filter. Only the surfaces that render that card
+   * (Today, My Tasks) opt in.
+   */
+  includeQuestions?: boolean
 }) {
   const qs = new URLSearchParams()
+  if (params?.includeQuestions) qs.set('include_questions', '1')
   if (params?.completed_since) qs.set('completed_since', params.completed_since)
   if (params?.ids) qs.set('ids', params.ids.join(','))
   if (params?.assignee) qs.set('assignee', params.assignee)
@@ -545,7 +554,10 @@ export function fetchTasks(params?: {
   if (params?.source) qs.set('source', params.source)
   if (params?.completed) qs.set('completed', params.completed)
   const query = qs.toString()
-  return fetchApi<TaskRow[]>(`/api/tasks${query ? `?${query}` : ''}`)
+  const res = await fetchApi<TaskRow[]>(`/api/tasks${query ? `?${query}` : ''}`)
+  // Second line of defence: a server that predates ?include_questions still
+  // sends them, so drop them here unless the caller asked.
+  return params?.includeQuestions ? res : { ...res, data: res.data.filter((t) => !isQuestion(t)) }
 }
 
 /** The tasks that list `id` in their blocked_by (GET /api/tasks/:id/blocking). */

@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { isTestFixture } from '../lib/fixtures';
+import { NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 
 // GET /api/today/mentees -- the Today page's MENTEES row (Pulse card) and the
 // Hermes Suggests "mentee next due" bullet.
@@ -39,7 +40,7 @@ export async function handleTodayMentees(env: Env, viewerSlug: string): Promise<
   const tasks = await env.DB.prepare(
     `SELECT t.assignee, t.due_date, t.title FROM tasks t
      JOIN team_members tm ON tm.slug = t.assignee AND tm.member_type = 'research_team'
-     WHERE t.completed = 0 AND t.deleted_at IS NULL AND t.due_date IS NOT NULL`,
+     WHERE t.completed = 0 AND t.deleted_at IS NULL AND t.due_date IS NOT NULL AND ${NOT_QUESTION_SQL_T}`,
   ).all<{ assignee: string; due_date: string; title: string | null }>();
 
   const soonest = new Map<string, string>();

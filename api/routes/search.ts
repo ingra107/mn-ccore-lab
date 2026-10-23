@@ -3,6 +3,7 @@ import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/proj
 import { json } from '../helpers';
 import { activityVisibilityGate } from '../lib/activity-entry';
 import { legacyEchoExclude } from '../lib/posted-activity';
+import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
 
 // --- Scoring constants ---
 
@@ -173,7 +174,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
 
   const settled = await Promise.allSettled([
     env.DB.prepare(
-      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?`
+      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} LIMIT ?`
     ).bind(like, like, limit).all(),
     env.DB.prepare(
       `SELECT pr.slug, pr.title, pr.category, pr.pi, pr.description, pr.updated_at, ${homeProductCols('pr')}

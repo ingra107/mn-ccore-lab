@@ -101,7 +101,7 @@ export default function TodayPage() {
   // 2026-10-08: no slug yet -> no query at all. The old `: undefined` fallback
   // fired an UNSCOPED /api/tasks read (every member's tasks) until the slug
   // arrived; `enabled` makes that request impossible to build.
-  const tasksQuery = useRecentTasks({ assignee: userSlug }, { retry: false, enabled: !!userSlug })
+  const tasksQuery = useRecentTasks({ assignee: userSlug, includeQuestions: true }, { retry: false, enabled: !!userSlug })
   const menteesQuery = useTodayMentees()
   const projectsQuery = useProjects()
   const meetingsQuery = useMeetingsApi()

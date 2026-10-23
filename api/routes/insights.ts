@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { homeProductCols, homeProductJoin, homeStageWords, PRODUCT_STAGE_COUNTS_SQL, type ProductStageCount } from '../lib/project-home'
 import { json } from '../helpers';
+import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 
 // UTC-safe YYYY-MM-DD from a Date object (pure UTC integer arithmetic).
 // Avoids .toISOString().split/.slice lint ban (R21).
@@ -362,7 +363,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // 2. Tasks per person (open only)
   const taskDistRes = await env.DB.prepare(
     `SELECT assignee, COUNT(*) as c FROM tasks
-     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
+     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL AND ${NOT_QUESTION_SQL}
      GROUP BY assignee ORDER BY c DESC`
   ).all<{ assignee: string; c: number }>()
   const distribution = (taskDistRes.results ?? []).map((r) => ({ slug: r.assignee, count: r.c }))
@@ -430,7 +431,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
          FROM tasks
          WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
            AND due_date IS NOT NULL
-           AND due_date >= ?
+           AND due_date >= ? AND ${NOT_QUESTION_SQL}
            AND due_date < date(?, '+7 days')
          GROUP BY assignee, dow`
       ).bind(isoDateStr(requestedMonday!), isoDateStr(requestedMonday!))
@@ -442,7 +443,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
          FROM tasks
          WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
            AND due_date IS NOT NULL
-           AND due_date >= date('now', 'weekday 0', '-6 days')
+           AND due_date >= date('now', 'weekday 0', '-6 days') AND ${NOT_QUESTION_SQL}
            AND due_date < date('now', 'weekday 0', '+1 day')
          GROUP BY assignee, dow`
       ).all<{ assignee: string; dow: number; c: number }>()
@@ -470,7 +471,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
     `SELECT p.slug, p.title,
        MAX(ae.created_at) as last_update,
        (SELECT COUNT(*) FROM tasks t
-          WHERE t.project_id = p.id AND t.deleted_at IS NULL AND t.completed = 0) as open_tasks
+          WHERE t.project_id = p.id AND t.deleted_at IS NULL AND t.completed = 0 AND ${NOT_QUESTION_SQL_T}) as open_tasks
      FROM projects p
      LEFT JOIN activity_entries ae ON ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.project_id = p.id
      WHERE p.deleted_at IS NULL AND p.status = 'active'
@@ -538,7 +539,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   const tasksSparklinePromises = sparklineWindowEnds.map((endIso) =>
     env.DB.prepare(
       `SELECT COUNT(*) as c FROM tasks
-       WHERE deleted_at IS NULL AND completed = 1
+       WHERE deleted_at IS NULL AND completed = 1 AND ${NOT_QUESTION_SQL}
          AND updated_at > datetime(?, '-7 days')
          AND updated_at <= datetime(?, '+1 day')`
     ).bind(endIso, endIso).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
