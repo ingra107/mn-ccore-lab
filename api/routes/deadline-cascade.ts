@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json, error, assertProjectVisible } from '../helpers';
+import { NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -193,7 +194,7 @@ export async function handleGetAllCascades(env: Env): Promise<Response> {
     `SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title
      FROM tasks t
      LEFT JOIN projects p ON t.project_id = p.slug OR t.project_id = p.id
-     WHERE t.due_date IS NOT NULL AND t.completed = 0
+     WHERE t.due_date IS NOT NULL AND t.completed = 0 AND ${NOT_QUESTION_SQL_T}
      ORDER BY t.due_date ASC`
   ).all();
 

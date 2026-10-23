@@ -14,7 +14,7 @@ import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
-import { DEFAULT_TASK_KIND, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
+import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 
 // guardTaskProject: reads the live task through the caller's handle. A task
 // the caller may not read (api/lib/table-scope.ts taskRule) is absent, so
@@ -56,7 +56,7 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
   let query = `SELECT
     SUM(CASE WHEN due_date < ? THEN 1 ELSE 0 END) as count,
     SUM(CASE WHEN acknowledged_at IS NULL THEN 1 ELSE 0 END) as unseen
-    FROM tasks WHERE completed = 0 AND deleted_at IS NULL`
+    FROM tasks WHERE completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}`
   const params: string[] = [today]
   if (assignee) { query += ' AND assignee = ?'; params.push(assignee) }
   const result = await env.DB.prepare(query).bind(...params).first<{ count: number | null; unseen: number | null }>()
@@ -157,6 +157,14 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   }
   if (source) { query += ' AND t.source = ?'; params.push(source); }
   if (kind) { query += ' AND t.kind = ?'; params.push(kind); }
+  // A question waits on Nick's answer, not on work, and shows only on the Today
+  // "Needs you" card. Every ordinary read drops it. Callers that want questions
+  // say so: ?kind=question (the Telegram reconciler), ?include_questions=1 (the
+  // Today and My Tasks pages, which render the card), or a sync read (seq_after
+  // cursor, include_deleted, updated_since/created_since), which mirrors every row.
+  const wantsQuestions = kind !== null || url.searchParams.get('include_questions') === '1'
+    || seqAfterRaw !== null || includeDeleted || updatedSince !== null || createdSince !== null;
+  if (!wantsQuestions) query += ` AND ${NOT_QUESTION_SQL_T}`;
   if (completed !== null && completed !== undefined) {
     query += ' AND t.completed = ?';
     params.push(completed === 'true' ? 1 : 0);

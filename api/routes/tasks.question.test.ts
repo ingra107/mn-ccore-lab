@@ -552,14 +552,24 @@ describe('GET /api/tasks?kind=question', () => {
     expect(body.data.map((t) => t.id)).toEqual(['task_01get_question_0001'])
   })
 
-  it('omits the kind clause when the param is absent', async () => {
+  it('omits the kind clause when the param is absent, and drops questions from the list', async () => {
     const db = makeQueryCaptureDB()
     const env = db.env
     const res = await handleGetTasks(new URL('https://x/api/tasks'), env, true)
     // t.kind is in the SELECT projection either way; the FILTER must be absent.
     expect(db._calls[0].sql).not.toContain(' AND t.kind = ?')
     const body = await res.json() as { data: Array<{ id: string }> }
-    expect(body.data.map((t) => t.id).sort()).toEqual(['task_01get_ordinary_0001', 'task_01get_question_0001'])
+    // An ordinary read never lists a question (it shows on the Needs you card only).
+    expect(body.data.map((t) => t.id)).toEqual(['task_01get_ordinary_0001'])
+  })
+
+  it('?include_questions=1 and the sync reads (seq_after) still return the question', async () => {
+    const db = makeQueryCaptureDB()
+    for (const q of ['include_questions=1', 'seq_after=0']) {
+      const res = await handleGetTasks(new URL(`https://x/api/tasks?${q}`), db.env, true)
+      const body = await res.json() as { data: Array<{ id: string }> }
+      expect(body.data.map((t) => t.id).sort(), q).toEqual(['task_01get_ordinary_0001', 'task_01get_question_0001'])
+    }
   })
 
   it('an unlisted kind is a 400 naming the vocabulary, not an empty list', async () => {

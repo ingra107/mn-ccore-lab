@@ -12,6 +12,7 @@ import { initialAudience, isLabSeriesTitle, isMeetingAudience, meetingSeriesKey 
 import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/viewer-db';
 import { meetingArms } from '../lib/table-scope';
 import { prepActivityWhere } from '../lib/activity-feed-types';
+import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
@@ -33,7 +34,7 @@ async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourc
   const ids = sourceId ? [meetingId, sourceId] : [meetingId];
   const placeholders = ids.map(() => '?').join(',');
   const cnt = await env.DB.prepare(
-    `SELECT COUNT(*) as n FROM tasks WHERE meeting_id IN (${placeholders}) AND deleted_at IS NULL`
+    `SELECT COUNT(*) as n FROM tasks WHERE meeting_id IN (${placeholders}) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}`
   ).bind(...ids).first<{ n: number }>();
   const n = cnt?.n ?? 0;
   await env.DB.prepare(
@@ -67,7 +68,7 @@ export async function handleGetMeetings(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     `WITH tc AS (
        SELECT meeting_id, COUNT(*) AS n, SUM(CASE WHEN completed = 0 THEN 1 ELSE 0 END) AS open_n
-         FROM tasks WHERE deleted_at IS NULL AND meeting_id IS NOT NULL GROUP BY meeting_id
+         FROM tasks WHERE deleted_at IS NULL AND meeting_id IS NOT NULL AND ${NOT_QUESTION_SQL} GROUP BY meeting_id
      )
      SELECT meetings.*,
             ${GRANTED_PROJECTS_SQL} AS granted_projects,
@@ -142,7 +143,7 @@ export async function handleGetMeeting(id: string, env: Env, viewer?: Viewer): P
   const sourceId = (meeting as { source_id?: string | null }).source_id ?? null;
   const [actionItemsRaw, agendaItems] = await Promise.all([
     env.DB.prepare(
-      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL ORDER BY t.created_at`
+      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} ORDER BY t.created_at`
     ).bind(id, sourceId ?? id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
@@ -533,7 +534,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
       ? env.DB.prepare(
           `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.completed, t.due_date
            FROM tasks t
-           WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL
+           WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
            ORDER BY t.completed ASC, t.assignee`
         ).bind(prevMeeting.id, prevMeeting.source_id ?? prevMeeting.id).all()
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
@@ -549,7 +550,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
-       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL
+       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
        ORDER BY t.due_date`
     ).bind(today, twoWeeksOut).all(),
     // Current meeting's agenda items
@@ -560,7 +561,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority
        FROM tasks t
-       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL
+       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
        ORDER BY t.due_date`
     ).bind(today).all(),
   ]);
@@ -624,7 +625,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
           `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
            FROM tasks t ${TASK_MEETING_JOIN}
            WHERE t.meeting_id IN (${seriesRefs.map(() => '?').join(', ')})
-             AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
+             AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
            ORDER BY m.date DESC, t.created_at
            LIMIT 20`
         ).bind(...seriesRefs).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),
@@ -635,7 +636,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
        WHERE t.status IN ('todo','in_progress','waiting_external')
          AND t.priority IN ('high','urgent')
          AND t.due_date BETWEEN ? AND ?
-         AND (t.deleted_at IS NULL OR t.deleted_at = '')
+         AND (t.deleted_at IS NULL OR t.deleted_at = '') AND ${NOT_QUESTION_SQL_T}
        ORDER BY t.due_date
        LIMIT 15`
     ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>(),

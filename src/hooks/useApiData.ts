@@ -699,6 +699,8 @@ export function useTasks(filters?: {
   source?: string
   completed?: string
   completed_since?: string
+  /** Only the Today and My Tasks pages (the "Needs you" card) pass true; see fetchTasks. */
+  includeQuestions?: boolean
 }, options?: { enabled?: boolean; retry?: boolean | number }) {
   return useQuery({
     queryKey: ['tasks', filters],
@@ -732,7 +734,7 @@ export function recentCompletionCutoff(now: Date = new Date()): string {
  * Completed group on Deadlines) keeps using useTasks() unsliced.
  */
 export function useRecentTasks(
-  extra?: { assignee?: string },
+  extra?: { assignee?: string; includeQuestions?: boolean },
   options?: { enabled?: boolean; retry?: boolean | number },
 ) {
   return useTasks({ ...extra, completed_since: recentCompletionCutoff() }, options)

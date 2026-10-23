@@ -6,6 +6,7 @@ import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
 import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
+import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ async function generateDigest(memberSlug: string, env: Env): Promise<DigestData>
     // Overdue tasks assigned to this member
     env.DB.prepare(
       `SELECT id, title, due_date, priority, status, project_id FROM tasks
-       WHERE assignee = ? AND due_date < ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL
+       WHERE assignee = ? AND due_date < ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY priority DESC, due_date ASC
        LIMIT 10`
     ).bind(memberSlug, today).all(),
@@ -68,14 +69,14 @@ async function generateDigest(memberSlug: string, env: Env): Promise<DigestData>
     // Tasks due today
     env.DB.prepare(
       `SELECT id, title, due_date, priority, status, project_id FROM tasks
-       WHERE assignee = ? AND due_date = ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL
+       WHERE assignee = ? AND due_date = ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY priority DESC`
     ).bind(memberSlug, today).all(),
 
     // Tasks due in the next 7 days (excluding today)
     env.DB.prepare(
       `SELECT id, title, due_date, priority, status, project_id FROM tasks
-       WHERE assignee = ? AND due_date > ? AND due_date <= ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL
+       WHERE assignee = ? AND due_date > ? AND due_date <= ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY due_date ASC, priority DESC
        LIMIT 10`
     ).bind(memberSlug, today, sevenDaysFromNow).all(),
@@ -385,7 +386,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     env.DB.prepare(
       `SELECT COUNT(*) as n FROM tasks
        WHERE assignee = ? AND status != 'done' AND completed = 0
-         AND due_date < ? AND deleted_at IS NULL`
+         AND due_date < ? AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}`
     ).bind(member.slug, today).first<{ n: number }>(),
 
     // Regulatory items expiring in next 14 days
@@ -416,7 +417,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     env.DB.prepare(
       `SELECT COUNT(*) as n FROM tasks
        WHERE assignee = ? AND due_date = ? AND status != 'done'
-         AND completed = 0 AND deleted_at IS NULL`
+         AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}`
     ).bind(member.slug, today).first<{ n: number }>(),
   ]);
 
