@@ -22,7 +22,7 @@ import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import Field from '../components/ui/Field'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { emDashifyTitle } from '../lib/textUtils'
-import { civilDaysUntil, formatFullDate, localDateKey } from '../lib/dateUtils'
+import { civilDaysUntil, formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
@@ -35,9 +35,12 @@ import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
+import { splitMeetingList } from '../lib/meetingList'
 import { Button } from '../components/ui/Button'
 
 type FilterMode = 'all' | 'decisions' | 'actions' | 'today'
+/** Upcoming meetings shown before "+N more": the strip stays a strip. */
+const UPCOMING_SHOWN = 3
 
 const ALL_TEAM_MEMBERS = [
   ...directors.map((d) => ({ slug: d.slug, name: d.name, initials: d.initials, photoUrl: d.photoUrl })),
@@ -490,6 +493,9 @@ export default function Meetings() {
     return out
   }, { replace: true })
   const [searchQuery, setSearchQuery] = useState('')
+  // Past meetings with nothing written in them stay folded until asked for.
+  const [showEmpty, setShowEmpty] = useState(false)
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
   // M-34: mobile view — false = show list, true = show detail
@@ -606,7 +612,15 @@ export default function Meetings() {
   const pendingActions = allActionItems.filter((a) => !a.completed)
   const completedActions = allActionItems.filter((a) => a.completed)
 
+  // Default view (All, no search): meetings that happened and have content,
+  // newest first, with upcoming ones in a strip above and empty ones behind a
+  // toggle (lib/meetingList). A filter tab or a search lists every match.
+  const isDefaultView = filter === 'all' && !searchQuery.trim()
+  const split = useMemo(() => splitMeetingList(meetings, localDateKey()), [meetings])
+  const upcomingMeetings = isDefaultView ? split.upcoming : []
+
   const filteredMeetings = useMemo(() => {
+    if (isDefaultView) return showEmpty ? [...split.past, ...split.empty] : split.past
     let result = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
     if (filter === 'today') result = result.filter((m) => m.date.slice(0, 10) === localDateKey())
     else if (filter === 'decisions') result = result.filter((m) => m.decisions && m.decisions.length > 0)
@@ -624,7 +638,7 @@ export default function Meetings() {
       })
     }
     return result
-  }, [filter, searchQuery, meetings])
+  }, [filter, searchQuery, meetings, isDefaultView, showEmpty, split])
 
   // The muted project line on each list card: the meeting's tagged projects
   // (what it discussed), else its action items' projects. Only projects this
@@ -649,7 +663,9 @@ export default function Meetings() {
   }, [projectList, meetingRows, meetings])
 
   const effectiveSelectedId = selectedMeetingId ?? filteredMeetings[0]?.id ?? null
-  const selectedMeeting = filteredMeetings.find((m) => m.id === effectiveSelectedId) ?? null
+  // Look the selection up in every meeting: an upcoming one (the strip) or an
+  // empty one picked before folding is not in the list but still opens.
+  const selectedMeeting = meetings.find((m) => m.id === effectiveSelectedId) ?? null
 
   // Viewing a meeting in the split-panel detail (default-selected or
   // clicked) counts as "seen" for the new-notes badge/pill — this is the
@@ -909,8 +925,37 @@ export default function Meetings() {
                   <div style={{ width: '85%', height: 12, background: 'var(--hover-subtle)', borderRadius: 'var(--radius-sm)' }} />
                 </div>
               ))
-            ) : filteredMeetings.length > 0 ? (
-              filteredMeetings.map((meeting, idx) => {
+            ) : filteredMeetings.length > 0 || upcomingMeetings.length > 0 || (isDefaultView && split.empty.length > 0) ? (
+              <>
+              {upcomingMeetings.length > 0 && (
+                <section className="tk-mup" aria-label="Upcoming meetings">
+                  <div className="tk-mup-h">Upcoming <span className="tk-cnt">{upcomingMeetings.length}</span></div>
+                  {(showAllUpcoming ? upcomingMeetings : upcomingMeetings.slice(0, UPCOMING_SHOWN)).map((meeting) => {
+                    const isSelected = meeting.id === effectiveSelectedId
+                    return (
+                      <div key={meeting.id} className={`tk-mup-r${isSelected ? ' tk-sel' : ''}`}>
+                        <button
+                          type="button"
+                          className="tk-mup-b"
+                          aria-current={isSelected ? 'true' : undefined}
+                          onClick={() => { setSelectedMeetingId(meeting.id); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}
+                        >
+                          <span className="tk-mld">{formatShortDate(meeting.date)}</span>
+                          <span className="tk-mup-t">{emDashifyTitle(meeting.title)}</span>
+                        </button>
+                        <Link to={PATHS.meetingPrep(meeting.id)} className="tk-mup-p">Prep</Link>
+                      </div>
+                    )
+                  })}
+                  {upcomingMeetings.length > UPCOMING_SHOWN && (
+                    <button type="button" className="tk-mup-x" onClick={() => setShowAllUpcoming((v) => !v)} aria-expanded={showAllUpcoming}>
+                      {showAllUpcoming ? 'Show fewer' : `+${upcomingMeetings.length - UPCOMING_SHOWN} more`}
+                    </button>
+                  )}
+                </section>
+              )}
+              {upcomingMeetings.length > 0 && filteredMeetings.length > 0 && <div className="tk-mup-h">Past</div>}
+              {filteredMeetings.map((meeting, idx) => {
                 const isSelected = meeting.id === effectiveSelectedId
                 const isNext = isNextMeeting(meeting)
                 const { actionCount = 0, pendingCount = 0 } = actionCountsByMeetingId.get(meeting.id) ?? {}
@@ -938,7 +983,13 @@ export default function Meetings() {
                     onSelect={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}
                   />
                 )
-              })
+              })}
+              {isDefaultView && split.empty.length > 0 && (
+                <button type="button" className="tk-mup-x" onClick={() => setShowEmpty((v) => !v)} aria-expanded={showEmpty}>
+                  {showEmpty ? 'Hide' : 'Show'} {split.empty.length} past meeting{split.empty.length === 1 ? '' : 's'} with no notes
+                </button>
+              )}
+              </>
             ) : (
               <div className="py-10 text-center px-4">
                 <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>

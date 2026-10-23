@@ -299,6 +299,8 @@ export function useTeam(options?: { enabled?: boolean }) {
       return res.data.map(rowToTeamMember)
     },
     initialData: import.meta.env.DEV ? () => _devGetAllMembers() : undefined,
+    // DEV fixture, not data: stale at once so the real roster replaces it (as useProjects).
+    initialDataUpdatedAt: import.meta.env.DEV ? 0 : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
@@ -516,6 +518,9 @@ export function useMeetingsApi(options?: { enabled?: boolean }) {
     // reading ['meetings'] before the real fetch resolved briefly saw the
     // 6-row demo dataset as ground truth. Same rationale applies here.
     initialData: import.meta.env.DEV ? () => staticToMeetingRows() : undefined,
+    // DEV fixture, not data: stale at once so the real meetings replace it on
+    // mount. Without this a local page showed the 6 demo meetings for STALE_TIME.
+    initialDataUpdatedAt: import.meta.env.DEV ? 0 : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,

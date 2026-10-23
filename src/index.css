@@ -3075,6 +3075,17 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .tk .tk-mlc{display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;padding:9px 11px 9px;cursor:pointer;font:inherit;color:inherit}
 .tk .tk-mlc.tk-sel{box-shadow:inset 2px 0 0 var(--job-accent),inset 0 1px 0 var(--sk-rim-ac),var(--sk-amb)}
 .tk .tk-mlc:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
+.tk .tk-mup{display:flex;flex-direction:column;gap:2px;padding-bottom:4px}
+.tk .tk-mup-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--sk-t3);padding:2px 2px 4px}
+.tk .tk-mup-r{display:flex;align-items:center;gap:8px;border-radius:var(--r-ctl);padding:0 8px 0 0}
+.tk .tk-mup-r:hover,.tk .tk-mup-r.tk-sel{background:var(--sk-panel)}
+.tk .tk-mup-r.tk-sel{box-shadow:inset 2px 0 0 var(--job-accent)}
+.tk .tk-mup-b{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;padding:6px 8px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+.tk .tk-mup-b:focus-visible,.tk .tk-mup-p:focus-visible,.tk .tk-mup-x:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
+.tk .tk-mup-t{font-size:12.5px;color:var(--sk-t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tk .tk-mup-p{font-size:11.5px;color:var(--job-accent);text-decoration:none;flex-shrink:0}
+.tk .tk-mup-p:hover{text-decoration:underline;text-underline-offset:2px}
+.tk .tk-mup-x{align-self:flex-start;font-size:11.5px;color:var(--sk-t3);text-decoration:underline;text-underline-offset:2px;padding:6px 2px;background:none;border:0;cursor:pointer}
 .tk .tk-mlr{display:flex;align-items:center;gap:8px;min-width:0}
 .tk .tk-mlr .tk-sp{flex:1;min-width:0}
 .tk .tk-mld{font-size:11.5px;color:var(--sk-t3);font-variant-numeric:tabular-nums;white-space:nowrap}
