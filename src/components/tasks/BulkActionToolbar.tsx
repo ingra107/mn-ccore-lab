@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock, ListChecks } from 'lucide-react'
+import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, CalendarDays, ListChecks } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { DELETE_ARM_WINDOW_MS } from '../../lib/uiTiming'
 import { Button } from '../ui/Button'
+import InlineDatePicker from '../InlineDatePicker'
 
 interface BulkActionToolbarProps {
   selectedIds: Set<string>
   selectedTasks: TaskRow[]
   onClear: () => void
-  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => void
+  onBulkAction: (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'due' | 'status', value?: string) => void
   isUpdating: boolean
 }
 
@@ -369,23 +370,24 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
             )}
           </div>
 
-          {/* Snooze (+1 day) */}
-          {selectedTasks.some(t => t.due_date) && (
-            <button
-              onClick={() => {
-                closeDropdowns()
-                onBulkAction('snooze', '1')
-              }}
-              disabled={isUpdating}
-              style={{
-                ...buttonStyle(),
-                color: 'var(--sk-t2)',
-              }}
-            >
-              <AlarmClock {...ICON_PROPS} size={14} />
-              +1 day
-            </button>
-          )}
+          {/* Due date: the shared picker (presets, cumulative +7d, month grid,
+              Clear), not a fixed +1 day (#148's class). 'due' carries the
+              date, '' clears it. */}
+          <span className="bulk-date-host" onMouseDown={closeDropdowns}>
+            <InlineDatePicker
+              value={(() => {
+                const dues = new Set(selectedTasks.map(t => t.due_date ?? null))
+                return dues.size === 1 ? [...dues][0] : null
+              })()}
+              onChange={(d) => onBulkAction('due', d ?? '')}
+              display={
+                <span style={{ ...buttonStyle(), color: 'var(--sk-t2)' }}>
+                  <CalendarDays {...ICON_PROPS} size={14} />
+                  Due date
+                </span>
+              }
+            />
+          </span>
 
           {/* Delete */}
           <button

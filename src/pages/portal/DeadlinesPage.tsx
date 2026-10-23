@@ -56,28 +56,17 @@ export default function DeadlinesPage() {
     updateTask.mutate({ id, fields: { [field]: value } })
   }, [updateTask])
 
-  const handleBulkAction = useCallback((action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
-    if (action === 'snooze') {
-      const days = parseInt(value || '1', 10)
-      // S2: capture prior due dates before mutating so Undo restores the exact
-      // pre-snooze values; report tasks skipped for having no due date.
-      const prior: Array<{ id: string; due_date: string }> = []
-      let skipped = 0
-      for (const id of selectedIds) {
-        const task = tasks.find(t => t.id === id)
-        if (!task?.due_date) { skipped++; continue }
-        prior.push({ id, due_date: task.due_date })
-        const d = new Date(task.due_date + 'T12:00:00')
-        d.setDate(d.getDate() + days)
-        const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-        handleFieldChange(id, 'due_date', newDate)
-      }
-      const snoozedLabel = `${prior.length} snoozed +${days}d`
-      const skippedLabel = skipped > 0 ? ` · ${skipped} skipped (no due date)` : ''
-      showUndo(`${snoozedLabel}${skippedLabel}`, () => {
+  const handleBulkAction = useCallback((action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'due' | 'status', value?: string) => {
+    if (action === 'due') {
+      // The bulk date picker (#148's class): one date for every selected task,
+      // '' clears it. Undo restores each task's own prior date. The selection
+      // stays so the picker's +7d can keep stepping the same tasks.
+      const due = value || null
+      const prior = [...selectedIds].map((id) => ({ id, due_date: tasks.find(t => t.id === id)?.due_date ?? null }))
+      for (const p of prior) handleFieldChange(p.id, 'due_date', due)
+      showUndo(due ? `Due ${formatShortDate(due)} for ${prior.length}` : `Cleared the due date on ${prior.length}`, () => {
         for (const p of prior) handleFieldChange(p.id, 'due_date', p.due_date)
       })
-      setSelectedIds(new Set())
       return
     }
     bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {

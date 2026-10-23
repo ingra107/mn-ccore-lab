@@ -48,13 +48,18 @@ for (const theme of ['light', 'dark'] as const) {
       )
       const bar = host.firstElementChild as HTMLElement
       const barBg = getComputedStyle(bar).backgroundColor
-      const labels = ['Complete', 'Status', 'Reassign', 'Priority', '+1 day', 'Delete']
+      const labels = ['Complete', 'Status', 'Reassign', 'Priority', 'Delete']
       const buttons = [...host.querySelectorAll('button')]
       for (const label of labels) {
         const b = buttons.find((x) => (x.textContent ?? '').trim() === label)
         expect(b, label).toBeTruthy()
         expect(contrast(getComputedStyle(b!).color, barBg), `${label} text on the bar`).toBeGreaterThanOrEqual(4.5)
       }
+      // The due-date picker's trigger (it replaced "+1 day"): the label is a span
+      // inside the picker's button, so read the span.
+      const due = host.querySelector('.bulk-date-host .sr-trig > span') as HTMLElement
+      expect(due?.textContent?.trim(), 'Due date trigger').toBe('Due date')
+      expect(contrast(getComputedStyle(due).color, barBg), 'Due date text on the bar').toBeGreaterThanOrEqual(4.5)
       const close = host.querySelector('button[aria-label="Clear selection"]')!
       expect(contrast(getComputedStyle(close).color, barBg), 'clear glyph').toBeGreaterThanOrEqual(3)
       const count = [...host.querySelectorAll('span')].find((s) => (s.textContent ?? '').includes('selected'))!
