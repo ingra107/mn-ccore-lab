@@ -29,7 +29,7 @@
 //   non-question  a spec or answer only on a kind='question' row
 //             -> question_field_on_non_question
 // plus questionPatchError (what the write carries): question_spec_immutable,
-// question_choice_unknown, question_kind_immutable.
+// question_choice_unknown, question_choice_is_snooze, question_kind_immutable.
 //
 // Every error string opens with its code and a colon, the same shape
 // applyPatch's `lmm_invalid:` uses, so a caller can match on the code.
@@ -57,6 +57,7 @@ export const QUESTION_ERROR_CODES = {
   question_field_on_non_question: 'question_rule',
   question_spec_immutable: 'question_rule',
   question_choice_unknown: 'question_rule',
+  question_choice_is_snooze: 'question_rule',
   question_answer_frozen: 'question_rule',
   question_kind_immutable: 'question_rule',
   question_spec_missing: 'question_shape',
@@ -221,6 +222,17 @@ function specChoiceKeys(spec: unknown): Set<string> | null {
   return keys;
 }
 
+/** The spec's choice object for `key`, or null. */
+function specChoice(spec: unknown, key: string): Record<string, unknown> | null {
+  if (spec === null || spec === undefined) return null;
+  const parsed = parseJsonCol(spec);
+  if (!parsed.ok || !isPlainObject(parsed.value) || !Array.isArray(parsed.value.choices)) return null;
+  for (const c of parsed.value.choices) {
+    if (isPlainObject(c) && c.key === key) return c;
+  }
+  return null;
+}
+
 /**
  * The two question rules that need to know what THIS write carries, not just
  * the row it produces (L-Q23, 2026-10-08; ported from PB's BrainDB, which
@@ -236,6 +248,13 @@ function specChoiceKeys(spec: unknown): Set<string> | null {
  *                   keys (or `other`). Judged only when the write carries the
  *                   answer, so an old row is never refused for an answer it
  *                   already holds.                   -> question_choice_unknown
+ *   snooze is not   an answer naming a choice the spec declares a snooze
+ *   an answer       (payload.snooze_days, 2026-10-22: a "Not yet") is
+ *                   refused. Picking it writes due_date (Hub card,
+ *                   Telegram), never question_answer_json; a "Not yet"
+ *                   stored as an answer reads `answered` to every consumer
+ *                   and nothing ever asks again (#2079's question sat that
+ *                   way from 2026-10-13).            -> question_choice_is_snooze
  *   kind fixed      on an EXISTING row, a write may not move it into or out
  *                   of kind='question' (#8842). questionConsumedError judges
  *                   a close by the effective kind, so a flip question->task
@@ -281,6 +300,11 @@ export function questionPatchError(
       const keys = specChoiceKeys(spec);
       if (keys && !keys.has(choice)) {
         return `question_choice_unknown: answer choice '${choice}' is not one of the spec's choices (${[...keys].join(', ')})`;
+      }
+      const picked = specChoice(spec, choice);
+      const payload = picked && isPlainObject(picked.payload) ? picked.payload : null;
+      if (payload && payload.snooze_days !== undefined && payload.snooze_days !== null) {
+        return `question_choice_is_snooze: choice '${choice}' is a snooze (payload.snooze_days=${String(payload.snooze_days)}), not an answer; write due_date instead`;
       }
     }
   }

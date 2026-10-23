@@ -31,7 +31,7 @@ const TaskBoardView = lazyRoute(() => import('../../components/tasks/TaskBoardVi
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
-import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, todayKey } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, isQuestionSnoozed, todayKey } from '../../lib/taskGrouping'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -194,6 +194,11 @@ export default function UnifiedMyTasks() {
   const questionDay = todayKey()
   const questionTasks = useMemo(
     () => allTasks.filter((t) => isQuestionOnCard(t, questionDay)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasksQuery.data, questionDay],
+  )
+  const snoozedQuestions = useMemo(
+    () => allTasks.filter((t) => isQuestionSnoozed(t, questionDay)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tasksQuery.data, questionDay],
   )
@@ -395,7 +400,7 @@ export default function UnifiedMyTasks() {
         <div style={pageScroll ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' } : { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* "Needs you" questions — shown above the pending-meetings card, same
               guard shape. Disappears once every question is answered. */}
-          {!isLoading && <QuestionsCard tasks={questionTasks} />}
+          {!isLoading && <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} />}
           {/* Pending meetings triage card — shown above the task list on all views.
               Disappears automatically once all meetings are accepted or declined. */}
           {!isLoading && <PendingMeetingsCard tasks={pendingMeetingTasks} />}

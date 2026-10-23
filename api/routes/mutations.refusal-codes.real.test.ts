@@ -341,6 +341,29 @@ describe('question writes that stay legal', () => {
     expect((await send(upd('task_Q', { question_answer_json: null }))).status).toBe('accepted');
   });
 
+  // Snooze (2026-10-22): a spec's "Not yet" declared as payload.snooze_days is
+  // a due_date write, never an answer.
+  const SNOOZE_SPEC = JSON.stringify({
+    v: 1, kind: 'response_required', prompt: 'Removed the old tasks?',
+    choices: [{ key: 'o1', label: 'I ran it', payload: { rr_key: 'Q01' } },
+      { key: 'o2', label: 'Not yet', payload: { snooze_days: 3 } }, { key: 'other', label: 'Other' }],
+    allow_text: true, rec: 'o1',
+  });
+
+  it('an answer naming a snooze choice -> question_choice_is_snooze (quiet), nothing written', async () => {
+    seedTask('task_S', { kind: 'question', question_spec_json: SNOOZE_SPEC });
+    const r = refused(await send(upd('task_S', { question_answer_json: answer('o2') })), 'question_rule');
+    expect(r.reason).toMatch(/^apply error: question_choice_is_snooze: choice 'o2' is a snooze/);
+    expect(taskRow('task_S').question_answer_json).toBeNull();
+  });
+
+  it('the real answer on the same spec, and a due_date snooze, are accepted', async () => {
+    seedTask('task_S', { kind: 'question', question_spec_json: SNOOZE_SPEC });
+    expect((await send(upd('task_S', { due_date: '2026-10-25' }))).status).toBe('accepted');
+    expect(taskRow('task_S')).toMatchObject({ due_date: '2026-10-25', question_answer_json: null });
+    expect((await send(upd('task_S', { question_answer_json: answer('o1') }))).status).toBe('accepted');
+  });
+
   it('re-sending the identical spec is not a change', async () => {
     expect((await send(upd('task_Q', { question_spec_json: SPEC }))).status).toBe('accepted');
   });

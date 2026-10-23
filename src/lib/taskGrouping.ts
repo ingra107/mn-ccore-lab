@@ -321,18 +321,69 @@ export function isQuestionWaiting(t: {
 }
 
 /**
+ * Snooze (2026-10-22, Nick: "i like the snooze function for those things
+ * because it can come back a few days or the next day"). On a question row
+ * `due_date` means "keep this off Nick's view until that local civil date";
+ * there is no other column and no job. A question is snoozed while its
+ * due_date is AFTER today, so it comes back on the morning of that date by
+ * construction. Every question carries a due_date from birth (PB create_task
+ * defaults it to the mint day), which is never after today, so an unsnoozed
+ * question reads as not snoozed with nothing to clear.
+ *
+ * Snooze is Nick's view only. No consumer gate reads it: PB's question_state
+ * ignores due_date, and a snooze never writes question_answer_json.
+ * Mirrored by PB scripts/questions/state.py::is_snoozed; both sides run the
+ * table in src/lib/__tests__/fixtures/question-snooze-cases.json.
+ */
+export function questionSnoozedUntil(t: { due_date?: string | null }, today: string = todayKey()): string | null {
+  const d = typeof t.due_date === 'string' ? t.due_date.slice(0, 10) : ''
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) && d > today ? d : null
+}
+
+/** A question Nick would see (waiting, or answered and not acted on) that is
+ *  snoozed past today. Acted-on and closed rows are never "snoozed". */
+export function isQuestionSnoozed(t: {
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+  due_date?: string | null
+}, today: string = todayKey()): boolean {
+  const state = questionCardState(t)
+  return (state === 'waiting' || state === 'answered') && questionSnoozedUntil(t, today) !== null
+}
+
+/** The longest snooze a spec may declare (PB spec.SNOOZE_DAYS_MAX). */
+export const SNOOZE_DAYS_MAX = 14
+
+/**
+ * The days a choice snoozes for, or null when it is an answer. A spec
+ * declares a "Not yet" choice as a snooze with payload.snooze_days (an
+ * integer 1..14, PB spec.Choice refuses anything else); picking it writes
+ * due_date, never an answer, and the Hub refuses it as an answer
+ * (question_choice_is_snooze).
+ */
+export function snoozeChoiceDays(choice: { payload?: unknown } | null | undefined): number | null {
+  const p = choice?.payload
+  if (!isObj(p)) return null
+  const n = p.snooze_days
+  return typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= SNOOZE_DAYS_MAX ? n : null
+}
+
+/**
  * The rows the "Needs you" card is handed: every question still waiting or
- * answered-but-not-acted-on, plus those acted on today (the receipt's local
- * day). An older acted-on row is history, not news.
+ * answered-but-not-acted-on and not snoozed, plus those acted on today (the
+ * receipt's local day). An older acted-on row is history, not news.
  */
 export function isQuestionOnCard(t: {
   kind?: string | null
   question_answer_json?: string | null
   question_consumed_json?: string | null
   status?: string | null
+  due_date?: string | null
 }, today: string = todayKey()): boolean {
   const state = questionCardState(t)
-  if (state === 'waiting' || state === 'answered') return true
+  if (state === 'waiting' || state === 'answered') return questionSnoozedUntil(t, today) === null
   if (state !== 'acted') return false
   return localDayKey(parseDbUtc(parseQuestionReceipt(t)!.at)) === today
 }

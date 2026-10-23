@@ -63,7 +63,7 @@ import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, civilDatePlusDays } from '../../lib/taskGrouping'
+import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, isQuestionSnoozed, civilDatePlusDays } from '../../lib/taskGrouping'
 import { isStalledProject, projectMovedAt } from '../../lib/taskConstants'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
@@ -133,6 +133,12 @@ export default function TodayPage() {
   const questionDay = todayKey()
   const questionTasks: TaskRow[] = useMemo(
     () => (tasksQuery.data ?? []).filter((t) => isQuestionOnCard(t, questionDay)),
+    [tasksQuery.data, questionDay],
+  )
+  // Snoozed questions (due_date after today) are off the card; the card
+  // says how many and when the next one is back.
+  const snoozedQuestions: TaskRow[] = useMemo(
+    () => (tasksQuery.data ?? []).filter((t) => isQuestionSnoozed(t, questionDay)),
     [tasksQuery.data, questionDay],
   )
   // #97: ANSWERED approvals (accepted/declined) drop out entirely — they are
@@ -602,7 +608,7 @@ export default function TodayPage() {
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
-        <QuestionsCard tasks={questionTasks} band={false} />
+        <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} band={false} />
 
         {/* Asks to join a project (schema-v139): Nick and Nate only; renders
             nothing for anyone else or when none is pending. */}

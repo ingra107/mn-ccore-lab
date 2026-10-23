@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../UndoToast'
 import { QuestionsCard } from './QuestionsCard'
 import { nowInstant } from '../../lib/time'
+import { civilDatePlusDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
@@ -84,7 +85,7 @@ function makeQuestionTask(overrides: Partial<TaskRow> = {}): TaskRow {
   } as TaskRow
 }
 
-function mountCard(tasks: TaskRow[]): { host: HTMLElement; queryClient: QueryClient } {
+function mountCard(tasks: TaskRow[], snoozed: TaskRow[] = []): { host: HTMLElement; queryClient: QueryClient } {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   queryClient.setQueryData<TaskRow[]>(['tasks'], tasks)
   const host = document.createElement('div')
@@ -93,7 +94,7 @@ function mountCard(tasks: TaskRow[]): { host: HTMLElement; queryClient: QueryCli
   root.render(
     <QueryClientProvider client={queryClient}>
       <UndoToastProvider>
-        <QuestionsCard tasks={tasks} />
+        <QuestionsCard tasks={tasks} snoozed={snoozed} />
       </UndoToastProvider>
     </QueryClientProvider>,
   )
@@ -160,8 +161,9 @@ describe('QuestionsCard', () => {
     expect(row.textContent).toContain('You answered “Pulmonary HSR Group Meeting”')
     expect(row.querySelector('[data-testid="q-answered-age"]')!.textContent).toBe('10 days ago')
     // Clearing an answer a consumer may already be acting on reopens the
-    // question and invites a second effect, so the answered row has no button.
-    expect(row.querySelector('button')).toBeNull()
+    // question and invites a second effect, so the answered row has no button
+    // that touches the answer: its only buttons are the three snoozes.
+    expect([...row.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Tomorrow', '3 days', 'Next week'])
     // The count is the waiting rows only: the answered one is not his turn.
     expect(host.querySelector('.tk-cnt')!.textContent).toBe('1')
   })
@@ -216,5 +218,78 @@ describe('QuestionsCard', () => {
     expect(body.question_answer_json.choice).toBe('c1')
     expect(body.question_answer_json.via).toBe('hub')
     expect(body).not.toHaveProperty('status')
+  })
+})
+
+describe('QuestionsCard snooze', () => {
+  const okFetch = () => vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({ data: makeQuestionTask() }),
+  })
+  const bodies = (f: ReturnType<typeof vi.fn>) =>
+    f.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string))
+
+  it('a snooze writes due_date only (never an answer or a status), and Undo restores the old date', async () => {
+    const fetchMock = okFetch()
+    vi.stubGlobal('fetch', fetchMock)
+    const { host } = mountCard([makeQuestionTask({ due_date: '2026-10-01' })])
+    await until(() => host.querySelector('[data-testid="q-snooze-3"]') != null, 'snooze links')
+    ;(host.querySelector('[data-testid="q-snooze-3"]') as HTMLButtonElement).click()
+    await until(() => fetchMock.mock.calls.length > 0, 'snooze POST')
+    expect(bodies(fetchMock)[0]).toEqual({ due_date: civilDatePlusDays(todayKey(), 3) })
+
+    const undo = await (async () => {
+      for (let i = 0; i < 200; i++) {
+        const b = [...document.querySelectorAll('button')].find((x) => x.textContent?.trim() === 'Undo')
+        if (b) return b as HTMLButtonElement
+        await new Promise((r) => setTimeout(r, 10))
+      }
+      throw new Error('no Undo button')
+    })()
+    undo.click()
+    await until(() => fetchMock.mock.calls.length > 1, 'undo POST')
+    expect(bodies(fetchMock)[1]).toEqual({ due_date: '2026-10-01' })
+  })
+
+  it('a declared "Not yet" choice snoozes for its days instead of answering', async () => {
+    const fetchMock = okFetch()
+    vi.stubGlobal('fetch', fetchMock)
+    const spec = {
+      ...SPEC,
+      choices: [
+        { key: 'o1', label: 'I ran it' },
+        { key: 'o2', label: 'Not yet', payload: { snooze_days: 3 } },
+        { key: 'other', label: 'Other' },
+      ],
+      rec: 'o1',
+    }
+    const { host } = mountCard([makeQuestionTask({ question_spec_json: JSON.stringify(spec) })])
+    await until(() => host.querySelector('[data-testid="q-choice-o2"]') != null, 'choice')
+    ;(host.querySelector('[data-testid="q-choice-o2"]') as HTMLButtonElement).click()
+    await until(() => host.querySelector('[data-testid="q-submit"]')!.textContent === 'Snooze 3 days', 'snooze label')
+    ;(host.querySelector('[data-testid="q-submit"]') as HTMLButtonElement).click()
+    await until(() => fetchMock.mock.calls.length > 0, 'POST')
+    const body = bodies(fetchMock)[0]
+    expect(body).toEqual({ due_date: civilDatePlusDays(todayKey(), 3) })
+    expect(body).not.toHaveProperty('question_answer_json')
+  })
+
+  it('says how many are snoozed and when the next comes back', async () => {
+    const tomorrow = civilDatePlusDays(todayKey(), 1)
+    const { host } = mountCard(
+      [makeQuestionTask({ id: 'q-wait' })],
+      [makeQuestionTask({ id: 'q-s1', due_date: civilDatePlusDays(todayKey(), 5) }), makeQuestionTask({ id: 'q-s2', due_date: tomorrow })],
+    )
+    await until(() => host.querySelector('[data-testid="q-snoozed"]') != null, 'snoozed line')
+    expect(host.querySelector('[data-testid="q-snoozed"]')!.textContent).toBe('2 snoozed · next back tomorrow')
+    // Snoozed rows are never drawn as questions.
+    expect(host.querySelectorAll('[data-testid="q-submit"]').length).toBe(1)
+  })
+
+  it('snoozed rows alone do not show the card', async () => {
+    const { host } = mountCard([], [makeQuestionTask({ due_date: civilDatePlusDays(todayKey(), 2) })])
+    await new Promise((r) => setTimeout(r, 30))
+    expect(host.querySelector('[aria-label="Needs you"]')).toBeNull()
   })
 })

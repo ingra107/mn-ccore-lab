@@ -1,0 +1,25 @@
+{
+  "about": "Parity table for the question snooze predicate. Hub src/lib/taskGrouping.ts::isQuestionSnoozed and PB scripts/questions/state.py::is_snoozed must agree on every case. Read by src/lib/__tests__/questionSnooze.test.ts and PB tests/questions/test_snooze_hub_parity.py (at Hub origin/main).",
+  "answer": "{\"v\":1,\"choice\":\"c1\",\"via\":\"hub\",\"at\":\"2026-10-12T11:46:51.313Z\"}",
+  "receipt": "{\"v\":1,\"consumer\":\"fix_approval\",\"at\":\"2026-10-13T00:00:00Z\",\"answer_at\":\"2026-10-12T11:46:51.313Z\",\"evidence\":\"x\"}",
+  "cases": [
+    {"name": "waiting, due tomorrow", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "2026-10-23"}, "snoozed": true},
+    {"name": "waiting, due today (mint default)", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "2026-10-22"}, "snoozed": false},
+    {"name": "waiting, due yesterday", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "2026-10-21"}, "snoozed": false},
+    {"name": "waiting, no due date", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": null}, "snoozed": false},
+    {"name": "waiting, empty due date", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": ""}, "snoozed": false},
+    {"name": "waiting, junk due date", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "next week"}, "snoozed": false},
+    {"name": "waiting, due date with a time part", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "2026-10-22T23:00:00Z"}, "snoozed": false},
+    {"name": "waiting, future date with a time part", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "due_date": "2026-10-25 00:00:00"}, "snoozed": true},
+    {"name": "in_progress, due next week", "today": "2026-10-22", "row": {"kind": "question", "status": "in_progress", "due_date": "2026-10-29"}, "snoozed": true},
+    {"name": "month rollover", "today": "2026-10-31", "row": {"kind": "question", "status": "todo", "due_date": "2026-11-01"}, "snoozed": true},
+    {"name": "answered, due later", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "question_answer_json": "$answer", "due_date": "2026-10-25"}, "snoozed": true},
+    {"name": "answered, due earlier", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "question_answer_json": "$answer", "due_date": "2026-10-12"}, "snoozed": false},
+    {"name": "acted on, due later", "today": "2026-10-22", "row": {"kind": "question", "status": "done", "question_answer_json": "$answer", "question_consumed_json": "$receipt", "due_date": "2026-10-25"}, "snoozed": false},
+    {"name": "deleted, due later", "today": "2026-10-22", "row": {"kind": "question", "status": "deleted", "due_date": "2026-10-25"}, "snoozed": false},
+    {"name": "done without a receipt (anomaly), due later", "today": "2026-10-22", "row": {"kind": "question", "status": "done", "question_answer_json": "$answer", "due_date": "2026-10-25"}, "snoozed": false},
+    {"name": "unreadable answer, due later", "today": "2026-10-22", "row": {"kind": "question", "status": "todo", "question_answer_json": "{not json", "due_date": "2026-10-25"}, "snoozed": false},
+    {"name": "ordinary task, due later", "today": "2026-10-22", "row": {"kind": "task", "status": "todo", "due_date": "2026-10-25"}, "snoozed": false},
+    {"name": "no kind, due later", "today": "2026-10-22", "row": {"status": "todo", "due_date": "2026-10-25"}, "snoozed": false}
+  ]
+}
