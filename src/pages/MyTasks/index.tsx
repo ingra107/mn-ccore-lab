@@ -217,8 +217,10 @@ export default function UnifiedMyTasks() {
   })
   // Genuinely-empty vs filtered-to-empty. The views pick AllCaughtUp or
   // NoTasksMatch on this; before it was plumbed, an empty plate always read
-  // "your filters hide everything" with nothing to clear.
-  const isEmpty = nonPendingTasks.length === 0
+  // "your filters hide everything" with nothing to clear. Done tasks do not
+  // count: a member whose every task is done (Casey, 2026-10-23: 12 of 12)
+  // is caught up, not filtered out; Show completed still lists them.
+  const isEmpty = !nonPendingTasks.some((t) => !isTaskDone(t))
 
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
 
