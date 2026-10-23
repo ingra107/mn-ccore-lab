@@ -23,7 +23,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CheckSquare, ListChecks, StickyNote } from 'lucide-react'
-import type { TodayEvent } from './constants'
+import { jotKey, type TodayEvent } from './constants'
 import { useNowMinutes } from './useNowMinutes'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
@@ -64,7 +64,8 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   // rows and real D1 rows (no e.meetingId) never carry the seen indicator
   // here; that surface is out of scope for this row.
   const { data: unseen } = useUnseenActivity()
-  const meetingSeen = e.meetingId ? unseen?.meetings.get(e.meetingId) : undefined
+  // Seen markers speak of NOTES, so they stay tied to a meeting that has them.
+  const meetingSeen = e.meetingId && e.meetingNotes ? unseen?.meetings.get(e.meetingId) : undefined
   const isNeverSeenMeeting = meetingSeen?.never_seen === 1
   const hasUpdateSinceSeenMeeting = !!meetingSeen && !isNeverSeenMeeting
 
@@ -86,7 +87,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   // straight through instead of offering to create anything.
   const navigate = useNavigate()
   const prep = usePrepMeetingFromEvent()
-  const rowMeetingId = isCalEvent ? (e.meetingId ?? e.matchedMeetingId) : e.id
+  const rowMeetingId = isCalEvent ? e.meetingId : e.id
   const { showError } = useToast()
   // projectCalendarEventToDay always builds calendarRef, so test the uid in it:
   // a list response from a Worker older than #2225 has no uid, and Prep then
@@ -113,6 +114,9 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
     }
   }
 
+  // Jotting: a native row, or a calendar row merged with its meeting (e.meetingId),
+  // jots under the meeting's id. A calendar row with no meeting stays read-only.
+  const canJot = !isCalEvent || !!e.meetingId
   const hasNotes = (note && note.length > 0) || !!e.meetingNotes
   const place = e.loc ?? null
 
@@ -128,7 +132,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   // row is its own meeting; a calendar row shows them only once it IS the
   // meeting's row (notes merged, e.meetingId): a matched meeting without notes
   // keeps its native row elsewhere on Today, which carries them. Never both.
-  const actionRowsMeetingId = total > 0 && (!isCalEvent || e.meetingId) ? rowMeetingId : null
+  const actionRowsMeetingId = total > 0 ? rowMeetingId : null
   const actionRowsEl = actionRowsMeetingId ? <MeetingActionsCard meetingId={actionRowsMeetingId} placeholder={actionsEl} /> : null
   const projectEl = e.project && (
     <Link to={PATHS.project(e.project.slug)} onClick={(ev) => ev.stopPropagation()} aria-label={`Open ${e.project.name}`}>
@@ -188,7 +192,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   )
   const notesPanel = (
     <div className="tk-mexp">
-              {e.meetingNotes ? (
+              {e.meetingNotes && note === undefined ? (
                 // T13: cal- row matched to a D1 meeting that has debrief notes —
                 // read-only rendered notes + deep link, no jot textarea (editing
                 // debriefed notes stays on the meeting page).
@@ -209,28 +213,20 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                 <>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
                     <div className="tk-lbl" style={{ margin: 0 }}>Meeting notes</div>
-                    {!isCalEvent && saveStatus === 'saving' && (
+                    {canJot && saveStatus === 'saving' && (
                       <span style={{ fontSize: 10.5, color: 'var(--sk-t3)' }}>saving…</span>
                     )}
-                    {!isCalEvent && saveStatus === 'saved' && (
+                    {canJot && saveStatus === 'saved' && (
                       <span style={{ fontSize: 10.5, color: 'var(--job-accent)' }}>saved</span>
                     )}
                   </div>
                   <textarea
-                    value={isCalEvent ? '' : (note || '')}
-                    onChange={isCalEvent || !onNote ? undefined : (ev) => onNote(e.id, ev.target.value)}
-                    readOnly={isCalEvent}
-                    disabled={isCalEvent}
-                    placeholder={
-                      isCalEvent
-                        ? (e.hasUndebriefedMatch
-                            // #550: a match exists (undebriefed) — the native row
-                            // elsewhere carries the live jot; don't claim no record.
-                            ? 'This meeting has its own row — jot notes there instead'
-                            : 'No meeting page yet — press Prep to build an agenda')
-                        : 'Jot notes as the meeting happens…'
-                    }
-                    style={{ resize: isCalEvent ? 'none' : 'vertical', cursor: isCalEvent ? 'not-allowed' : undefined, outline: 'none', lineHeight: 1.5 }}
+                    value={canJot ? (note || '') : ''}
+                    onChange={!canJot || !onNote ? undefined : (ev) => onNote(jotKey(e), ev.target.value)}
+                    readOnly={!canJot}
+                    disabled={!canJot}
+                    placeholder={canJot ? 'Jot notes as the meeting happens…' : 'No meeting page yet — press Prep to build an agenda'}
+                    style={{ resize: canJot ? 'vertical' : 'none', cursor: canJot ? undefined : 'not-allowed', outline: 'none', lineHeight: 1.5 }}
                   />
                 </>
               )}

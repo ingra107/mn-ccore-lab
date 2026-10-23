@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { matchMeetingRecord, normalizeMeetingTitle, projectCalendarEventToDay, continuationNote } from './constants'
+import { mergeCalendarWithMeetings, jotKey, matchMeetingRecord, normalizeMeetingTitle, projectCalendarEventToDay, continuationNote } from './constants'
 import { todayKey } from '../../lib/taskGrouping'
+import type { MeetingRow } from '../../hooks/useApiData'
 
 // T13: pure-function coverage for the cal- row <-> D1 meeting bridge.
 // normalizeMeetingTitle mirrors api/routes/meetings.ts's server-side copy —
@@ -173,5 +174,44 @@ describe('projectCalendarEventToDay', () => {
     expect(e.startsBeforeDay).toBe(false)
     expect(e.endsAfterDay).toBe(false)
     expect(continuationNote(e)).toBe('')
+  })
+})
+
+describe('mergeCalendarWithMeetings: a meeting shows once', () => {
+  const today = todayKey()
+  const mtg = (id: string, title: string, notes: string | null = null) => ({ id, title, date: today, notes }) as unknown as MeetingRow
+  const cal = (id: string, title: string) => ({ id, time: '9:00 AM', title, startMin: 540 })
+
+  it('a note-less matched meeting folds into the timed card and is not emitted again', () => {
+    const { calendar, native } = mergeCalendarWithMeetings([cal('cal-1', 'CLIF WG Weekly Meeting')], [mtg('m1', 'clif wg weekly  meeting')])
+    expect(calendar).toHaveLength(1)
+    expect(calendar[0].meetingId).toBe('m1')
+    expect(calendar[0].time).toBe('9:00 AM')
+    expect(native).toEqual([])
+    expect(jotKey(calendar[0])).toBe('m1')
+  })
+
+  it('a meeting with notes folds the same way and carries them', () => {
+    const { calendar, native } = mergeCalendarWithMeetings([cal('cal-1', 'Sync')], [mtg('m1', 'Sync', 'debrief')])
+    expect(calendar[0].meetingNotes).toBe('debrief')
+    expect(native).toEqual([])
+  })
+
+  it('an unmatched meeting stays an untimed native card; an unmatched calendar card has no meeting id', () => {
+    const { calendar, native } = mergeCalendarWithMeetings([cal('cal-1', 'Dentist')], [mtg('m1', 'Sync')])
+    expect(calendar[0].meetingId).toBeUndefined()
+    expect(native.map((e) => [e.id, e.time])).toEqual([['m1', '—']])
+  })
+
+  it('one meeting is claimed by at most one calendar card', () => {
+    const { calendar, native } = mergeCalendarWithMeetings([cal('cal-1', 'Sync'), cal('cal-2', 'Sync')], [mtg('m1', 'Sync')])
+    expect(calendar.map((e) => e.meetingId)).toEqual(['m1', undefined])
+    expect(native).toEqual([])
+  })
+
+  it('two same-title meetings and two same-title cards pair up one to one', () => {
+    const { calendar, native } = mergeCalendarWithMeetings([cal('cal-1', 'Sync'), cal('cal-2', 'Sync')], [mtg('m1', 'Sync'), mtg('m2', 'Sync')])
+    expect(calendar.map((e) => e.meetingId)).toEqual(['m1', 'm2'])
+    expect(native).toEqual([])
   })
 })

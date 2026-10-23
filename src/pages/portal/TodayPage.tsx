@@ -31,8 +31,8 @@ import {
   GROUP_ORDER,
   INK, INK_MUTED, PAGE_BG,
   todayKey, formatTodayDate,
-  meetingToEvent, meetingCardFields, projectCalendarEventToDay, isToday,
-  matchMeetingRecord, normalizeMeetingTitle,
+  projectCalendarEventToDay, isToday,
+  mergeCalendarWithMeetings,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
@@ -418,7 +418,6 @@ export default function TodayPage() {
   // top as the "all day" band.
   const todaysMeetings: TodayEvent[] = useMemo(() => {
     const rawMeetings = (meetingsQuery.data ?? []).filter((m) => isToday(m.date))
-    const meetings = rawMeetings.map(meetingToEvent)
     // #107: project every returned event onto today rather than filtering on
     // its START. An event that began yesterday and ends this morning belongs on
     // today; a start-date filter dropped it entirely.
@@ -426,33 +425,10 @@ export default function TodayPage() {
       .map((e) => projectCalendarEventToDay(e, todayKey()))
       .filter((e): e is TodayEvent => e !== null)
 
-    // T13: bridge personal-calendar rows to their D1 meeting record (same
-    // day + normalized title). Merge ONLY once the meeting has debrief notes:
-    // the decorated cal- row shows read-only notes + deep link, so it can
-    // replace the native row. A matched meeting WITHOUT notes keeps its
-    // native untimed row — that row carries the live jot textarea
-    // (MeetingNotesAutoSave), and the cal- row's textarea is disabled by
-    // isCalEvent; merging early would silently kill in-meeting jotting.
-    const matchedMeetingIds = new Set<string>()
-    const decoratedPersonal = personal.map((e) => {
-      const match = matchMeetingRecord(e, rawMeetings, normalizeMeetingTitle)
-      if (!match) return e
-      // The card fields (faces, project, action count) follow the matched
-      // meeting either way; they gate nothing.
-      const row = rawMeetings.find((m) => m.id === match.id)
-      const card = row ? meetingCardFields(row) : {}
-      // #550: a match with no notes yet stays undecorated (7b5188de — the
-      // native untimed row below keeps the live jot), but flag it so
-      // MeetingRow can stop claiming "no meeting record" when one exists.
-      // matchedMeetingId rides along so the Prep pill links to the existing
-      // page instead of offering to create a second one. It deliberately does
-      // NOT set meetingId — that field still gates the jot/unseen behavior
-      // #550 left on the native row.
-      if (!match.notes) return { ...e, ...card, hasUndebriefedMatch: true, matchedMeetingId: match.id }
-      matchedMeetingIds.add(match.id)
-      return { ...e, ...card, meetingId: match.id, meetingNotes: match.notes }
-    })
-    const dedupedMeetings = meetings.filter((m) => !matchedMeetingIds.has(m.id))
+    // T13: a calendar row matched to a Hub meeting (same day + normalized
+    // title) IS that meeting's card, notes or not: one timed card carrying the
+    // meeting id, so jotting works on it. Only unmatched meetings stay untimed.
+    const { calendar: decoratedPersonal, native: dedupedMeetings } = mergeCalendarWithMeetings(personal, rawMeetings)
 
     // Personal events with a real time go after untimed meetings, sorted
     // by start. Untimed events keep insertion order (D1 returns by date).

@@ -43,7 +43,7 @@ import {
   type TimelineUnit, type DayBalance,
 } from './timelineModel'
 import {
-  continuationNote,
+  continuationNote, jotKey,
   type TodayEvent, type PlannedSlot,
 } from './constants'
 import { fmtDuration } from './utils'
@@ -693,9 +693,9 @@ function AgendaMeetingRow({
         e={event}
         compact
         onDismiss={onDismiss}
-        note={notes[event.id]}
+        note={notes[jotKey(event)]}
         onNote={onNote}
-        saveStatus={saveStatus[event.id] ?? 'idle'}
+        saveStatus={saveStatus[jotKey(event)] ?? 'idle'}
         isCalEvent={event.id.startsWith('cal-')}
         isPhone={isPhone}
         minHeight={baseHeight}
@@ -807,9 +807,9 @@ function AgendaOverlapRegion({
                     overlap
                     compact
                     onDismiss={onDismiss}
-                    note={notes[e.id]}
+                    note={notes[jotKey(e)]}
                     onNote={onNote}
-                    saveStatus={saveStatus[e.id] ?? 'idle'}
+                    saveStatus={saveStatus[jotKey(e)] ?? 'idle'}
                     isCalEvent={e.id.startsWith('cal-')}
                     isPhone={isPhone}
                     minHeight={pxForMeeting(eDuration)}
@@ -991,9 +991,9 @@ export function TimelineGrid({
               key={e.id}
               e={e}
               onDismiss={onDismiss}
-              note={notes[e.id]}
+              note={notes[jotKey(e)]}
               onNote={onNote}
-              saveStatus={saveStatus[e.id] ?? 'idle'}
+              saveStatus={saveStatus[jotKey(e)] ?? 'idle'}
               isCalEvent={e.id.startsWith('cal-')}
               isPhone={isPhone}
             />
@@ -1035,9 +1035,9 @@ export function TimelineGrid({
                 key={e.id}
                 e={e}
                 onDismiss={onDismiss}
-                note={notes[e.id]}
+                note={notes[jotKey(e)]}
                 onNote={onNote}
-                saveStatus={saveStatus[e.id] ?? 'idle'}
+                saveStatus={saveStatus[jotKey(e)] ?? 'idle'}
                 isCalEvent={e.id.startsWith('cal-')}
                 isPhone={isPhone}
               />

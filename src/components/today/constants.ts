@@ -59,29 +59,13 @@ export interface TodayEvent {
   // the Today timeline's left rail instead of the main flow.
   isAllDay?: boolean
   // T13: set on a cal-* row once matched to a same-day D1 meeting record
-  // (matchMeetingRecord). Bridges the personal-calendar row to its D1
-  // identity so the timeline row can deep-link + mark-seen against the real
-  // meeting instead of rendering the "no meeting record" placeholder.
+  // (mergeCalendarWithMeetings), notes or not. The calendar row IS the meeting's
+  // card: it deep-links, marks seen and carries the live jot against this id.
   meetingId?: string
-  // T13: the matched meeting's debrief notes, decorated onto the cal- row.
-  // Non-empty → MeetingRow renders MarkdownView + "Open meeting" link
-  // instead of the jot textarea.
+  // The matched meeting's debrief notes. Non-empty (and nothing jotted yet this
+  // session) -> MeetingRow renders MarkdownView + "Open meeting" instead of the
+  // jot textarea.
   meetingNotes?: string | null
-  // #550: true when a cal- row matched a same-day D1 meeting record that has
-  // NO debrief notes yet (7b5188de's early-return path — meetingId/meetingNotes
-  // stay unset on purpose so the native untimed row keeps the live jot
-  // textarea, not this row). Exists ONLY so MeetingRow can pick accurate
-  // placeholder copy; it must NOT feed meetingId-gated behavior (unseen dot,
-  // mark-seen, deep link) — that's the pre-debrief merge rework this row
-  // explicitly defers, not this fix.
-  hasUndebriefedMatch?: boolean
-  // The id of the D1 meeting a cal- row matched, INCLUDING the undebriefed
-  // case that deliberately leaves `meetingId` unset. Read only by the Prep
-  // pill, to link to an existing meeting instead of offering to create one.
-  // Kept separate from `meetingId` on purpose: that field still gates the
-  // unseen dot, mark-seen and the notes deep link, and #550 defers widening
-  // those to pre-debrief matches.
-  matchedMeetingId?: string
   // The day this row was projected onto (YYYY-MM-DD, local). A cal- row's own
   // `id` is day-qualified but its start instant may sit on another day, and
   // the D1 meetings table is keyed by date — so the Prep pill needs the day
@@ -216,6 +200,11 @@ export function meetingCardFields(m: MeetingRow): Pick<TodayEvent, 'people' | 'p
     actionCount: m.action_count ?? 0,
     openActionCount: m.open_action_count ?? 0,
   }
+}
+
+/** Key a card's jotted note lives under: the meeting's id, for a native row or a calendar row merged with its meeting. */
+export function jotKey(e: Pick<TodayEvent, 'id' | 'meetingId'>): string {
+  return e.meetingId ?? e.id
 }
 
 export function meetingToEvent(m: MeetingRow): TodayEvent {
@@ -394,4 +383,27 @@ export function matchMeetingRecord(
     }
   }
   return best
+}
+
+/**
+ * Merge the day's calendar cards with its Hub meeting rows so a meeting shows
+ * ONCE. A calendar card claims at most one meeting (date + normalized title,
+ * notes or not) and carries its id; a claimed meeting is not emitted again.
+ * `native` is built from the same claim set, so a claimed meeting cannot also
+ * appear there. Only meetings no calendar card claimed stay untimed cards.
+ */
+export function mergeCalendarWithMeetings(
+  personal: TodayEvent[],
+  meetings: MeetingRow[],
+): { calendar: TodayEvent[]; native: TodayEvent[] } {
+  const claimed = new Set<string>()
+  const calendar = personal.map((e) => {
+    const free = meetings.filter((m) => !claimed.has(m.id))
+    const match = matchMeetingRecord(e, free, normalizeMeetingTitle)
+    if (!match) return e
+    claimed.add(match.id)
+    const row = free.find((m) => m.id === match.id)
+    return { ...e, ...(row ? meetingCardFields(row) : {}), meetingId: match.id, meetingNotes: match.notes }
+  })
+  return { calendar, native: meetings.filter((m) => !claimed.has(m.id)).map(meetingToEvent) }
 }

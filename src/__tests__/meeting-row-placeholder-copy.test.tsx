@@ -36,13 +36,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function renderRow(e: TodayEvent): Promise<HTMLElement> {
+function renderRow(e: TodayEvent, onNote: (id: string, v: string) => void = () => {}): Promise<HTMLElement> {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return mount(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <EventRow e={e} onDismiss={() => {}} onNote={() => {}} isCalEvent />
+        <EventRow e={e} onDismiss={() => {}} onNote={onNote} isCalEvent />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -59,11 +59,16 @@ describe('EventRow placeholder copy (#550)', () => {
     expect(textarea.placeholder).toBe('No meeting page yet — press Prep to build an agenda')
   })
 
-  it('does not claim there is no page once matched but undebriefed', async () => {
-    const host = await renderRow({ ...BASE, hasUndebriefedMatch: true })
+  it('a calendar card merged with a note-less meeting is jottable, under the meeting id', async () => {
+    const calls: Array<[string, string]> = []
+    const host = await renderRow({ ...BASE, meetingId: 'mtg-9', meetingNotes: null }, (id, v) => calls.push([id, v]))
     const textarea = await expand(host)
-    expect(textarea.placeholder).not.toContain('No meeting page yet')
-    expect(textarea.placeholder).toContain('own row')
+    expect(textarea.disabled).toBe(false)
+    expect(textarea.placeholder).toBe('Jot notes as the meeting happens…')
+    // React tracks the value; use the native setter so onChange fires.
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, 'hello')
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    expect(calls).toEqual([['mtg-9', 'hello']])
   })
 })
 
@@ -131,7 +136,7 @@ describe('EventRow Prep pill', () => {
   })
 
   it('shows Agenda instead of Prep once a meeting record exists', async () => {
-    const host = await renderRow({ ...BASE, dayKey: '2026-08-26', matchedMeetingId: 'mtg-2026-08-26-abc' })
+    const host = await renderRow({ ...BASE, dayKey: '2026-08-26', meetingId: 'mtg-2026-08-26-abc' })
     expect(pills(host)).toContain('Agenda')
     expect(pills(host)).not.toContain('Prep')
   })
