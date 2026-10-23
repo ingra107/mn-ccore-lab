@@ -3,9 +3,10 @@
 // purpose (agenda prep creates them, and /meetings/:id/prep reads them), but
 // sorted newest-date-first they sat above every meeting that happened and the
 // page opened on an empty one. The default view is now three parts:
-//   upcoming: dated after today, soonest first (a small strip with Prep links)
+//   upcoming: dated after today, or today with nothing written yet, soonest
+//             first (a small strip with Prep links)
 //   past:     today or earlier WITH content, newest first (the page opens here)
-//   empty:    today or earlier with no notes, decisions or actions (behind a toggle)
+//   empty:    before today with no notes, decisions or actions (behind a toggle)
 // A filter tab or a search shows every match in one list, so nothing is
 // unreachable.
 
@@ -27,8 +28,11 @@ export function splitMeetingList<M extends Pick<Meeting, 'date' | 'notes' | 'dec
   todayKey: string,
 ): MeetingListSplit<M> {
   const day = (m: M) => m.date.slice(0, 10)
-  const upcoming = meetings.filter((m) => day(m) > todayKey).sort((a, b) => a.date.localeCompare(b.date))
-  const rest = meetings.filter((m) => day(m) <= todayKey).sort((a, b) => b.date.localeCompare(a.date))
+  // Today's meeting with nothing in it has not been written up yet: it is
+  // still something to prep, not an empty record.
+  const isUpcoming = (m: M) => day(m) > todayKey || (day(m) === todayKey && !meetingHasContent(m))
+  const upcoming = meetings.filter(isUpcoming).sort((a, b) => a.date.localeCompare(b.date))
+  const rest = meetings.filter((m) => !isUpcoming(m)).sort((a, b) => b.date.localeCompare(a.date))
   return {
     upcoming,
     past: rest.filter(meetingHasContent),

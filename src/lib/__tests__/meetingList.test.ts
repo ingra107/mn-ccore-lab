@@ -15,16 +15,22 @@ describe('splitMeetingList', () => {
     m('past-action', '2026-09-30', { actionItems: [{ id: 'a' }] }),
   ]
 
-  it('puts future meetings in upcoming, soonest first, even with content', () => {
-    expect(splitMeetingList(list, today).upcoming.map((x) => x.id)).toEqual(['future-near', 'future-far'])
+  it("puts future meetings, and today's not yet written up, in upcoming, soonest first", () => {
+    expect(splitMeetingList(list, today).upcoming.map((x) => x.id)).toEqual(['today-empty', 'future-near', 'future-far'])
+  })
+
+  it("today's meeting with notes is past, not upcoming", () => {
+    const s = splitMeetingList([m('today-done', '2026-10-23', { notes: 'Done' })], today)
+    expect(s.past.map((x) => x.id)).toEqual(['today-done'])
+    expect(s.upcoming).toEqual([])
   })
 
   it('keeps past meetings with content, newest first; the page opens on the first', () => {
     expect(splitMeetingList(list, today).past.map((x) => x.id)).toEqual(['past-notes', 'past-decision', 'past-action'])
   })
 
-  it('sets aside past and same-day meetings with nothing in them', () => {
-    expect(splitMeetingList(list, today).empty.map((x) => x.id)).toEqual(['today-empty', 'past-empty'])
+  it('sets aside earlier meetings with nothing in them', () => {
+    expect(splitMeetingList(list, today).empty.map((x) => x.id)).toEqual(['past-empty'])
   })
 
   it('whitespace-only notes are not content', () => {
