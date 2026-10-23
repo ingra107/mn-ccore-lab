@@ -1,11 +1,13 @@
-# ▶▶ 2026-10-23 (work): BUG QUEUE EMPTY + LIVE SWEEP CLEAN. main `b7eb372b` live (probe PASS). **Schema v146.** **Routes 272 on main; 266 on branch `retire-ask-the-lab`.**
+# ▶▶ 2026-10-23 (work): BUG QUEUE EMPTY + LIVE SWEEP CLEAN. main `1ac8d675` live (probe PASS). **Schema v147.** **Routes 266.**
 
 ## What shipped (all deployed)
 - **#148** bulk Due date = the shared `InlineDatePicker` on My Tasks (`67fc56d3`) and on the shared `BulkActionToolbar` (Deadlines, project pages; `de65395d`, bulk action `snooze` became `due`). Selection stays open so `+7d` keeps stepping.
 - **#149** Needs you: "N snoozed" opens the snoozed list (answerable, Bring back now); 1-day snooze reads "For today" (`5550f69b`).
 - Dropdowns placed before paint, no top-left first frame (`usePortalDropdown` layout effect, `faeec0ea`).
 - My Tasks: only-done list reads "All caught up" (`69e82c5f`); Digest count line names its day (`7326240c`).
-- Ask the Lab out of ⌘K, phone More and onboarding (`40a50450`).
+- **Ask the Lab retired** (Nick waived the 24h dogfood): menus (`40a50450`), page + 6 routes + hooks (`d3749ac7`; `/portal/ask` redirects to Today), schema-v147 drops `lab_questions`/`lab_answers` on test + prod (`57f1ec47`; the one row is quoted in the migration header, Time Travel bookmark in the PB decision doc). Branch `retire-ask-the-lab` deleted.
+- **Meetings default list** (`31ce6fe7`, `1ac8d675`): Upcoming strip with Prep links (today's meeting with nothing written leads it), then past meetings with content (page opens on the latest), empty past meetings behind a toggle. Search and the other tabs still list everything. `src/lib/meetingList.ts`.
+- Local dev: Meetings and team list read real data, not the demo initialData (`initialDataUpdatedAt: 0` in DEV).
 - Grants dates use the shared picker; picker gained year jumps « » and Shift+PageUp/Down (`8ebeff36`).
 - Keyed toasts: `showUndo/showSuccess(..., key)` replace instead of stacking; a replaced Undo chains back to the first state (`61c6c6c5`). ⌘K Backlog Wave failure is an error toast (`1a603398`).
 - **Deploy gate `predeploy:submodules`** (`b7eb372b`): the `pb-schema/` checkout sat at 0.19.0 while main recorded 0.20.0, so deploys shipped a `links` field list without `kind`. Gate fails on any submodule off its recorded commit.
@@ -17,9 +19,7 @@
 - Bulk `onBulkAction('due', date | '')` replaced `'snooze'`; `''` clears.
 
 ## Open
-- **Branch `retire-ask-the-lab` (`85862427`)**: page, 6 routes, hooks and tests removed. Merge + deploy after the 24h dogfood (PB task due 2026-10-24). PB decision doc `Context/Decisions/2026-10-23-ask-the-lab-retirement.md`.
-- NEEDS-NICK: migration dropping `lab_questions` / `lab_answers` (1 + 0 rows); remove their table-scope, project-slug and viewer-sweep entries in the same change.
-- `tests/feature-registry.json` summary block is stale (says 347; 328 features); regenerate with `scripts/inspection-scanner.py`.
+- None.
 
 ---
 

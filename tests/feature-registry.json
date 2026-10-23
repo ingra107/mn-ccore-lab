@@ -2988,7 +2988,6 @@
     "form-meeting-notes-upload",
     "animation-route-progress-bar",
     "animation-count-up",
-    "animation-scroll-reveal",
     "animation-network-background",
     "click-clif-map-sites",
     "click-collaboration-graph",
@@ -3000,9 +2999,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 347,
-    "covered": 304,
-    "uncovered": 43,
-    "coverage_pct": 87.6
+    "total": 328,
+    "covered": 287,
+    "uncovered": 41,
+    "coverage_pct": 87.5
   }
 }
