@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, LayoutDashboard, User, SquareCheck, ListTodo, Calendar,
-  Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
+  Clock, FolderKanban, FileText, Lightbulb, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
   Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink, X,
@@ -189,7 +189,6 @@ export default function CommandPalette() {
       { path: PATHS.projects, label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
       { path: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
       { path: PATHS.ideasTab, label: 'Ideas', icon: Lightbulb },
-      { path: PATHS.ask, label: 'Ask the Lab', icon: HelpCircle },
       { path: PATHS.decisions, label: 'Decisions', icon: Scale },
       { path: PATHS.digestTab, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
       { path: PATHS.grants, label: 'Grants', icon: DollarSign },
@@ -255,14 +254,6 @@ export default function CommandPalette() {
       sublabel: 'Add a new research idea',
       icon: Lightbulb,
       action: () => { navigate(`${PATHS.ideasTab}&create=true`); setOpen(false) },
-      category: 'action',
-    })
-    items.push({
-      id: 'action-ask-question',
-      label: 'Ask the Lab',
-      sublabel: 'Post a question for anyone to answer',
-      icon: HelpCircle,
-      action: () => { navigate(`${PATHS.ask}?create=true`); setOpen(false) },
       category: 'action',
     })
     items.push({

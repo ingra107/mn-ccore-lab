@@ -375,7 +375,6 @@ const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; memberOnly?: boolean
   {
     title: 'More',
     routes: [
-      { to: PATHS.ask, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.ask] },
       { to: PATHS.narratives, icon: BookOpen, label: PORTAL_PAGE_LABELS[PATHS.narratives] },
       { to: PATHS.decisions, icon: HelpCircle, label: PORTAL_PAGE_LABELS[PATHS.decisions] },
       { to: '/', icon: ExternalLink, label: 'Back to website' },

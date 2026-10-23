@@ -101,15 +101,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
 
   // Day 14: Connect
   {
-    id: 'ask',
-    day: 14,
-    title: 'Ask a question on Ask the Lab',
-    description: 'No question is too small. Ask something you are curious about.',
-    action: 'Visit Ask the Lab',
-    link: '/ask',
-    category: 'connect',
-  },
-  {
     id: 'react',
     day: 14,
     title: 'React to a team update',
