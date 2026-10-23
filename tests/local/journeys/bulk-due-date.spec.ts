@@ -60,7 +60,18 @@ test('Deadlines bulk bar: Due date opens the shared picker (not +1 day), +7d add
   await rows.nth(1).getByRole('cell').nth(1).getByRole('button').first().click({ modifiers: ['Shift'] })
   await expect(page.getByText(/1 selected/)).toBeVisible()
   await expect(page.getByText('+1 day')).toHaveCount(0)
+  // Record where the picker is the moment it enters the DOM (a microtask after
+  // React's commit, before paint). It must already sit by its trigger, not at
+  // the top-left corner (a one-frame flash seen on the live site).
+  await page.evaluate(() => {
+    const w = window as unknown as { __firstPickerTop?: number }
+    new MutationObserver((_, obs) => {
+      const d = document.querySelector('[role="dialog"][aria-label="Choose a date"]') as HTMLElement | null
+      if (d) { w.__firstPickerTop = d.getBoundingClientRect().top; obs.disconnect() }
+    }).observe(document.body, { childList: true, subtree: true })
+  })
   await page.locator('.bulk-date-host').getByRole('button').click()
+  expect(await page.evaluate(() => (window as unknown as { __firstPickerTop?: number }).__firstPickerTop)).toBeGreaterThan(50)
   const picker = page.getByRole('dialog', { name: 'Choose a date' })
   await expect(picker).toBeVisible()
   await picker.getByRole('button', { name: '+7d', exact: true }).click()

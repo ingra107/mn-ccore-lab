@@ -17,7 +17,7 @@
 // separate, later fix — GhostSelect's scroll bug (aba74719, 2026-06-11) —
 // not part of #90, which was clamp math only.
 
-import { useState, useRef, useEffect, useCallback, type RefObject } from 'react'
+import { useState, useRef, useLayoutEffect, useCallback, type RefObject } from 'react'
 import { useDismissable } from './useDismissable'
 
 export interface PortalDropdownPosition {
@@ -84,7 +84,10 @@ export function usePortalDropdown<T extends HTMLElement = HTMLElement>({
   // with the callers, which own their keyboard handling.
   useDismissable(open, onClose, [triggerRef, menuRef], { escape: false })
 
-  useEffect(() => {
+  // A layout effect, not a plain one: the menu must be placed before the
+  // browser paints, or its first frame shows at INITIAL_POS, the top-left
+  // corner (seen on the Deadlines bulk Due date picker, 2026-10-23).
+  useLayoutEffect(() => {
     if (!open) return
     computePosition()
 
