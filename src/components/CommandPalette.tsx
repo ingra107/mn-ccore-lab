@@ -74,7 +74,7 @@ export default function CommandPalette() {
   const { user } = useAuth()
   const currentUserSlug = user?.slug ?? ''
   const { launch } = useProtocolLaunch()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
 
   const [recentRoutes, setRecentRoutes] = useState<string[]>(() => {
     try {
@@ -347,7 +347,7 @@ export default function CommandPalette() {
               showSuccess('Queued — your home machine will pick it up and Telegram you')
             } catch (e) {
               console.error('Backlog Wave enqueue failed:', e)
-              showSuccess('Could not queue Backlog Wave — try again from the laptop')
+              showError('Could not queue Backlog Wave — try again from the laptop')
             }
           })()
           setOpen(false)
@@ -524,7 +524,7 @@ export default function CommandPalette() {
     }
 
     return items
-  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch, currentUserSlug, location.pathname, recentRoutes])
+  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch, currentUserSlug, location.pathname, recentRoutes, showSuccess, showError])
 
   // Project mode: when query starts with `/`
   const isProjectMode = query.startsWith('/')
