@@ -333,7 +333,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       for (const p of prior) handleFieldChange(p.id, 'due_date', due)
       showUndo(due ? `Due ${formatShortDate(due)} for ${prior.length}` : `Cleared the due date on ${prior.length}`, () => {
         for (const p of prior) handleFieldChange(p.id, 'due_date', p.due_date)
-      })
+      }, 'bulk-due')
       return
     }
     bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {

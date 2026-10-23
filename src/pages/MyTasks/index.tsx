@@ -283,7 +283,7 @@ export default function UnifiedMyTasks() {
     Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
       .then(() => undoToast.showSuccess(due
         ? `Due ${formatShortDate(due)} for ${ids.length} task${ids.length === 1 ? '' : 's'}`
-        : `Cleared the due date on ${ids.length} task${ids.length === 1 ? '' : 's'}`))
+        : `Cleared the due date on ${ids.length} task${ids.length === 1 ? '' : 's'}`, undefined, 'bulk-due'))
       .catch((err) => { console.error('Set due date failed:', err); undoToast.showError('Due date change failed — please try again.') })
   }, [selected, updateTask, undoToast])
 

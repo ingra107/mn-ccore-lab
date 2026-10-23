@@ -59,9 +59,14 @@ const TOAST_STYLES: Record<Toast['type'], {
   undo:    { testId: 'undo-toast',    borderColor: null,            Icon: null,        iconColor: '' },
 }
 
+// `key` (optional): a toast with the same key REPLACES the one still showing
+// instead of stacking under it. A picker clicked several times in a row (the
+// bulk date picker's +7d) then shows one toast with the latest words, and a
+// replaced Undo chains: Undo runs the newest reversal, then each earlier one,
+// so it lands back where the first click started.
 interface ToastContextType {
-  showUndo: (message: string, onUndo: () => void) => void
-  showSuccess: (message: string, action?: ToastAction) => void
+  showUndo: (message: string, onUndo: () => void, key?: string) => void
+  showSuccess: (message: string, action?: ToastAction, key?: string) => void
   showError: (message: string, action?: ToastAction) => void
   showInfo: (message: string, action?: ToastAction) => void
 }
@@ -87,6 +92,25 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
   const undoLinks = useRef<Map<string, { message: string; mutationIds: Set<number> }>>(new Map())
   const lastSpecificErrorAt = useRef(0)
   const failureTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+  // Keyed toasts still showing: key -> its id (and its Undo, to chain).
+  const keyed = useRef<Map<string, { id: string; onUndo?: () => void }>>(new Map())
+  const seq = useRef(0)
+  const nextId = (suffix: string) => `${Date.now()}-${++seq.current}${suffix}`
+  /** Remove the keyed toast still showing under `key`, returning its Undo. */
+  const takeKeyed = (key: string | undefined): (() => void) | undefined => {
+    if (!key) return undefined
+    const prev = keyed.current.get(key)
+    keyed.current.delete(key)
+    if (!prev || !timers.current.has(prev.id)) return undefined
+    clearTimeout(timers.current.get(prev.id))
+    timers.current.delete(prev.id)
+    undoLinks.current.delete(prev.id)
+    setToasts((ts) => ts.filter((t) => t.id !== prev.id))
+    return prev.onUndo
+  }
+  const forgetKeyed = (key: string | undefined, id: string) => {
+    if (key && keyed.current.get(key)?.id === id) keyed.current.delete(key)
+  }
 
   // Clear all timeouts on unmount
   useEffect(() => {
@@ -123,14 +147,18 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     dismiss(id)
   }, [dismiss])
 
-  const showUndo = useCallback((message: string, onUndo: () => void) => {
+  const showUndo = useCallback((message: string, onUndo: () => void, key?: string) => {
     const shownAt = Date.now()
-    const id = shownAt.toString()
-    setToasts((prev) => [...prev, { id, type: 'undo', message, onUndo }])
+    const id = nextId('')
+    const earlier = takeKeyed(key)
+    const undo = earlier ? () => { onUndo(); earlier() } : onUndo
+    if (key) keyed.current.set(key, { id, onUndo: undo })
+    setToasts((prev) => [...prev, { id, type: 'undo', message, onUndo: undo }])
 
     // Auto-dismiss after 5 seconds
     const timer = setTimeout(() => {
       timers.current.delete(id)
+      forgetKeyed(key, id)
       undoLinks.current.delete(id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 5000)
@@ -153,13 +181,16 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient, withdrawUndo])
 
-  const showSuccess = useCallback((message: string, action?: ToastAction) => {
-    const id = Date.now().toString() + '-s'
+  const showSuccess = useCallback((message: string, action?: ToastAction, key?: string) => {
+    const id = nextId('-s')
+    takeKeyed(key)
+    if (key) keyed.current.set(key, { id })
     setToasts((prev) => [...prev, { id, type: 'success', message, action }])
 
     // Auto-dismiss after 3 seconds (shorter than undo)
     const timer = setTimeout(() => {
       timers.current.delete(id)
+      forgetKeyed(key, id)
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 3000)
     timers.current.set(id, timer)

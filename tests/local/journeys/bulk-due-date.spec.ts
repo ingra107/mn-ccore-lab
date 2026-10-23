@@ -43,6 +43,8 @@ test('bulk Due date opens the shared picker and +7d adds up on every selected ta
   expect(a).toHaveLength(2)
   const gap = (Date.parse(a[1]) - Date.parse(a[0])) / 86_400_000
   expect(gap).toBe(7)
+  // Two clicks, one toast: the second replaces the first (keyed toast).
+  await expect(page.getByTestId('success-toast')).toHaveCount(1)
   await page.screenshot({ path: 'test-results/bulk-due-date.png' })
 })
 
@@ -80,5 +82,6 @@ test('Deadlines bulk bar: Due date opens the shared picker (not +1 day), +7d add
   await expect.poll(() => writes.length).toBe(2)
   expect(writes[0].url).toBe(writes[1].url)
   expect((Date.parse(String(writes[1].due)) - Date.parse(String(writes[0].due))) / 86_400_000).toBe(7)
+  await expect(page.getByTestId('undo-toast')).toHaveCount(1)
   await page.screenshot({ path: 'test-results/deadlines-bulk-due.png' })
 })
