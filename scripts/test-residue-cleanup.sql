@@ -20,8 +20,6 @@ DELETE FROM meetings WHERE LOWER(title) LIKE 'test_delete_%';
 
 DELETE FROM digest_comments WHERE LOWER(content) LIKE 'test_delete_%';
 
--- lab_answers references question_id. Clean cascading.
-DELETE FROM lab_answers WHERE question_id IN (SELECT id FROM lab_questions WHERE LOWER(question) LIKE 'test_delete_%');
-DELETE FROM lab_questions WHERE LOWER(question) LIKE 'test_delete_%';
+-- (lab_questions / lab_answers dropped, schema-v147.)
 
 DELETE FROM publications WHERE LOWER(title) LIKE 'test_delete_%';

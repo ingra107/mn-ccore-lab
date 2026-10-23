@@ -13,7 +13,6 @@ import { openSession, closeSession, section, log, pass, bug, apiGet, marker, cle
 async function main() {
   const s = await openSession('03-content-entities')
   const cleanupMeetings: string[] = []
-  const cleanupQuestions: string[] = []
 
   try {
     // ═══════════════════ MEETINGS ═══════════════════
@@ -78,30 +77,7 @@ async function main() {
       pass(s, `3.C /api/grants returned ${existingGrants.length} rows`)
     }
 
-    // ═══════════════════ QUESTIONS (AskTheLab) ═══════════════════
-    section(s, '3.F  Ask-the-lab question lifecycle')
-    const qText = `${marker('question')} how does CLIF v3.0 handle respiratory support transitions?`
-    const qResp = await s.api.post('/api/questions', { data: { question: qText, asked_by: 'nick' } })
-    if (!qResp.ok()) {
-      bug(s, 'QUESTION-CREATE', 'P1', '3.F POST /api/questions', `HTTP ${qResp.status()}`, '200')
-    } else {
-      const qb = (await qResp.json()) as { data?: { id: string } }
-      if (qb?.data?.id) {
-        cleanupQuestions.push(qb.data.id)
-        pass(s, `3.F Question ${qb.data.id} created`)
-
-        section(s, '3.G  Answer the question (body uses "content", not "answer")')
-        const aResp = await s.api.post(`/api/questions/${qb.data.id}/answers`, {
-          data: { content: `${marker('answer')} CLIF v3 introduces a new hospital_transitions table`, author_slug: 'nate' },
-        })
-        if (aResp.ok()) pass(s, '3.G Answer POST accepted')
-        else bug(s, 'QUESTION-ANSWER-POST', 'P1', '3.G POST /api/questions/:id/answers', `HTTP ${aResp.status()}`, '200')
-
-        const answers = await apiGet<Array<{ id: string; content: string }>>(s, `/api/questions/${qb.data.id}/answers`)
-        if (answers && answers.length > 0) pass(s, `3.G GET /answers returns ${answers.length} row(s)`)
-        else bug(s, 'QUESTION-ANSWER-GET', 'P1', '3.G GET /answers after POST', `${answers?.length ?? 0}`, '>=1')
-      }
-    }
+    // (3.F/3.G Ask the Lab retired 2026-10-23, schema-v147.)
 
     // ═══════════════════ REVISIONS ═══════════════════
     section(s, '3.H  Paper revision tracking — POST /api/revisions, then GET /api/revisions?project_id=')
@@ -166,7 +142,6 @@ async function main() {
     log(s, `\n⚠ FATAL: ${(e as Error).message}\n${(e as Error).stack?.slice(0, 800)}`)
   } finally {
     for (const mid of cleanupMeetings) leaveForResidueSweep(s, 'meetings', mid)
-    for (const qid of cleanupQuestions) leaveForResidueSweep(s, 'lab_questions', qid)
     await closeSession(s)
   }
 }

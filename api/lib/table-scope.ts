@@ -49,8 +49,8 @@ export const HUB_TABLES = [
   'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
-  'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations', 'lab_answers',
-  'lab_questions', 'lab_settings', 'launch_log', 'link_kinds', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
+  'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations',
+  'lab_settings', 'launch_log', 'link_kinds', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
@@ -162,7 +162,7 @@ const projectsScoped = (v: ScopedViewer) => projectRule(v) !== null
 
 /** Every spelling of a visible project's reference: the typed id, and the legacy slug. */
 // The slug arm stays because slug-keyed columns exist (contributions,
-// lab_questions, hub_decisions, ai_requests, narrative_projects,
+// hub_decisions, ai_requests, narrative_projects,
 // paper_project_links carry project_slug, and legacy tasks may store a slug).
 // It ignores any slug shaped like, or equal to, a project id: a slug that
 // spells another project's id would otherwise make that project's id-keyed
@@ -433,7 +433,6 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   ideas: byProject('ideas', 'project_id'),
   inbox: byProject('inbox', 'project_id'),
   contributions: byProject('contributions', 'project_slug'),
-  lab_questions: byProject('lab_questions', 'project_slug'),
   paper_project_links: byProject('paper_project_links', 'project_slug', 'id', false),
   narrative_projects: byProject('narrative_projects', 'project_slug', ['narrative_id', 'project_slug'], false),
   project_dependencies: {
@@ -445,10 +444,6 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   reviewer_comments: {
     kind: 'scoped', key: 'id', dependsOn: ['manuscript_revisions'],
     where: (v) => (projectsScoped(v) ? 'reviewer_comments.revision_id IN (SELECT id FROM manuscript_revisions)' : null),
-  },
-  lab_answers: {
-    kind: 'scoped', key: 'id', dependsOn: ['lab_questions'],
-    where: (v) => (projectsScoped(v) ? 'lab_answers.question_id IN (SELECT id FROM lab_questions)' : null),
   },
   // An artifact follows its task and its project; a public artifact is public.
   artifacts: {

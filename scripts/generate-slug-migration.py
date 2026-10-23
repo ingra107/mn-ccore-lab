@@ -55,8 +55,6 @@ SLUG_COLUMNS = [
     ("file_attachments", "uploaded_by"),
     ("ideas", "submitted_by"),
     ("inbox", "author"),
-    ("lab_answers", "author_slug"),
-    ("lab_questions", "asked_by"),
     ("mentee_milestones", "mentee_slug"),
     ("milestones", "future_note_author"),
     ("notifications", "recipient_slug"),
@@ -96,7 +94,6 @@ NON_TEAM_SLUG = {
     ("ai_requests", "project_slug"),
     ("hub_decisions", "project_slug"),
     ("paper_project_links", "project_slug"),
-    ("lab_questions", "project_slug"),
 }
 SLUG_COLUMNS = [pair for pair in SLUG_COLUMNS if pair not in NON_TEAM_SLUG]
 

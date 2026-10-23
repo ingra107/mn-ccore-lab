@@ -28,7 +28,7 @@
 
 -- ── Delete child rows whose parent is a fixture ──────────────────────
 -- task_files / task_handoffs / task_subtasks reference tasks(id).
--- `lab_answers` cascades from lab_questions automatically.
+-- (lab_questions / lab_answers dropped, schema-v147.)
 -- agenda_items reference meetings; action items are now tasks with
 -- meeting_id set (action_items table DROPPED, backlog #742, 2026-07-16 —
 -- see api/schema-v99-drop-action-items.sql), so they're already covered
@@ -109,14 +109,7 @@ DELETE FROM milestones WHERE project_id IN (
 -- (project_documents DELETE removed: table dropped, schema-v146, PB #151)
 
 -- ── Parent deletes ───────────────────────────────────────────────────
--- lab_questions (lab_answers cascades automatically)
-DELETE FROM lab_questions WHERE
-  LOWER(question) LIKE '\_test\_delete\_%' ESCAPE '\' OR
-  LOWER(question) LIKE 'test\_delete\_%' ESCAPE '\' OR
-  LOWER(question) LIKE 'deep-audit-%' OR
-  LOWER(question) GLOB 'test q*' OR LOWER(question) = 'test' OR
-  LOWER(question) LIKE 'test question%' OR
-  LOWER(question) = '@claude hi';
+-- (lab_questions DELETE removed: table dropped, schema-v147)
 
 DELETE FROM hub_decisions WHERE
   LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR

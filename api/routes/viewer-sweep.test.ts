@@ -53,13 +53,12 @@ const TASK_ENTRY = 'ae-sweep-task'
 const PROJ_ENTRY = 'ae-sweep-proj'
 const PROJ_FILE = 'file-sweep-proj'
 const REVISION = 'rev-sweep-hidden'
-const QUESTION = 'lq-sweep-hidden'
 const ARTIFACT = 'art-sweep-hidden'
 const NATE_ONLY = 'proj_nateonly'
 const NICK_ONLY = 'proj_nickonly'
 const CASEY_PROJ = 'proj_caseyown'
 const LOOSE = 'task_sweeploose' // Nick's own project-less task
-const FILLS = [HIDDEN, AGENDA, DECISION, ENTRY, FILE_ID, PROJ, PROJ_SLUG, TASK, TASK_ENTRY, PROJ_ENTRY, PROJ_FILE, REVISION, QUESTION, ARTIFACT, LOOSE, CASEY_PROJ, 'cm-sweep', 'sweep-none']
+const FILLS = [HIDDEN, AGENDA, DECISION, ENTRY, FILE_ID, PROJ, PROJ_SLUG, TASK, TASK_ENTRY, PROJ_ENTRY, PROJ_FILE, REVISION, ARTIFACT, LOOSE, CASEY_PROJ, 'cm-sweep', 'sweep-none']
 
 let db: InstanceType<typeof Database>
 let env: Env
@@ -144,8 +143,6 @@ function seedLaneB() {
   insertRow(db, 'ideas', { id: 'idea-sweep', title: `${MARK} idea`, submitted_by: 'nate-mesfin', project_id: PROJ })
   insertRow(db, 'inbox', { id: 'inbox-sweep', text: `${MARK} inbox`, project_id: PROJ, author: 'nate-mesfin' })
   insertRow(db, 'contributions', { id: 'contrib-sweep', member_slug: 'nate-mesfin', type: 'analysis', description: `${MARK} contrib`, project_slug: PROJ_SLUG })
-  insertRow(db, 'lab_questions', { id: QUESTION, question: `${MARK} question`, asked_by: 'nate-mesfin', project_slug: PROJ_SLUG })
-  insertRow(db, 'lab_answers', { id: 'la-sweep', question_id: QUESTION, content: `${MARK} answer`, author_slug: 'nate-mesfin' })
   insertRow(db, 'hub_decisions', { id: 'dec-sweep-proj', title: `${MARK} proj decision`, project_slug: PROJ_SLUG })
   insertRow(db, 'artifacts', { id: ARTIFACT, title: `${MARK} artifact`, body_md: `${MARK}`, task_id: TASK, project_id: PROJ, created_by: 'nate-mesfin' })
   insertRow(db, 'commitments', { id: 'cm-sweep', commitment: `${MARK} commitment`, to_whom: 'x', project: PROJ, task_id: TASK })
@@ -197,7 +194,7 @@ function fill(path: string, id: string): string {
 const entityTypeOf = (id: string) => (id.startsWith('proj') || id === PROJ_SLUG ? 'project' : id.startsWith('task') ? 'task' : 'meeting')
 const QUERY = (id: string) => `?id=${id}&meeting_id=${id}&entity_type=${entityTypeOf(id)}&entity_id=${id}&q=SWEEP&query=SWEEP`
   + `&project_id=${id}&project=${id}&project_slug=${id}&slug=${id}&task_id=${id}&target_type=comment&target_id=${TASK_ENTRY}`
-  + `&owner_table=${id.startsWith('task') ? 'tasks' : 'projects'}&owner_id=${id}&revision_id=${REVISION}&question_id=${QUESTION}`
+  + `&owner_table=${id.startsWith('task') ? 'tasks' : 'projects'}&owner_id=${id}&revision_id=${REVISION}`
   + `&limit=500&days=3650&start=2000-01-01&end=2999-12-31&date=${TODAY}&include_hidden=1&include_fixtures=1&include_deleted=1&status=all`
 
 const hiddenRows = () => JSON.stringify([
@@ -224,8 +221,8 @@ const hiddenRows = () => JSON.stringify([
     ['milestones', 'project_id', PROJ], ['regulatory_items', 'project_id', PROJ],
     ['manuscript_revisions', 'project_id', PROJ], ['submission_events', 'project_id', PROJ],
     ['conference_submissions', 'project_id', PROJ], ['ideas', 'project_id', PROJ], ['inbox', 'project_id', PROJ],
-    ['contributions', 'project_slug', PROJ_SLUG], ['lab_questions', 'project_slug', PROJ_SLUG], ['hub_decisions', 'project_slug', PROJ_SLUG],
-    ['reviewer_comments', 'revision_id', REVISION], ['lab_answers', 'question_id', QUESTION], ['reactions', 'target_id', TASK_ENTRY],
+    ['contributions', 'project_slug', PROJ_SLUG], ['hub_decisions', 'project_slug', PROJ_SLUG],
+    ['reviewer_comments', 'revision_id', REVISION], ['reactions', 'target_id', TASK_ENTRY],
     ['links', 'owner_id', TASK], ['links', 'owner_id', PROJ], ['file_attachments', 'entity_id', PROJ], ['file_attachments', 'entity_id', TASK],
     ['project_state_log', 'project_id', PROJ], ['file_activity_daily', 'project_id', PROJ], ['ai_requests', 'project_slug', PROJ_SLUG],
     ['watchlist', 'entity_id', PROJ], ['project_member_folders', 'project_id', PROJ],
@@ -343,7 +340,7 @@ describe('write sweep: no write route changes or adds a row of a meeting the cal
       root_id: ENTRY, read_up_to: '2026-10-09 10:00:00', audience: 'lab',
       // Lane B: name the hidden project and task in every field a handler might read.
       project_id: PROJ, project_slug: PROJ_SLUG, project: PROJ, task_id: TASK, slug: 'casey-eddington',
-      assignee: 'casey-eddington', revision_id: REVISION, question_id: QUESTION, target_type: 'comment', target_id: TASK_ENTRY,
+      assignee: 'casey-eddington', revision_id: REVISION, target_type: 'comment', target_id: TASK_ENTRY,
       owner_table: 'tasks', owner_id: TASK, url: 'https://x.test/sweep', emoji: 'x', situation: 'sweep',
       from_project_id: CASEY_PROJ, to_project_id: PROJ, commitment: 'sweep', to_whom: 'x',
     })

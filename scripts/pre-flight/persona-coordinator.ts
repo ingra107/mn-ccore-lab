@@ -1,7 +1,7 @@
 /**
  * Persona: research coordinator.
  *
- * Role: data entry lens. Creates tasks, logs decisions, answers questions,
+ * Role: data entry lens. Creates tasks, logs decisions,
  * adds comments. Typical day = heavy mutations + lots of text input.
  * Tests the "actually get work done" path that notification + sync paths
  * depend on.
@@ -19,7 +19,6 @@ async function main() {
   const cleanupTasks: string[] = []
   const cleanupIdeas: string[] = []
   const cleanupDecisions: string[] = []
-  const cleanupQuestions: string[] = []
 
   try {
     section(s, '1  Create three tasks via API (simulate clicking New Task 3x)')
@@ -106,20 +105,7 @@ async function main() {
       }
     }
 
-    section(s, '5  Ask a question in AskTheLab, provide an answer')
-    const qText = `${mk('coord_q')} how do we handle CLIF respiratory transitions?`
-    const qResp = await s.api.post('/api/questions', { data: { question: qText, asked_by: 'nick' } })
-    if (qResp.ok()) {
-      const qid = ((await qResp.json()) as { data?: { id: string } }).data?.id
-      if (qid) {
-        cleanupQuestions.push(qid)
-        pass(s, `Question posted id=${qid}`)
-        const aResp = await s.api.post(`/api/questions/${qid}/answers`, {
-          data: { content: `${mk('a')} CLIF v3 adds hospital_transitions table`, author_slug: 'mesfin' },
-        })
-        if (aResp.ok()) pass(s, 'Answer submitted')
-      }
-    }
+    // (5: Ask the Lab retired 2026-10-23, schema-v147.)
 
     section(s, '6  Navigate to Deadlines, verify due dates lined up')
     await goto(s, '/portal/deadlines')
@@ -167,7 +153,6 @@ async function main() {
     for (const tid of cleanupTasks) cleanupPost(s, '/api/tasks/batch', { ids: [tid], action: 'delete' })
     for (const iid of cleanupIdeas) leaveForResidueSweep(s, 'ideas', iid)
     for (const did of cleanupDecisions) leaveForResidueSweep(s, 'hub_decisions', did)
-    for (const qid of cleanupQuestions) leaveForResidueSweep(s, 'lab_questions', qid)
     const result = await closePersona(s)
     console.log(`\n[coordinator] DONE — ${result.passCount} pass, ${result.findings.length} findings`)
   }
