@@ -40,7 +40,7 @@ import {
   readPlannedToday, isTaskDone, parseViewMode,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
-import { localDateKey } from '../../lib/dateUtils'
+import { formatShortDate } from '../../lib/dateUtils'
 import { projectFullTitleHint, projectShortLabel } from '../../lib/displayNames'
 import { useTodayPlan } from '../../lib/todayPlan'
 import type { TaskRow } from '../../lib/api'
@@ -269,16 +269,21 @@ export default function UnifiedMyTasks() {
     clearSelection()
   }, [selected, clearSelection, undoToast, plan, tasksQuery.data])
 
-  const onBulkSnoozeDay = useCallback(() => {
+  // #148: the bulk due-date picker. Selection stays open so the picker's
+  // cumulative +7d can keep stepping the same tasks.
+  const bulkCommonDue = useMemo(() => {
+    const dues = new Set((tasksQuery.data ?? []).filter((t) => selected.has(t.id)).map((t) => t.due_date ?? null))
+    return dues.size === 1 ? [...dues][0] : null
+  }, [selected, tasksQuery.data])
+  const onBulkSetDue = useCallback((due: string | null) => {
     // No batch due_date action; loop via single-task updates.
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const due = localDateKey(tomorrow)
     const ids = [...selected]
     Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
-      .then(() => { undoToast.showSuccess(`Snoozed ${ids.length} task${ids.length === 1 ? '' : 's'} +1d`); clearSelection() })
-      .catch((err) => { console.error('Snooze failed:', err); undoToast.showError('Snooze failed — please try again.') })
-  }, [selected, updateTask, clearSelection, undoToast])
+      .then(() => undoToast.showSuccess(due
+        ? `Due ${formatShortDate(due)} for ${ids.length} task${ids.length === 1 ? '' : 's'}`
+        : `Cleared the due date on ${ids.length} task${ids.length === 1 ? '' : 's'}`))
+      .catch((err) => { console.error('Set due date failed:', err); undoToast.showError('Due date change failed — please try again.') })
+  }, [selected, updateTask, undoToast])
 
   const onBulkComplete = useCallback(() => {
     const ids = [...selected]
@@ -387,7 +392,8 @@ export default function UnifiedMyTasks() {
           count={selected.size}
           onClear={clearSelection}
           onPlanToday={onBulkPlanToday}
-          onSnoozeDay={onBulkSnoozeDay}
+          commonDue={bulkCommonDue}
+          onSetDue={onBulkSetDue}
           onComplete={onBulkComplete}
           onArchive={onBulkArchive}
           onReassign={onBulkReassign}

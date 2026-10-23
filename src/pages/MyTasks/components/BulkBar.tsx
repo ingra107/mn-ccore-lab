@@ -1,4 +1,4 @@
-// BulkBar — appears when ≥1 row is selected. Plan today / Snooze / Status /
+// BulkBar — appears when ≥1 row is selected. Plan today / Due / Status /
 // Reassign / Priority / Complete / Archive / Deselect. Picker popover for
 // multi-option actions (status, reassign, priority).
 //
@@ -13,12 +13,15 @@ import {
   PRIORITY_COLOR, STATUS_COLOR,
 } from '../constants'
 import { withAlpha } from '../../../lib/taskGrouping'
+import InlineDatePicker from '../../../components/InlineDatePicker'
 
 interface BulkBarProps {
   count: number
   onClear: () => void
   onPlanToday: () => void
-  onSnoozeDay: () => void
+  /** #148: the due date every selected task shares, else null. */
+  commonDue: string | null
+  onSetDue: (date: string | null) => void
   onComplete: () => void
   onArchive: () => void
   onReassign: (slug: string) => void
@@ -29,7 +32,7 @@ interface BulkBarProps {
 
 type BulkPicker = 'reassign' | 'priority' | 'status' | null
 
-export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, onArchive, onReassign, onPriority, onStatus, assigneeOptions }: BulkBarProps) {
+export function BulkBar({ count, onClear, onPlanToday, commonDue, onSetDue, onComplete, onArchive, onReassign, onPriority, onStatus, assigneeOptions }: BulkBarProps) {
   const [picker, setPicker] = useState<BulkPicker>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   // Close on outside click
@@ -78,7 +81,15 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
           className="tk-btn"
           style={{ padding: '3px 9px', fontSize: 11, color: INK, gap: 4 }}
         ><Pin {...ICON_PROPS} size={11} /> Plan today</button>
-        {btn('Snooze +1d', onSnoozeDay)}
+        {/* #148: the shared date picker (presets, cumulative +7d, month grid,
+            Clear), not a fixed +1d. Its trigger reads like the buttons beside it. */}
+        <span className="bulk-date-host">
+          <InlineDatePicker
+            value={commonDue}
+            onChange={onSetDue}
+            display={<span style={{ padding: '3px 9px', fontSize: 11, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', color: INK }}>Due date ▾</span>}
+          />
+        </span>
         {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
         {btn('Reassign', () => setPicker(picker === 'reassign' ? null : 'reassign'), undefined, picker === 'reassign')}
         {btn('Priority', () => setPicker(picker === 'priority' ? null : 'priority'), undefined, picker === 'priority')}
