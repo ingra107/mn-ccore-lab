@@ -60,6 +60,7 @@ import { NewActivityCard } from '../../components/today/rail/NewActivityCard'
 import { CommitmentsCard } from '../../components/today/rail/CommitmentsCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
+import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
 import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
@@ -135,6 +136,8 @@ export default function TodayPage() {
     () => (tasksQuery.data ?? []).filter((t) => isQuestionOnCard(t, questionDay)),
     [tasksQuery.data, questionDay],
   )
+  // The whole card can be folded into the stat line ("N needs you").
+  const { folded: needsYouFolded, count: needsYouCount, collapse: collapseNeedsYou, restore: restoreNeedsYou } = useNeedsYouCollapsed(questionTasks)
   // Snoozed questions (due_date after today) are off the card; the card
   // says how many and when the next one is back.
   const snoozedQuestions: TaskRow[] = useMemo(
@@ -608,7 +611,9 @@ export default function TodayPage() {
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
-        <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} band={false} />
+        {!needsYouFolded && (
+          <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} band={false} onCollapse={collapseNeedsYou} />
+        )}
 
         {/* Asks to join a project (schema-v139): Nick and Nate only; renders
             nothing for anyone else or when none is pending. */}
@@ -638,6 +643,7 @@ export default function TodayPage() {
           // meetings can fail here. isLoadingError: a refetch that fails after data
           // loaded keeps the cached data, and the number stays.
           failed={{ meetings: meetingsQuery.isLoadingError }}
+          needsYou={needsYouFolded ? { count: needsYouCount, onShow: restoreNeedsYou } : undefined}
         />
 
         {/* PI only: the Lab pulse line, one gray line that opens PI Analytics. */}

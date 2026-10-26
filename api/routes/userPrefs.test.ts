@@ -80,6 +80,13 @@ describe('/api/user-prefs through the real worker', () => {
     expect(rows()).toHaveLength(2)
   })
 
+  it('the Today Needs you fold flag saves and reads back as a boolean', async () => {
+    expect((await call('PUT', '/api/user-prefs/today.needsYouCollapsed', PI_EMAIL, { value: true })).status).toBe(200)
+    expect(await prefsOf(PI_EMAIL)).toEqual({ 'today.needsYouCollapsed': true })
+    expect((await call('DELETE', '/api/user-prefs/today.needsYouCollapsed', PI_EMAIL)).status).toBe(200)
+    expect(rows()).toHaveLength(0)
+  })
+
   it("one person's preferences are never read, replaced or removed by another", async () => {
     expect((await call('PUT', '/api/user-prefs/dashboard.tab', PI_EMAIL, { value: 'projects' })).status).toBe(200)
     expect(await prefsOf(CASEY_EMAIL)).toEqual({})

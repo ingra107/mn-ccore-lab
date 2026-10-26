@@ -36,9 +36,10 @@
 // .tk wrapper scopes them so the card looks the same on My Tasks.
 
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ChevronUp } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
+import { Button } from '../ui/Button'
 import { nowInstant, parseDbUtc } from '../../lib/time'
 import { civilDatePlusDays, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
@@ -51,9 +52,13 @@ interface QuestionsCardProps {
   /** Questions snoozed past today (isQuestionSnoozed), for the one dim line
    *  that says how many are waiting to come back. Never rendered as rows. */
   snoozed?: TaskRow[]
+  /** Today only: adds a header control that hides the whole card (the caller
+   *  keeps the flag and shows an "N needs you" stat in its place). Absent =
+   *  no control, as on My Tasks. */
+  onCollapse?: () => void
 }
 
-export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [] }: QuestionsCardProps) {
+export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [], onCollapse }: QuestionsCardProps) {
   // A request to join (source 'project_join', schema-v139) is answered on
   // JoinRequestsCard, where Nate decides too; its question row exists for
   // Nick's Telegram card alone, so it is not shown here a second time.
@@ -80,6 +85,19 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
           <span className="tk-attn-dot" aria-hidden="true" />
           Needs you
           {waiting.length > 0 && <span className="tk-cnt">{waiting.length}</span>}
+          {onCollapse && (
+            <Button
+              size="icon"
+              type="button"
+              className="tk-attn-fold"
+              data-testid="q-collapse"
+              aria-label="Hide the Needs you card"
+              title="Hide until you click it in the stat line"
+              onClick={onCollapse}
+            >
+              <ChevronUp size={15} aria-hidden="true" />
+            </Button>
+          )}
         </div>
         {waiting.map((task) => (
           <QuestionRow key={task.id} task={task} />

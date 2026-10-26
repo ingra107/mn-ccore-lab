@@ -42,6 +42,8 @@ export const USER_PREF_FAMILIES = [
   { key: 'labprefs', param: false, merge: 'scalar' },
   { key: 'today.defaultView', param: false, merge: 'scalar' },
   { key: 'today.dueWindow', param: false, merge: 'scalar' },
+  // Today: the whole Needs you card folded into the stat line (a boolean).
+  { key: 'today.needsYouCollapsed', param: false, merge: 'scalar' },
   // savedViews.<page>: the Saved views menu on each page.
   { key: 'savedViews.', param: true, merge: 'set', identity: 'id' },
   // tableConfig.<tableId>: sort, column widths and order, filters.

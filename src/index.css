@@ -2522,6 +2522,12 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-st .tk-ar{opacity:0;transition:opacity .15s}
 .tk a.tk-st:hover .tk-l,.tk a.tk-st:focus-visible .tk-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
 .tk a.tk-st:hover .tk-ar,.tk a.tk-st:focus-visible .tk-ar{opacity:1}
+.tk button.tk-st-btn{background:none;border:0;padding:0;font:inherit;text-align:left;cursor:pointer;touch-action:manipulation}
+.tk .tk-st-btn .tk-v{color:var(--job-wants)}
+.tk .tk-st-btn:hover .tk-l,.tk .tk-st-btn:focus-visible .tk-l{color:var(--sk-t1);text-decoration:underline;text-underline-offset:3px}
+.tk .tk-st-btn:hover .tk-ar,.tk .tk-st-btn:focus-visible .tk-ar{opacity:1}
+.tk .tk-attn-fold{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin-top:-6px;margin-right:-6px;background:none;border:0;border-radius:6px;color:var(--job-wants);cursor:pointer;touch-action:manipulation}
+.tk .tk-attn-fold:hover{background:color-mix(in srgb,var(--job-wants) 14%,transparent)}
 .tk a.tk-st:focus-visible,.tk button:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
 .tk .tk-st.tk-zero .tk-v{opacity:.45;color:var(--sk-t3)} .tk .tk-st.tk-zero .tk-l{color:var(--sk-t3);opacity:.8}
 .tk .tk-hint{display:flex;gap:8px;font-size:12px;color:var(--sk-t3);margin:0 0 14px;align-items:flex-start}

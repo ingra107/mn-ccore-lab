@@ -8,6 +8,12 @@
 // is dim and not a link, because something that looks clickable and does
 // nothing is worse than something quiet (Nick, 2026-10-09).
 //
+// "N needs you" (2026-10-26, Nick: "snooze that actual box ... in the same
+// line of the 16 overdue ... if I click that needs you, then it appears back
+// into the position that it's at today"): shown only while the Needs you card
+// is folded away. A real <button>, gold rule and number (the attention color),
+// never a Link: it restores the card, it goes to no page.
+//
 // The divider under the line fills teal with done / (done + still planned),
 // the day's progress, with no extra element (.tk-stats::after reads --prog).
 //
@@ -53,13 +59,16 @@ interface Stat {
 
 export type StatKey = 'overdue' | 'stalled' | 'planned' | 'meetings' | 'done' | 'done-week'
 
-export function StatLine({ counts, doneThisWeek, pending, failed }: {
+export function StatLine({ counts, doneThisWeek, pending, failed, needsYou }: {
   counts: DailyCounts
   doneThisWeek?: number
   /** Stats whose source query has not answered yet; each renders a dash, not a number. */
   pending?: Partial<Record<StatKey, boolean>>
   /** Stats whose source query errored: a dash that says unavailable, never a false 0. */
   failed?: Partial<Record<StatKey, boolean>>
+  /** The Needs you card is folded away: one more stat, a real button that
+   *  brings the card back where it was. Absent (or count 0) = no stat. */
+  needsYou?: { count: number; onShow: () => void }
 }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
@@ -109,6 +118,22 @@ export function StatLine({ counts, doneThisWeek, pending, failed }: {
           <Link key={s.key} to={s.to} className="tk-st" aria-label={`${s.value} ${s.label}: open ${s.dest}`} title={s.dest}>{inner}</Link>
         )
       })}
+      {needsYou && needsYou.count > 0 && (
+        <button
+          type="button"
+          className="tk-st tk-st-btn"
+          data-stat="needs-you"
+          aria-label={`${needsYou.count} needs you: show the card`}
+          title="Show the Needs you card"
+          onClick={needsYou.onShow}
+        >
+          <span className="tk-rl tk-g" aria-hidden="true" />
+          <span>
+            <span className="tk-v" style={{ display: 'block' }}>{needsYou.count}</span>
+            <span className="tk-l">needs you<span className="tk-ar" aria-hidden="true">&darr;</span></span>
+          </span>
+        </button>
+      )}
     </div>
   )
 }

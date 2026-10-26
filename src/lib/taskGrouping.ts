@@ -321,6 +321,26 @@ export function isQuestionWaiting(t: {
 }
 
 /**
+ * How many rows the Needs you card shows as asking for him: waiting plus
+ * answered-not-acted-on. Project-join asks are left out (they are answered on
+ * JoinRequestsCard). The Today "N needs you" stat reads this so it can never
+ * disagree with the card it stands in for (2026-10-26).
+ */
+export function cardQuestionCount(tasks: Array<{
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+  source?: string | null
+}>): number {
+  return tasks.filter((t) => {
+    if (t.source === 'project_join') return false
+    const s = questionCardState(t)
+    return s === 'waiting' || s === 'answered'
+  }).length
+}
+
+/**
  * Snooze (2026-10-22, Nick: "i like the snooze function for those things
  * because it can come back a few days or the next day"). On a question row
  * `due_date` means "keep this off Nick's view until that local civil date";
