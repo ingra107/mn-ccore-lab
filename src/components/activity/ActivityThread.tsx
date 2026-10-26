@@ -59,7 +59,8 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   // A Hermes thread = the root is an @hermes/@claude ask. Continuing it means
   // talking to Hermes, and the reply must START with @hermes for the server to
   // answer in-thread — so seed the composer with the token when it opens.
-  const isHermesThread = /^\s*@(hermes|claude)\b/i.test(root.body)
+  // A root written by Hermes itself (claude-ai: an offer or an answer) counts too.
+  const isHermesThread = /^\s*@(hermes|claude)\b/i.test(root.body) || root.actor_slug === 'claude-ai'
   const openComposer = () => {
     setComposing(true)
     setExpanded(true)

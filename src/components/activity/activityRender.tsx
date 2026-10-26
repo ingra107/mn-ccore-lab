@@ -823,9 +823,25 @@ export function ActivityEntryItem({
             <HermesResponse content={entry.body} />
           </CollapsibleBody>
         )}
-        {showReactions && !isTask && (
-          <div style={{ marginTop: 6 }}>
-            <ReactionBar targetType="comment" targetId={entry.id} />
+        {((showReactions && !isTask) || (onReply && !isHermesPending(entry.body))) && (
+          <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>
+            {showReactions && !isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
+            {/* Reply under a Hermes card (an offer or an answer) opens the root's
+                composer seeded with @hermes, so "go" runs it. Hidden while the
+                answer is still pending. */}
+            {onReply && !isHermesPending(entry.body) && (
+              <button
+                type="button"
+                onClick={onReply}
+                className="cursor-pointer"
+                style={{
+                  fontSize: '11px', color: 'var(--slate)', opacity: 0.85,
+                  background: 'none', border: 'none', padding: 0,
+                }}
+              >
+                {isReply ? 'Reply to Hermes' : 'Reply'}
+              </button>
+            )}
           </div>
         )}
       </ActivityEntryWrapper>
@@ -946,7 +962,7 @@ export function ActivityEntryItem({
                     background: 'none', border: 'none', padding: 0,
                   }}
                 >
-                  {isReply && isHermes ? 'Reply to Hermes' : 'Reply'}
+                  Reply
                 </button>
               )}
             </div>

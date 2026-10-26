@@ -53,6 +53,11 @@ Meeting comments are team-visible by default (a meeting page is a shared surface
   not apply says "Not done". Asks from team members, or from Nick in a
   team-visible thread, cannot change anything. The note lands in the task
   description, which the project team can read.
+- A comment Hermes posts (an offer such as "I can draft this") carries a Reply
+  link. The reply box opens with `@hermes ` already typed; type `go` and send.
+  Hermes reads the whole thread, including the private offer and the context
+  it carries, because it answers Nick from everything Nick can see. A reply
+  from a team member sees only what the team can see.
 
 ## What Hermes Cannot Do
 - Access external databases or PubMed directly

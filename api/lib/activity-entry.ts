@@ -22,7 +22,7 @@
 // readers that want the posts too go through api/lib/posted-activity.ts.
 
 import type { AuthUser, Env } from '../helpers';
-import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, resolveSlug } from '../helpers';
+import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, resolveSlug, getPiEmails } from '../helpers';
 
 // The pending-placeholder body. Written here, matched by the response handler
 // (api/routes/ai-requests.ts) and rendered as <HermesPending> by the UI
@@ -1040,14 +1040,13 @@ async function dispatchHermes(
       // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
       // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
       // rows. Requester-scoped + visibility-gated in the WHERE regardless.
-      const priorRes = await env.DB.prepare(
-        `SELECT ae.actor_slug, ae.body, ae.created_at FROM activity_entries ae
-          WHERE ${scopeClause}
-            AND ae.id != ?2
-            AND ae.kind = 'comment'
-            AND ae.body != ?3
-            ${teamOnly}
-            AND (
+      // A PI requester sees every row (activityVisibilityGate returns 1=1 for a
+      // PI), so the three arms are dropped for them: a claude-ai author-only
+      // root (a private offer carrying the context pack) is neither team, nor the
+      // requester's, nor under a requester-written root, and "go" must see it.
+      // teamOnly above still binds a team-visible ask. Non-PI: unchanged.
+      const requesterIsPi = (await getPiEmails(env)).has(args.requestedBy.toLowerCase());
+      const visibilityArms = requesterIsPi ? '' : `AND (
               ae.visibility = 'team'
               OR ae.actor_slug = ?4
               OR EXISTS (
@@ -1056,9 +1055,20 @@ async function dispatchHermes(
                       AND r.visibility = 'author'
                       AND r.actor_slug = ?4
                  )
-            )
+            )`;
+      const priorRes = await env.DB.prepare(
+        `SELECT ae.actor_slug, ae.body, ae.created_at FROM activity_entries ae
+          WHERE ${scopeClause}
+            AND ae.id != ?2
+            AND ae.kind = 'comment'
+            AND ae.body != ?3
+            ${teamOnly}
+            ${visibilityArms}
           ORDER BY ae.created_at ASC, ae.id ASC`
-      ).bind(scopeBind, args.entryId, HERMES_PENDING_BODY, await resolveSlug(env, args.requestedBy)).all<{
+      ).bind(
+        scopeBind, args.entryId, HERMES_PENDING_BODY,
+        ...(requesterIsPi ? [] : [await resolveSlug(env, args.requestedBy)]),
+      ).all<{
         actor_slug: string; body: string; created_at: string;
       }>();
       const prior = (priorRes.results ?? []).slice(-THREAD_CONTEXT_MAX_MESSAGES);

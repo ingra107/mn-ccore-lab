@@ -198,4 +198,16 @@ describe('Slack-style threads', () => {
     expect(host.textContent).toContain('second answer')
     vi.unstubAllGlobals()
   })
+
+  it('a Hermes-authored offer shows Reply and opens the composer seeded with @hermes', async () => {
+    stub()
+    const offer = row({ id: 'offer', actor_slug: 'claude-ai', body: 'Offer: draft the IDP. Reply go.', reply_count: 0 })
+    const host = await mount(wrap(<ActivityThread root={offer as never} invalidateKeys={[]} />), { ready: (h) => h.querySelector('.detail-card'), label: 'ActivityThread' })
+    const replyBtn = [...host.querySelectorAll('button')].find((b) => b.textContent === 'Reply') as HTMLButtonElement
+    expect(replyBtn).toBeTruthy()
+    replyBtn.click()
+    const ta = await waitFor(() => host.querySelector<HTMLTextAreaElement>('textarea'), 'the reply box')
+    expect(ta.value).toBe('@hermes ')
+    vi.unstubAllGlobals()
+  })
 })

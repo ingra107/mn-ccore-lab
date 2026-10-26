@@ -1341,6 +1341,37 @@ describe('dispatchHermes — thread transcript (#98)', () => {
     expect(prompt).not.toContain('SECRET salary figure')
   })
 
+  // "Reply go" under a private offer: the offer is a claude-ai author-only root,
+  // so the three-arm gate drops it and Hermes never sees what "go" means. A PI
+  // sees every row, so a PI requester's transcript carries it.
+  const offerThread = async (asker: AuthUser, askerSlug: string) => {
+    const ctx = makeEnv(FX)
+    const root = await postActivityEntry({
+      env: ctx.env, user: { email: 'claude-ai', name: 'Hermes', slug: 'claude-ai' }, entityType: 'task', entityId: 't1',
+      kind: 'comment', body: 'Offer: draft the IDP. Context: sources in Box/IDP', actorSlug: 'claude-ai',
+      visibility: 'author', fireSideEffects: false,
+    })
+    if (!root.ok) throw new Error('root failed')
+    await postActivityEntry({
+      env: ctx.env, user: asker, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: '@hermes go', actorSlug: askerSlug, visibility: 'author', parentId: root.row.id as string,
+    })
+    return ctx.aiRequests
+  }
+
+  it("a PI's reply under a claude-ai author-only offer carries the offer in the transcript", async () => {
+    const aiRequests = await offerThread(NICK, 'nick-ingraham')
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).toContain('<activity_thread_context')
+    expect(prompt).toContain('Context: sources in Box/IDP')
+  })
+
+  it("a non-PI requester's transcript still drops a claude-ai author-only root", async () => {
+    const aiRequests = await offerThread(NATE, 'nate-mesfin')
+    const prompt = promptOf(aiRequests, aiRequests.length - 1)
+    expect(prompt).not.toContain('Context: sources in Box/IDP')
+  })
+
   it("does NOT leak another member's private day thread into a day-scoped transcript", async () => {
     const { env, aiRequests } = makeEnv(FX)
     await postActivityEntry({
