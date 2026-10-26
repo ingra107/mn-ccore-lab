@@ -1037,7 +1037,7 @@ async function dispatchHermes(
       // team thread.
       const teamOnly = args.visibility === 'team' ? `AND ae.visibility = 'team'` : '';
       //
-      // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
+      // Hidden rows, Hermes transcript (thread- or day-scoped). Owner
       // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
       // rows. Requester-scoped + visibility-gated in the WHERE regardless.
       // A PI requester sees every row (activityVisibilityGate returns 1=1 for a
@@ -1046,6 +1046,7 @@ async function dispatchHermes(
       // requester's, nor under a requester-written root, and "go" must see it.
       // teamOnly above still binds a team-visible ask. Non-PI: unchanged.
       const requesterIsPi = (await getPiEmails(env)).has(args.requestedBy.toLowerCase());
+      // activity-hidden-exempt: Hermes transcript visibility arm (same reason as above).
       const visibilityArms = requesterIsPi ? '' : `AND (
               ae.visibility = 'team'
               OR ae.actor_slug = ?4
@@ -1056,6 +1057,7 @@ async function dispatchHermes(
                       AND r.actor_slug = ?4
                  )
             )`;
+      // activity-hidden-exempt: Hermes transcript (same reason as above).
       const priorRes = await env.DB.prepare(
         `SELECT ae.actor_slug, ae.body, ae.created_at FROM activity_entries ae
           WHERE ${scopeClause}
