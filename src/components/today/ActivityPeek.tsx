@@ -20,6 +20,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { DeleteEntryButton, DismissEntryButton, type ActivityEntryItemRow } from '../activity/activityRender'
+import { ActivityThread } from '../activity/ActivityThread'
+import { isHermesPending } from '../hermesPendingUtil'
 import { ShowHiddenToggle } from '../activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { isRepliableKind } from '../../../shared/activityKinds'
@@ -54,6 +56,9 @@ export function ActivityPeek({ taskId, count = 3, onViewAll }: { taskId: string;
   const [showHidden, setShowHidden] = useState(false)
   const deleteEntry = useDeleteActivityEntry()
   const dismissThread = useDismissThread()
+  // A Hermes offer's Reply swaps its one-line row for the shared thread, reply
+  // box open and seeded with @hermes (ActivityThread owns that rule).
+  const [replyingId, setReplyingId] = useState<string | null>(null)
 
   const { data: feed, isLoading } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
     queryKey: [...activityQueryKey('task', taskId), showHidden],
@@ -80,6 +85,16 @@ export function ActivityPeek({ taskId, count = 3, onViewAll }: { taskId: string;
           const hermes = e.actor_slug === 'claude-ai'
           const mayAct = canDeleteActivityEntry(user, e.actor_slug)
           const hidden = !!e.hidden_at
+          if (hermes && replyingId === e.id) {
+            return (
+              <ActivityThread
+                key={e.id}
+                root={e}
+                startComposing
+                invalidateKeys={[activityQueryKey('task', taskId)]}
+              />
+            )
+          }
           return (
             <div key={e.id} className={`tk-feedl${hidden ? ' tk-hid' : ''}`} data-activity-id={e.id}>
               {hermes
@@ -89,6 +104,9 @@ export function ActivityPeek({ taskId, count = 3, onViewAll }: { taskId: string;
                 <b>{hermes ? 'Hermes' : firstNameFor(e.actor_slug)}</b> {oneLine(e.body)}
               </span>
               <span className="tk-feedm">{ago(e.created_at)}</span>
+              {hermes && !isHermesPending(e.body) && isRepliableKind(e.kind) && (
+                <button type="button" className="tk-rmore" onClick={() => setReplyingId(e.id)}>Reply</button>
+              )}
               {mayAct && (
                 <span className="tk-feedctl">
                   {isRepliableKind(e.kind) && (

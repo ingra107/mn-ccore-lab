@@ -86,6 +86,18 @@ describe('activity controls survive the badge + first-name restyle', () => {
     vi.unstubAllGlobals()
   })
 
+  it('drawer activity line: a Hermes offer has a Reply that opens the composer seeded with @hermes', async () => {
+    stubFeed([entry({ actor_slug: 'claude-ai', visibility: 'author', body: 'Want a one-page cheat sheet for tomorrow?' })])
+    const host = await mount(wrap(user({}), <ActivityPeek taskId="t1" onViewAll={() => {}} />), {
+      ready: (h) => h.querySelector('[data-activity-id]'), label: 'ActivityPeek',
+    })
+    const reply = [...host.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Reply')
+    expect(reply, 'Reply control on the Hermes line').toBeTruthy()
+    reply!.click()
+    await expect.poll(() => (host.querySelector('textarea') as HTMLTextAreaElement | null)?.value).toBe('@hermes ')
+    vi.unstubAllGlobals()
+  })
+
   it('Hermes day thread: PI sees dismiss and delete on the root', async () => {
     stubFeed([entry({ entity_type: 'day', actor_slug: 'nick-ingraham', body: '@hermes what is left on the K23 RPPR?', visibility: 'author' })])
     const host = await mount(wrap(user({}), <DayActivityFeed dateKey="2026-10-09" />), {

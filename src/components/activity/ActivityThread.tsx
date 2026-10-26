@@ -42,15 +42,18 @@ interface ActivityThreadProps {
   /** Dismiss (hide) or restore this root's whole thread. Feed passes it; gated
    *  author-or-PI here, re-enforced server-side. Reversible single click. */
   onDismiss?: (entry: ActivityEntryItemRow) => void
+  /** Mount with the reply box already open (the drawer's one-line Hermes row
+   *  swaps itself for this thread when Nick taps Reply). */
+  startComposing?: boolean
 }
 
-export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEdit, onDismiss }: ActivityThreadProps) {
+export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEdit, onDismiss, startComposing = false }: ActivityThreadProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   // Auto-expand when the composer opens: replying to a thread you cannot see
   // is disorienting, and the reply you just wrote must land somewhere visible.
-  const [expanded, setExpanded] = useState(false)
-  const [composing, setComposing] = useState(false)
+  const [expanded, setExpanded] = useState(startComposing)
+  const [composing, setComposing] = useState(startComposing)
   const [draft, setDraft] = useState<string | null>(null)
 
   const replyCount = root.reply_count ?? 0
