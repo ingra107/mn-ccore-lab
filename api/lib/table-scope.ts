@@ -183,8 +183,9 @@ const inVisibleProject = (col: string) => `${col} IN ${VISIBLE_PROJECT_REFS}`
  * assignee), and how a member removed from a project still sees the tasks
  * that are theirs to finish. It holds for every project, Peripheral Brain
  * included: a task Nick assigns someone is theirs to see, while its project
- * and the project's other tasks stay hidden. A task's meeting_id neither
- * grants nor narrows: project membership (or the task naming you) decides.
+ * and the project's other tasks stay hidden. A third arm: the task belongs to
+ * a meeting the viewer owns or attended (meetingTaskArm). Nothing else about
+ * meeting_id narrows or grants.
  */
 function taskRule(v: ScopedViewer): string | null {
   if (!projectsScoped(v)) return null
@@ -192,7 +193,33 @@ function taskRule(v: ScopedViewer): string | null {
   const ids = idList(v)
   const mine = `(tasks.assignee = ${sqlList([v.slug])} OR lower(COALESCE(tasks.assigned_by, '')) IN (${ids}) `
     + `OR (json_valid(tasks.watchers) AND EXISTS (SELECT 1 FROM json_each(tasks.watchers) w WHERE w.type = 'text' AND lower(w.value) IN (${ids}))))`
-  return `(${inVisibleProject('tasks.project_id')} OR ${mine})`
+  return `(${inVisibleProject('tasks.project_id')} OR ${mine} OR ${meetingTaskArm(v)})`
+}
+
+/**
+ * A meeting's action items are visible to the meeting's OWNER and its
+ * ATTENDEES, whoever they are assigned to (Nick, 2026-10-26: "I want anybody
+ * that attended the meeting to see all the tasks ... at the very least, I
+ * should be able to see everything"). Before this arm a debrief task for Casey
+ * on a project Nick is not a member of was invisible to Nick on his own
+ * meeting, and Nick's task invisible to Casey. Only the owner and attendee
+ * arms count: a lab audience or a project grant shows the meeting, not its
+ * tasks. Tasks on a Peripheral Brain project stay hidden from everyone but
+ * its member (the 2026-10-09 ruling). A task's meeting_id holds the Hub id or PB's source_id (v95), so both
+ * are matched. Reads `main.meetings` whole (rule text is ours), so tasks gain
+ * no dependency on the meetings CTE.
+ */
+function meetingTaskArm(v: ScopedViewer): string {
+  const arms = meetingArms(v).filter((a) => a.arm === 'owner' || a.arm === 'attendee')
+  if (arms.length === 0) return '0'
+  const mine = `(SELECT meetings.id AS mid, meetings.source_id AS sid FROM main.meetings AS meetings WHERE ${arms.map((a) => a.sql).join(' OR ')})`
+  // Peripheral Brain projects stay private to Nick (their only member), even
+  // for a task he linked to a meeting others attended; a ref that names no
+  // project reaches no one by this arm either.
+  const notPrivate = `(COALESCE(tasks.project_id, '') = '' OR (`
+    + `EXISTS (SELECT 1 FROM main.projects p WHERE p.id = tasks.project_id OR p.slug = tasks.project_id) `
+    + `AND NOT EXISTS (SELECT 1 FROM main.projects p WHERE (p.id = tasks.project_id OR p.slug = tasks.project_id) AND p.category = 'Peripheral Brain')))`
+  return `(tasks.meeting_id IS NOT NULL AND ${notPrivate} AND (tasks.meeting_id IN (SELECT mid FROM ${mine}) OR tasks.meeting_id IN (SELECT sid FROM ${mine} WHERE sid IS NOT NULL)))`
 }
 
 /** A visible task's id. */

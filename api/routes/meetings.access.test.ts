@@ -314,6 +314,46 @@ describe('Today payload: the list carries what a meeting card shows', () => {
   })
 })
 
+describe("a meeting's action items: the owner and every attendee see all of them", () => {
+  const ids = async (who: string, meeting: string) =>
+    ((await call('GET', `/api/meetings/${meeting}`, who)).json.data.action_items as { id: string }[]).map((t) => t.id).sort()
+
+  beforeEach(() => {
+    // M_ATT: Nick owns it, Nate attends; Casey is a stranger to it. Tasks sit on a
+    // project only Nick is on, or on none, so project/assignee rules alone hide them.
+    insertRow(db, 'tasks', { id: 'mt-nick', title: 'nick task', project_id: PROJ_N, assignee: 'nick-ingraham', meeting_id: M_ATT })
+    insertRow(db, 'tasks', { id: 'mt-casey', title: 'casey task', assignee: 'casey-eddington', meeting_id: M_ATT })
+    insertRow(db, 'tasks', { id: 'mt-nate', title: 'nate task', assignee: 'nate-mesfin', meeting_id: M_ATT })
+    // A Peripheral Brain project's task stays Nick's alone, even on a shared meeting.
+    insertRow(db, 'projects', { id: 'proj_pbpriv', slug: 'pb-priv', title: 'PB private', short_name: 'PBP', category: 'Peripheral Brain', status: 'active' })
+    insertRow(db, 'project_members', { project_id: 'proj_pbpriv', member_slug: 'nick-ingraham', added_by: 'test' })
+    insertRow(db, 'tasks', { id: 'mt-pb', title: 'pb task', project_id: 'proj_pbpriv', assignee: 'nick-ingraham', meeting_id: M_ATT })
+    // M_LAB reached by PB's source_id.
+    insertRow(db, 'tasks', { id: 'mt-lab', title: 'lab task', assignee: 'casey-eddington', meeting_id: 'cal-lab-1' })
+  })
+
+  it('the owner sees every row, whoever it is assigned to (Nick on his own meeting)', async () => {
+    expect(await ids(NICK, M_ATT)).toEqual(['mt-casey', 'mt-nate', 'mt-nick', 'mt-pb'])
+    expect(await ids(NICK, M_LAB)).toEqual(['mt-lab'])
+  })
+
+  it('an attendee sees every row, including the owner\'s on a project they are not on', async () => {
+    expect(await ids(NATE, M_ATT)).toEqual(['mt-casey', 'mt-nate', 'mt-nick']) // not mt-pb: Peripheral Brain stays private
+  })
+
+  it('a non-attendee still sees only the rows that are theirs; a lab audience shows the meeting, not its tasks', async () => {
+    expect(await ids(CASEY, M_LAB)).toEqual(['mt-lab'])           // hers by assignee
+    expect(await ids(DAVE, M_LAB)).toEqual([])                    // sees the meeting, no task
+    expect((await call('GET', `/api/meetings/${M_ATT}`, CASEY)).status).toBe(404)
+  })
+
+  it('the Today counts follow the same rule', async () => {
+    const row = async (who: string) => ((await call('GET', '/api/meetings', who)).json.data as Record<string, unknown>[]).find((r) => r.id === M_ATT)
+    expect((await row(NICK))!.action_count).toBe(4)
+    expect((await row(NATE))!.action_count).toBe(3)
+  })
+})
+
 describe('lab series dedup on write (upsertMeeting)', () => {
   it('a member prepping the series meeting lands on the lab row, not a second one', async () => {
     const r = await call('POST', '/api/meetings', CASEY, { date: DAY, title: 'mnccore' })
