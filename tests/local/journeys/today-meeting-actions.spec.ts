@@ -14,8 +14,10 @@
  *   - two rows selected raise the bar; Date writes the same date to both through
  *     the batch route (asserted through the API), Assign and Project the same;
  *   - a card of freshly minted rows (dated, routed, Nick's) is NOT folded: only
- *     done, or handed to someone else, counts as handled;
- *   - the card folds to "4 of 4 handled" once every row is done or delegated.
+ *     done, or handed to someone else, counts as handled; the header counts
+ *     rows DONE and the viewer's own open rows (#155);
+ *   - the card folds once every row is done or delegated;
+ *   - the meeting card's own caret folds the rows too (#155).
  * Screenshots (light/dark x 1440/375) land in review/s76/ when S76_SHOTS=1.
  */
 import { test, expect, type Page, type Locator } from '@playwright/test'
@@ -113,8 +115,8 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
   // 1. The rows show inside the meeting's card, none handled yet.
   const rows = card(page).locator('[data-task-id]')
   await expect(rows).toHaveCount(4, { timeout: 15_000 })
-  const header = card(page).getByRole('button', { name: /Action items, \d+ of \d+ handled/ })
-  await expect(header).toHaveAttribute('aria-label', 'Action items, 0 of 4 handled')
+  const header = card(page).getByRole('button', { name: /Action items, \d+ of \d+ done/ })
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 0 of 4 done, 4 yours open')
 
   // 2. Each task shows once on Today. Due today for Nick, so the groups below
   //    would list them too; while the card holds them they are left out.
@@ -130,12 +132,18 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
   //    Open it again: back on the card, gone from the groups.
   await header.click()
   await expect(card(page).locator('[data-task-id]')).toHaveCount(4)
+  //    The meeting card's caret is the same collapse (#155): it folds the rows
+  //    with the card, and opens them again.
+  await card(page).locator('.meeting-row-header').click()
+  await expect(card(page).locator('[data-task-id]')).toHaveCount(0)
+  await card(page).locator('.meeting-row-header').click()
+  await expect(card(page).locator('[data-task-id]')).toHaveCount(4)
   for (const t of tasks) await expect(page.getByText(t.title, { exact: true })).toHaveCount(1)
 
   // 3. Check one off in place.
   await row(page, 0).getByRole('button', { name: 'Mark done' }).click()
   await expect.poll(async () => (await apiRows(page))[tasks[0].id].status, { timeout: 10_000 }).toBe('done')
-  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 handled')
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 done, 3 yours open')
 
   // 4. Select two: the bar shows at the foot of THIS card. Date writes both.
   await select(page, 1, 2)
@@ -171,7 +179,7 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
     return [r[tasks[1].id].project_id, r[tasks[2].id].project_id, r[tasks[3].id].project_id]
   }, { timeout: 10_000 }).toEqual([projectSlug, projectSlug, mintSlug])
   // Dated, routed, Nick's: still his to do, so still not handled.
-  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 handled')
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 done, 3 yours open')
 
   // 6. Hand the same two to Casey: delegated rows are handled.
   await select(page, 1, 2)
@@ -182,16 +190,16 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
     return [r[tasks[1].id].assignee, r[tasks[2].id].assignee, r[tasks[3].id].assignee]
   }, { timeout: 10_000 }).toEqual(['casey-eddington', 'casey-eddington', 'nick-ingraham'])
   await expect(bar).toHaveCount(0)
-  await expect(header).toHaveAttribute('aria-label', 'Action items, 3 of 4 handled')
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 done, 1 yours open')
 
   // 7. The last row goes to Casey from its own owner picker. Every row is done or
   //    delegated, so the card folds to its count, even though it was opened by hand.
   await row(page, 3).getByRole('button', { name: /^Assignee:/ }).click()
   await page.getByRole('option', { name: /Casey/ }).first().click()
-  await expect(header).toHaveAttribute('aria-label', 'Action items, 4 of 4 handled', { timeout: 10_000 })
+  await expect(header).toHaveAttribute('aria-label', 'Action items, 1 of 4 done', { timeout: 10_000 })
   await expect(card(page).getByTestId('meeting-actions-card')).toHaveAttribute('data-open', 'false')
   await expect(card(page).locator('[data-task-id]')).toHaveCount(0)
-  await expect(card(page).getByText('4 of 4 handled')).toBeVisible()
+  await expect(card(page).getByText('1 of 4 done')).toBeVisible()
   // None of it is Nick's any more: no task title shows more than once on Today.
   for (const t of tasks) expect(await page.getByText(t.title, { exact: true }).count()).toBeLessThanOrEqual(1)
   expect(errors).toEqual([])
@@ -229,7 +237,7 @@ test('screenshots: light and dark, 1440 and 375', async ({ page }) => {
     for (const [name, w, h] of [['1440', 1440, 1100], ['375', 375, 1000]] as const) {
       await page.setViewportSize({ width: w, height: h })
       await openToday(page, theme)
-      await expect(card(page).getByText('6 of 6 handled')).toBeVisible({ timeout: 15_000 })
+      await expect(card(page).getByText('6 of 6 done')).toBeVisible({ timeout: 15_000 })
       await card(page).evaluate((el) => el.scrollIntoView({ block: 'center' }))
       await card(page).screenshot({ path: `${SHOTS}/card-folded-${theme}-${name}.png` })
     }

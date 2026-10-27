@@ -46,6 +46,9 @@ function timeLine(e: TodayEvent): string {
 
 export function EventRow({ e, onDismiss, overlap = false, compact = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone = false, minHeight, scan = false, notToday = false }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; compact?: boolean; note?: string; onNote?: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number; /** Agenda scan mode: no notes panel, the card does not expand. */ scan?: boolean; /** A row that is not on today's clock (Tomorrow): never "Now", never "ended". */ notToday?: boolean }) {
   const [expandedState, setExpanded] = useState(false)
+  // The card's caret folds the action rows too: each click is a command to them.
+  const [rowsCommand, setRowsCommand] = useState({ open: false, n: 0 })
+  const [rowsShown, setRowsShown] = useState(false)
   const expanded = scan ? false : expandedState
 
   // Happening now: the Join link becomes the filled primary and the card gets
@@ -133,7 +136,21 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
   // meeting's row (notes merged, e.meetingId): a matched meeting without notes
   // keeps its native row elsewhere on Today, which carries them. Never both.
   const actionRowsMeetingId = total > 0 ? rowMeetingId : null
-  const actionRowsEl = actionRowsMeetingId ? <MeetingActionsCard meetingId={actionRowsMeetingId} placeholder={actionsEl} /> : null
+  const actionRowsEl = actionRowsMeetingId ? (
+    <MeetingActionsCard
+      meetingId={actionRowsMeetingId}
+      placeholder={actionsEl}
+      command={rowsCommand}
+      onOpenChange={setRowsShown}
+    />
+  ) : null
+  // ONE collapse for the card (#155): the caret reads "open" while notes OR
+  // action rows show, and a click folds both, or opens both.
+  const showing = expanded || (!!actionRowsEl && rowsShown)
+  const toggleCard = () => {
+    setExpanded(!showing)
+    setRowsCommand((c) => ({ open: !showing, n: c.n + 1 }))
+  }
   const projectEl = e.project && (
     <Link to={PATHS.project(e.project.slug)} onClick={(ev) => ev.stopPropagation()} aria-label={`Open ${e.project.name}`}>
       {e.project.name}
@@ -248,7 +265,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
         className={`tk-card tk-mc tk-mcc${isNow ? ' tk-nowm' : ''}`}
         style={{ minHeight }}
       >
-        <div onClick={() => setExpanded(!expanded)} className={`meeting-row-header tk-mcr${overlap || isPhone ? ' tk-wrap' : ''}`} style={{ cursor: 'pointer' }}>
+        <div onClick={toggleCard} className={`meeting-row-header tk-mcr${overlap || isPhone ? ' tk-wrap' : ''}`} style={{ cursor: 'pointer' }}>
           <span className="tk-mt" title={timeLine(e)}>{start}</span>
           <span className="tk-ct">{e.title}</span>
           {place && <span className="tk-cs tk-inl" title={place}>{place}</span>}
@@ -258,7 +275,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
           <span className="tk-sp" />
           {facesEl}{!actionRowsEl && actionsEl}{notesEl}{agendaEl}{prepEl}{joinEl}
           {hasUpdateSinceSeenMeeting && <span aria-hidden="true" title="Updated since you last looked" className="tk-dotg" />}
-          <span className="tk-caret">{expanded ? '▾' : '▸'}</span>
+          <span className="tk-caret">{showing ? '▾' : '▸'}</span>
           <Button size="icon"
             type="button"
             onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
@@ -281,7 +298,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
       className={`tk-card tk-mc${isNow ? ' tk-nowm' : ''}`}
       style={{ minHeight }}
     >
-      <div onClick={scan ? undefined : () => setExpanded(!expandedState)} className="meeting-row-header" style={{ cursor: scan ? 'default' : 'pointer' }}>
+      <div onClick={scan ? undefined : toggleCard} className="meeting-row-header" style={{ cursor: scan ? 'default' : 'pointer' }}>
         <div className="tk-mch" style={scan ? { cursor: 'default' } : undefined}>
           <div className="tk-hdr">
             <div className="tk-ct" style={{ fontSize: 13 }}>{e.title}</div>
@@ -298,7 +315,7 @@ export function EventRow({ e, onDismiss, overlap = false, compact = false, note,
                 className="tk-dotg"
               />
             )}
-            {!scan && <span className="tk-caret">{expanded ? '▾' : '▸'}</span>}
+            {!scan && <span className="tk-caret">{showing ? '▾' : '▸'}</span>}
             <Button size="icon"
               type="button"
               onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
