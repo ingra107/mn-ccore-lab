@@ -31,9 +31,12 @@ interface TopBarProps {
   currentQuery: string
   onApplyView: (q: string) => void
   onCreateTask: () => void
+  /** Set while the Needs you card is folded (the same per-person flag Today
+   *  folds, #152): shows "N needs you" in the toolbar to bring it back. */
+  needsYou?: { count: number; onShow: () => void }
 }
 
-export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask }: TopBarProps) {
+export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask, needsYou }: TopBarProps) {
   // N1.10 — phones: the toolbar consumed ~60% of the viewport (7 wrapped
   // control rows). Condensed: quick-views become ONE swipeable row, the filter
   // chips collapse behind a Filters pill with an active-count badge. Create
@@ -174,6 +177,20 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           </div>
         )}
         </>}
+        {needsYou && needsYou.count > 0 && (
+          <div className="tk-fsel">
+            <button
+              type="button"
+              data-stat="needs-you"
+              aria-label={`${needsYou.count} needs you: show the card`}
+              title="Show the Needs you card"
+              onClick={needsYou.onShow}
+            >
+              <span className="tk-attn-dot" aria-hidden="true" />
+              {needsYou.count} needs you<span aria-hidden="true">&darr;</span>
+            </button>
+          </div>
+        )}
       </div>
      </div>
     </div>

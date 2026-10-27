@@ -92,7 +92,7 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
               className="tk-attn-fold"
               data-testid="q-collapse"
               aria-label="Hide the Needs you card"
-              title="Hide until you click it in the stat line"
+              title="Hide on Today and My Tasks until you click N needs you"
               onClick={onCollapse}
             >
               <ChevronUp size={15} aria-hidden="true" />

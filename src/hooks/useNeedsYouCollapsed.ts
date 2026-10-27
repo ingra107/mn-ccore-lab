@@ -3,10 +3,11 @@ import { useUserPref } from './useUserPref'
 import { cardQuestionCount } from '../lib/taskGrouping'
 import type { TaskRow } from '../lib/api'
 
-// Whether Nick folded the Today "Needs you" card into the stat line. One flag
+// Whether Nick folded the "Needs you" card, on Today AND My Tasks (#152). One flag
 // per person on the server (pref 'today.needsYouCollapsed', useUserPref), so
 // folding it on one laptop folds it on the other and on the phone. It stays
-// folded across reloads until he clicks "N needs you" in the stat line.
+// folded across reloads until he clicks "N needs you" (Today's stat line,
+// My Tasks' toolbar).
 //
 // `folded` is what the page acts on: the flag AND at least one row the card
 // would show. With nothing waiting the flag has nothing to hide, so neither the

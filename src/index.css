@@ -2543,7 +2543,7 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-attn+.tk-attn{margin-top:8px}
 .tk .tk-attn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 0 17px;font-size:12px;font-weight:600;color:var(--job-wants);letter-spacing:.01em}
 .tk .tk-attn-h .tk-cnt{color:var(--job-wants);font-weight:500} /* gold on the wash: 5.8:1 light, 6.5:1 dark */
-.tk .tk-attn-dot{width:7px;height:7px;border-radius:50%;background:var(--job-wants);box-shadow:0 0 0 3px color-mix(in srgb,var(--job-wants) 22%,transparent)}
+.tk .tk-attn-dot,.tk-fsel .tk-attn-dot{width:7px;height:7px;border-radius:50%;background:var(--job-wants);box-shadow:0 0 0 3px color-mix(in srgb,var(--job-wants) 22%,transparent)}
 .tk .tk-attn .tk-qrow{padding:6px 14px 12px 17px}
 .tk .tk-attn .tk-qrow+.tk-qrow{border-top:1px solid color-mix(in srgb,var(--job-wants) 22%,transparent);padding-top:10px}
 .tk .tk-ph{display:flex;align-items:center;gap:8px;margin:0 0 10px;flex-wrap:wrap}
