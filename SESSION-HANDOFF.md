@@ -14,6 +14,7 @@
 - **NOT DEPLOYED YET.** main has #156 + follow-ups. Prod needs v148 + v149 first (auto mode refuses prod DDL; Nick runs them with `!`):
   `scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=api/schema-v148-hub-releases-announcements.sql` then the same for `api/schema-v149-pulse-timestamp-indexes.sql`. Both applied to the TEST DB. Then `npm run deploy:pages:gated`, write the printed draft's title + blurbs, Nick approves in the pill.
 - Follow-ups fixed this session (no deferrals): pulse counts use v149 indexes + skip lab-wide refetch; pill shows on phones; Discard disarms after 3s; GrantGantt swipe test re-runs a gesture slower than the hold delay; meeting-actions journey picks a "Project ~ Product" row (full journey passes).
+- Session-close `/code-review medium` found 10 issues; all fixed test-first in `8a521910` (approve TOCTOU, intake race, pulse poll + no lab-wide bump, PI draft dot drains, wins bulk filter, `%x1e` git-log separator, stale edit form, reactions under pending Hermes / the editor, no double fetch on a `proj_` URL). Gates green: api 2538, lib 782, src 691, every deploy-gate lint.
 - GitHub #156 stays open until deployed.
 
 ---
