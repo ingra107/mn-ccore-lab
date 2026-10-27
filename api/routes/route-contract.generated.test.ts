@@ -221,7 +221,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   /api/questions, GET /api/questions/:id, GET + POST
     //   /api/questions/:id/answers, POST /api/answers/:id/accept. Its @hermes
     //   went 2026-10-21 (#8238); one question since April, no answers.
-    expect(ROUTE_REGISTRY).toHaveLength(266)
+    // 271 as of 2026-10-26 -- What's new / Lab pulse (+5, #156): GET /api/pulse,
+    //   POST /api/releases, POST /api/releases/:id, POST /api/announcements,
+    //   POST /api/announcements/:id/delete.
+    expect(ROUTE_REGISTRY).toHaveLength(271)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

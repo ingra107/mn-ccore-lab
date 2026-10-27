@@ -108,7 +108,20 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block).toContain("method: 'POST'")
       expect(block).toContain("path: '/api/projects/:id/join-request',")
     }
-    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER))
+    // Plus the Lab pulse counts (#156, api/lib/pulse-aggregates.ts): lab-wide
+    // numbers and member slugs only (Nick's Rule 90 aggregate exemption,
+    // 2026-10-26), on GET /api/pulse only, never the handle.
+    const PULSE_COUNTS = "pulseCountsFrom(c.get('unscopedDb'))"
+    const pulseCounts = lines.filter((l) => l.includes(PULSE_COUNTS))
+    expect(pulseCounts).toHaveLength(1)
+    expect(pulseCounts[0].split("get('unscopedDb')").length - 1).toBe(1)
+    {
+      const at = src.indexOf(pulseCounts[0])
+      const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
+      expect(block).toContain("method: 'GET'")
+      expect(block).toContain("path: '/api/pulse',")
+    }
+    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER) && !l.includes(PULSE_COUNTS))
     expect(uses).toHaveLength(3)
     // The third: labWideEnv hands the unscoped handle to a PI only. The three Lab
     // pulse routes and the pi-dashboard call it (the pulse routes also answer a

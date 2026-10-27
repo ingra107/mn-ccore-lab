@@ -47,6 +47,8 @@ import { handleGetMemberFeaturedPublications, handlePutMemberFeaturedPublication
 import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleMakeTaskFromNote } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
 import { handleBugReport, handleListBugReports, handleUpdateBugReportStatus } from './routes/bug-report';
+import { handleGetPulse, handleReleaseIntake, handleUpdateRelease, handleCreateAnnouncement, handleDeleteAnnouncement } from './routes/pulse';
+import { pulseCountsFrom } from './lib/pulse-aggregates';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
 import { handleGetSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
@@ -2631,6 +2633,47 @@ defineRoute({
 // Bug Squasher queue — PI/API-key gated (in-handler isPiRequest, same idiom
 // as the PB-sync reads). The squasher (scripts/bug-squasher.bat) lists open
 // bugs then marks each resolved/dismissed as it works through them.
+// ─────────────────────────────────────────────────────────────────────────────
+// What's new / Lab pulse pill (#156, schema-v148). Handlers carry their own
+// gates: the key writes a draft's words, a signed-in PI approves/announces.
+// ─────────────────────────────────────────────────────────────────────────────
+defineRoute({
+  method: 'GET',
+  path: '/api/pulse',
+  auth: 'authed',
+  entity: 'misc',
+  // Lab-wide counts read the UNSCOPED handle (Rule 90 aggregate exemption,
+  // Nick 2026-10-26); they return numbers and member slugs only.
+  handler: (c) => handleGetPulse(R(c), E(c), pulseCountsFrom(c.get('unscopedDb'))),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/releases',
+  auth: 'authed',
+  entity: 'misc',
+  handler: (c) => handleReleaseIntake(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/releases/:id',
+  auth: 'authed',
+  entity: 'misc',
+  handler: (c) => handleUpdateRelease(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/announcements',
+  auth: 'authed',
+  entity: 'misc',
+  handler: (c) => handleCreateAnnouncement(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/announcements/:id/delete',
+  auth: 'authed',
+  entity: 'misc',
+  handler: (c) => handleDeleteAnnouncement(c.req.param('id'), R(c), E(c)),
+});
 defineRoute({
   method: 'GET',
   path: '/api/bug-reports',

@@ -71,3 +71,9 @@ export async function labPulseCounts(
     newPapers: Number(p.papers ?? 0),
   }
 }
+
+/** The one form the route takes the unscoped handle in: a counts function,
+ *  never the handle itself (pinned by api/health-unscoped.test.ts). */
+export function pulseCountsFrom(db: D1Database): (args: { nowIso: string; weekStartIso: string }) => Promise<PulseCounts> {
+  return (args) => labPulseCounts(db, args)
+}

@@ -279,7 +279,9 @@ function ulid(): string {
   return timePart + randPart;
 }
 
-export function generateId(kind?: 'task' | 'project' | 'product' | 'inbox_event' | 'mut'): string {
+export function generateId(kind?: 'task' | 'project' | 'product' | 'inbox_event' | 'mut' | 'release' | 'announcement'): string {
+  if (kind === 'release') return `rel_${ulid()}`;
+  if (kind === 'announcement') return `ann_${ulid()}`;
   if (kind === 'task') return `task_${ulid()}`;
   if (kind === 'project') return `proj_${ulid()}`;
   if (kind === 'product') return `prd_${ulid()}`;
@@ -420,6 +422,16 @@ export async function getPiEmails(env: Env): Promise<Set<string>> {
 /** Test-only: drop the cached PI list so a test's lab_settings row is read. */
 export function _resetPiEmailsCacheForTests(): void {
   piEmailsCache = null;
+}
+
+/** True iff a SIGNED-IN PI made the request (#156). Unlike isPiRequest, the
+ *  API key alone is NOT a PI here: approving a release or posting an
+ *  announcement is Nick's act, and the key is what the deploy step and
+ *  Claude sessions hold. */
+export async function isPiIdentity(request: Request, env: Env): Promise<boolean> {
+  const user = await getAuthUser(request, env)
+  if (!user?.email) return false
+  return (await getPiEmails(env)).has(user.email.toLowerCase())
 }
 
 /** True iff the request is from a PI — either an authenticated CF Access
