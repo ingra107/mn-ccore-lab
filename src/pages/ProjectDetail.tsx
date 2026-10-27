@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { Button } from '../components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -97,11 +97,22 @@ type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
   const { data: projects = [], isLoading, isError } = useProjects()
-  const project = projects.find((p) => p.slug === slug)
+  // A link may carry the typed id (proj_*) instead of the slug; both name the
+  // same row, and the URL is rewritten to the slug below so the page has one
+  // canonical address.
+  const project = projects.find((p) => p.slug === slug) ?? projects.find((p) => (p as { id?: string }).id === slug)
+  const canonicalSlug = project?.slug
+  const navigateToCanonical = useNavigate()
+  const location = useLocation()
+  useEffect(() => {
+    if (canonicalSlug && slug && canonicalSlug !== slug) {
+      navigateToCanonical(`${PATHS.project(canonicalSlug)}${location.search}${location.hash}`, { replace: true })
+    }
+  }, [canonicalSlug, slug, location.search, location.hash, navigateToCanonical])
   // The project's own queries start with the list, not after it (the slug is in
   // the URL). Once the list has answered and does not hold the slug (bad URL, no
   // access), they stop: the page is the not-found screen.
-  useProjectDetailQueries(!isLoading && !isError && !project ? undefined : slug)
+  useProjectDetailQueries(!isLoading && !isError && !project ? undefined : (canonicalSlug ?? slug))
 
   // New-activity signal (entity_seen v81): visiting the project page IS the
   // "seen" mark — project activity newer than this visit re-flags as ● new.
