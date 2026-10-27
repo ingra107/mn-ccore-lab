@@ -1,4 +1,4 @@
-# ▶▶ 2026-10-26 (work): BUG SWEEP #150-#155 + WHAT'S NEW / LAB PULSE (#156). **Schema v149.** **Routes 271.**
+# ▶▶ 2026-10-26 (work): BUG SWEEP #150-#155 + WHAT'S NEW / LAB PULSE (#156). **Schema v150.** **Routes 274.**
 
 ## Shipped
 - #150 segmented control: active segment lost its inner outline (`d5c3a5ec`). #151 a project page opens from its `proj_*` id and rewrites to the slug (`13830c6b`). #153 "Show more" + Reply on one line, fade on the clipped line (`dd6a9324`). #154 quick-add textarea text transparent over the token mirror (`32274ec9`). #152 My Tasks folds Needs you with Today's flag (`cc0d52da`). #155 meeting card caret folds its action rows; header reads "N yours open · X of Y done" (`52e8fee8`). All deployed `52e8fee8`.
@@ -11,8 +11,7 @@
 - Pill seen state = `user_prefs` `hub.pulse.seen`, marked per TAB (release on What's new, announcement on Lab pulse). Ids are ULIDs; seen only moves forward.
 
 ## Open
-- **NOT DEPLOYED YET.** main has #156 + follow-ups. Prod needs v148 + v149 first (auto mode refuses prod DDL; Nick runs them with `!`):
-  `scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=api/schema-v148-hub-releases-announcements.sql` then the same for `api/schema-v149-pulse-timestamp-indexes.sql`. Both applied to the TEST DB. Then `npm run deploy:pages:gated`, write the printed draft's title + blurbs, Nick approves in the pill.
+- **DEPLOYED 2026-10-27 05:5x CDT (work), 37c01c9e.** Prod D1 got v148, v149 and v150 (links product scope, current-draft per product) after an export (PB `data/backups/mnccore-lab-pre-v148-150-2026-10-27.sql`, 43 MB) and time-travel bookmark `0000078c-00000112-00005111-7f2a85a794b9fccd6059eefa0e5d5d33`. Each read back clean. Release draft `rel_01M5YG2RYR34FR7QZ7GZH236CY` has its title + blurbs; Nick approves it in the pill. Schema is now **v150**, routes 274.
 - Follow-ups fixed this session (no deferrals): pulse counts use v149 indexes + skip lab-wide refetch; pill shows on phones; Discard disarms after 3s; GrantGantt swipe test re-runs a gesture slower than the hold delay; meeting-actions journey picks a "Project ~ Product" row (full journey passes).
 - Session-close `/code-review medium` found 10 issues; all fixed test-first in `8a521910` (approve TOCTOU, intake race, pulse poll + no lab-wide bump, PI draft dot drains, wins bulk filter, `%x1e` git-log separator, stale edit form, reactions under pending Hermes / the editor, no double fetch on a `proj_` URL). Gates green: api 2538, lib 782, src 691, every deploy-gate lint.
 - GitHub #156 stays open until deployed.
