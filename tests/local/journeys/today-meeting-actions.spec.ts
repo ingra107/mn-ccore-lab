@@ -173,7 +173,10 @@ test('rows on the card, once each, then triage them to a folded card', async ({ 
   // 5. Route the same two to another project.
   await select(page, 1, 2)
   await bar.getByRole('combobox', { name: 'Move selected to project' }).click()
-  await page.getByRole('option', { name: projectLabel, exact: true }).first().click()
+  // The picker lists a project with products as its "Project ~ Product" pairs
+  // (no bare row), so match either form; both file the task on projectSlug.
+  const label = projectLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  await page.getByRole('option', { name: new RegExp(`^${label}( ~ .*)?$`) }).first().click()
   await expect.poll(async () => {
     const r = await apiRows(page)
     return [r[tasks[1].id].project_id, r[tasks[2].id].project_id, r[tasks[3].id].project_id]
