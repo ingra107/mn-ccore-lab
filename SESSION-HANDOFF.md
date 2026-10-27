@@ -1,3 +1,21 @@
+# ▶▶ 2026-10-26 (work): BUG SWEEP #150-#155 + WHAT'S NEW / LAB PULSE (#156). **Schema v148.** **Routes 271.**
+
+## Shipped
+- #150 segmented control: active segment lost its inner outline (`d5c3a5ec`). #151 a project page opens from its `proj_*` id and rewrites to the slug (`13830c6b`). #153 "Show more" + Reply on one line, fade on the clipped line (`dd6a9324`). #154 quick-add textarea text transparent over the token mirror (`32274ec9`). #152 My Tasks folds Needs you with Today's flag (`cc0d52da`). #155 meeting card caret folds its action rows; header reads "N yours open · X of Y done" (`52e8fee8`). All deployed `52e8fee8`.
+- **#156 What's new / Lab pulse pill** replaces `PhaseReleaseBanner` (deleted). Spec `docs/superpowers/specs/2026-10-26-whats-new-lab-pulse-design.md`, plan `docs/superpowers/plans/2026-10-26-whats-new-lab-pulse.md`. Tables `hub_releases` (draft -> approved | discarded, ONE draft by partial unique index, drafts hidden from non-PI by TABLE_SCOPE) + `hub_announcements`. Routes `GET /api/pulse`, `POST /api/releases` (API key: probe / intake), `POST /api/releases/:id` (key edits; approve/discard = `personPi`), `POST /api/announcements[/:id/delete]` (`personPi`).
+
+## Landmines added
+- **Every deploy now ends with `postdeploy:release-draft`.** Write the draft's title + blurbs (`POST /api/releases/<id> {"action":"edit","title":...,"blurbs":[{"lead","text"}]}`) before you stop. It warns, never fails the deploy; it skips when the last release is not in this clone's history.
+- **Approve must carry `reviewed: {commitTo, title, blurbs}`**; a deploy or edit since then gets 409 `changed_since_review`. The API key and the TEST_MODE_KEY identity can never approve (personPi).
+- **Lab-wide counts are a Rule 90 exemption**: only `pulseCountsFrom(c.get('unscopedDb'))` on GET /api/pulse, pinned in `api/health-unscoped.test.ts`. Wins rows stay viewer-scoped.
+- Pill seen state = `user_prefs` `hub.pulse.seen`, marked per TAB (release on What's new, announcement on Lab pulse). Ids are ULIDs; seen only moves forward.
+
+## Open
+- `tests/local/journeys/today-meeting-actions.spec.ts` step 5 fails on fixture drift (project picker lists only "Project ~ Product" pairs for a project with products); pre-existing.
+- Deferred minors (#156 review): pulse counts full-scan via datetime() and refetch on every lab write; Discard stays armed for the card's life. GrantGantt touch test flaked once under the full src run.
+
+---
+
 # ▶▶ 2026-10-23 (work): BUG QUEUE EMPTY + LIVE SWEEP CLEAN. main `1ac8d675` live (probe PASS). **Schema v147.** **Routes 266.**
 
 ## What shipped (all deployed)
