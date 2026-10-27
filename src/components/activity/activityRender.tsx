@@ -685,6 +685,28 @@ export function ActivityEntryItem({
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
   const [editing, setEditing] = useState(false)
+  const reactions = showReactions && !isTask
+  // The entry's own controls, on ONE line under its body (#112, #153):
+  // reactions, then Reply at the far right. They stay under a pending Hermes
+  // placeholder (reactions only) and under the comment editor.
+  // Reply under a Hermes card (an offer or an answer) opens the root's
+  // composer seeded with @hermes, so "go" runs it.
+  const hermesActions = (withReply: boolean) => (reactions || (withReply && onReply)) ? (
+    <>
+      {reactions && <ReactionBar targetType="comment" targetId={entry.id} />}
+      {withReply && onReply && (
+        <button type="button" onClick={onReply} className="entry-reply ml-auto">
+          {isReply ? 'Reply to Hermes' : 'Reply'}
+        </button>
+      )}
+    </>
+  ) : undefined
+  const commentActions = (reactions || onReply) ? (
+    <>
+      {reactions && <ReactionBar targetType={entry.kind === 'update' ? 'project_update' : 'comment'} targetId={entry.id} />}
+      {onReply && <button type="button" onClick={onReply} className="entry-reply ml-auto">Reply</button>}
+    </>
+  ) : undefined
   // "(edited)" marker — set by handleEditActivityEntry in metadata_json.edited.
   const wasEdited = (() => {
     try { return !!(entry.metadata_json && JSON.parse(entry.metadata_json).edited) } catch { return false }
@@ -817,25 +839,13 @@ export function ActivityEntryItem({
         </div>
         {/* Body — long answers collapse to a few lines (#126) */}
         {isHermesPending(entry.body) ? (
-          <HermesPending askedAt={entry.created_at} />
+          <>
+            <HermesPending askedAt={entry.created_at} />
+            {/* Reactions stay while the answer is pending; Reply waits for it. */}
+            {hermesActions(false) && <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>{hermesActions(false)}</div>}
+          </>
         ) : (
-          <CollapsibleBody
-            fontSize={textSize}
-            contentKey={entry.body}
-            actions={((showReactions && !isTask) || onReply) ? (
-              <>
-                {showReactions && !isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
-                {/* Reply under a Hermes card (an offer or an answer) opens the root's
-                    composer seeded with @hermes, so "go" runs it. It sits at the far
-                    right, on the "Show more" line (#153). */}
-                {onReply && (
-                  <button type="button" onClick={onReply} className="entry-reply ml-auto">
-                    {isReply ? 'Reply to Hermes' : 'Reply'}
-                  </button>
-                )}
-              </>
-            ) : undefined}
-          >
+          <CollapsibleBody fontSize={textSize} contentKey={entry.body} actions={hermesActions(true)}>
             <HermesResponse content={entry.body} />
           </CollapsibleBody>
         )}
@@ -900,11 +910,14 @@ export function ActivityEntryItem({
 
           {/* Body — inline editor while editing, else the rendered body + (edited) tag */}
           {editing && onEdit ? (
-            <InlineCommentEditor
-              initial={entry.body}
-              onSave={(v) => { onEdit(v); setEditing(false) }}
-              onCancel={() => setEditing(false)}
-            />
+            <>
+              <InlineCommentEditor
+                initial={entry.body}
+                onSave={(v) => { onEdit(v); setEditing(false) }}
+                onCancel={() => setEditing(false)}
+              />
+              {commentActions && <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>{commentActions}</div>}
+            </>
           ) : (
             // Long bodies collapse to a few lines with "Show more" (#126). Font
             // size lives on the wrapper so the cap counts the same lines it
@@ -917,19 +930,7 @@ export function ActivityEntryItem({
             <CollapsibleBody
               fontSize={textSize}
               contentKey={entry.body}
-              actions={((showReactions && !isTask) || onReply) ? (
-                <>
-                  {showReactions && !isTask && (
-                    <ReactionBar
-                      targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
-                      targetId={entry.id}
-                    />
-                  )}
-                  {onReply && (
-                    <button type="button" onClick={onReply} className="entry-reply ml-auto">Reply</button>
-                  )}
-                </>
-              ) : undefined}
+              actions={commentActions}
             >
               <p
                 style={{

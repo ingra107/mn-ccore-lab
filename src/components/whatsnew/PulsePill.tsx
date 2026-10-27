@@ -26,6 +26,7 @@ function validSeen(stored: unknown): PulseSeen {
   return {
     releaseId: typeof s?.releaseId === 'string' ? s.releaseId : null,
     announcementId: typeof s?.announcementId === 'string' ? s.announcementId : null,
+    draftKey: typeof s?.draftKey === 'string' ? s.draftKey : null,
   }
 }
 
@@ -54,7 +55,7 @@ export default function PulsePill() {
   useEffect(() => {
     if (!open || !data || !seenLoaded) return
     const next = seenFor(data, tab, seen)
-    if (next.releaseId !== seen.releaseId || next.announcementId !== seen.announcementId) setSeen(next)
+    if (next.releaseId !== seen.releaseId || next.announcementId !== seen.announcementId || next.draftKey !== seen.draftKey) setSeen(next)
   }, [open, tab, data, seen, seenLoaded, setSeen])
 
   useEffect(() => {

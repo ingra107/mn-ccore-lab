@@ -10,7 +10,18 @@
 // an older announcement resurfacing after the newest was deleted is not new.
 import type { PulsePayload } from '../../shared/pulse'
 
-export interface PulseSeen { releaseId: string | null; announcementId: string | null }
+export interface PulseSeen {
+  releaseId: string | null
+  announcementId: string | null
+  /** Nick only: the pending draft as he last opened it (draftKey). The dot
+   *  drains once he has seen it and relights when a deploy or a session changes it. */
+  draftKey?: string | null
+}
+
+/** A draft's identity for the PI dot: its id, its last commit and its words. */
+export function draftKey(d: { id: string; commitTo: string; title: string; blurbs: unknown[] }): string {
+  return `${d.id}:${d.commitTo}:${d.title}:${JSON.stringify(d.blurbs)}`
+}
 export type PulseTab = 'news' | 'pulse'
 
 export type PillState =
@@ -28,7 +39,8 @@ const isNewer = (id: string | undefined, seen: string | null) => !!id && (seen =
  */
 export function pulsePillState(p: PulsePayload | undefined, seen: PulseSeen, isPi: boolean, seenLoaded = true): PillState {
   if (p && seenLoaded) {
-    const unseenRelease = isNewer(p.release?.id, seen.releaseId) || (isPi && !!p.draft)
+    const unseenDraft = isPi && !!p.draft && draftKey(p.draft) !== (seen.draftKey ?? null)
+    const unseenRelease = isNewer(p.release?.id, seen.releaseId) || unseenDraft
     const unseenAnnouncement = isNewer(p.announcement?.id, seen.announcementId)
     if (unseenRelease) return { tone: 'news', label: "What's new", openTab: 'news' }
     if (unseenAnnouncement) return { tone: 'news', label: "What's new", openTab: 'pulse' }
@@ -40,6 +52,7 @@ export function pulsePillState(p: PulsePayload | undefined, seen: PulseSeen, isP
 export function seenFor(p: PulsePayload, tab: PulseTab, prev: PulseSeen): PulseSeen {
   const next = { ...prev }
   if (tab === 'news' && isNewer(p.release?.id, prev.releaseId)) next.releaseId = p.release!.id
+  if (tab === 'news' && p.draft) next.draftKey = draftKey(p.draft)
   if (tab === 'pulse' && isNewer(p.announcement?.id, prev.announcementId)) next.announcementId = p.announcement!.id
   return next
 }

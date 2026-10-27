@@ -44,6 +44,7 @@ import TaskGridView from '../components/tasks/TaskGridView'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/LazyTaskDetailPanel'
 import EntityNotFound from '../components/EntityNotFound'
+import { detailQueryRef } from '../lib/projectRef'
 import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
@@ -109,10 +110,9 @@ export default function ProjectDetail() {
       navigateToCanonical(`${PATHS.project(canonicalSlug)}${location.search}${location.hash}`, { replace: true })
     }
   }, [canonicalSlug, slug, location.search, location.hash, navigateToCanonical])
-  // The project's own queries start with the list, not after it (the slug is in
-  // the URL). Once the list has answered and does not hold the slug (bad URL, no
-  // access), they stop: the page is the not-found screen.
-  useProjectDetailQueries(!isLoading && !isError && !project ? undefined : (canonicalSlug ?? slug))
+  // The project's own queries start with the list on a slug URL, wait for it on
+  // an id URL, and stop when the list answered without the project (projectRef.ts).
+  useProjectDetailQueries(detailQueryRef(slug, project, isLoading, isError))
 
   // New-activity signal (entity_seen v81): visiting the project page IS the
   // "seen" mark — project activity newer than this visit re-flags as ● new.

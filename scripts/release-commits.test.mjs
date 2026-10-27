@@ -39,10 +39,10 @@ describe('selectReleaseCommits()', () => {
 })
 
 describe('parseGitLog()', () => {
-  it('reads `git log --reverse --name-only --format=@@%H%x09%s` output', () => {
-    const raw = '@@aaa\tFix the thing\n\nsrc/x.tsx\ndocs/y.md\n@@bbb\tDocs only\n\ndocs/z.md\n'
+  it('reads `git log --reverse --name-only --format=%x1e%H%x09%s` output, even a subject holding @@', () => {
+    const raw = '\x1eaaa\tFix @@ hunk parsing\n\nsrc/x.tsx\ndocs/y.md\n\x1ebbb\tDocs only\n\ndocs/z.md\n'
     assert.deepEqual(parseGitLog(raw), [
-      { sha: 'aaa', subject: 'Fix the thing', files: ['src/x.tsx', 'docs/y.md'] },
+      { sha: 'aaa', subject: 'Fix @@ hunk parsing', files: ['src/x.tsx', 'docs/y.md'] },
       { sha: 'bbb', subject: 'Docs only', files: ['docs/z.md'] },
     ])
   })

@@ -91,11 +91,15 @@ describe('version bump', () => {
       'POST /api/ai-requests/:id/claim',
       'POST /api/ai-requests/:id/release',
       'POST /api/ai-requests/queue',
+      // #156: announcements change only the pulse, which refreshes itself.
+      'POST /api/announcements',
+      'POST /api/announcements/:id/delete',
       'POST /api/client-errors',
       'POST /api/notifications/:id/read',
       'POST /api/notifications/read-all',
       // #156: the deploy's release intake writes a draft only Nick can read.
       'POST /api/releases',
+      'POST /api/releases/:id',
       'POST /api/seen',
       'POST /api/thread-seen',
     ])

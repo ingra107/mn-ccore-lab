@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext } from '../hooks/useAuth'
 import { UndoToastProvider } from '../components/UndoToast'
 import PulsePill from '../components/whatsnew/PulsePill'
+import { DraftReleaseCard } from '../components/whatsnew/DraftReleaseCard'
+import { useState } from 'react'
 import type { PulsePayload } from '../../shared/pulse'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
@@ -120,5 +122,23 @@ describe('PI controls in the pulse panel', () => {
     await expect.poll(() => f.mock.calls.find((c) => String(c[0]) === '/api/announcements')).toBeTruthy()
     const call = f.mock.calls.find((c) => String(c[0]) === '/api/announcements')!
     expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({ body: 'Retreat Nov 14' })
+  })
+})
+
+describe('DraftReleaseCard edit form', () => {
+  it('Edit opens on the words the draft holds now, not the ones it held at mount', async () => {
+    stub(payload([]))
+    const empty = payload([]).draft!
+    const written = { ...empty, title: 'Smoother Today', blurbs: [{ lead: 'One collapse.', text: 'The caret folds rows.' }] }
+    function Harness() {
+      const [d, setD] = useState(empty)
+      return <><button type="button" onClick={() => setD(written)}>session writes</button><DraftReleaseCard key={d.id} draft={d} /></>
+    }
+    const host = await mount(wrap(true, <Harness />), { ready: (h) => h.querySelector('[data-testid="draft-release"]'), label: 'DraftReleaseCard' })
+    button(host, 'session writes')!.click()
+    await expect.poll(() => host.textContent).toContain('Smoother Today')
+    button(host, 'Edit')!.click()
+    await expect.poll(() => host.querySelector<HTMLInputElement>('#release-title')?.value).toBe('Smoother Today')
+    expect(host.querySelector<HTMLInputElement>('#release-lead-0')?.value).toBe('One collapse.')
   })
 })

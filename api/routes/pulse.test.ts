@@ -232,3 +232,61 @@ describe('GET /api/pulse wins', () => {
     expect(wins.map((w) => w.title)).toEqual(['Newer paper', 'Older milestone'])
   })
 })
+
+describe('code-review fixes (#156 session close)', () => {
+  const blurbs = [{ lead: 'One collapse per meeting.', text: 'The caret folds action items too.' }]
+
+  it('approve publishes nothing if the draft changes between its read and its write', async () => {
+    release('rel_01D', 'draft', 'a', 'b', { title: 'Smoother Today', blurbs_json: JSON.stringify(blurbs) })
+    let raced = false
+    const racing = d1Adapter(db, {
+      onExec: (sql) => {
+        if (!raced && /UPDATE hub_releases SET status = 'approved'/.test(sql)) {
+          raced = true
+          db.prepare("UPDATE hub_releases SET commit_to = 'c99' WHERE id = 'rel_01D'").run()
+        }
+      },
+    }) as unknown as D1Database
+    const res = await handleUpdateRelease('rel_01D', req('/api/releases/rel_01D', {}, {
+      action: 'approve', reviewed: { commitTo: 'b', title: 'Smoother Today', blurbs },
+    }), envFor(racing), NICK_ACT)
+    expect(res.status).toBe(409)
+    expect(row('rel_01D').status).toBe('draft')
+  })
+
+  it('two deploys racing to open the draft both land in the one draft', async () => {
+    let raced = false
+    const racing = d1Adapter(db, {
+      onExec: (sql) => {
+        if (!raced && /INSERT INTO hub_releases/.test(sql)) {
+          raced = true
+          db.prepare("INSERT INTO hub_releases (id, status, commit_from, commit_to, commits_json) VALUES ('rel_01R', 'draft', 'a', 'r1', ?)").run(JSON.stringify([{ sha: 'r1', subject: 'other deploy' }]))
+        }
+      },
+    }) as unknown as D1Database
+    const res = await handleReleaseIntake(req('/api/releases', asKey, { commitTo: 's2', commits: [{ sha: 's2', subject: 'mine' }] }), envFor(racing))
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { data: { id: string; created: boolean } }).data).toEqual({ id: 'rel_01R', created: false })
+    expect(JSON.parse(row('rel_01R').commits_json).map((c: { sha: string }) => c.sha)).toEqual(['r1', 's2'])
+    expect(row('rel_01R').commit_to).toBe('s2')
+  })
+
+  it('recent wins leave out a bulk sync, as the papers count does', async () => {
+    // eslint-disable-next-line local/time-discipline -- fixture writes a stored UTC stamp, as the DB holds it
+    const stamp = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 19).replace('T', ' ')
+    for (let i = 0; i < 6; i++) insertRow(db, 'publications', { id: `bulk${i}`, title: `Bulk ${i}`, authors: 'a', created_at: stamp })
+    // eslint-disable-next-line local/time-discipline -- fixture writes a stored UTC stamp, as the DB holds it
+    insertRow(db, 'publications', { id: 'real', title: 'Real paper', authors: 'a', created_at: new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 19).replace('T', ' ') })
+    const p = await pulseAs(CASEY, MEMBER_EMAIL)
+    expect(p.wins.map((w) => w.title)).toEqual(['Real paper'])
+    expect(p.newPapers).toBe(1)
+  })
+
+  it('pulse writes do not make every open tab refetch the lab', () => {
+    const src = readFileSync(join(__dirname, '..', 'index.ts'), 'utf8')
+    for (const path of ["'/api/releases/:id'", "'/api/announcements'", "'/api/announcements/:id/delete'"]) {
+      const start = src.indexOf(`path: ${path},`)
+      expect(src.slice(start, src.indexOf('defineRoute(', start)), path).toContain('noVersionBump: true')
+    }
+  })
+})

@@ -2661,6 +2661,9 @@ defineRoute({
   path: '/api/releases/:id',
   auth: 'authed',
   entity: 'misc',
+  // Changes only the pulse, which refreshes itself (5 min, focus, own writes):
+  // no lab-wide refetch in every member's tab.
+  noVersionBump: true,
   handler: (c) => handleUpdateRelease(c.req.param('id'), R(c), E(c), pulseActor(c)),
 });
 defineRoute({
@@ -2668,6 +2671,9 @@ defineRoute({
   path: '/api/announcements',
   auth: 'authed',
   entity: 'misc',
+  // Changes only the pulse, which refreshes itself (5 min, focus, own writes):
+  // no lab-wide refetch in every member's tab.
+  noVersionBump: true,
   handler: (c) => handleCreateAnnouncement(R(c), E(c), pulseActor(c)),
 });
 defineRoute({
@@ -2675,6 +2681,9 @@ defineRoute({
   path: '/api/announcements/:id/delete',
   auth: 'authed',
   entity: 'misc',
+  // Changes only the pulse, which refreshes itself (5 min, focus, own writes):
+  // no lab-wide refetch in every member's tab.
+  noVersionBump: true,
   handler: (c) => handleDeleteAnnouncement(c.req.param('id'), E(c), pulseActor(c)),
 });
 defineRoute({

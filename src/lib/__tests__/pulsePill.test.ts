@@ -68,3 +68,14 @@ describe('weekStartIso', () => {
     expect(weekStartIso(new Date(2026, 10, 1, 23, 0, 0))).toBe(new Date(2026, 9, 26, 0, 0, 0).toISOString())
   })
 })
+
+describe('the PI draft dot (code review: Rule 73, it must drain)', () => {
+  const draft = (over: Partial<PulseRelease> = {}) => ({ ...rel('rel_d', 'draft'), title: '', blurbs: [], commitTo: 'c1', ...over })
+  it('drains once Nick has opened the draft, and relights when the draft changes', () => {
+    const p = { ...base, draft: draft() }
+    const seen = seenFor(p, 'news', NONE)
+    expect(pulsePillState(p, seen, true).tone).toBe('pulse')
+    expect(pulsePillState({ ...base, draft: draft({ commitTo: 'c2' }) }, seen, true).tone).toBe('news')
+    expect(pulsePillState({ ...base, draft: draft({ title: 'Smoother Today', blurbs: [{ lead: 'L', text: 'T' }] }) }, seen, true).tone).toBe('news')
+  })
+})

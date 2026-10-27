@@ -32,6 +32,13 @@ export function DraftReleaseCard({ draft }: { draft: PulseRelease }) {
   const ready = draft.title.trim() !== '' && draft.blurbs.length > 0
   const busy = edit.isPending || approve.isPending || discard.isPending
 
+  // The form opens on the draft as it is NOW: a session may have written the
+  // words after this card mounted, and Save must never post an older copy.
+  const startEdit = () => {
+    setTitle(draft.title)
+    setBlurbs(draft.blurbs.length ? draft.blurbs : [{ lead: '', text: '' }])
+    setEditing(true)
+  }
   const setBlurb = (i: number, patch: Partial<ReleaseBlurb>) => setBlurbs((bs) => bs.map((b, j) => (j === i ? { ...b, ...patch } : b)))
   const save = () => {
     const clean = blurbs.map((b) => ({ lead: b.lead.trim(), text: b.text.trim() })).filter((b) => b.lead && b.text)
@@ -80,7 +87,7 @@ export function DraftReleaseCard({ draft }: { draft: PulseRelease }) {
             ) : (
               <Button size="sm" variant="secondary" type="button" onClick={() => setArmed(true)} disabled={busy}>Discard</Button>
             )}
-            <Button size="sm" variant="secondary" type="button" onClick={() => setEditing(true)} disabled={busy}>Edit</Button>
+            <Button size="sm" variant="secondary" type="button" onClick={startEdit} disabled={busy}>Edit</Button>
             <Button
               size="sm"
               variant="primary"

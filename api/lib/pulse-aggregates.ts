@@ -29,7 +29,7 @@ export interface PulseCounts {
 }
 
 /** More than this many publications sharing one created_at is a bulk sync, not new work. */
-const BULK_SYNC_ROWS = 5
+export const BULK_SYNC_ROWS = 5
 
 export const PULSE_SQL = {
   // rule-90-aggregate-exempt: #156 (slugs only; which entity is never returned)

@@ -17,6 +17,9 @@ export function usePulse() {
       return ((await res.json()) as { data: PulsePayload }).data
     },
     staleTime: 5 * 60_000,
+    // It opts out of the lab-change refetch below, so it polls on its own:
+    // a new release or announcement reaches an open, focused tab within 5 minutes.
+    refetchInterval: 5 * 60_000,
     // Lab-wide and in every tab: not refetched on every write in the lab.
     meta: { labChangeRefetch: false },
     refetchOnWindowFocus: true,

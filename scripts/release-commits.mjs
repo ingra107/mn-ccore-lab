@@ -11,10 +11,14 @@ const NOT_USER_FACING = [
   /^scripts\//, /^\.github\//, /^\.githooks\//, /^\.superpowers\//,
 ]
 
-/** `git log --reverse --name-only --format=@@%H%x09%s` output -> entries, oldest first. */
+/** The record separator git writes before each commit (%x1e): a subject can hold
+ *  any printable text, '@@' included, but never this control character. */
+export const GIT_LOG_FORMAT = '--format=%x1e%H%x09%s'
+
+/** `git log --reverse --name-only --format=%x1e%H%x09%s` output -> entries, oldest first. */
 export function parseGitLog(raw) {
   const out = []
-  for (const block of raw.split('@@').slice(1)) {
+  for (const block of raw.split('').slice(1)) {
     const [head, ...rest] = block.split('\n')
     const tab = head.indexOf('\t')
     out.push({

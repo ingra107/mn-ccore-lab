@@ -26,7 +26,7 @@ import type { Env } from '../helpers'
 import { json, error, generateId } from '../helpers'
 import { validateApiKey } from '../middleware/api-key-auth'
 import { nowInstant } from '../lib/time'
-import type { PulseCounts } from '../lib/pulse-aggregates'
+import { BULK_SYNC_ROWS, type PulseCounts } from '../lib/pulse-aggregates'
 import {
   ANNOUNCEMENT_MAX, RELEASE_BLURBS_MAX, RELEASE_TITLE_MAX,
   type PulsePayload, type PulseRelease, type PulseWin, type ReleaseBlurb,
@@ -103,10 +103,16 @@ export async function handleGetPulse(request: Request, env: Env, counts: CountsF
         ORDER BY datetime(completed_at) DESC LIMIT 3`,
     ).bind(nowIso).all<{ title: string; date: string }>(),
     env.DB.prepare(
+      // A bulk sync (more than BULK_SYNC_ROWS sharing one created_at) is not a
+      // win, the same rule the papers count applies (pulse-aggregates.ts).
       `SELECT title, created_at AS date FROM publications
         WHERE datetime(created_at) > datetime(?1, '-30 days')
+          AND created_at NOT IN (
+            SELECT created_at FROM publications
+             WHERE datetime(created_at) > datetime(?1, '-30 days')
+             GROUP BY created_at HAVING COUNT(*) > ?2)
         ORDER BY datetime(created_at) DESC LIMIT 3`,
-    ).bind(nowIso).all<{ title: string; date: string }>(),
+    ).bind(nowIso, BULK_SYNC_ROWS).all<{ title: string; date: string }>(),
     counts({ nowIso, weekStartIso }),
   ])
 
@@ -153,8 +159,7 @@ export async function handleReleaseIntake(request: Request, env: Env): Promise<R
   if (!commits || typeof body.commitTo !== 'string' || !body.commitTo) return error('commitTo and commits required', 400)
   if (commits.length === 0) return json({ data: null })
 
-  const draft = await env.DB.prepare(`SELECT ${RELEASE_COLS} FROM hub_releases WHERE status = 'draft' LIMIT 1`).first<ReleaseRow>()
-  if (draft) {
+  const extend = async (draft: ReleaseRow) => {
     const have = JSON.parse(draft.commits_json) as Commit[]
     const seen = new Set(have.map((c) => c.sha))
     const merged = [...have, ...commits.filter((c) => !seen.has(c.sha))]
@@ -162,11 +167,22 @@ export async function handleReleaseIntake(request: Request, env: Env): Promise<R
       .bind(JSON.stringify(merged), body.commitTo, draft.id).run()
     return json({ data: { id: draft.id, created: false } })
   }
+  const pending = () => env.DB.prepare(`SELECT ${RELEASE_COLS} FROM hub_releases WHERE status = 'draft' LIMIT 1`).first<ReleaseRow>()
+  const draft = await pending()
+  if (draft) return extend(draft)
   const id = generateId('release')
   const from = (await lastCommitTo(env)) ?? commits[0].sha
-  await env.DB.prepare(
-    `INSERT INTO hub_releases (id, status, commit_from, commit_to, commits_json) VALUES (?, 'draft', ?, ?, ?)`,
-  ).bind(id, from, body.commitTo, JSON.stringify(commits)).run()
+  try {
+    await env.DB.prepare(
+      `INSERT INTO hub_releases (id, status, commit_from, commit_to, commits_json) VALUES (?, 'draft', ?, ?, ?)`,
+    ).bind(id, from, body.commitTo, JSON.stringify(commits)).run()
+  } catch (e) {
+    // Two deploys at once: the other opened the one draft first (the partial
+    // unique index refused this INSERT). Add these commits to it.
+    const theirs = /UNIQUE/i.test(String(e)) ? await pending() : null
+    if (theirs) return extend(theirs)
+    throw e
+  }
   return json({ data: { id, created: true } })
 }
 
@@ -228,9 +244,13 @@ export async function handleUpdateRelease(id: string, request: Request, env: Env
     return error('changed_since_review', 409)
   }
   if (!row.title.trim() || stored.length < 1) return error('needs_blurbs', 400)
-  await env.DB.prepare(
-    `UPDATE hub_releases SET status = 'approved', approved_at = ?, approved_by = ? WHERE id = ? AND status = 'draft'`,
-  ).bind(nowInstant(), actor.slug, id).run()
+  // The write itself re-checks what Nick read: a deploy or an edit landing
+  // between the SELECT above and this UPDATE changes 0 rows, never publishes.
+  const done = await env.DB.prepare(
+    `UPDATE hub_releases SET status = 'approved', approved_at = ?, approved_by = ?
+      WHERE id = ? AND status = 'draft' AND commit_to = ? AND title = ? AND blurbs_json = ?`,
+  ).bind(nowInstant(), actor.slug, id, row.commit_to, row.title, row.blurbs_json).run()
+  if (!done.meta?.changes) return error('changed_since_review', 409)
   return json({ data: { id, status: 'approved' } })
 }
 

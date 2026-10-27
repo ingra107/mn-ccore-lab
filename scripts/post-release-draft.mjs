@@ -12,7 +12,7 @@
 // Usage: node scripts/post-release-draft.mjs [--url https://...]
 
 import { execFileSync } from 'node:child_process'
-import { parseGitLog, planRange, selectReleaseCommits } from './release-commits.mjs'
+import { GIT_LOG_FORMAT, parseGitLog, planRange, selectReleaseCommits } from './release-commits.mjs'
 
 const PROD_URL = 'https://mn-ccore-lab.pages.dev'
 const FIRST_RUN_COMMITS = 30
@@ -38,7 +38,7 @@ async function post(body) {
 }
 
 function gitLog(range) {
-  const args = ['log', '--reverse', '--name-only', '--format=@@%H%x09%s', range || `-n${FIRST_RUN_COMMITS}`]
+  const args = ['log', '--reverse', '--name-only', GIT_LOG_FORMAT, range || `-n${FIRST_RUN_COMMITS}`]
   return execFileSync('git', args, { encoding: 'utf8' })
 }
 
