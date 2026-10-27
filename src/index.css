@@ -1455,6 +1455,18 @@ a:hover {
   box-shadow: var(--shadow-menu); z-index: var(--z-dropdown); color: var(--sk-t1); font-size: 13px;
 }
 .pulse-panel .tk-seg { justify-self: start; }
+.pulse-pill-short { display: none; }
+/* Phones (#156 review): the short label, and a panel that spans the screen
+   under the top bar instead of hanging off the pill's right edge. */
+@media (max-width: 639px) {
+  .pulse-pill-long { display: none; }
+  .pulse-pill-short { display: inline; }
+  .pulse-panel {
+    position: fixed; top: calc(env(safe-area-inset-top, 0px) + 60px);
+    left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    width: auto; margin-top: 0; max-height: calc(100dvh - 140px); overflow-y: auto;
+  }
+}
 .pulse-col { display: grid; gap: 10px; min-width: 0; }
 .pulse-eyebrow { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--sk-t3); }
 .pulse-title { font-weight: 600; font-size: 14px; margin-top: 2px; text-wrap: balance; }

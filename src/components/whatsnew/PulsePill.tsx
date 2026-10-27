@@ -76,12 +76,14 @@ export default function PulsePill() {
         data-testid="pulse-pill"
         data-pulse-tone={state.tone}
         className={`pulse-pill${state.tone === 'news' ? ' pulse-pill-news' : ''}`}
+        aria-label={state.label}
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={toggle}
       >
         <span className={state.tone === 'news' ? 'pulse-dot-news' : 'pulse-dot'} aria-hidden="true" />
-        <span>{state.label}</span>
+        <span className="pulse-pill-long" aria-hidden="true">{state.label}</span>
+        <span className="pulse-pill-short" data-pulse-short="" aria-hidden="true">{state.tone === 'news' ? 'New' : String(data?.active.length ?? 0)}</span>
         <ChevronRight {...ICON_PROPS} size={12} aria-hidden="true" style={{ transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 150ms ease' }} />
       </button>
       <AnimatePresence>

@@ -85,6 +85,18 @@ describe('PI controls in the pulse panel', () => {
     })
   })
 
+  it('Discard asks once more, then settles back if not confirmed', async () => {
+    const f = stub(payload([{ lead: 'L.', text: 'T' }]))
+    const host = await mount(wrap(true, <PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="news"]'), label: 'PulsePill' })
+    await openPanel(host)
+    await expect.poll(() => button(host, 'Discard')).toBeTruthy()
+    button(host, 'Discard')!.click()
+    await expect.poll(() => button(host, 'Discard draft')).toBeTruthy()
+    await expect.poll(() => button(host, 'Discard'), { timeout: 5000 }).toBeTruthy()
+    expect(button(host, 'Discard draft')).toBeUndefined()
+    expect(f.mock.calls.some((c) => /\/api\/releases\/rel_d\d+$/.test(String(c[0])))).toBe(false)
+  })
+
   it('the composer refuses 281 characters and posts 12', async () => {
     const f = stub(payload([{ lead: 'L.', text: 'T' }]))
     const host = await mount(wrap(true, <PulsePill />), { ready: (h) => h.querySelector('[data-testid="pulse-pill"]'), label: 'PulsePill' })

@@ -52,6 +52,9 @@ describe('PulsePill', () => {
     stub(payload())
     const host = await mount(wrap(<PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="news"]'), label: 'PulsePill' })
     expect(pill(host).textContent).toContain("What's new")
+    // Phones show the short form; the full label stays the accessible name.
+    expect(host.querySelector('[data-pulse-short]')?.textContent).toBe('New')
+    expect(pill(host).getAttribute('aria-label')).toBe("What's new")
     pill(host).click()
     await expect.poll(() => host.textContent).toContain('One collapse per meeting.')
     expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("What's new")
@@ -89,6 +92,7 @@ describe('PulsePill', () => {
     stub(payload({ release: null, announcement: null, active: [], tasksDone: 0, milestonesHit: 0, newPapers: 0, wins: [] }))
     const host = await mount(wrap(<PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="pulse"]'), label: 'PulsePill' })
     expect(pill(host).textContent).toContain('Lab pulse · 0 active')
+    expect(host.querySelector('[data-pulse-short]')?.textContent).toBe('0')
     pill(host).click()
     await expect.poll(() => host.textContent).toContain('Nobody active in the last day')
     expect(host.textContent).toContain('No announcement in the last two weeks')

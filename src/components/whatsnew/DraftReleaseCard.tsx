@@ -4,12 +4,14 @@
 // writes the title and blurbs; Nick reads them against what shipped, edits,
 // then approves (the team sees it at once) or discards. Discard is two-step
 // inside the card: the viewer never shows confirm().
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 import type { PulseRelease, ReleaseBlurb } from '../../../shared/pulse'
 import { RELEASE_BLURBS_MAX, RELEASE_TITLE_MAX } from '../../../shared/pulse'
 import { useApproveRelease, useDiscardRelease, useEditRelease } from '../../hooks/mutations/usePulseMutations'
 import { ReleaseBody } from './WhatsNewTab'
+
+const DISARM_MS = 3000
 
 export function DraftReleaseCard({ draft }: { draft: PulseRelease }) {
   const edit = useEditRelease()
@@ -17,6 +19,13 @@ export function DraftReleaseCard({ draft }: { draft: PulseRelease }) {
   const discard = useDiscardRelease()
   const [editing, setEditing] = useState(false)
   const [armed, setArmed] = useState(false)
+  // An unconfirmed Discard settles back after a few seconds, so a stray
+  // click never leaves a one-click destroy waiting on the card.
+  useEffect(() => {
+    if (!armed) return
+    const t = setTimeout(() => setArmed(false), DISARM_MS)
+    return () => clearTimeout(t)
+  }, [armed])
   const [showCommits, setShowCommits] = useState(false)
   const [title, setTitle] = useState(draft.title)
   const [blurbs, setBlurbs] = useState<ReleaseBlurb[]>(draft.blurbs.length ? draft.blurbs : [{ lead: '', text: '' }])

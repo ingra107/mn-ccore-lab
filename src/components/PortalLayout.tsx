@@ -256,8 +256,9 @@ export default function PortalLayout() {
 
           {/* What's new / Lab pulse pill (#156): approved release notes,
               Nick's announcements and the lab's day, on every portal page.
-              Read state is per person on the server (user_prefs). */}
-          <div className="hidden sm:flex items-center mr-2">
+              Read state is per person on the server (user_prefs). On a phone
+              it shows a short label, like the Search trigger above. */}
+          <div className="flex items-center mr-1 sm:mr-2">
             <PulsePill />
           </div>
 
