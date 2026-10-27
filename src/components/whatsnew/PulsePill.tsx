@@ -93,7 +93,7 @@ export default function PulsePill() {
               onChange={setTab}
             />
             <div role="tabpanel" id={`pulse-tabpanel-${tab}`} aria-labelledby={`pulse-tab-${tab}`} className="pulse-body">
-              {tab === 'news' ? <WhatsNewTab data={data} /> : <LabPulseTab data={data} />}
+              {tab === 'news' ? <WhatsNewTab data={data} isPi={isPi} /> : <LabPulseTab data={data} isPi={isPi} />}
             </div>
           </motion.div>
         )}

@@ -4,10 +4,13 @@ import type { PulsePayload } from '../../../shared/pulse'
 import { Face } from '../today/skin'
 import { formatRelativeTime, formatShortDate } from '../../lib/dateUtils'
 import { fullNameReadable } from '../../lib/personLabel'
+import { useDeleteAnnouncement } from '../../hooks/mutations/usePulseMutations'
+import { AnnouncementComposer } from './AnnouncementComposer'
 
 const MAX_FACES = 8
 
-export function LabPulseTab({ data }: { data: PulsePayload | undefined }) {
+export function LabPulseTab({ data, isPi }: { data: PulsePayload | undefined; isPi: boolean }) {
+  const remove = useDeleteAnnouncement()
   if (!data) return <p className="pulse-empty">Loading the lab pulse…</p>
   const extra = data.active.length - MAX_FACES
   return (
@@ -15,9 +18,13 @@ export function LabPulseTab({ data }: { data: PulsePayload | undefined }) {
       {data.announcement && (
         <section className="pulse-ann" aria-label="Announcement">
           <p>{data.announcement.body}</p>
-          <span className="pulse-date">{fullNameReadable(data.announcement.authorSlug)} · {formatRelativeTime(data.announcement.createdAt)}</span>
+          <span className="pulse-date">
+            {fullNameReadable(data.announcement.authorSlug)} · {formatRelativeTime(data.announcement.createdAt)}
+            {isPi && <> · <button type="button" className="pulse-link" onClick={() => remove.mutate(data.announcement!.id)} disabled={remove.isPending}>Remove</button></>}
+          </span>
         </section>
       )}
+      {isPi && <AnnouncementComposer />}
       <section aria-label="Active in the last day">
         <div className="pulse-eyebrow">Active in the last day</div>
         {data.active.length === 0 ? (

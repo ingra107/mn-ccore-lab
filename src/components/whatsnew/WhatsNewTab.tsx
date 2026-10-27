@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { PulsePayload, PulseRelease } from '../../../shared/pulse'
 import { formatShortDate } from '../../lib/dateUtils'
+import { DraftReleaseCard } from './DraftReleaseCard'
 
 export function ReleaseBody({ release }: { release: PulseRelease }) {
   return (
@@ -13,11 +14,12 @@ export function ReleaseBody({ release }: { release: PulseRelease }) {
   )
 }
 
-export function WhatsNewTab({ data }: { data: PulsePayload | undefined }) {
+export function WhatsNewTab({ data, isPi }: { data: PulsePayload | undefined; isPi: boolean }) {
   const [showPast, setShowPast] = useState(false)
   const release = data?.release ?? null
   return (
     <div className="pulse-col">
+      {isPi && data?.draft && <DraftReleaseCard key={data.draft.id} draft={data.draft} />}
       {release ? (
         <section aria-label="Latest release">
           <div className="pulse-eyebrow">{release.approvedAt ? formatShortDate(release.approvedAt) : 'Released'}</div>
