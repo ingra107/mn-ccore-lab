@@ -46,7 +46,7 @@ import { DIRECTORY_COLUMNS } from './project-join-columns'
 export const HUB_TABLES = [
   '_meta', 'activity_entries', 'activity_log', 'activity_thread_seen', 'agenda_items', 'agent_knowledge', 'ai_requests',
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
-  'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
+  'conference_submissions', 'current_draft_changes', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations',
@@ -440,6 +440,11 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // schema-v124: a product is visible with its project. A funded-by edge is
   // visible only when BOTH ends are: funding confers no access (codex tiebreak).
   products: byProject('products', 'project_id', 'id', false),
+  // schema-v149: a current-draft receipt is visible with its product.
+  current_draft_changes: {
+    kind: 'scoped', key: 'id', dependsOn: ['products'],
+    where: (v) => (projectsScoped(v) ? '(current_draft_changes.product_id IN (SELECT id FROM products))' : null),
+  },
   product_funding: {
     kind: 'scoped', key: 'id', dependsOn: ['products'],
     where: (v) => (projectsScoped(v)
