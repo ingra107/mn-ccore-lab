@@ -24,7 +24,6 @@ const DEVICE_LOCAL: Record<string, string> = {
   'components/DeskBrokerFrame.tsx': "a desk artifact's own storage, brokered",
   'components/NeedsAttentionDashboard.tsx': 'section fold state',
   'components/PageTooltip.tsx': 'tip dismissed in this browser',
-  'components/PhaseReleaseBanner.tsx': 'banner dismissed in this browser',
   'components/PortalLayout.tsx': 'sidebar collapse follows window width',
   'components/ReleaseRibbon.tsx': 'release ribbon dismissed in this browser',
   'components/RoundPrompt.tsx': 'prompt dismissed in this browser',

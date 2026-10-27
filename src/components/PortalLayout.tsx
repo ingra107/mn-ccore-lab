@@ -19,7 +19,7 @@ import { useFavicon } from '../hooks/useFavicon'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
-import PhaseReleaseBanner from './PhaseReleaseBanner'
+import PulsePill from './whatsnew/PulsePill'
 import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -254,11 +254,11 @@ export default function PortalLayout() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Phase-release pill (R4-10) — lives here across every portal
-              page so the announcement isn't Dashboard-only. Dismissal
-              persists per-user in localStorage. */}
+          {/* What's new / Lab pulse pill (#156): approved release notes,
+              Nick's announcements and the lab's day, on every portal page.
+              Read state is per person on the server (user_prefs). */}
           <div className="hidden sm:flex items-center mr-2">
-            <PhaseReleaseBanner />
+            <PulsePill />
           </div>
 
           {/* P3-7: per-surface density toggle removed — one global density lives
