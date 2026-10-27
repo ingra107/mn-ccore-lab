@@ -155,7 +155,9 @@ export function kindFilterOptions(
 }
 
 /** Only stored rows carry a role the Worker can change; `derived` rows are
- *  synthesised per request from project columns and have no row to update. */
+ *  synthesised per request from project columns and have no row to update.
+ *  A product's draft rows (product_id, schema-v149) move only through the
+ *  current-draft route, which the Worker enforces; no button offers it here. */
 export function canChangeRole(link: StoredLink): boolean {
-  return link.role === 'key' || link.role === 'archive'
+  return (link.role === 'key' || link.role === 'archive') && !link.product_id
 }

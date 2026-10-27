@@ -286,7 +286,7 @@ describe('handleGetLinks — pull endpoint', () => {
     // The sync projection: identity-mapped columns only.
     expect(Object.keys(body.data[0]).sort()).toEqual([
       'canonical_url', 'created_at', 'deleted_at', 'id', 'kind', 'last_mutation_id', 'owner_id',
-      'owner_table', 'role', 'seq', 'short_title', 'sort_order', 'source_raw', 'type', 'updated_at',
+      'owner_table', 'product_id', 'role', 'seq', 'short_title', 'sort_order', 'source_raw', 'type', 'updated_at',
     ]);
   });
 

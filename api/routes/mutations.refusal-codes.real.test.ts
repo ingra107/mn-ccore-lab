@@ -122,9 +122,12 @@ describe('links: a constraint failure is decided by the live row, not the engine
   it('a second id for a live natural key -> link_natural_key, carrying the holder row', async () => {
     seedLink('link_holder');
     const r = refused(await send(mut({ table: 'links', record_id: 'link_second', payload: { ...LINK } })), 'link_natural_key');
-    // The exact text PB's _LINK_NATURAL_KEY_UNIQUE_RE matches today.
+    // PB adopts on `code` alone (tests/db/test_links_table.py
+    // test_unique_text_without_a_code_does_not_adopt); the text is for people.
+    // schema-v149 made the natural key an expression index (product scope), so
+    // SQLite names the index instead of the columns.
     expect(r.reason).toMatch(/^apply error: /);
-    expect(r.reason).toContain('UNIQUE constraint failed: links.owner_table, links.owner_id, links.role, links.canonical_url');
+    expect(r.reason).toContain("UNIQUE constraint failed: index 'idx_links_owner_role_url'");
     expect(r.current_payload?.id).toBe('link_holder');
     expect(db.prepare("SELECT COUNT(*) AS c FROM links WHERE id = 'link_second'").get()).toEqual({ c: 0 });
   });
