@@ -43,7 +43,7 @@ describe('feed entry 3-line cap', () => {
       { ready: (h) => h.querySelector('[data-collapsible-body]'), label: 'FeedEntryText', width: '200px' },
     )
     const box = host.querySelector<HTMLElement>('[data-collapsible-body]')!
-    await expect.poll(() => host.querySelector('button')?.textContent).toBe('more')
+    await expect.poll(() => host.querySelector('button')?.textContent).toBe('Show more')
     const cap = box.clientHeight
     const lines = textLines(box)
     expect(lines.length).toBeGreaterThanOrEqual(4)

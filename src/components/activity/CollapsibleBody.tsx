@@ -13,6 +13,8 @@
 // which line-clamp handles inconsistently across block children.
 
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface CollapsibleBodyProps {
   children: ReactNode
@@ -28,11 +30,15 @@ interface CollapsibleBodyProps {
    *  not on a child: a child's own line-height overrides the wrapper's, and a
    *  3-line cap then shows 3.4 lines (1.375) or cuts the third (1.6). */
   lineHeight?: number
+  /** The entry's own controls (reactions, Reply). They share ONE line with
+   *  "more" (#153): "more" on the left, these after it; put `ml-auto` on a
+   *  control that belongs at the far right. */
+  actions?: ReactNode
 }
 
 const DEFAULT_LINE_HEIGHT = 1.55
 
-export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, lineHeight = DEFAULT_LINE_HEIGHT }: CollapsibleBodyProps) {
+export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, lineHeight = DEFAULT_LINE_HEIGHT, actions }: CollapsibleBodyProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [overflows, setOverflows] = useState(false)
@@ -60,6 +66,7 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, 
   // Re-measure when the content changes.
   useLayoutEffect(() => { measure() }, [measure, contentKey])
 
+  const clipped = overflows && !expanded
   return (
     <>
       <div
@@ -69,19 +76,32 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, 
           lineHeight,
           fontSize,
           ...(expanded ? {} : { maxHeight: `${maxLines * lineHeight}em`, overflow: 'hidden' }),
+          // The last line fades out while clipped: the text visibly continues,
+          // which is the cue to click "more" (#153).
+          ...(clipped ? {
+            maskImage: `linear-gradient(to bottom, #000 calc(100% - ${lineHeight}em), transparent)`,
+            WebkitMaskImage: `linear-gradient(to bottom, #000 calc(100% - ${lineHeight}em), transparent)`,
+          } : {}),
         }}
       >
         {children}
       </div>
-      {overflows && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          // .hit-area: a 44px tap target on touch without growing the row.
-          className="hit-area"
-          style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
-        >{expanded ? 'less' : 'more'}</button>
+      {(overflows || actions) && (
+        <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: overflows ? 2 : 6 }}>
+          {overflows && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              // .hit-area: a 44px tap target on touch without growing the row.
+              className="hit-area collapsible-more"
+            >
+              {expanded ? 'Show less' : 'Show more'}
+              <ChevronDown size={12} {...ICON_PROPS} aria-hidden="true" style={{ transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 120ms' }} />
+            </button>
+          )}
+          {actions}
+        </div>
       )}
     </>
   )

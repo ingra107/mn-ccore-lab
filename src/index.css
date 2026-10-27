@@ -3441,3 +3441,10 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .sr.idea-move .sr-trig{min-width:28px;min-height:28px;margin-left:0;padding:0;justify-content:center}
 .sr.idea-move .sr-car{display:none}
 @media (hover:none){.sr.idea-move .sr-trig{min-width:36px;min-height:36px}}
+
+/* CollapsibleBody's "Show more" (#153): quiet ink with a chevron, teal on hover. */
+.collapsible-more{display:inline-flex;align-items:center;gap:3px;font:500 11px var(--font-body);color:var(--sk-t2);background:transparent;border:0;padding:2px 0;cursor:pointer}
+.collapsible-more:hover{color:var(--job-accent)}
+.collapsible-more:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px;border-radius:4px}
+.entry-reply{font:500 11px var(--font-body);color:var(--sk-t2);background:none;border:0;padding:0;cursor:pointer}
+.entry-reply:hover{color:var(--job-accent)}

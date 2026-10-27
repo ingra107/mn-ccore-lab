@@ -819,30 +819,25 @@ export function ActivityEntryItem({
         {isHermesPending(entry.body) ? (
           <HermesPending askedAt={entry.created_at} />
         ) : (
-          <CollapsibleBody fontSize={textSize} contentKey={entry.body}>
+          <CollapsibleBody
+            fontSize={textSize}
+            contentKey={entry.body}
+            actions={((showReactions && !isTask) || onReply) ? (
+              <>
+                {showReactions && !isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
+                {/* Reply under a Hermes card (an offer or an answer) opens the root's
+                    composer seeded with @hermes, so "go" runs it. It sits at the far
+                    right, on the "Show more" line (#153). */}
+                {onReply && (
+                  <button type="button" onClick={onReply} className="entry-reply ml-auto">
+                    {isReply ? 'Reply to Hermes' : 'Reply'}
+                  </button>
+                )}
+              </>
+            ) : undefined}
+          >
             <HermesResponse content={entry.body} />
           </CollapsibleBody>
-        )}
-        {((showReactions && !isTask) || (onReply && !isHermesPending(entry.body))) && (
-          <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>
-            {showReactions && !isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
-            {/* Reply under a Hermes card (an offer or an answer) opens the root's
-                composer seeded with @hermes, so "go" runs it. Hidden while the
-                answer is still pending. */}
-            {onReply && !isHermesPending(entry.body) && (
-              <button
-                type="button"
-                onClick={onReply}
-                className="cursor-pointer"
-                style={{
-                  fontSize: '11px', color: 'var(--slate)', opacity: 0.85,
-                  background: 'none', border: 'none', padding: 0,
-                }}
-              >
-                {isReply ? 'Reply to Hermes' : 'Reply'}
-              </button>
-            )}
-          </div>
         )}
       </ActivityEntryWrapper>
     )
@@ -911,9 +906,31 @@ export function ActivityEntryItem({
               onCancel={() => setEditing(false)}
             />
           ) : (
-            // Long bodies collapse to a few lines with "more" (#126). Font size
-            // lives on the wrapper so the cap counts the same lines it clamps.
-            <CollapsibleBody fontSize={textSize} contentKey={entry.body}>
+            // Long bodies collapse to a few lines with "Show more" (#126). Font
+            // size lives on the wrapper so the cap counts the same lines it
+            // clamps. ONE action row (#112, #153): "Show more", reactions, and
+            // Reply at the far right share the line under the body; reaction
+            // pills sit closest to the body they belong to. The reply COUNT and
+            // expand toggle live in ThreadSummary (#98). Reply also shows on a
+            // REPLY so you can answer Hermes in-thread (it opens the root's
+            // composer, so the thread stays one level).
+            <CollapsibleBody
+              fontSize={textSize}
+              contentKey={entry.body}
+              actions={((showReactions && !isTask) || onReply) ? (
+                <>
+                  {showReactions && !isTask && (
+                    <ReactionBar
+                      targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
+                      targetId={entry.id}
+                    />
+                  )}
+                  {onReply && (
+                    <button type="button" onClick={onReply} className="entry-reply ml-auto">Reply</button>
+                  )}
+                </>
+              ) : undefined}
+            >
               <p
                 style={{
                   color: 'var(--ink)',
@@ -928,44 +945,6 @@ export function ActivityEntryItem({
                 )}
               </p>
             </CollapsibleBody>
-          )}
-
-          {/* ONE action row: reactions + thread controls (#112).
-              These used to be two stacked rows, and on a project-entity row the
-              reaction row is EMPTY until somebody reacts — a 26px band holding a
-              single right-floated dashed "+", measured on prod. That band is what
-              Nick saw as "so much space between the end of that statement and the
-              reply". Merging them costs the feed nothing and removes the gap;
-              existing reaction pills still sit closest to the body they belong to. */}
-          {/* #98: the reply COUNT and the expand toggle live in ThreadSummary, the row
-              under the root (activity/ThreadSummary.tsx); this footer only carries
-              reactions and the Reply control. */}
-          {/* The Reply control also shows on a REPLY so you can answer Hermes
-              in-thread (it opens the root's composer — the follow-up still
-              attaches to the root, so the thread stays one level). The reply
-              COUNT / expand toggle stays root-only. */}
-          {((showReactions && !isTask) || onReply) && (
-            <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 6 }}>
-              {showReactions && !isTask && (
-                <ReactionBar
-                  targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
-                  targetId={entry.id}
-                />
-              )}
-              {onReply && (
-                <button
-                  type="button"
-                  onClick={onReply}
-                  className="cursor-pointer"
-                  style={{
-                    fontSize: '11px', color: 'var(--slate)', opacity: 0.85,
-                    background: 'none', border: 'none', padding: 0,
-                  }}
-                >
-                  Reply
-                </button>
-              )}
-            </div>
           )}
         </div>
       </div>

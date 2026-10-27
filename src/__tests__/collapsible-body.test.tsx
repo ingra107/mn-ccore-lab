@@ -29,13 +29,13 @@ describe('CollapsibleBody', () => {
     const box = host.querySelector<HTMLElement>('[data-collapsible-body]')!
     expect(box.scrollHeight).toBeGreaterThan(box.clientHeight)
     const btn = host.querySelector<HTMLButtonElement>('button')
-    expect(btn?.textContent).toBe('more')
+    expect(btn?.textContent).toBe('Show more')
   })
 
   it('expands on click and can collapse again', async () => {
     const host = await mount(<CollapsibleBody maxLines={5}><p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{LONG}</p></CollapsibleBody>)
     host.querySelector<HTMLButtonElement>('button')!.click()
-    await expect.poll(() => host.querySelector('button')?.textContent).toBe('less')
+    await expect.poll(() => host.querySelector('button')?.textContent).toBe('Show less')
     const box = host.querySelector<HTMLElement>('[data-collapsible-body]')!
     await expect.poll(() => box.scrollHeight - box.clientHeight).toBe(0)
   })
@@ -51,7 +51,7 @@ describe('CollapsibleBody', () => {
     )
     const box = host.querySelector<HTMLElement>('[data-collapsible-body]')!
     expect(Math.abs(box.clientHeight - 14 * lh * 3)).toBeLessThanOrEqual(1)
-    expect(host.querySelector('button')?.textContent).toBe('more')
+    expect(host.querySelector('button')?.textContent).toBe('Show more')
   })
 
   it('shows no control on a short body', async () => {
