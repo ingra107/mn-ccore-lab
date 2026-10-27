@@ -46,9 +46,11 @@
 // to be ours (finding 4).
 //
 // Local paths: links of a PI-only type (local_file, local_folder) are the PI's
-// alone (lib/pi-only-project-fields.ts). Every response here goes through the
-// same filter, and a receipt's candidate_url and key are withheld from a
-// non-PI unless its draft is of a shared type (finding 1).
+// alone (lib/pi-only-project-fields.ts). For a non-PI every response here
+// filters rows the same way, and a receipt or refusal never names a private
+// draft: its link ids, candidate_url and note are withheld, and the key always
+// is (finding 1; second review: an id alone must reveal nothing, which
+// api/routes/links.ts liveLink/feRow now also guarantee).
 
 import type { Env } from '../types'
 import type { AuthUser } from '../helpers'
@@ -134,19 +136,48 @@ function sameAsk(c: Change, ask: Ask): boolean {
   return ask.op === 'promote' ? c.candidate_url === ask.url : c.undoes_id === ask.undoes
 }
 
-function changeOut(c: Change, replayed: boolean): Record<string, unknown> {
+/** The ids among `ids` a non-PI may not see: PI-only drafts, and ids that
+ *  name no row (fail closed). Empty for the PI. */
+async function hiddenIds(env: Env, ids: (string | null | undefined)[], isPi: boolean): Promise<Set<string>> {
+  const want = [...new Set(ids.filter((x): x is string => !!x))]
+  if (isPi || want.length === 0) return new Set()
+  const res = await env.DB
+    .prepare(`SELECT id, type FROM links WHERE id IN (${want.map(() => '?').join(', ')})`)
+    .bind(...want)
+    .all<{ id: string; type: string }>()
+  const shared = new Set((res.results ?? [])
+    .filter((r) => !(PI_ONLY_LINK_TYPES as readonly string[]).includes(r.type)).map((r) => r.id))
+  return new Set(want.filter((id) => !shared.has(id)))
+}
+
+function changeOut(c: Change, replayed: boolean, hidden: Set<string> = new Set()): Record<string, unknown> {
+  const show = (id: string | null) => (id && hidden.has(id) ? null : id)
   return {
-    id: c.id, op: c.op, product_id: c.product_id, before_link_id: c.before_link_id,
-    after_link_id: c.after_link_id, created_link: c.created_link === 1, undoes_id: c.undoes_id,
+    id: c.id, op: c.op, product_id: c.product_id, before_link_id: show(c.before_link_id),
+    after_link_id: show(c.after_link_id), created_link: c.created_link === 1, undoes_id: c.undoes_id,
     undone_by: c.undone_by, replayed,
   }
+}
+
+/** A refusal naming the product's current draft, which a non-PI sees only
+ *  when it is a shared link. */
+async function refuseNaming(
+  env: Env, isPi: boolean, code: string, message: string, linkId: string | null,
+): Promise<Response> {
+  const hidden = await hiddenIds(env, [linkId], isPi)
+  return refuse(code, message, 409, { current_link_id: linkId && !hidden.has(linkId) ? linkId : null })
+}
+
+async function changeResponse(env: Env, c: Change, replayed: boolean, isPi: boolean): Promise<Response> {
+  const hidden = await hiddenIds(env, [c.before_link_id, c.after_link_id], isPi)
+  return json({ change: changeOut(c, replayed, hidden), rows: await rowsFor(env, [c.before_link_id, c.after_link_id], isPi) })
 }
 
 /** The answer for a receipt already under this request's key: its replay when
  *  it is this request's change, a 409 when the key names another one. */
 async function answerFor(env: Env, c: Change, ask: Ask, isPi: boolean): Promise<Response> {
   if (!sameAsk(c, ask)) return refuse('idempotency_mismatch', 'idempotency_key already names a different change', 409)
-  return json({ change: changeOut(c, true), rows: await rowsFor(env, [c.before_link_id, c.after_link_id], isPi) })
+  return changeResponse(env, c, true, isPi)
 }
 
 /** Refuse, unless a twin request with this key has landed meanwhile. */
@@ -186,20 +217,22 @@ export async function handleGetCurrentDraft(productId: string, request: Request,
     .bind(product!.id)
     .all<Record<string, unknown>>()).results ?? []
   if (!isPi) {
-    // A receipt names its draft by URL; show it only when that draft is of a
-    // type a member may see. Tombstoned drafts count too, so read every row.
-    const types = new Map(((await env.DB
-      .prepare('SELECT id, type FROM links WHERE product_id = ?').bind(product!.id)
-      .all<{ id: string; type: string }>()).results ?? []).map((r) => [r.id, r.type]))
-    const shared = (id: unknown) => {
-      const t = types.get(id as string)
-      return t !== undefined && !(PI_ONLY_LINK_TYPES as readonly string[]).includes(t)
-    }
-    changes = changes.map((c) => ({
-      ...c,
-      candidate_url: c.op === 'promote' && shared(c.after_link_id) ? c.candidate_url : null,
-      idempotency_key: null,
-    }))
+    // A receipt names its drafts by id and URL, and its note can quote a
+    // path: a member sees each only when the draft is a shared link.
+    // Tombstoned drafts count too (hiddenIds reads every row).
+    const hidden = await hiddenIds(env, changes.flatMap((c) => [c.before_link_id, c.after_link_id] as (string | null)[]), isPi)
+    const isHidden = (id: unknown) => typeof id === 'string' && hidden.has(id)
+    changes = changes.map((c) => {
+      const priv = isHidden(c.before_link_id) || isHidden(c.after_link_id)
+      return {
+        ...c,
+        before_link_id: isHidden(c.before_link_id) ? null : c.before_link_id,
+        after_link_id: isHidden(c.after_link_id) ? null : c.after_link_id,
+        candidate_url: c.op === 'promote' && !isHidden(c.after_link_id) ? c.candidate_url : null,
+        note: priv ? null : c.note,
+        idempotency_key: null,
+      }
+    })
   }
   const current = history.find((r) => r.role === CURRENT_DRAFT_ROLE) ?? null
   return json({ product, current, history, changes })
@@ -245,14 +278,13 @@ export async function handleSetCurrentDraft(
   const current = await currentId(env, p.id)
   if (current !== expected) {
     return refuseUnlessLanded(env, key, ask, isPi, () =>
-      refuse('current_draft_stale', 'The product\'s current draft is not the one this request expected', 409,
-        { current_link_id: current }))
+      refuseNaming(env, isPi, 'current_draft_stale', 'The product\'s current draft is not the one this request expected', current))
   }
   if (current) {
     const cur = await env.DB.prepare('SELECT canonical_url FROM links WHERE id = ?').bind(current).first<{ canonical_url: string }>()
     if (cur?.canonical_url === url) {
       return refuseUnlessLanded(env, key, ask, isPi, () =>
-        refuse('already_current', 'That URL is already the product\'s current draft', 409, { current_link_id: current }))
+        refuseNaming(env, isPi, 'already_current', 'That URL is already the product\'s current draft', current))
     }
   }
   // Re-use the product's own archived row for this URL (its history row), so
@@ -314,8 +346,8 @@ export async function handleSetCurrentDraft(
       // A twin with this key, or another promotion, landed first. A receipt
       // under our key answers only if it is OUR change.
       return refuseUnlessLanded(env, key, ask, isPi, async () =>
-        refuse('current_draft_stale', 'Another change to this product\'s current draft landed first', 409,
-          { current_link_id: await currentId(env, p.id) }))
+        refuseNaming(env, isPi, 'current_draft_stale', 'Another change to this product\'s current draft landed first',
+          await currentId(env, p.id)))
     }
     if (/FOREIGN KEY/.test(e instanceof Error ? e.message : String(e))) {
       return error(`${JSON.stringify(kind)} is not a link kind`, 400)
@@ -325,10 +357,10 @@ export async function handleSetCurrentDraft(
   const landed = await env.DB.prepare(`SELECT ${CHANGE_COLS} FROM current_draft_changes WHERE id = ?`).bind(changeId).first<Change>()
   if (!landed) {
     return refuseUnlessLanded(env, key, ask, isPi, async () =>
-      refuse('current_draft_stale', 'The product\'s current draft changed while this request ran; nothing was written', 409,
-        { current_link_id: await currentId(env, p.id) }))
+      refuseNaming(env, isPi, 'current_draft_stale', 'The product\'s current draft changed while this request ran; nothing was written',
+        await currentId(env, p.id)))
   }
-  return json({ change: changeOut(landed, false), rows: await rowsFor(env, [expected, afterId], isPi) })
+  return changeResponse(env, landed, false, isPi)
 }
 
 // POST /api/products/:id/current-draft/undo
@@ -363,8 +395,7 @@ export async function handleUndoCurrentDraft(
   const latest = await env.DB.prepare(`SELECT ${LATEST_LIVE_PROMOTION} AS id`).bind(p.id).first<{ id: string | null }>()
   if (current !== promo.after_link_id || latest?.id !== promo.id) {
     return refuseUnlessLanded(env, key, ask, isPi, () =>
-      refuse('current_draft_moved', 'The product\'s current draft changed after that promotion; undo it from the newer change', 409,
-        { current_link_id: current }))
+      refuseNaming(env, isPi, 'current_draft_moved', 'The product\'s current draft changed after that promotion; undo it from the newer change', current))
   }
   const restore = promo.before_link_id
   if (restore) {
@@ -410,16 +441,15 @@ export async function handleUndoCurrentDraft(
   } catch (e) {
     if (isUniqueFailure(e)) {
       return refuseUnlessLanded(env, key, ask, isPi, async () =>
-        refuse('already_undone', 'That promotion was undone or replaced concurrently', 409,
-          { current_link_id: await currentId(env, p.id) }))
+        refuseNaming(env, isPi, 'already_undone', 'That promotion was undone or replaced concurrently', await currentId(env, p.id)))
     }
     throw e
   }
   const landed = await env.DB.prepare(`SELECT ${CHANGE_COLS} FROM current_draft_changes WHERE id = ?`).bind(undoId).first<Change>()
   if (!landed) {
     return refuseUnlessLanded(env, key, ask, isPi, async () =>
-      refuse('current_draft_moved', 'The product\'s current draft changed while this request ran; nothing was written', 409,
-        { current_link_id: await currentId(env, p.id) }))
+      refuseNaming(env, isPi, 'current_draft_moved', 'The product\'s current draft changed while this request ran; nothing was written',
+        await currentId(env, p.id)))
   }
-  return json({ change: changeOut(landed, false), rows: await rowsFor(env, [promo.after_link_id, restore], isPi) })
+  return changeResponse(env, landed, false, isPi)
 }
