@@ -719,7 +719,7 @@ async function meetingDedupAccepted(
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'envelope_invalid', 'insert requires payload');
 
-  // schema-v149: a product's current draft is the current-draft route's alone.
+  // schema-v150: a product's current draft is the current-draft route's alone.
   if (mut.table === 'links') {
     const cdErr = currentDraftGuard('insert', null, mut.payload as Record<string, unknown>);
     if (cdErr) return mutErr(mut.mutation_id, 'value_invalid', cdErr);
@@ -1109,7 +1109,7 @@ async function decideAndCommitUpdate(
     return mutErr(mut.mutation_id, 'record_not_found', `${mut.table} record ${mut.record_id} not found`);
   }
 
-  // schema-v149: never re-role, re-scope or re-own a product's current draft
+  // schema-v150: never re-role, re-scope or re-own a product's current draft
   // through the generic door (api/lib/current-draft.ts).
   if (mut.table === 'links') {
     const cdErr = currentDraftGuard('update', current, mut.patch as Record<string, unknown>);
@@ -1381,7 +1381,7 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
       canonical_payload: current,
     });
   }
-  // schema-v149: tombstoning a product's current draft would leave it none.
+  // schema-v150: tombstoning a product's current draft would leave it none.
   if (mut.table === 'links') {
     const cdErr = currentDraftGuard('delete', current, null);
     if (cdErr) return mutErr(mut.mutation_id, 'value_invalid', cdErr);
@@ -2065,7 +2065,7 @@ async function applyErrorResult(env: Env, mut: Mutation, e: unknown): Promise<Mu
 
 /** The live links row (other than this record) holding the natural key
  *  (owner_table, owner_id, product scope, role, canonical_url) this write would
- *  produce. schema-v149: the key is product-scoped, `IS` matches NULL to NULL. */
+ *  produce. schema-v150: the key is product-scoped, `IS` matches NULL to NULL. */
 async function liveLinkHolder(env: Env, mut: Mutation): Promise<Record<string, unknown> | null> {
   let row: Record<string, unknown>;
   if (mut.op === 'insert') {

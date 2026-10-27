@@ -1,4 +1,4 @@
-// A product's current draft (schema-v149, PB mig 154, 2026-10-26).
+// A product's current draft (schema-v150, PB mig 154, 2026-10-26).
 //
 //   GET  /api/products/:id/current-draft        the current draft, the history, the receipts
 //   POST /api/products/:id/current-draft        make a URL the current draft (replace)

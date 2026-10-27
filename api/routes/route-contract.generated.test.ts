@@ -224,7 +224,7 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 271 as of 2026-10-26 -- What's new / Lab pulse (+5, #156): GET /api/pulse,
     //   POST /api/releases, POST /api/releases/:id, POST /api/announcements,
     //   POST /api/announcements/:id/delete.
-    // 274 as of 2026-10-26 -- a product's current draft (+3, schema-v149):
+    // 274 as of 2026-10-26 -- a product's current draft (+3, schema-v150):
     //   GET + POST /api/products/:id/current-draft and POST
     //   /api/products/:id/current-draft/undo (api/routes/current-draft.ts).
     expect(ROUTE_REGISTRY).toHaveLength(274)

@@ -1,4 +1,4 @@
--- schema-v149-links-product-scope.sql (2026-10-26) -- a product's current draft.
+-- schema-v150-links-product-scope.sql (2026-10-26) -- a product's current draft.
 --
 -- Nick, 2026-10-26: "you will have seen that there were two more versions of
 -- edits to an abstract or manuscript and you will have filed them away so that
@@ -42,13 +42,18 @@
 -- and the product-aware natural key ARE in the cache). The PB links pull names
 -- product_id once the Worker below ships.
 --
+-- DEPENDENCY: numbered after v148 (hub_releases / hub_announcements) and v149
+-- (pulse timestamp indexes), both #156 and unrelated to links; apply them
+-- first so schema_migrations stays in order. Written as v149 first; renumbered
+-- 2026-10-26 when #156 took v148/v149 on main.
+--
 -- APPLY ORDER (prod is orchestrator-only; do not apply from a lane):
 --   1. PB mig 154 on BOTH machines first.
 --   2. Backup: scripts/wrangler-d1 d1 export mnccore-lab --remote --output=<file>
 --      and a Time Travel bookmark: npx wrangler d1 time-travel info mnccore-lab
---   3. scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v149-links-product-scope.sql
+--   3. scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v150-links-product-scope.sql
 --      probe: PRAGMA index_list(links) -> idx_links_one_current_draft (unique, partial)
---   4. scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v149-links-product-scope.sql
+--   4. scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v150-links-product-scope.sql
 --   5. THEN deploy the Worker that selects links.product_id.
 -- Not re-runnable (ADD COLUMN); the schema_migrations row says it landed.
 -- ROLLBACK (Worker rolled back first; export the scoped rows first:
@@ -63,7 +68,7 @@
 --     (fails if one URL is now scoped to two products of a project; tombstone one first)
 --   ALTER TABLE links DROP COLUMN product_id;
 --   DROP TABLE IF EXISTS current_draft_changes;
---   DELETE FROM schema_migrations WHERE version = 149;
+--   DELETE FROM schema_migrations WHERE version = 150;
 
 -- NULL default: SQLite admits ADD COLUMN with REFERENCES only when the default
 -- is NULL. The CHECK reads the row's other columns; every existing row has
@@ -125,4 +130,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_current_draft_changes_product_seq ON curre
 CREATE UNIQUE INDEX IF NOT EXISTS idx_current_draft_changes_one_undo
     ON current_draft_changes(undoes_id) WHERE undoes_id IS NOT NULL;
 
-INSERT OR IGNORE INTO schema_migrations (version, filename) VALUES (149, 'schema-v149-links-product-scope.sql');
+INSERT OR IGNORE INTO schema_migrations (version, filename) VALUES (150, 'schema-v150-links-product-scope.sql');

@@ -2173,7 +2173,7 @@ defineRoute({
   entity: 'products',
   handler: (c) => handleProjectProductWrite(c.req.param('slug'), R(c), USER(c), E(c)),
 });
-// A product's current draft (schema-v149): the one door that replaces it
+// A product's current draft (schema-v150): the one door that replaces it
 // (archive + promote + receipt in one D1 batch) and undoes a replacement.
 // Visibility is the product's project (assertProjectVisible inside).
 defineRoute({

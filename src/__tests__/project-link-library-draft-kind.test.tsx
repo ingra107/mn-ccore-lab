@@ -1,4 +1,4 @@
-// A product's draft rows (schema-v149) keep their kind picker on the project
+// A product's draft rows (schema-v150) keep their kind picker on the project
 // page; only the role control is gone (third cold review, 2026-10-26: one
 // permission had been hiding both).
 

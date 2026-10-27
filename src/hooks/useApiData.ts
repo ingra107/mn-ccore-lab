@@ -1562,7 +1562,7 @@ export interface StoredLink {
   owner_table?: string
   /** link_kinds key (schema-v145); null/absent = Unfiled. */
   kind?: string | null
-  /** schema-v149: the product whose draft this is (role 'current_draft' or its
+  /** schema-v150: the product whose draft this is (role 'current_draft' or its
    *  archived history); null/absent = project-wide. */
   product_id?: string | null
   /** On a project page's task-owned row: the task holding it. */

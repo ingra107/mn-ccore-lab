@@ -1,5 +1,5 @@
 // current-draft.ts -- the generic doors may not move a product's current draft
-// (schema-v149, PB mig 154, 2026-10-26).
+// (schema-v150, PB mig 154, 2026-10-26).
 //
 // A product's current draft is a project-owned `links` row with product_id set
 // and role 'current_draft'. Only POST /api/products/:id/current-draft (and its
