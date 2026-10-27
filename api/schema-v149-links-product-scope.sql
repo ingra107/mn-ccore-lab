@@ -30,8 +30,9 @@
 --     draft of two products of one project.
 --   * current_draft_changes: the receipt of every promotion and undo, written
 --     in the SAME batch as the role changes. idempotency_key is UNIQUE (a
---     replayed request returns its receipt) and a promotion is undone at most
---     once (idx_current_draft_changes_one_undo).
+--     replayed request returns its receipt), a promotion is undone at most
+--     once (idx_current_draft_changes_one_undo), and (product_id, seq) is
+--     UNIQUE, so "the latest promotion" is one row.
 -- What is a route rule (Level 2, one door, api/routes/current-draft.ts): the
 -- archive + promote order, the expected-current compare, undo only while the
 -- promoted draft is still current. The generic doors refuse current_draft and
@@ -101,6 +102,7 @@ END;
 CREATE TABLE IF NOT EXISTS current_draft_changes (
   id              TEXT PRIMARY KEY,                       -- cdc_<id>
   product_id      TEXT NOT NULL REFERENCES products(id),
+  seq             INTEGER NOT NULL,                       -- per-product receipt order (1, 2, ...), UNIQUE below
   op              TEXT NOT NULL CHECK (op IN ('promote', 'undo')),
   idempotency_key TEXT NOT NULL UNIQUE,
   candidate_url   TEXT,                                   -- promote: the canonical_url promoted
@@ -116,7 +118,10 @@ CREATE TABLE IF NOT EXISTS current_draft_changes (
   CHECK ((op = 'undo') = (undoes_id IS NOT NULL)),
   CHECK (op = 'undo' OR (candidate_url IS NOT NULL AND after_link_id IS NOT NULL))
 );
-CREATE INDEX IF NOT EXISTS idx_current_draft_changes_product ON current_draft_changes(product_id, created_at);
+-- The order of a product's receipts. Undo acts only on the latest promotion
+-- not yet undone (api/routes/current-draft.ts), so the order must be total:
+-- two concurrent writers cannot both take the same seq.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_current_draft_changes_product_seq ON current_draft_changes(product_id, seq);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_current_draft_changes_one_undo
     ON current_draft_changes(undoes_id) WHERE undoes_id IS NOT NULL;
 

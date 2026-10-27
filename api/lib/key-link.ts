@@ -155,7 +155,8 @@ export function slotLinkStatements(
         `INSERT INTO links (id, owner_table, owner_id, role, type, canonical_url, short_title, source_raw, sort_order, last_mutation_id)
          SELECT ?, ?, ?, 'key', ?, ?, ?, ?, ?, ?
          WHERE ${landed.sql}
-           AND NOT EXISTS (SELECT 1 FROM links WHERE owner_table = ? AND owner_id = ? AND canonical_url = ? AND deleted_at IS NULL)`,
+           AND NOT EXISTS (SELECT 1 FROM links WHERE owner_table = ? AND owner_id = ? AND canonical_url = ?
+                             AND product_id IS NULL AND deleted_at IS NULL)`,
       ).bind(
         `link_${generateId()}`, ownerTable, ownerId, l.type, l.canonical_url, l.short_title,
         l.source_raw, l.slot - 1, mutationId,
@@ -169,7 +170,8 @@ export function slotLinkStatements(
         `UPDATE links SET sort_order = ?, short_title = COALESCE(?, short_title),
                 updated_at = datetime('now'), last_mutation_id = ?
          WHERE ${landed.sql}
-           AND owner_table = ? AND owner_id = ? AND role = 'key' AND canonical_url = ? AND deleted_at IS NULL
+           AND owner_table = ? AND owner_id = ? AND role = 'key' AND canonical_url = ?
+           AND product_id IS NULL AND deleted_at IS NULL
            AND (sort_order IS NOT ? OR (? IS NOT NULL AND short_title IS NOT ?))`,
       ).bind(
         l.slot - 1, title, mutationId,
