@@ -394,6 +394,46 @@ describe('cold review fixes', () => {
   })
 })
 
+// Second cold review (codex, 2026-10-26): knowing a private draft's id must
+// never reveal its URL, on ANY route that serializes a links row.
+describe('a member who holds a private draft id learns nothing', () => {
+  it('walks every links-returning route as a non-PI member', async () => {
+    const a1 = await promote(MS_A, 'main_v1.docx', null, 'k-p1', {})
+    const a2 = await promote(MS_A, 'main_v2.docx', a1.body.change.after_link_id, 'k-p2')
+    const privateIds = [a1.body.change.after_link_id!, a2.body.change.after_link_id!]
+    db.prepare("UPDATE current_draft_changes SET note = 'process catch-up: ~/Box/Research/R03/Manuscript/main_v2.docx'").run()
+    insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'casey-eddington', added_by: 'nick-ingraham' })
+    insertRow(db, 'tasks', { id: 'task_01KXH4E23G0DTFGFBYS2C8RTA9', title: 'Revise', project_id: PROJECT, product_id: MS_A, status: 'todo', assignee: 'casey-eddington' })
+    as = OUTSIDER_EMAIL
+    const calls: [string, RequestInit?][] = [
+      [`/api/products/${MS_A}/current-draft`],
+      ['/api/projects/r03/links'],
+      ['/api/projects/links'],
+      ['/api/tasks/task_01KXH4E23G0DTFGFBYS2C8RTA9/links'],
+      ['/api/links?include_deleted=1'],
+      ['/api/projects/r03/products'],
+      [`/api/projects/r03/links`, { method: 'POST', body: JSON.stringify({ url: url('main_v2.docx') }) }],
+      [`/api/products/${MS_A}/current-draft`, { method: 'POST', body: JSON.stringify({
+        candidate: { canonical_url: 'https://docs.google.com/document/d/1MEMBERDOC/edit', type: 'google_doc', short_title: 'm' },
+        expected_current_link_id: null, idempotency_key: 'k-member' }) }],
+      [`/api/products/${MS_A}/current-draft/undo`, { method: 'POST', body: JSON.stringify({ change_id: a2.body.change.id, idempotency_key: 'u-member' }) }],
+    ]
+    for (const id of privateIds) {
+      calls.push([`/api/links/${id}`, { method: 'POST', body: JSON.stringify({ kind: null }) }])
+      calls.push([`/api/links/${id}/role`, { method: 'POST', body: JSON.stringify({ role: 'archive' }) }])
+      calls.push([`/api/links/${id}`, { method: 'POST', body: JSON.stringify({ kind: 'manuscript_draft' }) }])
+      calls.push([`/api/links/${id}/promote`, { method: 'POST' }])
+    }
+    for (const [path, init] of calls) {
+      const text = await (await fetch(path, init)).text()
+      expect(text, path).not.toContain('~/Box')
+      for (const id of privateIds) expect(text, `${path} leaks ${id}`).not.toContain(id)
+    }
+    // The member's writes changed nothing on the private rows.
+    expect(rows("SELECT kind FROM links WHERE id IN (?, ?)", ...privateIds)).toEqual([{ kind: null }, { kind: null }])
+  })
+})
+
 describe('readers', () => {
   it("a task inherits its own product's current draft, never another product's", async () => {
     await promote(MS_A, 'main_v1.docx', null)

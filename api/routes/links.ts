@@ -43,7 +43,7 @@
 
 import type { Env } from '../types';
 import type { AuthUser } from '../helpers';
-import { withoutPiOnlyLinks } from '../lib/pi-only-project-fields';
+import { PI_ONLY_LINK_TYPES, withoutPiOnlyLinks } from '../lib/pi-only-project-fields';
 import { json, error, isPiRequest, assertProjectVisible, generateId, getValidationFlags } from '../helpers';
 import { assertEnumDomain } from '../lib/enum-domains';
 import { nowInstant } from '../lib/time';
@@ -657,11 +657,26 @@ type LinkRow = {
 
 const LINK_ROW_COLS = 'id, owner_table, owner_id, role, canonical_url, type, short_title, source_raw, kind, product_id';
 
-async function liveLink(env: Env, linkId: string): Promise<LinkRow | null> {
-  return env.DB
+// PI-only links by id (2026-10-26, second cold review of the current-draft
+// branch): every route that takes a link id or answers with a link row goes
+// through liveLink / feRow / piSafe, so for a non-PI a local_file /
+// local_folder row does not exist -- not readable, not writable, never echoed.
+// Knowing its id (from a receipt, a log, a guess) reveals nothing.
+function isPiOnlyRow(row: { type?: unknown } | null | undefined): boolean {
+  return !!row && (PI_ONLY_LINK_TYPES as readonly unknown[]).includes(row.type)
+}
+
+/** `row` as a caller may see it: null for a non-PI when it is a PI-only link. */
+function piSafe<T extends { type?: unknown } | null | undefined>(isPi: boolean, row: T): T | null {
+  return !isPi && isPiOnlyRow(row) ? null : row
+}
+
+async function liveLink(env: Env, linkId: string, isPi: boolean): Promise<LinkRow | null> {
+  const row = await env.DB
     .prepare(`SELECT ${LINK_ROW_COLS} FROM links WHERE id = ? AND deleted_at IS NULL LIMIT 1`)
     .bind(linkId)
     .first<LinkRow>();
+  return piSafe(isPi, row);
 }
 
 /** The project a link belongs to: its owner for a project link, the task's
@@ -779,8 +794,10 @@ async function projectRowFor(env: Env, projectId: string, url: string): Promise<
     .first<LinkRow>();
 }
 
-async function feRow(env: Env, linkId: string): Promise<unknown> {
-  return env.DB.prepare(`SELECT ${FE_LINKS_COLS} FROM links WHERE id = ?`).bind(linkId).first();
+async function feRow(env: Env, linkId: string, isPi: boolean): Promise<unknown> {
+  const row = await env.DB.prepare(`SELECT ${FE_LINKS_COLS} FROM links WHERE id = ?`).bind(linkId)
+    .first<Record<string, unknown>>();
+  return piSafe(isPi, row);
 }
 
 // POST /api/links/:id -- change one link's role and/or kind (#2089, #151)
@@ -810,6 +827,7 @@ export async function handleUpdateLink(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  const isPi = await isPiRequest(request, env);
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -829,14 +847,14 @@ export async function handleUpdateLink(
   if (k.kind !== undefined) patch.kind = k.kind;
   if (Object.keys(patch).length === 0) return error('Body names role and/or kind', 400);
 
-  const row = await liveLink(env, linkId);
+  const row = await liveLink(env, linkId, isPi);
   if (!row) return error('Link not found', 404);
   const { block } = await guardLinkOwner(request, env, row);
   if (block) return block;
 
   if ('role' in patch && patch.role === row.role) delete patch.role;
   if ('kind' in patch && (patch.kind ?? null) === (row.kind ?? null)) delete patch.kind;
-  if (Object.keys(patch).length === 0) return json({ data: await feRow(env, linkId) });
+  if (Object.keys(patch).length === 0) return json({ data: await feRow(env, linkId, isPi) });
 
   if ('role' in patch) {
     // The pre-check gives the plain message; the catch below covers a
@@ -864,7 +882,7 @@ export async function handleUpdateLink(
     if (/FOREIGN KEY/.test(res.reason ?? '')) return kindRefused(patch.kind);
     return mutationRefused(res);
   }
-  return json({ data: res.canonical_payload ?? null });
+  return json({ data: piSafe(isPi, res.canonical_payload ?? null) });
 }
 
 // POST /api/links/:id/promote -- put a task's document on its project (#151)
@@ -882,7 +900,8 @@ export async function handlePromoteLink(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const row = await liveLink(env, linkId);
+  const isPi = await isPiRequest(request, env);
+  const row = await liveLink(env, linkId, isPi);
   if (!row) return error('Link not found', 404);
   if (row.owner_table !== 'tasks') return error('Only a task link can be promoted to its project', 400);
   const { block, projectId } = await guardLinkOwner(request, env, row);
@@ -891,12 +910,12 @@ export async function handlePromoteLink(
 
   const existing = await projectRowFor(env, projectId, row.canonical_url);
   if (existing && existing.role === 'key') {
-    return json({ data: await feRow(env, existing.id), created: false });
+    return json({ data: await feRow(env, existing.id, isPi), created: false });
   }
   if (existing) {
     const res = await patchLink(env, user, existing.id, { role: 'key' }, 'handlePromoteLink');
     if (res.status !== 'accepted' && res.status !== 'merged_clean') return mutationRefused(res);
-    return json({ data: await feRow(env, existing.id), created: false });
+    return json({ data: await feRow(env, existing.id, isPi), created: false });
   }
   let res: Awaited<ReturnType<typeof applyInsert>>;
   try {
@@ -908,13 +927,13 @@ export async function handlePromoteLink(
     // A concurrent promote of the same URL took the natural key first.
     if (isUniqueFailure(e)) {
       const won = await projectRowFor(env, projectId, row.canonical_url);
-      if (won) return json({ data: await feRow(env, won.id), created: false });
+      if (won) return json({ data: await feRow(env, won.id, isPi), created: false });
     }
     throw e;
   }
   if (res.status !== 'accepted' && res.status !== 'merged_clean') return mutationRefused(res);
   const id = (res.canonical_payload?.id as string | undefined) ?? null;
-  return json({ data: id ? await feRow(env, id) : res.canonical_payload ?? null, created: true }, 201);
+  return json({ data: id ? await feRow(env, id, isPi) : piSafe(isPi, res.canonical_payload ?? null), created: true }, 201);
 }
 
 // POST /api/projects/:slug/links -- add a document to a project (#151)
@@ -934,6 +953,7 @@ export async function handleCreateProjectLink(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  const isPi = await isPiRequest(request, env);
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -957,6 +977,9 @@ export async function handleCreateProjectLink(
 
   const link = normalizeLink(url, { titleHint: title });
   if (!link) return error(`${JSON.stringify(url)} holds no recognizable link`, 400);
+  // A local path is the PI's alone (lib/pi-only-project-fields.ts): a member
+  // may not file one, and so is never answered with one.
+  if (!isPi && isPiOnlyRow(link)) return error('Local folders and files can be added by the PI only', 403);
   // A Gmail URL that names no thread and no draft addresses nothing (PB #1867;
   // the normalizer files it as plain `web`). Same refusal PB's add_link makes.
   if (/^https?:\/\/mail\.google\.com\//i.test(link.canonical_url)
@@ -977,7 +1000,7 @@ export async function handleCreateProjectLink(
           return mutationRefused(res);
         }
       }
-      return json({ data: await feRow(env, existing.id), created: false });
+      return json({ data: await feRow(env, existing.id, isPi), created: false });
     }
     const res = await insertProjectLink(env, user, project.id, {
       type: link.type, canonical_url: link.canonical_url, short_title: link.short_title,
@@ -988,12 +1011,12 @@ export async function handleCreateProjectLink(
       return mutationRefused(res);
     }
     const id = (res.canonical_payload?.id as string | undefined) ?? null;
-    return json({ data: id ? await feRow(env, id) : res.canonical_payload ?? null, created: true }, 201);
+    return json({ data: id ? await feRow(env, id, isPi) : piSafe(isPi, res.canonical_payload ?? null), created: true }, 201);
   } catch (e) {
     if (isForeignKeyFailure(e)) return kindRefused(k.kind);
     if (isUniqueFailure(e)) {
       const won = await projectRowFor(env, project.id, link.canonical_url);
-      if (won) return json({ data: await feRow(env, won.id), created: false });
+      if (won) return json({ data: await feRow(env, won.id, isPi), created: false });
     }
     throw e;
   }
