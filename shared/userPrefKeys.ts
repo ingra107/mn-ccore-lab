@@ -44,6 +44,9 @@ export const USER_PREF_FAMILIES = [
   { key: 'today.dueWindow', param: false, merge: 'scalar' },
   // Today: the whole Needs you card folded into the stat line (a boolean).
   { key: 'today.needsYouCollapsed', param: false, merge: 'scalar' },
+  // The What's new / Lab pulse pill (#156): ids of the release and the
+  // announcement last opened, so reading on the phone clears the laptop.
+  { key: 'hub.pulse.seen', param: false, merge: 'scalar' },
   // savedViews.<page>: the Saved views menu on each page.
   { key: 'savedViews.', param: true, merge: 'set', identity: 'id' },
   // tableConfig.<tableId>: sort, column widths and order, filters.
