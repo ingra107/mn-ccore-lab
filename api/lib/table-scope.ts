@@ -48,7 +48,7 @@ export const HUB_TABLES = [
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
   'conference_submissions', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
-  'file_attachments', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'ideas',
+  'file_attachments', 'hub_announcements', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'hub_releases', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations',
   'lab_settings', 'launch_log', 'link_kinds', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
@@ -275,6 +275,14 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // viewer, so only a raw handle (the PB key's service viewer, and the
   // ledger's own flush in api/lib/error-ledger.ts) sees the table.
   hub_errors: { kind: 'scoped', key: ['fingerprint', 'day'], dependsOn: [], where: () => '0' },
+  // What's new releases (schema-v148, #156). A draft is Nick's until he
+  // approves it: a PI reads every row, anyone else only approved ones. The
+  // PB key (service viewer) gets the raw handle, so the deploy step sees the
+  // draft it extends.
+  hub_releases: {
+    kind: 'scoped', key: 'id', dependsOn: [],
+    where: (v) => (v.kind === 'person' && v.pi ? null : "hub_releases.status = 'approved'"),
+  },
   // A grant row is visible with its meeting (the pill row on the meeting page).
   meeting_project_grants: {
     kind: 'scoped', key: ['meeting_id', 'project_id'], dependsOn: ['meetings'],
@@ -512,7 +520,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   task_handoffs: byTask('task_handoffs', 'task_id'),
   hub_pomodoro_slots: byTask('hub_pomodoro_slots', 'task_id'),
 
-  _meta: LAB, agent_knowledge: LAB, bug_reports: LAB, day_capacity: LAB, deadline_dependencies: LAB,
+  _meta: LAB, agent_knowledge: LAB, bug_reports: LAB, hub_announcements: LAB, day_capacity: LAB, deadline_dependencies: LAB,
   decisions: LAB, digest_comments: LAB, dispatch_queue: LAB, expertise_tags: LAB,
   inbox_events: LAB, kg_entities: LAB, kg_relation_type_registry: LAB, kg_relations: LAB,
   lab_settings: LAB, launch_log: LAB, link_kinds: LAB, member_featured_publications: LAB, memory_facts: LAB,
