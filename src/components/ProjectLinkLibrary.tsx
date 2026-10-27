@@ -41,7 +41,7 @@ import InlineSelect from './InlineSelect'
 import { Button } from './ui/Button'
 import { FilterLinks } from './ui/FilterLinks'
 import {
-  canChangeRole, kindFilterOptions, kindLabel, matchesKind, partitionForProjectPage,
+  canChangeRole, canEditKind, kindFilterOptions, kindLabel, matchesKind, partitionForProjectPage,
   type KindFilter, type TaskDoc,
 } from '../lib/projectLinkLibrary'
 import { formatDbLocal } from '../lib/time'
@@ -106,7 +106,7 @@ function LinkRow({
         </span>
       ) : chip}
       <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
-        {kinds && onSetKind && canChangeRole(link) && (
+        {kinds && onSetKind && canEditKind(link) && (
           <KindPicker link={link} kinds={kinds} onSetKind={onSetKind} />
         )}
         {date && (

@@ -26,8 +26,12 @@
 // nothing, steps 2-3 then match nothing, and the read-back finds no receipt:
 // 409, nothing changed. A concurrent promotion that did land makes step 3
 // violate idx_links_one_current_draft and D1 rolls the whole batch back. The
-// archive always runs before the promote, so it carries the lower seq, which
-// is the order PB's links pull (and its singleton index) needs.
+// archive runs before the promote, so within this batch it carries the lower
+// seq. That is NOT what keeps PB's cache consistent: a later edit to the
+// archived draft moves its seq past the new current, so a pull can deliver
+// the current row first. PB's per-row pull write demotes any other cached
+// current of the product before it lands the Hub's current row
+// (Peripheral-Brain scripts/db/sync/drivers/hub.py apply_opaque_pk_row).
 //
 // Undo is the inverse batch, and runs only on the promotion that made the
 // CURRENT state: the product's latest promotion not yet undone (by receipt
@@ -138,15 +142,24 @@ function sameAsk(c: Change, ask: Ask): boolean {
 
 /** The ids among `ids` a non-PI may not see: PI-only drafts, and ids that
  *  name no row (fail closed). Empty for the PI. */
+// D1 refuses a statement with more than 100 bound parameters, and a product's
+// receipt history has no upper bound, so ids are looked up in chunks.
+const ID_CHUNK = 90
+
 async function hiddenIds(env: Env, ids: (string | null | undefined)[], isPi: boolean): Promise<Set<string>> {
   const want = [...new Set(ids.filter((x): x is string => !!x))]
   if (isPi || want.length === 0) return new Set()
-  const res = await env.DB
-    .prepare(`SELECT id, type FROM links WHERE id IN (${want.map(() => '?').join(', ')})`)
-    .bind(...want)
-    .all<{ id: string; type: string }>()
-  const shared = new Set((res.results ?? [])
-    .filter((r) => !(PI_ONLY_LINK_TYPES as readonly string[]).includes(r.type)).map((r) => r.id))
+  const shared = new Set<string>()
+  for (let i = 0; i < want.length; i += ID_CHUNK) {
+    const chunk = want.slice(i, i + ID_CHUNK)
+    const res = await env.DB
+      .prepare(`SELECT id, type FROM links WHERE id IN (${chunk.map(() => '?').join(', ')})`)
+      .bind(...chunk)
+      .all<{ id: string; type: string }>()
+    for (const r of res.results ?? []) {
+      if (!(PI_ONLY_LINK_TYPES as readonly string[]).includes(r.type)) shared.add(r.id)
+    }
+  }
   return new Set(want.filter((id) => !shared.has(id)))
 }
 
