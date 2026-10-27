@@ -4,7 +4,7 @@
 // buckets, and a legacy row with no `role` must land in `current`.
 
 import { describe, it, expect } from 'vitest'
-import { canChangeRole, kindFilterOptions, kindLabel, matchesKind, partitionByRole, partitionForProjectPage, sortForDisplay } from '../projectLinkLibrary'
+import { canChangeRole, canEditKind, kindFilterOptions, kindLabel, matchesKind, partitionByRole, partitionForProjectPage, sortForDisplay } from '../projectLinkLibrary'
 import type { StoredLink } from '../../hooks/useApiData'
 
 function link(over: Partial<StoredLink> & { id: string }): StoredLink {
@@ -137,6 +137,15 @@ describe('canChangeRole', () => {
     // a product's current draft and its archived drafts move only through the route
     expect(canChangeRole(link({ id: 'c', role: 'current_draft', product_id: 'prd_1' }))).toBe(false)
     expect(canChangeRole(link({ id: 'h', role: 'archive', product_id: 'prd_1' }))).toBe(false)
+  })
+})
+
+describe('canEditKind', () => {
+  it('keeps the kind picker on a product\'s draft rows, where the role control is gone', () => {
+    expect(canEditKind(link({ id: 'c', role: 'current_draft', product_id: 'prd_1' }))).toBe(true)
+    expect(canEditKind(link({ id: 'h', role: 'archive', product_id: 'prd_1' }))).toBe(true)
+    expect(canEditKind(link({ id: 'k' }))).toBe(true)
+    expect(canEditKind(link({ id: 'd', role: 'derived' }))).toBe(false)
   })
 })
 

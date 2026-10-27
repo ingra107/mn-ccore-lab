@@ -434,6 +434,34 @@ describe('a member who holds a private draft id learns nothing', () => {
   })
 })
 
+// Third cold review: D1 refuses a statement with more than 100 bound
+// parameters, and the member's receipt view must stay under it however long
+// the product's history is.
+describe('a long draft history stays inside D1 limits', () => {
+  it('a member reads 120 receipts with no statement binding more than 100 values', async () => {
+    let maxBound = 0
+    env = { DB: d1Adapter(db, { onExec: (_sql, vals) => { maxBound = Math.max(maxBound, vals.length) } }),
+            TEST_MODE_KEY: TEST_KEY, REQUIRE_AUTH: '1' } as unknown as Env
+    for (let i = 0; i < 120; i++) {
+      const id = `link_HIST${String(i).padStart(22, '0')}`
+      insertRow(db, 'links', { id, owner_table: 'projects', owner_id: PROJECT, product_id: MS_A, role: 'archive',
+        type: i % 2 ? 'google_doc' : 'local_file', canonical_url: `https://docs.google.com/document/d/H${i}/edit`, short_title: `h${i}` })
+      insertRow(db, 'current_draft_changes', { id: `cdc_H${i}`, product_id: MS_A, seq: i + 1, op: 'promote',
+        idempotency_key: `k-h${i}`, candidate_url: `https://docs.google.com/document/d/H${i}/edit`,
+        before_link_id: i ? `link_HIST${String(i - 1).padStart(22, '0')}` : null, after_link_id: id })
+    }
+    insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'casey-eddington', added_by: 'nick-ingraham' })
+    as = OUTSIDER_EMAIL
+    const res = await fetch(`/api/products/${MS_A}/current-draft`)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { changes: { after_link_id: string | null }[] }
+    expect(body.changes).toHaveLength(120)
+    // shared (google_doc) drafts keep their id; local ones are withheld
+    expect(body.changes.filter((c) => c.after_link_id !== null)).toHaveLength(60)
+    expect(maxBound).toBeLessThanOrEqual(100)
+  })
+})
+
 describe('readers', () => {
   it("a task inherits its own product's current draft, never another product's", async () => {
     await promote(MS_A, 'main_v1.docx', null)

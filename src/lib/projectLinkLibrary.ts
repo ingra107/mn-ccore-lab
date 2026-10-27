@@ -161,3 +161,10 @@ export function kindFilterOptions(
 export function canChangeRole(link: StoredLink): boolean {
   return (link.role === 'key' || link.role === 'archive') && !link.product_id
 }
+
+/** Kind is a separate permission: any stored row may be labelled, a product's
+ *  draft rows included (the Worker's guard permits kind; it refuses only role,
+ *  owner and URL changes on them). Derived rows have no row to update. */
+export function canEditKind(link: StoredLink): boolean {
+  return link.role === 'key' || link.role === 'archive' || link.role === 'current_draft'
+}
