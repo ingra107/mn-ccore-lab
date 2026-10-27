@@ -27,7 +27,9 @@ function usePulseWrite<V>(write: (v: V) => Promise<unknown>, done?: string) {
 export const useEditRelease = () =>
   usePulseWrite((v: { id: string; title: string; blurbs: ReleaseBlurb[] }) => post(`/api/releases/${v.id}`, { action: 'edit', title: v.title, blurbs: v.blurbs }), 'Draft saved')
 export const useApproveRelease = () =>
-  usePulseWrite((id: string) => post(`/api/releases/${id}`, { action: 'approve' }), 'Release published to the lab')
+  // Approve names what Nick read; the server refuses it (409) if the draft changed since.
+  usePulseWrite((v: { id: string; reviewed: { commitTo: string; title: string; blurbs: ReleaseBlurb[] } }) =>
+    post(`/api/releases/${v.id}`, { action: 'approve', reviewed: v.reviewed }), 'Release published to the lab')
 export const useDiscardRelease = () =>
   usePulseWrite((id: string) => post(`/api/releases/${id}`, { action: 'discard' }), 'Draft discarded')
 export const usePostAnnouncement = () =>

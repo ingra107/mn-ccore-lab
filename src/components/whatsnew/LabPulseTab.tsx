@@ -24,6 +24,7 @@ export function LabPulseTab({ data, isPi }: { data: PulsePayload | undefined; is
           </span>
         </section>
       )}
+      {!data.announcement && <p className="pulse-empty">No announcement in the last two weeks.</p>}
       {isPi && <AnnouncementComposer />}
       <section aria-label="Active in the last day">
         <div className="pulse-eyebrow">Active in the last day</div>

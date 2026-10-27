@@ -12,7 +12,7 @@
 // Usage: node scripts/post-release-draft.mjs [--url https://...]
 
 import { execFileSync } from 'node:child_process'
-import { parseGitLog, selectReleaseCommits } from './release-commits.mjs'
+import { parseGitLog, planRange, selectReleaseCommits } from './release-commits.mjs'
 
 const PROD_URL = 'https://mn-ccore-lab.pages.dev'
 const FIRST_RUN_COMMITS = 30
@@ -46,15 +46,17 @@ function gitLog(range) {
 
 try {
   const { lastCommitTo } = await post({ probe: true })
-  let raw
-  try {
-    raw = gitLog(lastCommitTo ? `${lastCommitTo}..HEAD` : null)
-  } catch {
-    // The stored commit is not in this clone (rewritten history, shallow clone).
-    raw = gitLog(null)
+  let isAncestor = false
+  if (lastCommitTo) {
+    try {
+      execFileSync('git', ['merge-base', '--is-ancestor', lastCommitTo, 'HEAD'], { stdio: 'ignore' })
+      isAncestor = true
+    } catch { /* not in this history: planRange skips */ }
   }
-  // With no range, `git log -nN --reverse` still lists newest-N oldest first.
-  const commits = selectReleaseCommits(parseGitLog(raw))
+  const plan = planRange(lastCommitTo, isAncestor)
+  if (plan.skip) warn(plan.skip)
+  // With no range, `git log -nN --reverse` still lists the newest N, oldest first.
+  const commits = selectReleaseCommits(parseGitLog(gitLog(plan.range)))
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
   if (commits.length === 0) {
     console.log('[release-draft] nothing user-facing shipped since the last release; no draft')

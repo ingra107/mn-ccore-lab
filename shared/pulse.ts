@@ -8,6 +8,8 @@ export interface PulseRelease {
   title: string
   blurbs: ReleaseBlurb[]
   approvedAt: string | null
+  /** The last commit the release covers; Approve sends it back as proof of what was read. */
+  commitTo: string
   status: 'draft' | 'approved'
   /** The commit subjects the release covers (drafts only; [] on an approved one). */
   commits: { sha: string; subject: string }[]

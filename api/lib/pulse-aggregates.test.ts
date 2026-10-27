@@ -40,7 +40,8 @@ describe('labPulseCounts (#156)', () => {
     t('t-deleted', '2026-10-27T10:00:00.000Z', { deleted_at: '2026-10-27T11:00:00.000Z' })
     t('m-in', '2026-10-28T09:00:00.000Z', { kind: 'milestone' })
     const r = await run(d)
-    expect(r.tasksDone).toBe(2)
+    // A milestone has its own tile: "tasks done" does not count it twice.
+    expect(r.tasksDone).toBe(1)
     expect(r.milestonesHit).toBe(1)
   })
 

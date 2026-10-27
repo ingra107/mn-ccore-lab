@@ -30,7 +30,7 @@ function wrap(node: ReactElement): ReactElement {
 // own release/announcement ids: what one test marked seen cannot unlight the next.
 let n = 0
 const payload = (over: Partial<PulsePayload> = {}): PulsePayload => (n++, {
-  release: { id: `rel_${n}`, title: 'Smoother Today', blurbs: [{ lead: 'One collapse per meeting.', text: 'The caret folds action items too.' }], approvedAt: '2026-10-26T20:00:00.000Z', status: 'approved', commits: [] },
+  release: { id: `rel_${n}`, title: 'Smoother Today', blurbs: [{ lead: 'One collapse per meeting.', text: 'The caret folds action items too.' }], approvedAt: '2026-10-26T20:00:00.000Z', commitTo: 'c1', status: 'approved', commits: [] },
   pastReleases: [], draft: null,
   announcement: { id: `ann_${n}`, body: 'Lab retreat moved to Nov 14', authorSlug: 'nick-ingraham', createdAt: '2026-10-26T18:00:00.000Z' },
   active: ['nick-ingraham', 'casey-eddington', 'tom-byrd'], tasksDone: 23, milestonesHit: 2, newPapers: 1,
@@ -62,7 +62,11 @@ describe('PulsePill', () => {
     const host = await mount(wrap(<PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="news"]'), label: 'PulsePill' })
     pill(host).click()
     await expect.poll(() => host.textContent).toContain('One collapse per meeting.')
-    pill(host).click() // close
+    pill(host).click() // close: the release was shown, the announcement was not
+    await expect.poll(() => pill(host).getAttribute('data-pulse-tone')).toBe('news')
+    pill(host).click() // now it opens where the unseen announcement is
+    await expect.poll(() => host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Lab pulse')
+    pill(host).click()
     await expect.poll(() => pill(host).textContent).toContain('Lab pulse · 3 active')
     pill(host).click()
     await expect.poll(() => host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Lab pulse')
@@ -73,11 +77,20 @@ describe('PulsePill', () => {
     expect(host.textContent).toContain('Sedation trends in CLIF')
   })
 
+  it('a new announcement alone opens on Lab pulse, where it is shown', async () => {
+    stub(payload({ release: null }))
+    const host = await mount(wrap(<PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="news"]'), label: 'PulsePill' })
+    pill(host).click()
+    await expect.poll(() => host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Lab pulse')
+    expect(host.textContent).toContain('Lab retreat moved to Nov 14')
+  })
+
   it('an empty lab reads quietly', async () => {
     stub(payload({ release: null, announcement: null, active: [], tasksDone: 0, milestonesHit: 0, newPapers: 0, wins: [] }))
     const host = await mount(wrap(<PulsePill />), { ready: (h) => h.querySelector('[data-pulse-tone="pulse"]'), label: 'PulsePill' })
     expect(pill(host).textContent).toContain('Lab pulse · 0 active')
     pill(host).click()
     await expect.poll(() => host.textContent).toContain('Nobody active in the last day')
+    expect(host.textContent).toContain('No announcement in the last two weeks')
   })
 })

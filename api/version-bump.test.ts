@@ -84,7 +84,7 @@ describe('version bump', () => {
     expect(version()).not.toBe('1')
   })
 
-  it('only the read-receipt, error-report and Hermes claim routes opt out', () => {
+  it('only the read-receipt, error-report, Hermes claim and release-intake routes opt out', () => {
     const optOut = ROUTE_REGISTRY.filter((r) => r.noVersionBump).map((r) => `${r.method} ${r.path}`).sort()
     expect(optOut).toEqual([
       'POST /api/ai-requests/:id/alert-sent',
@@ -94,6 +94,8 @@ describe('version bump', () => {
       'POST /api/client-errors',
       'POST /api/notifications/:id/read',
       'POST /api/notifications/read-all',
+      // #156: the deploy's release intake writes a draft only Nick can read.
+      'POST /api/releases',
       'POST /api/seen',
       'POST /api/thread-seen',
     ])

@@ -5,16 +5,21 @@
  *   - a non-PI member must never see a draft (the TABLE_SCOPE rule, read
  *     through a real viewer handle here, not a stub);
  *   - the API key may write a draft's words but never approve it: approval
- *     is a signed-in PI identity (isPiIdentity), not isPiRequest;
+ *     is a signed-in PI PERSON (index.ts personPi: not the API key, not the
+ *     shared TEST_MODE_KEY identity), handed to the handler as `actor`;
+ *   - approve publishes only the words and commits Nick reviewed (409 if a
+ *     session or a deploy changed the draft since);
  *   - one pending draft: a second deploy extends it; discarded commits are
  *     never offered again.
  * Auth runs through the real helpers with the TEST_MODE_KEY + X-Test-User
  * bypass, on the migration-chain database.
  */
 import { describe, it, expect, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type Database from 'better-sqlite3'
 import type { Env } from '../helpers'
-import { isPiIdentity, _resetPiEmailsCacheForTests } from '../helpers'
+import { _resetPiEmailsCacheForTests } from '../helpers'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { viewerDb, personViewer } from '../lib/viewer-db'
 import { labPulseCounts } from '../lib/pulse-aggregates'
@@ -65,14 +70,10 @@ const release = (id: string, status: string, from: string, to: string, extra: Re
 const row = (id: string) => db.prepare('SELECT * FROM hub_releases WHERE id = ?').get(id) as Record<string, string>
 const commits = (...shas: string[]) => shas.map((sha) => ({ sha, subject: `subject ${sha}` }))
 
-describe('isPiIdentity', () => {
-  it('is false for the API key alone and true for a signed-in PI', async () => {
-    const env = envFor(raw)
-    expect(await isPiIdentity(req('/x', asKey), env)).toBe(false)
-    expect(await isPiIdentity(req('/x', asUser(PI_EMAIL)), env)).toBe(true)
-    expect(await isPiIdentity(req('/x', asUser(MEMBER_EMAIL)), env)).toBe(false)
-  })
-})
+const NICK_ACT = { piPerson: true, slug: 'nick-ingraham' as string | null }
+const MEMBER_ACT = { piPerson: false, slug: 'casey-eddington' as string | null }
+const KEY_ACT = { piPerson: false, slug: null as string | null }
+type Act = typeof NICK_ACT
 
 describe('GET /api/pulse', () => {
   it('an empty lab answers nulls and zeros', async () => {
@@ -130,51 +131,84 @@ describe('POST /api/releases (deploy intake, API key only)', () => {
 })
 
 describe('POST /api/releases/:id', () => {
-  const update = (id: string, body: unknown, headers: Record<string, string>) => handleUpdateRelease(id, req(`/api/releases/${id}`, headers, body), envFor(raw))
+  const update = (id: string, body: unknown, headers: Record<string, string>, actor: Act) =>
+    handleUpdateRelease(id, req(`/api/releases/${id}`, headers, body), envFor(raw), actor)
   const blurbs = [{ lead: 'One collapse per meeting.', text: 'The caret folds action items too.' }]
+  /** What Nick's panel sends with Approve: the draft as he read it. */
+  const reviewed = (id: string) => {
+    const r = row(id)
+    return { action: 'approve', reviewed: { commitTo: r.commit_to, title: r.title, blurbs: JSON.parse(r.blurbs_json) } }
+  }
 
   it('the API key can write words but cannot approve or discard', async () => {
     release('rel_01D', 'draft', 'a', 'b')
-    expect((await update('rel_01D', { action: 'edit', title: 'Smoother Today', blurbs }, asKey)).status).toBe(200)
-    expect((await update('rel_01D', { action: 'approve' }, asKey)).status).toBe(403)
-    expect((await update('rel_01D', { action: 'discard' }, asKey)).status).toBe(403)
+    expect((await update('rel_01D', { action: 'edit', title: 'Smoother Today', blurbs }, asKey, KEY_ACT)).status).toBe(200)
+    expect((await update('rel_01D', reviewed('rel_01D'), asKey, KEY_ACT)).status).toBe(403)
+    expect((await update('rel_01D', { action: 'discard' }, asKey, KEY_ACT)).status).toBe(403)
     expect(row('rel_01D').status).toBe('draft')
   })
   it('a non-PI member can do none of it', async () => {
     release('rel_01D', 'draft', 'a', 'b')
-    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs }, asUser(MEMBER_EMAIL))).status).toBe(403)
+    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs }, asUser(MEMBER_EMAIL), MEMBER_ACT)).status).toBe(403)
   })
   it('approve needs a title and a blurb, then stamps who approved', async () => {
     release('rel_01D', 'draft', 'a', 'b')
-    const bad = await update('rel_01D', { action: 'approve' }, asUser(PI_EMAIL))
+    const bad = await update('rel_01D', reviewed('rel_01D'), {}, NICK_ACT)
     expect(bad.status).toBe(400)
     expect(await bad.json()).toEqual({ error: 'needs_blurbs' })
-    await update('rel_01D', { action: 'edit', title: 'Smoother Today', blurbs }, asUser(PI_EMAIL))
-    expect((await update('rel_01D', { action: 'approve' }, asUser(PI_EMAIL))).status).toBe(200)
+    await update('rel_01D', { action: 'edit', title: 'Smoother Today', blurbs }, {}, NICK_ACT)
+    expect((await update('rel_01D', reviewed('rel_01D'), {}, NICK_ACT)).status).toBe(200)
     expect(row('rel_01D')).toMatchObject({ status: 'approved', approved_by: 'nick-ingraham' })
     expect(row('rel_01D').approved_at).toBeTruthy()
   })
-  it('validates the words: 1-4 blurbs, a title of at most 80', async () => {
+  it('approve refuses a draft that changed since Nick read it', async () => {
+    release('rel_01D', 'draft', 'a', 'b', { title: 'Smoother Today', blurbs_json: JSON.stringify(blurbs) })
+    const asRead = reviewed('rel_01D')
+    // a deploy appends commits meanwhile
+    await handleReleaseIntake(req('/api/releases', asKey, { commitTo: 'c9', commits: [{ sha: 'c9', subject: 's' }] }), envFor(raw))
+    const stale = await update('rel_01D', asRead, {}, NICK_ACT)
+    expect(stale.status).toBe(409)
+    expect(await stale.json()).toEqual({ error: 'changed_since_review' })
+    // a session rewrites a blurb meanwhile
+    const asRead2 = reviewed('rel_01D')
+    await update('rel_01D', { action: 'edit', title: 'Smoother Today', blurbs: [{ lead: 'Other.', text: 'Words.' }] }, asKey, KEY_ACT)
+    expect((await update('rel_01D', asRead2, {}, NICK_ACT)).status).toBe(409)
+    // approve without saying what was read is refused outright
+    expect((await update('rel_01D', { action: 'approve' }, {}, NICK_ACT)).status).toBe(400)
+    expect(row('rel_01D').status).toBe('draft')
+  })
+  it('edit may save a title before any blurb exists; at most 4 blurbs, a title of at most 80', async () => {
     release('rel_01D', 'draft', 'a', 'b')
-    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs: [] }, asKey)).status).toBe(400)
-    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs: Array(5).fill(blurbs[0]) }, asKey)).status).toBe(400)
-    expect((await update('rel_01D', { action: 'edit', title: 'x'.repeat(81), blurbs }, asKey)).status).toBe(400)
+    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs: [] }, asKey, KEY_ACT)).status).toBe(200)
+    expect((await update('rel_01D', { action: 'edit', title: 'x', blurbs: Array(5).fill(blurbs[0]) }, asKey, KEY_ACT)).status).toBe(400)
+    expect((await update('rel_01D', { action: 'edit', title: 'x'.repeat(81), blurbs }, asKey, KEY_ACT)).status).toBe(400)
   })
   it('only a draft changes', async () => {
     release('rel_01A', 'approved', 'a', 'b', { title: 't', blurbs_json: JSON.stringify(blurbs) })
-    expect((await update('rel_01A', { action: 'discard' }, asUser(PI_EMAIL))).status).toBe(409)
-    expect((await update('rel_none', { action: 'discard' }, asUser(PI_EMAIL))).status).toBe(404)
+    expect((await update('rel_01A', { action: 'discard' }, {}, NICK_ACT)).status).toBe(409)
+    expect((await update('rel_none', { action: 'discard' }, {}, NICK_ACT)).status).toBe(404)
+  })
+  it('the routes hand the handler personPi, which refuses the API key and the TEST_MODE_KEY identity', () => {
+    const src = readFileSync(join(__dirname, '..', 'index.ts'), 'utf8')
+    for (const path of ["'/api/releases/:id'", "'/api/announcements'", "'/api/announcements/:id/delete'"]) {
+      const start = src.indexOf(`path: ${path},`)
+      expect(start, path).toBeGreaterThan(-1)
+      expect(src.slice(start, src.indexOf('defineRoute(', start)), path).toContain('pulseActor(c)')
+    }
+    expect(src).toContain("const pulseActor = (c: Context<AppEnv>) => ({ piPerson: personPi(c), slug: USER(c)?.slug ?? null })")
+    expect(src).toMatch(/const personPi = \(c: Context<AppEnv>\) =>\s*c\.get\('isPi'\) === true && c\.get\('apiKeyValid'\) !== true && !isTestModeRequest/)
   })
 })
 
 describe('announcements', () => {
-  const post = (body: unknown, headers: Record<string, string>) => handleCreateAnnouncement(req('/api/announcements', headers, body), envFor(raw))
-  it('only a signed-in PI posts, 1-280 chars', async () => {
-    expect((await post({ body: 'hi' }, asUser(MEMBER_EMAIL))).status).toBe(403)
-    expect((await post({ body: 'hi' }, asKey)).status).toBe(403)
-    expect((await post({ body: 'x'.repeat(281) }, asUser(PI_EMAIL))).status).toBe(400)
-    expect((await post({ body: '   ' }, asUser(PI_EMAIL))).status).toBe(400)
-    const ok = await post({ body: 'Retreat moved to Nov 14' }, asUser(PI_EMAIL))
+  const post = (body: unknown, actor: Act) => handleCreateAnnouncement(req('/api/announcements', {}, body), envFor(raw), actor)
+  it('only a signed-in PI posts, 1-280 chars after trimming', async () => {
+    expect((await post({ body: 'hi' }, MEMBER_ACT)).status).toBe(403)
+    expect((await post({ body: 'hi' }, KEY_ACT)).status).toBe(403)
+    expect((await post({ body: 'x'.repeat(281) }, NICK_ACT)).status).toBe(400)
+    expect((await post({ body: '   ' }, NICK_ACT)).status).toBe(400)
+    expect((await post({ body: `  ${'x'.repeat(280)}  ` }, NICK_ACT)).status).toBe(200)
+    const ok = await post({ body: 'Retreat moved to Nov 14' }, NICK_ACT)
     expect(ok.status).toBe(200)
     const id = ((await ok.json()) as { data: { id: string } }).data.id
     expect(id).toMatch(/^ann_/)
@@ -182,8 +216,19 @@ describe('announcements', () => {
   })
   it('delete hides it from the pulse', async () => {
     insertRow(db, 'hub_announcements', { id: 'ann_1', body: 'x', author_slug: 'nick-ingraham' })
-    expect((await handleDeleteAnnouncement('ann_1', req('/api/announcements/ann_1/delete', asUser(MEMBER_EMAIL), {}), envFor(raw))).status).toBe(403)
-    expect((await handleDeleteAnnouncement('ann_1', req('/api/announcements/ann_1/delete', asUser(PI_EMAIL), {}), envFor(raw))).status).toBe(200)
+    expect((await handleDeleteAnnouncement('ann_1', envFor(raw), MEMBER_ACT)).status).toBe(403)
+    expect((await handleDeleteAnnouncement('ann_1', envFor(raw), NICK_ACT)).status).toBe(200)
     expect((await pulseAs(CASEY, MEMBER_EMAIL)).announcement).toBeNull()
+  })
+})
+
+describe('GET /api/pulse wins', () => {
+  it('sorts a date-only stamp with the rest instead of scrambling the order', async () => {
+    // eslint-disable-next-line local/time-discipline -- fixture writes a stored UTC stamp, as the DB holds it
+    insertRow(db, 'publications', { id: 'p1', title: 'Newer paper', authors: 'a', created_at: new Date(Date.now() - 1 * 86_400_000).toISOString().slice(0, 19).replace('T', ' ') })
+    // eslint-disable-next-line local/time-discipline -- fixture writes a stored UTC stamp, as the DB holds it
+    insertRow(db, 'tasks', { id: 'm1', title: 'Older milestone', assignee: 'casey-eddington', kind: 'milestone', status: 'done', completed: 1, completed_at: new Date(Date.now() - 5 * 86_400_000).toISOString().slice(0, 10) })
+    const wins = (await pulseAs(CASEY, MEMBER_EMAIL)).wins
+    expect(wins.map((w) => w.title)).toEqual(['Newer paper', 'Older milestone'])
   })
 })

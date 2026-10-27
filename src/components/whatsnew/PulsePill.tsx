@@ -14,9 +14,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { usePulse } from '../../hooks/usePulse'
-import { useUserPref } from '../../hooks/useUserPref'
+import { useUserPref, useUserPrefsStatus } from '../../hooks/useUserPref'
 import { useAuth } from '../../hooks/useAuth'
-import { PULSE_SEEN_NONE, pulsePillState, seenAfterOpen, type PulseSeen } from '../../lib/pulsePill'
+import { PULSE_SEEN_NONE, pulsePillState, seenFor, type PulseSeen } from '../../lib/pulsePill'
 import { SegmentedToggle } from '../ui/SegmentedToggle'
 import { WhatsNewTab } from './WhatsNewTab'
 import { LabPulseTab } from './LabPulseTab'
@@ -35,7 +35,10 @@ export default function PulsePill() {
   const { data } = usePulse()
   const isPi = useAuth().user?.isPi === true
   const [seen, setSeen] = useUserPref<PulseSeen>('hub.pulse.seen', PULSE_SEEN_NONE, validSeen)
-  const state = pulsePillState(data, seen, isPi)
+  // Until the server answers, this device may hold no seen state at all:
+  // neither light the pill nor record anything against a stale copy.
+  const seenLoaded = useUserPrefsStatus() !== 'loading'
+  const state = pulsePillState(data, seen, isPi, seenLoaded)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('pulse')
   const rootRef = useRef<HTMLDivElement>(null)
@@ -45,8 +48,16 @@ export default function PulsePill() {
     if (open) { setOpen(false); return }
     setTab(state.openTab)
     setOpen(true)
-    if (data) setSeen(seenAfterOpen(data))
   }
+
+  // Mark seen what the open tab is showing, when it shows it: on open, on a
+  // tab switch, and when the payload arrives or changes while open. Only that
+  // tab's item moves (seenFor), so an announcement drains only once shown.
+  useEffect(() => {
+    if (!open || !data || !seenLoaded) return
+    const next = seenFor(data, tab, seen)
+    if (next.releaseId !== seen.releaseId || next.announcementId !== seen.announcementId) setSeen(next)
+  }, [open, tab, data, seen, seenLoaded, setSeen])
 
   useEffect(() => {
     if (!open) return

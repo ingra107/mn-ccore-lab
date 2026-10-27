@@ -2651,6 +2651,9 @@ defineRoute({
   path: '/api/releases',
   auth: 'authed',
   entity: 'misc',
+  // The probe and a no-commit call change nothing a tab renders, and a new
+  // draft is Nick's alone: no lab-wide refetch per deploy.
+  noVersionBump: true,
   handler: (c) => handleReleaseIntake(R(c), E(c)),
 });
 defineRoute({
@@ -2658,21 +2661,21 @@ defineRoute({
   path: '/api/releases/:id',
   auth: 'authed',
   entity: 'misc',
-  handler: (c) => handleUpdateRelease(c.req.param('id'), R(c), E(c)),
+  handler: (c) => handleUpdateRelease(c.req.param('id'), R(c), E(c), pulseActor(c)),
 });
 defineRoute({
   method: 'POST',
   path: '/api/announcements',
   auth: 'authed',
   entity: 'misc',
-  handler: (c) => handleCreateAnnouncement(R(c), E(c)),
+  handler: (c) => handleCreateAnnouncement(R(c), E(c), pulseActor(c)),
 });
 defineRoute({
   method: 'POST',
   path: '/api/announcements/:id/delete',
   auth: 'authed',
   entity: 'misc',
-  handler: (c) => handleDeleteAnnouncement(c.req.param('id'), R(c), E(c)),
+  handler: (c) => handleDeleteAnnouncement(c.req.param('id'), E(c), pulseActor(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2850,6 +2853,9 @@ defineRoute({
 // a PI email JWT. The shared PB API key and the shared TEST_MODE_KEY identity are refused.
 const personPi = (c: Context<AppEnv>) =>
   c.get('isPi') === true && c.get('apiKeyValid') !== true && !isTestModeRequest(R(c), E(c));
+// What's new / Lab pulse writes (#156): approve, discard and announcements are
+// Nick's act, so they take the same person-only PI check as a launch.
+const pulseActor = (c: Context<AppEnv>) => ({ piPerson: personPi(c), slug: USER(c)?.slug ?? null });
 defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c), personPi(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c), personPi(c)) });

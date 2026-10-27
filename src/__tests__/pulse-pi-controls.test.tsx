@@ -32,7 +32,7 @@ function payload(blurbs: { lead: string; text: string }[]): PulsePayload {
   n++
   return {
     release: null, pastReleases: [],
-    draft: { id: `rel_d${n}`, title: blurbs.length ? 'Smoother Today' : '', blurbs, approvedAt: null, status: 'draft', commits: [{ sha: 'abc', subject: 'Fold Needs you on My Tasks' }] },
+    draft: { id: `rel_d${n}`, title: blurbs.length ? 'Smoother Today' : '', blurbs, approvedAt: null, commitTo: 'c42', status: 'draft', commits: [{ sha: 'abc', subject: 'Fold Needs you on My Tasks' }] },
     announcement: null, active: [], tasksDone: 0, milestonesHit: 0, newPapers: 0, wins: [],
   }
 }
@@ -79,7 +79,10 @@ describe('PI controls in the pulse panel', () => {
     button(host, 'Approve')!.click()
     await expect.poll(() => f.mock.calls.find((c) => /\/api\/releases\/rel_d\d+$/.test(String(c[0])))).toBeTruthy()
     const call = f.mock.calls.find((c) => /\/api\/releases\/rel_d\d+$/.test(String(c[0])))!
-    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({ action: 'approve' })
+    expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
+      action: 'approve',
+      reviewed: { commitTo: 'c42', title: 'Smoother Today', blurbs: [{ lead: 'One collapse per meeting.', text: 'The caret folds action items too.' }] },
+    })
   })
 
   it('the composer refuses 281 characters and posts 12', async () => {
@@ -96,6 +99,9 @@ describe('PI controls in the pulse panel', () => {
     }
     type('x'.repeat(281))
     await expect.poll(() => button(host, 'Post')?.disabled).toBe(true)
+    // Spaces around the text do not count: the server trims too.
+    type(`  ${'x'.repeat(280)}  `)
+    await expect.poll(() => button(host, 'Post')?.disabled).toBe(false)
     type('Retreat Nov 14')
     await expect.poll(() => button(host, 'Post')?.disabled).toBe(false)
     button(host, 'Post')!.click()

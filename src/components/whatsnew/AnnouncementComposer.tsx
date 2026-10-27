@@ -10,7 +10,8 @@ export function AnnouncementComposer() {
   const post = usePostAnnouncement()
   const [body, setBody] = useState('')
   const text = body.trim()
-  const over = body.length > ANNOUNCEMENT_MAX
+  // Counted as the server counts it: spaces around the text are trimmed.
+  const over = text.length > ANNOUNCEMENT_MAX
   return (
     <form
       className="pulse-col"
@@ -27,7 +28,7 @@ export function AnnouncementComposer() {
         onChange={(e) => setBody(e.target.value)}
       />
       <div className="pulse-actions">
-        <span className={`pulse-date${over ? ' pulse-over' : ''}`}>{body.length}/{ANNOUNCEMENT_MAX}</span>
+        <span className={`pulse-date${over ? ' pulse-over' : ''}`}>{text.length}/{ANNOUNCEMENT_MAX}</span>
         <Button size="sm" variant="primary" type="submit" disabled={!text || over || post.isPending}>Post</Button>
       </div>
     </form>

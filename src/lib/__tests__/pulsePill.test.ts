@@ -2,11 +2,11 @@
 // "What's new" must drain (Rule 73): it lights only for something this person
 // has not opened, and a seen id that no longer exists cannot keep it lit.
 import { describe, it, expect } from 'vitest'
-import { pulsePillState, seenAfterOpen, weekStartIso } from '../pulsePill'
+import { pulsePillState, seenFor, weekStartIso } from '../pulsePill'
 import type { PulsePayload, PulseRelease } from '../../../shared/pulse'
 
 const rel = (id: string, status: 'draft' | 'approved' = 'approved'): PulseRelease =>
-  ({ id, title: 't', blurbs: [{ lead: 'L', text: 'T' }], approvedAt: null, status, commits: [] })
+  ({ id, title: 't', blurbs: [{ lead: 'L', text: 'T' }], approvedAt: null, commitTo: 'c', status, commits: [] })
 const base: PulsePayload = {
   release: null, pastReleases: [], draft: null, announcement: null,
   active: ['nick-ingraham', 'casey-eddington'], tasksDone: 3, milestonesHit: 0, newPapers: 0, wins: [],
@@ -17,9 +17,16 @@ describe('pulsePillState', () => {
   it('lights for an unseen release and opens on What\'s new', () => {
     expect(pulsePillState({ ...base, release: rel('rel_1') }, NONE, false)).toEqual({ tone: 'news', label: "What's new", openTab: 'news' })
   })
-  it('lights for an unseen announcement', () => {
+  it('an unseen announcement alone lights it and opens on Lab pulse, where the announcement is', () => {
     const p = { ...base, announcement: { id: 'ann_1', body: 'x', authorSlug: 'nick-ingraham', createdAt: '' } }
-    expect(pulsePillState(p, NONE, false).tone).toBe('news')
+    expect(pulsePillState(p, NONE, false)).toEqual({ tone: 'news', label: "What's new", openTab: 'pulse' })
+  })
+  it('an older announcement resurfacing after the newest was deleted does not relight it', () => {
+    const p = { ...base, announcement: { id: 'ann_01A', body: 'x', authorSlug: 'n', createdAt: '' } }
+    expect(pulsePillState(p, { releaseId: null, announcementId: 'ann_01B' }, false).tone).toBe('pulse')
+  })
+  it('stays unlit until the seen state has loaded from the server', () => {
+    expect(pulsePillState({ ...base, release: rel('rel_1') }, NONE, false, false).tone).toBe('pulse')
   })
   it('settles to the pulse once both are seen', () => {
     const p = { ...base, release: rel('rel_1'), announcement: { id: 'ann_1', body: 'x', authorSlug: 'n', createdAt: '' } }
@@ -39,11 +46,16 @@ describe('pulsePillState', () => {
   })
 })
 
-describe('seenAfterOpen', () => {
-  it('records the release and announcement now showing', () => {
-    const p = { ...base, release: rel('rel_2'), announcement: { id: 'ann_3', body: 'x', authorSlug: 'n', createdAt: '' } }
-    expect(seenAfterOpen(p)).toEqual({ releaseId: 'rel_2', announcementId: 'ann_3' })
-    expect(seenAfterOpen(base)).toEqual({ releaseId: null, announcementId: null })
+describe('seenFor', () => {
+  const p = { ...base, release: rel('rel_2'), announcement: { id: 'ann_3', body: 'x', authorSlug: 'n', createdAt: '' } }
+  it('marks only what the open tab shows: the release on What\'s new, the announcement on Lab pulse', () => {
+    expect(seenFor(p, 'news', NONE)).toEqual({ releaseId: 'rel_2', announcementId: null })
+    expect(seenFor(p, 'pulse', NONE)).toEqual({ releaseId: null, announcementId: 'ann_3' })
+    expect(seenFor(p, 'pulse', { releaseId: 'rel_2', announcementId: null })).toEqual({ releaseId: 'rel_2', announcementId: 'ann_3' })
+  })
+  it('never moves seen backwards to an older item', () => {
+    const older = { ...base, release: rel('rel_1') }
+    expect(seenFor(older, 'news', { releaseId: 'rel_2', announcementId: null })).toEqual({ releaseId: 'rel_2', announcementId: null })
   })
 })
 

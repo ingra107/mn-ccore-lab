@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { selectReleaseCommits, parseGitLog } from './release-commits.mjs'
+import { selectReleaseCommits, parseGitLog, planRange } from './release-commits.mjs'
 
 const e = (sha, files) => ({ sha, subject: `subject ${sha}`, files })
 
@@ -14,6 +14,15 @@ describe('selectReleaseCommits()', () => {
       e('a', ['docs/superpowers/specs/x.md']),
       e('b', ['tests/local/journeys/y.spec.ts']),
       e('c', ['README.md', 'SESSION-HANDOFF.md']),
+    ])
+    assert.deepEqual(out, [])
+  })
+  it('drops commits that only touch the repo tests and tooling wherever they live', () => {
+    const out = selectReleaseCommits([
+      e('t1', ['api/routes/pulse.test.ts', 'api/test-support/prod-schema-db.ts']),
+      e('t2', ['src/__tests__/pulse-pill.test.tsx', 'src/lib/__tests__/pulsePill.test.ts']),
+      e('t3', ['scripts/post-release-draft.mjs', 'scripts/release-commits.test.mjs']),
+      e('t4', ['.github/workflows/schema-drift.yml', '.superpowers/x', '.githooks/pre-commit']),
     ])
     assert.deepEqual(out, [])
   })
@@ -36,5 +45,19 @@ describe('parseGitLog()', () => {
       { sha: 'aaa', subject: 'Fix the thing', files: ['src/x.tsx', 'docs/y.md'] },
       { sha: 'bbb', subject: 'Docs only', files: ['docs/z.md'] },
     ])
+  })
+})
+
+describe('planRange()', () => {
+  it('first run (no release yet): the last 30 commits', () => {
+    assert.deepEqual(planRange(null, false), { range: null })
+  })
+  it('a known release end that is in this history: everything after it', () => {
+    assert.deepEqual(planRange('abc', true), { range: 'abc..HEAD' })
+  })
+  it('a release end this clone cannot see: skip, never re-offer shipped commits', () => {
+    const p = planRange('abc', false)
+    assert.equal(p.range, undefined)
+    assert.match(p.skip, /abc/)
   })
 })

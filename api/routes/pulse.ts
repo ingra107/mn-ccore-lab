@@ -9,8 +9,11 @@
  *   POST /api/announcements/:id/delete                signed-in PI only
  *
  * Who may do what (spec, "Settled after the builder check"): the API key
- * writes a draft's words; only a signed-in PI (isPiIdentity, never the key)
- * approves, discards or announces. A non-PI viewer never reads a draft:
+ * writes a draft's words; only a signed-in PI PERSON approves, discards or
+ * announces. The route computes that (index.ts personPi: not the API key, not
+ * the shared TEST_MODE_KEY identity) and hands it in as `actor`. Approve also
+ * names what Nick read (commit_to, title, blurbs) and is refused if a session
+ * or a deploy changed the draft since. A non-PI viewer never reads a draft:
  * TABLE_SCOPE hides it, so GET reads drafts through the viewer handle and
  * needs no check of its own.
  *
@@ -20,7 +23,7 @@
  */
 
 import type { Env } from '../helpers'
-import { json, error, generateId, getAuthUser, isPiIdentity } from '../helpers'
+import { json, error, generateId } from '../helpers'
 import { validateApiKey } from '../middleware/api-key-auth'
 import { nowInstant } from '../lib/time'
 import type { PulseCounts } from '../lib/pulse-aggregates'
@@ -36,6 +39,8 @@ interface ReleaseRow {
   commit_from: string; commit_to: string; commits_json: string; approved_at: string | null
 }
 type Commit = { sha: string; subject: string }
+/** Who is writing, as the route decided it (index.ts pulseActor). */
+export interface PulseActor { piPerson: boolean; slug: string | null }
 const RELEASE_COLS = 'id, status, title, blurbs_json, commit_from, commit_to, commits_json, approved_at'
 
 const isKey = (request: Request, env: Env) => validateApiKey(request, env as unknown as { PB_API_KEY?: string }) === true
@@ -56,7 +61,8 @@ export function chicagoWeekStartIso(now: Date): string {
   return new Date(monday.getTime() + 6 * 3_600_000).toISOString()
 }
 
-/** A stored time in either shape ('YYYY-MM-DD HH:MM:SS' UTC, or ISO) as epoch ms. */
+/** A stored time in either shape ('YYYY-MM-DD HH:MM:SS' UTC, or ISO) as epoch ms.
+ *  A date-only stamp parses too (V8 reads 'YYYY-MM-DDZ'; pulse.test.ts pins it). */
 function instant(s: string): number {
   return Date.parse(s.includes('T') ? s : `${s.replace(' ', 'T')}Z`)
 }
@@ -67,6 +73,7 @@ function toRelease(r: ReleaseRow): PulseRelease {
     title: r.title,
     blurbs: JSON.parse(r.blurbs_json) as ReleaseBlurb[],
     approvedAt: r.approved_at,
+    commitTo: r.commit_to,
     status: r.status === 'draft' ? 'draft' : 'approved',
     commits: r.status === 'draft' ? (JSON.parse(r.commits_json) as Commit[]) : [],
   }
@@ -166,7 +173,9 @@ export async function handleReleaseIntake(request: Request, env: Env): Promise<R
 function validWords(body: { title?: unknown; blurbs?: unknown }): { title: string; blurbs: ReleaseBlurb[] } | string {
   const title = typeof body.title === 'string' ? body.title.trim() : ''
   if (!title || title.length > RELEASE_TITLE_MAX) return `title must be 1-${RELEASE_TITLE_MAX} characters`
-  if (!Array.isArray(body.blurbs) || body.blurbs.length < 1 || body.blurbs.length > RELEASE_BLURBS_MAX) return `blurbs must be 1-${RELEASE_BLURBS_MAX} items`
+  // A draft may hold a title before its blurbs (Nick saves as he writes);
+  // approve asks for at least one (needs_blurbs).
+  if (!Array.isArray(body.blurbs) || body.blurbs.length > RELEASE_BLURBS_MAX) return `blurbs must be 0-${RELEASE_BLURBS_MAX} items`
   const blurbs: ReleaseBlurb[] = []
   for (const b of body.blurbs as { lead?: unknown; text?: unknown }[]) {
     const lead = typeof b?.lead === 'string' ? b.lead.trim() : ''
@@ -177,14 +186,18 @@ function validWords(body: { title?: unknown; blurbs?: unknown }): { title: strin
   return { title, blurbs }
 }
 
-export async function handleUpdateRelease(id: string, request: Request, env: Env): Promise<Response> {
-  const body = await request.json().catch(() => null) as { action?: string; title?: unknown; blurbs?: unknown } | null
+const sameWords = (a: ReleaseBlurb[], b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+
+export async function handleUpdateRelease(id: string, request: Request, env: Env, actor: PulseActor): Promise<Response> {
+  const body = await request.json().catch(() => null) as {
+    action?: string; title?: unknown; blurbs?: unknown
+    reviewed?: { commitTo?: unknown; title?: unknown; blurbs?: unknown }
+  } | null
   if (!body) return error('invalid_json', 400)
-  const pi = await isPiIdentity(request, env)
   if (body.action === 'edit') {
-    if (!pi && !isKey(request, env)) return error('forbidden', 403)
+    if (!actor.piPerson && !isKey(request, env)) return error('forbidden', 403)
   } else if (body.action === 'approve' || body.action === 'discard') {
-    if (!pi) return error('forbidden', 403)
+    if (!actor.piPerson) return error('forbidden', 403)
   } else {
     return error('action must be edit, approve or discard', 400)
   }
@@ -204,28 +217,36 @@ export async function handleUpdateRelease(id: string, request: Request, env: Env
     await env.DB.prepare(`UPDATE hub_releases SET status = 'discarded' WHERE id = ?`).bind(id).run()
     return json({ data: { id, status: 'discarded' } })
   }
-  if (typeof validWords({ title: row.title, blurbs: JSON.parse(row.blurbs_json) }) === 'string') return error('needs_blurbs', 400)
-  const user = await getAuthUser(request, env)
+  // Approve publishes what Nick read, nothing else: the panel can be minutes
+  // stale, and a session's edit or a deploy's new commits may land meanwhile.
+  const r = body.reviewed
+  if (!r || typeof r.commitTo !== 'string' || typeof r.title !== 'string' || !Array.isArray(r.blurbs)) {
+    return error('approve must name the reviewed commitTo, title and blurbs', 400)
+  }
+  const stored = JSON.parse(row.blurbs_json) as ReleaseBlurb[]
+  if (r.commitTo !== row.commit_to || r.title !== row.title || !sameWords(stored, r.blurbs)) {
+    return error('changed_since_review', 409)
+  }
+  if (!row.title.trim() || stored.length < 1) return error('needs_blurbs', 400)
   await env.DB.prepare(
-    `UPDATE hub_releases SET status = 'approved', approved_at = ?, approved_by = ? WHERE id = ?`,
-  ).bind(nowInstant(), user?.slug ?? null, id).run()
+    `UPDATE hub_releases SET status = 'approved', approved_at = ?, approved_by = ? WHERE id = ? AND status = 'draft'`,
+  ).bind(nowInstant(), actor.slug, id).run()
   return json({ data: { id, status: 'approved' } })
 }
 
-export async function handleCreateAnnouncement(request: Request, env: Env): Promise<Response> {
-  if (!(await isPiIdentity(request, env))) return error('forbidden', 403)
+export async function handleCreateAnnouncement(request: Request, env: Env, actor: PulseActor): Promise<Response> {
+  if (!actor.piPerson || !actor.slug) return error('forbidden', 403)
   const body = await request.json().catch(() => null) as { body?: unknown } | null
   const text = typeof body?.body === 'string' ? body.body.trim() : ''
   if (!text || text.length > ANNOUNCEMENT_MAX) return error(`announcement must be 1-${ANNOUNCEMENT_MAX} characters`, 400)
-  const user = await getAuthUser(request, env)
   const id = generateId('announcement')
   await env.DB.prepare(`INSERT INTO hub_announcements (id, body, author_slug) VALUES (?, ?, ?)`)
-    .bind(id, text, user?.slug ?? 'nick-ingraham').run()
+    .bind(id, text, actor.slug).run()
   return json({ data: { id } })
 }
 
-export async function handleDeleteAnnouncement(id: string, request: Request, env: Env): Promise<Response> {
-  if (!(await isPiIdentity(request, env))) return error('forbidden', 403)
+export async function handleDeleteAnnouncement(id: string, env: Env, actor: PulseActor): Promise<Response> {
+  if (!actor.piPerson) return error('forbidden', 403)
   const r = await env.DB.prepare(`UPDATE hub_announcements SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL`)
     .bind(nowInstant(), id).run()
   if (!r.meta?.changes) return error('not_found', 404)

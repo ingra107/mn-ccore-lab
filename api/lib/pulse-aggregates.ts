@@ -45,7 +45,7 @@ export async function labPulseCounts(
     ).bind(nowIso),
     // rule-90-aggregate-exempt: #156 (counts only)
     db.prepare(
-      `SELECT COUNT(*) AS done,
+      `SELECT COALESCE(SUM(CASE WHEN kind = 'milestone' THEN 0 ELSE 1 END), 0) AS done,
               COALESCE(SUM(CASE WHEN kind = 'milestone' THEN 1 ELSE 0 END), 0) AS milestones
          FROM tasks
         WHERE completed_at IS NOT NULL AND deleted_at IS NULL

@@ -76,7 +76,7 @@ export function DraftReleaseCard({ draft }: { draft: PulseRelease }) {
               size="sm"
               variant="primary"
               type="button"
-              onClick={() => approve.mutate(draft.id)}
+              onClick={() => approve.mutate({ id: draft.id, reviewed: { commitTo: draft.commitTo, title: draft.title, blurbs: draft.blurbs } })}
               disabled={busy || !ready}
               title={ready ? 'Publish to the lab' : 'Add a title and at least one blurb'}
             >Approve</Button>

@@ -424,16 +424,6 @@ export function _resetPiEmailsCacheForTests(): void {
   piEmailsCache = null;
 }
 
-/** True iff a SIGNED-IN PI made the request (#156). Unlike isPiRequest, the
- *  API key alone is NOT a PI here: approving a release or posting an
- *  announcement is Nick's act, and the key is what the deploy step and
- *  Claude sessions hold. */
-export async function isPiIdentity(request: Request, env: Env): Promise<boolean> {
-  const user = await getAuthUser(request, env)
-  if (!user?.email) return false
-  return (await getPiEmails(env)).has(user.email.toLowerCase())
-}
-
 /** True iff the request is from a PI — either an authenticated CF Access
  *  JWT matching a known PI email, OR a valid API-key request (server-side
  *  automation / Hermes). Returns false for unauthenticated + non-PI users.
