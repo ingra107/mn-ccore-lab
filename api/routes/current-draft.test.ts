@@ -289,6 +289,111 @@ describe('the arbiter refuses the wrong state on every path', () => {
   })
 })
 
+// Cold review of 8c6b3f9b (codex, 2026-10-26): six defects, each reproduced here first.
+describe('cold review fixes', () => {
+  async function mutate(m: Record<string, unknown>) {
+    const res = await fetch('/api/mutations', {
+      method: 'POST',
+      body: JSON.stringify({ mutations: [{
+        mutation_id: `mut_${Math.random().toString(36).slice(2)}`, origin_machine: 'home',
+        base_seq: null, base_row_hash: null, client_ts: '2026-10-26T20:00:00Z', issued_at: '2026-10-26T20:00:00Z', ...m,
+      }] }),
+    })
+    return (await res.json() as { results: { status: string; code?: string; reason?: string }[] }).results[0]
+  }
+
+  it('1: a non-PI member never receives a local draft path, in rows or receipts', async () => {
+    const a1 = await promote(MS_A, 'main_v1.docx', null)
+    await promote(MS_A, 'main_v2.docx', a1.body.change.after_link_id)
+    insertRow(db, 'project_members', { project_id: PROJECT, member_slug: 'casey-eddington', added_by: 'nick-ingraham' })
+    as = OUTSIDER_EMAIL
+    const text = await (await fetch(`/api/products/${MS_A}/current-draft`)).text()
+    expect(text).not.toContain('~/Box')
+    const body = JSON.parse(text) as { current: unknown; history: unknown[]; changes: { candidate_url: unknown }[] }
+    expect(body.current).toBeNull()
+    expect(body.history).toEqual([])
+    expect(body.changes.length).toBe(2)
+    expect(body.changes.every((c) => c.candidate_url === null)).toBe(true)
+    // A POST answer is filtered the same way.
+    const cur = current(MS_A)[0].id as string
+    const res = await promote(MS_A, 'main_v3.docx', cur)
+    expect(res.status).toBe(200)
+    expect(JSON.stringify(res.body)).not.toContain('~/Box')
+  })
+
+  it('2: a generic edit cannot rewrite a draft row\'s URL (current or archived); title stays editable', async () => {
+    const a1 = await promote(MS_A, 'main_v1.docx', null)
+    const a2 = await promote(MS_A, 'main_v2.docx', a1.body.change.after_link_id)
+    for (const id of [a2.body.change.after_link_id, a1.body.change.after_link_id]) {
+      const r = await mutate({ table: 'links', op: 'update', record_id: id, patch: { canonical_url: url('evil.docx') } })
+      expect(r.status).toBe('error')
+    }
+    expect(rows('SELECT id FROM links WHERE canonical_url = ?', url('evil.docx'))).toHaveLength(0)
+    const t = await mutate({ table: 'links', op: 'update', record_id: a2.body.change.after_link_id, patch: { short_title: 'Main v2' } })
+    expect(t.status).toBe('accepted')
+  })
+
+  it('3: undoing an old promotion is refused when a later one re-promoted the same row', async () => {
+    const a = await promote(MS_A, 'a.docx', null)
+    const b = await promote(MS_A, 'b.docx', a.body.change.after_link_id)
+    const c = await promote(MS_A, 'c.docx', b.body.change.after_link_id)
+    const b2 = await promote(MS_A, 'b.docx', c.body.change.after_link_id)
+    expect(b2.body.change.after_link_id).toBe(b.body.change.after_link_id)
+    const old = await undo(MS_A, b.body.change.id)
+    expect(old.status).toBe(409)
+    expect(old.body.code).toBe('current_draft_moved')
+    expect(current(MS_A)[0].canonical_url).toBe(url('b.docx'))
+    // The latest promotion undoes normally, back to c.
+    const latest = await undo(MS_A, b2.body.change.id)
+    expect(latest.status).toBe(200)
+    expect(current(MS_A)[0].canonical_url).toBe(url('c.docx'))
+  })
+
+  it('4: one key raced across two products never answers with the other product\'s receipt', async () => {
+    const [x, y] = await Promise.all([
+      promote(MS_A, 'a.docx', null, 'k-shared'),
+      promote(MS_B, 'b.docx', null, 'k-shared'),
+    ])
+    for (const [res, product] of [[x, MS_A], [y, MS_B]] as const) {
+      if (res.status === 200) {
+        const row = one('SELECT product_id FROM current_draft_changes WHERE id = ?', res.body.change.id)
+        expect(row!.product_id).toBe(product)
+      } else {
+        expect(res.status).toBe(409)
+        expect(res.body.code).toBe('idempotency_mismatch')
+      }
+    }
+    expect([x.status, y.status].sort()).toEqual([200, 409])
+  })
+
+  it('5: the same request twice at once is one promotion and two 200s (the second a replay)', async () => {
+    const [x, y] = await Promise.all([
+      promote(MS_A, 'a.docx', null, 'k-twice'),
+      promote(MS_A, 'a.docx', null, 'k-twice'),
+    ])
+    expect([x.status, y.status]).toEqual([200, 200])
+    expect(x.body.change.id).toBe(y.body.change.id)
+    const a = x.body.change
+    const [u1, u2] = await Promise.all([undo(MS_A, a.id, 'u-twice'), undo(MS_A, a.id, 'u-twice')])
+    expect([u1.status, u2.status]).toEqual([200, 200])
+    expect(u1.body.change.id).toBe(u2.body.change.id)
+  })
+
+  it('6: pinning a product draft\'s URL into a project slot files a project-wide row', async () => {
+    const DOC = 'https://docs.google.com/document/d/1DRAFTDOC/edit'
+    const res = await fetch(`/api/products/${MS_A}/current-draft`, {
+      method: 'POST',
+      body: JSON.stringify({ candidate: { canonical_url: DOC, type: 'google_doc', short_title: 'Draft' },
+        expected_current_link_id: null, idempotency_key: 'k-doc' }),
+    })
+    expect(res.status).toBe(200)
+    const r = await mutate({ table: 'projects', op: 'update', record_id: PROJECT, patch: { key_link_1: DOC } })
+    expect(r.status).toBe('accepted')
+    expect(rows("SELECT role, product_id FROM links WHERE canonical_url = ? AND deleted_at IS NULL ORDER BY product_id", DOC))
+      .toEqual([{ role: 'key', product_id: null }, { role: 'current_draft', product_id: MS_A }])
+  })
+})
+
 describe('readers', () => {
   it("a task inherits its own product's current draft, never another product's", async () => {
     await promote(MS_A, 'main_v1.docx', null)

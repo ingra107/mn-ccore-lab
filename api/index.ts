@@ -2181,21 +2181,21 @@ defineRoute({
   path: '/api/products/:id/current-draft',
   auth: 'authed',
   entity: 'products',
-  handler: (c) => handleGetCurrentDraft(c.req.param('id'), R(c), E(c)),
+  handler: (c) => handleGetCurrentDraft(c.req.param('id'), R(c), E(c), c.get('isPi') === true),
 });
 defineRoute({
   method: 'POST',
   path: '/api/products/:id/current-draft',
   auth: 'authed',
   entity: 'products',
-  handler: (c) => handleSetCurrentDraft(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleSetCurrentDraft(c.req.param('id'), R(c), USER(c), E(c), c.get('isPi') === true),
 });
 defineRoute({
   method: 'POST',
   path: '/api/products/:id/current-draft/undo',
   auth: 'authed',
   entity: 'products',
-  handler: (c) => handleUndoCurrentDraft(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleUndoCurrentDraft(c.req.param('id'), R(c), USER(c), E(c), c.get('isPi') === true),
 });
 
 // Frontend-accessible stored-links sub-resources (B3 Task 8, 2026-06-21).

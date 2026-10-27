@@ -48,11 +48,14 @@ export function currentDraftGuard(
       return `link ${String(current.id)} is a product's current draft; replace or undo it with ${ROUTE}`
     }
   }
-  // A product's archived draft is its history: the route re-promotes it (and
-  // undo restores it), so a generic role change would put a row at a role
-  // the product's readers do not read (a scoped `key`). Deleting one stays a
-  // person's explicit choice.
-  if (current && current.product_id && op === 'update' && ('role' in f || 'owner_id' in f || 'owner_table' in f)) {
+  // A product's draft rows (current and archived) are its history: the route
+  // re-promotes an archived one (and undo restores it), and receipts name them
+  // by id. So a generic edit may not re-role, re-own or re-point one: a new
+  // canonical_url would silently change WHICH draft a receipt and the current
+  // pointer name (cold review 2026-10-26, finding 2). Title and kind edits stay
+  // ordinary; deleting an archived one stays a person's explicit choice.
+  if (current && current.product_id && op === 'update'
+      && ('role' in f || 'owner_id' in f || 'owner_table' in f || 'canonical_url' in f)) {
     return `link ${String(current.id)} is in a product's draft history; re-promote it with ${ROUTE}`
   }
   return null
