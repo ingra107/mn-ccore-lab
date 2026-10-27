@@ -1,11 +1,11 @@
 /**
- * api/routes/current-draft.test.ts -- schema-v149: a product's current draft.
+ * api/routes/current-draft.test.ts -- schema-v150: a product's current draft.
  *
  * Nick, 2026-10-26: "...you will have filed them away so that when I do go to
  * work on that project I know that I'm working with the most recent version".
  * Rulings: auto-file a newer version as current, one-tick undo, the old pointer
  * archived and never removed. Every case runs the real worker against the
- * migration-chain database (prodSchemaDb), so the v149 index, CHECK, trigger
+ * migration-chain database (prodSchemaDb), so the v150 index, CHECK, trigger
  * and receipt table are the ones prod gets.
  */
 

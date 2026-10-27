@@ -440,7 +440,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // schema-v124: a product is visible with its project. A funded-by edge is
   // visible only when BOTH ends are: funding confers no access (codex tiebreak).
   products: byProject('products', 'project_id', 'id', false),
-  // schema-v149: a current-draft receipt is visible with its product.
+  // schema-v150: a current-draft receipt is visible with its product.
   current_draft_changes: {
     kind: 'scoped', key: 'id', dependsOn: ['products'],
     where: (v) => (projectsScoped(v) ? '(current_draft_changes.product_id IN (SELECT id FROM products))' : null),

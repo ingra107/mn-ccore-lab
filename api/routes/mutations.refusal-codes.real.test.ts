@@ -124,7 +124,7 @@ describe('links: a constraint failure is decided by the live row, not the engine
     const r = refused(await send(mut({ table: 'links', record_id: 'link_second', payload: { ...LINK } })), 'link_natural_key');
     // PB adopts on `code` alone (tests/db/test_links_table.py
     // test_unique_text_without_a_code_does_not_adopt); the text is for people.
-    // schema-v149 made the natural key an expression index (product scope), so
+    // schema-v150 made the natural key an expression index (product scope), so
     // SQLite names the index instead of the columns.
     expect(r.reason).toMatch(/^apply error: /);
     expect(r.reason).toContain("UNIQUE constraint failed: index 'idx_links_owner_role_url'");

@@ -61,8 +61,8 @@ const LINKS_SELECT_COLS = [
   // schema-v145 (#151): the semantic kind, FK into link_kinds. PB mig 153
   // caches it; apply v145 to prod BEFORE a Worker that selects it.
   'kind',
-  // schema-v149: the product a project link belongs to (NULL = project-wide).
-  // PB mig 154 caches it; apply v149 to prod BEFORE a Worker that selects it.
+  // schema-v150: the product a project link belongs to (NULL = project-wide).
+  // PB mig 154 caches it; apply v150 to prod BEFORE a Worker that selects it.
   'product_id',
 ].join(', ');
 
@@ -150,7 +150,7 @@ export async function handleGetLinks(url: URL, request: Request, env: Env): Prom
 // (Nick 2026-08-25: "all links and documents and artifacts with time stamps").
 // kind + owner_table (#151): the project page labels and filters by kind, and
 // tells a project-owned row from a task-owned one.
-// product_id (schema-v149): a product's current draft and its archived drafts.
+// product_id (schema-v150): a product's current draft and its archived drafts.
 const FE_LINKS_COLS =
   'id, owner_table, role, type, kind, product_id, canonical_url, short_title, sort_order, created_at, updated_at';
 
@@ -410,7 +410,7 @@ export async function handleGetTaskLinks(
   // they are computed from live project fields, so they are current by
   // construction and carry no role of their own.
   //
-  // schema-v149: a product's current draft follows the project onto the tasks
+  // schema-v150: a product's current draft follows the project onto the tasks
   // of THAT product only (tasks.product_id, v124), so a task on manuscript A
   // never shows manuscript B's draft. Project-wide key rows reach every task;
   // a product-scoped archived draft reaches none.
@@ -780,7 +780,7 @@ async function insertProjectLink(
 }
 
 /** The project's live PROJECT-WIDE row for a URL, preferring role='key'. A
- *  product's draft rows (product_id set, schema-v149) are the current-draft
+ *  product's draft rows (product_id set, schema-v150) are the current-draft
  *  route's, so adding or promoting a document never re-roles one. */
 async function projectRowFor(env: Env, projectId: string, url: string): Promise<LinkRow | null> {
   return env.DB
