@@ -2,7 +2,7 @@
 // and slugs only. Runs the real SQL on the migration-chain database.
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
-import { labPulseCounts } from './pulse-aggregates'
+import { labPulseCounts, PULSE_SQL, pulseParams } from './pulse-aggregates'
 
 const NOW = '2026-10-28T15:00:00.000Z'          // a Wednesday
 const WEEK_START = '2026-10-26T05:00:00.000Z'   // Monday 00:00 America/Chicago
@@ -51,5 +51,29 @@ describe('labPulseCounts (#156)', () => {
     insertRow(d, 'publications', { id: 'one', title: 't', authors: 'a', created_at: '2026-10-21 12:00:00' })
     insertRow(d, 'publications', { id: 'old', title: 't', authors: 'a', created_at: '2026-08-01 12:00:00' })
     expect((await run(d)).newPapers).toBe(1)
+  })
+})
+
+describe('labPulseCounts stays cheap as the lab grows (#156 review)', () => {
+  it('every statement searches an index instead of scanning its table', () => {
+    const d = db()
+    const params = pulseParams({ nowIso: NOW, weekStartIso: WEEK_START })
+    for (const [name, sql] of Object.entries(PULSE_SQL) as [keyof typeof PULSE_SQL, string][]) {
+      const bound = Object.fromEntries(params[name].map((v, i) => [i + 1, v]))
+      const plan = (d.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(bound) as { detail: string }[]).map((r) => r.detail)
+      for (const t of ['entity_seen', 'activity_entries', 'tasks', 'publications']) {
+        for (const line of plan.filter((l) => new RegExp(`\\b${t}\\b`).test(l))) {
+          expect(line, `${t}: ${line}`).not.toMatch(/^SCAN /)
+        }
+      }
+    }
+  })
+  it('a task completed in any stored format inside the week counts; one just before does not', async () => {
+    const d = db()
+    const t = (id: string, completed_at: string) => insertRow(d, 'tasks', { id, title: id, assignee: 'nick-ingraham', status: 'done', completed: 1, completed_at })
+    t('space-in', '2026-10-26 06:00:00')
+    t('date-in', '2026-10-27')
+    t('space-before', '2026-10-26 04:59:59')
+    expect((await run(d)).tasksDone).toBe(2)
   })
 })

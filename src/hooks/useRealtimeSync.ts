@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRealtimeBus } from '../lib/realtimeBus'
+import { refetchesOnLabChange } from '../lib/realtimeRefetch'
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
@@ -11,7 +12,7 @@ export function useRealtimeSync() {
   // every render just because a new function was created.
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({
-      predicate: (query) => query.queryKey[0] !== '_version',
+      predicate: refetchesOnLabChange,
     })
   }, [queryClient])
 
