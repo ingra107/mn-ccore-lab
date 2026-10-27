@@ -4,6 +4,11 @@
  * Uses the "textarea mirror" pattern:
  *   - A transparent textarea captures keystrokes (caret visible, text invisible)
  *   - A read-only mirror div positioned behind it renders colored token spans
+ *
+ * The two layers must lay out the SAME glyphs at the SAME x (#154: the input
+ * read as blurry, doubled text). So the textarea's own text is transparent,
+ * and a token never changes width: no bold, no padding or margin. Its pill
+ * is a box-shadow spread, which paints outside the box without moving text.
  */
 
 import { useRef, useCallback, useEffect, useState } from 'react'
@@ -19,14 +24,13 @@ import { withAlpha } from '../lib/taskGrouping'
 interface TokenStyle {
   color: string
   bg?: string
-  fontWeight?: number
 }
 
 const TOKEN_STYLES: Record<TokenType, TokenStyle> = {
-  assignee: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)', fontWeight: 600 },
-  project:  { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)', fontWeight: 600 },
-  priority: { color: 'var(--job-stale)', bg: 'color-mix(in srgb, var(--job-stale) 12%, transparent)', fontWeight: 700 },
-  date:     { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', fontWeight: 600 },
+  assignee: { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)' },
+  project:  { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 8%, transparent)' },
+  priority: { color: 'var(--job-stale)', bg: 'color-mix(in srgb, var(--job-stale) 12%, transparent)' },
+  date:     { color: 'var(--sk-t2)', bg: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)' },
   plain:    { color: 'inherit' },
 }
 
@@ -56,7 +60,7 @@ function Chip({ label, value, color = 'var(--slate)' }: ChipProps) {
       }}
     >
       <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{label}</span>
-      <span style={{ color, fontWeight: 600 }}>{value}</span>
+      <span style={{ color }}>{value}</span>
     </span>
   )
 }
@@ -213,11 +217,9 @@ export default function QuickAddTaskInput({
                   key={i}
                   style={{
                     color: s.color,
-                    fontWeight: s.fontWeight,
                     background: s.bg,
+                    boxShadow: s.bg ? `0 0 0 2px ${s.bg}` : undefined,
                     borderRadius: s.bg ? 'var(--radius-sm)' : undefined,
-                    padding: s.bg ? '1px 3px' : undefined,
-                    marginLeft: s.bg ? '-3px' : undefined,
                   }}
                 >
                   {tok.text}
@@ -282,6 +284,8 @@ export default function QuickAddTaskInput({
             outline: 'none',
             resize: 'none',
             height: '38px',
+            color: 'transparent',
+            caretColor: 'var(--sk-t1)',
             textDecorationColor: 'transparent',
           }}
         />
