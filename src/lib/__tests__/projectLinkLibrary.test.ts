@@ -134,6 +134,9 @@ describe('canChangeRole', () => {
     expect(canChangeRole(link({ id: 'x', role: 'archive' }))).toBe(true)
     // derived rows are synthesised per request; there is no row to update
     expect(canChangeRole(link({ id: 'd', role: 'derived' }))).toBe(false)
+    // a product's current draft and its archived drafts move only through the route
+    expect(canChangeRole(link({ id: 'c', role: 'current_draft', product_id: 'prd_1' }))).toBe(false)
+    expect(canChangeRole(link({ id: 'h', role: 'archive', product_id: 'prd_1' }))).toBe(false)
   })
 })
 

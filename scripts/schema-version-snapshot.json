@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "c5c31c7435083ad2c925dc06c9af254fdc55278b1bdf3fd8e9d1ec3c582b9483",
-  "file_count": 153,
+  "hash": "62969590ce310637682fece4ca62025c56a7a5bd2059f5bda93c4ddc606037ee",
+  "file_count": 154,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -155,6 +155,7 @@
     "schema-v146-drop-project-documents.sql",
     "schema-v147-drop-lab-questions.sql",
     "schema-v148-hub-releases-announcements.sql",
+    "schema-v149-links-product-scope.sql",
     "schema-v149-pulse-timestamp-indexes.sql"
   ],
   "version_range": [
@@ -192,6 +193,10 @@
     "53": [
       "schema-v53-seq-trigger-include-self.sql",
       "schema-v53-team-auto-create.sql"
+    ],
+    "149": [
+      "schema-v149-links-product-scope.sql",
+      "schema-v149-pulse-timestamp-indexes.sql"
     ]
   }
 }

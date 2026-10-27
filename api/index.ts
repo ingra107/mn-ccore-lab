@@ -106,6 +106,7 @@ import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
+import { handleGetCurrentDraft, handleSetCurrentDraft, handleUndoCurrentDraft } from './routes/current-draft';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2171,6 +2172,30 @@ defineRoute({
   auth: 'authed',
   entity: 'products',
   handler: (c) => handleProjectProductWrite(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+// A product's current draft (schema-v149): the one door that replaces it
+// (archive + promote + receipt in one D1 batch) and undoes a replacement.
+// Visibility is the product's project (assertProjectVisible inside).
+defineRoute({
+  method: 'GET',
+  path: '/api/products/:id/current-draft',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleGetCurrentDraft(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/products/:id/current-draft',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleSetCurrentDraft(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/products/:id/current-draft/undo',
+  auth: 'authed',
+  entity: 'products',
+  handler: (c) => handleUndoCurrentDraft(c.req.param('id'), R(c), USER(c), E(c)),
 });
 
 // Frontend-accessible stored-links sub-resources (B3 Task 8, 2026-06-21).

@@ -33,6 +33,7 @@ import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../li
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError } from '../lib/task-question';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
+import { currentDraftGuard } from '../lib/current-draft';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -718,6 +719,12 @@ async function meetingDedupAccepted(
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'envelope_invalid', 'insert requires payload');
 
+  // schema-v149: a product's current draft is the current-draft route's alone.
+  if (mut.table === 'links') {
+    const cdErr = currentDraftGuard('insert', null, mut.payload as Record<string, unknown>);
+    if (cdErr) return mutErr(mut.mutation_id, 'value_invalid', cdErr);
+  }
+
   // Question contract (schema-v111, 2026-09-17): a kind='question' row must
   // carry its spec, and any answer/telegram handle must be well-formed JSON.
   // Objects from a Hub-UI writer are serialized to text here (D1 refuses an
@@ -1102,6 +1109,13 @@ async function decideAndCommitUpdate(
     return mutErr(mut.mutation_id, 'record_not_found', `${mut.table} record ${mut.record_id} not found`);
   }
 
+  // schema-v149: never re-role, re-scope or re-own a product's current draft
+  // through the generic door (api/lib/current-draft.ts).
+  if (mut.table === 'links') {
+    const cdErr = currentDraftGuard('update', current, mut.patch as Record<string, unknown>);
+    if (cdErr) return mutErr(mut.mutation_id, 'value_invalid', cdErr);
+  }
+
   // Tombstone resurrection guard (codex Fix 1, 2026-05-11):
   // Reject updates to soft-deleted rows unless the patch intends to undelete.
   // Three allowed paths that indicate intent to undelete:
@@ -1366,6 +1380,11 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
       result_seq: current.seq as number,
       canonical_payload: current,
     });
+  }
+  // schema-v149: tombstoning a product's current draft would leave it none.
+  if (mut.table === 'links') {
+    const cdErr = currentDraftGuard('delete', current, null);
+    if (cdErr) return mutErr(mut.mutation_id, 'value_invalid', cdErr);
   }
 
   // Cascade cleanup for tasks and projects (codex Fixes 2+3, 2026-05-11).
@@ -2045,7 +2064,8 @@ async function applyErrorResult(env: Env, mut: Mutation, e: unknown): Promise<Mu
 }
 
 /** The live links row (other than this record) holding the natural key
- *  (owner_table, owner_id, role, canonical_url) this write would produce. */
+ *  (owner_table, owner_id, product scope, role, canonical_url) this write would
+ *  produce. schema-v149: the key is product-scoped, `IS` matches NULL to NULL. */
 async function liveLinkHolder(env: Env, mut: Mutation): Promise<Record<string, unknown> | null> {
   let row: Record<string, unknown>;
   if (mut.op === 'insert') {
@@ -2058,8 +2078,8 @@ async function liveLinkHolder(env: Env, mut: Mutation): Promise<Record<string, u
   if (key.some((v) => v === null || v === undefined)) return null;
   const hit = await env.DB.prepare(
     'SELECT * FROM links WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ? ' +
-    'AND deleted_at IS NULL AND id != ? LIMIT 1',
-  ).bind(...key, mut.record_id).first<Record<string, unknown>>();
+    'AND product_id IS ? AND deleted_at IS NULL AND id != ? LIMIT 1',
+  ).bind(...key, (row.product_id as string | null | undefined) ?? null, mut.record_id).first<Record<string, unknown>>();
   return hit ? safeRow('links', hit) : null;
 }
 

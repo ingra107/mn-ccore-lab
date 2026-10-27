@@ -61,6 +61,9 @@ const LINKS_SELECT_COLS = [
   // schema-v145 (#151): the semantic kind, FK into link_kinds. PB mig 153
   // caches it; apply v145 to prod BEFORE a Worker that selects it.
   'kind',
+  // schema-v149: the product a project link belongs to (NULL = project-wide).
+  // PB mig 154 caches it; apply v149 to prod BEFORE a Worker that selects it.
+  'product_id',
 ].join(', ');
 
 export async function handleGetLinks(url: URL, request: Request, env: Env): Promise<Response> {
@@ -147,8 +150,9 @@ export async function handleGetLinks(url: URL, request: Request, env: Env): Prom
 // (Nick 2026-08-25: "all links and documents and artifacts with time stamps").
 // kind + owner_table (#151): the project page labels and filters by kind, and
 // tells a project-owned row from a task-owned one.
+// product_id (schema-v149): a product's current draft and its archived drafts.
 const FE_LINKS_COLS =
-  'id, owner_table, role, type, kind, canonical_url, short_title, sort_order, created_at, updated_at';
+  'id, owner_table, role, type, kind, product_id, canonical_url, short_title, sort_order, created_at, updated_at';
 
 // Shared query helper: fetch live (non-deleted) links for one owner, ordered
 // by sort_order then id for a stable display sequence.
@@ -382,9 +386,9 @@ export async function handleGetTaskLinks(
   // A task can be visible without its project (it names the caller); the
   // project half below then reads nothing.
   const task = await env.DB
-    .prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL')
+    .prepare('SELECT project_id, product_id FROM tasks WHERE id = ? AND deleted_at IS NULL')
     .bind(taskId)
-    .first<{ project_id: string | null }>();
+    .first<{ project_id: string | null; product_id: string | null }>();
   if (!task) return error('Task not found', 404);
 
   // Fetch task links + project (explicit links + canonical fields) in parallel.
@@ -405,9 +409,17 @@ export async function handleGetTaskLinks(
   // Derived links (primary_folder / github_url / box_url) are NOT filtered:
   // they are computed from live project fields, so they are current by
   // construction and carry no role of their own.
-  const projectExplicit = (projectData?.explicit ?? []).filter(
-    (row) => (row.role ?? 'key') === 'key',
-  );
+  //
+  // schema-v149: a product's current draft follows the project onto the tasks
+  // of THAT product only (tasks.product_id, v124), so a task on manuscript A
+  // never shows manuscript B's draft. Project-wide key rows reach every task;
+  // a product-scoped archived draft reaches none.
+  const projectExplicit = (projectData?.explicit ?? []).filter((row) => {
+    const role = row.role ?? 'key';
+    const productId = (row.product_id as string | null | undefined) ?? null;
+    if (role === 'key') return productId === null;
+    return role === 'current_draft' && productId !== null && productId === task.product_id;
+  });
   // One document, one chip (#151 W6): a project link whose URL the task also
   // holds itself (a promoted COPY, or the same URL filed twice) is shown once,
   // as the task's own. Every task surface (TaskDetailPanel, TaskDetailDrawer,
@@ -640,10 +652,10 @@ export async function handleGetAllProjectLinks(
 type LinkRow = {
   id: string; owner_table: string; owner_id: string; role: string;
   canonical_url: string; type: string; short_title: string; source_raw: string | null;
-  kind: string | null;
+  kind: string | null; product_id: string | null;
 };
 
-const LINK_ROW_COLS = 'id, owner_table, owner_id, role, canonical_url, type, short_title, source_raw, kind';
+const LINK_ROW_COLS = 'id, owner_table, owner_id, role, canonical_url, type, short_title, source_raw, kind, product_id';
 
 async function liveLink(env: Env, linkId: string): Promise<LinkRow | null> {
   return env.DB
@@ -752,12 +764,15 @@ async function insertProjectLink(
   }, user);
 }
 
-/** The project's live row for a URL, preferring role='key'. */
+/** The project's live PROJECT-WIDE row for a URL, preferring role='key'. A
+ *  product's draft rows (product_id set, schema-v149) are the current-draft
+ *  route's, so adding or promoting a document never re-roles one. */
 async function projectRowFor(env: Env, projectId: string, url: string): Promise<LinkRow | null> {
   return env.DB
     .prepare(
       `SELECT ${LINK_ROW_COLS} FROM links
         WHERE owner_table = 'projects' AND owner_id = ? AND canonical_url = ? AND deleted_at IS NULL
+          AND product_id IS NULL
         ORDER BY CASE role WHEN 'key' THEN 0 ELSE 1 END LIMIT 1`,
     )
     .bind(projectId, url)
@@ -830,9 +845,9 @@ export async function handleUpdateLink(
       .prepare(
         `SELECT id FROM links
           WHERE owner_table = ? AND owner_id = ? AND role = ? AND canonical_url = ?
-            AND deleted_at IS NULL AND id != ? LIMIT 1`,
+            AND product_id IS ? AND deleted_at IS NULL AND id != ? LIMIT 1`,
       )
-      .bind(row.owner_table, row.owner_id, patch.role as string, row.canonical_url, linkId)
+      .bind(row.owner_table, row.owner_id, patch.role as string, row.canonical_url, row.product_id ?? null, linkId)
       .first<{ id: string }>();
     if (clash) return roleClash(patch.role as string, row.owner_table);
   }
