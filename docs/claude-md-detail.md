@@ -91,7 +91,7 @@ structural so it can't be forgotten a fifth time.
 
 ## Rule 29
 
-29. **Brand primitives live in `src/components/` — use them, don't reinvent.** `HeartbeatLine` / `HeartbeatDivider` (ECG motif), `HermesMark` (AI assistant), `CategoryIcon` (lungs/flask/heartbeat/cap), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner`, `RequireAuth`. Never use lucide `<Sparkles />` for Hermes or a 6px dot for categories. **Generic UI primitives (distinct from brand) live in `src/components/ui/` (P5, `4a21efce`):** `Button` (variant primary/secondary/ghost/danger × sm/md/lg), `Chip`, `Field`, `Modal` (createPortal + focus-trap + escape, no backdrop blur per Rule 45) — they codify the dominant existing patterns with design tokens baked in. Prefer them for new buttons/pills/labeled-fields/modals; adoption is incremental (existing ad-hoc instances migrate piecemeal).
+29. **Brand primitives live in `src/components/` — use them, don't reinvent.** `HeartbeatLine` / `HeartbeatDivider` (ECG motif), `HermesMark` (AI assistant), `CategoryIcon` (lungs/flask/heartbeat/cap), `EmptyStateArt` (8 illustrations), `RequireAuth`. Never use lucide `<Sparkles />` for Hermes or a 6px dot for categories. **Generic UI primitives (distinct from brand) live in `src/components/ui/` (P5, `4a21efce`):** `Button` (variant primary/secondary/ghost/danger × sm/md/lg), `Chip`, `Field`, `Modal` (createPortal + focus-trap + escape, no backdrop blur per Rule 45) — they codify the dominant existing patterns with design tokens baked in. Prefer them for new buttons/pills/labeled-fields/modals; adoption is incremental (existing ad-hoc instances migrate piecemeal).
 
 ## Rule 60
 

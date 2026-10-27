@@ -38,9 +38,7 @@ async function post(body) {
 }
 
 function gitLog(range) {
-  const args = ['log', '--reverse', '--name-only', '--format=@@%H%x09%s']
-  if (range) args.push(range)
-  else args.splice(1, 0, `-n${FIRST_RUN_COMMITS}`)
+  const args = ['log', '--reverse', '--name-only', '--format=@@%H%x09%s', range || `-n${FIRST_RUN_COMMITS}`]
   return execFileSync('git', args, { encoding: 'utf8' })
 }
 

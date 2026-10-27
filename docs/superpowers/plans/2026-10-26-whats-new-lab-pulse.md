@@ -8,6 +8,8 @@
 
 **Tech Stack:** Hono v4 Worker + D1, React 19, TanStack Query v5, Vitest (api suite on `prodSchemaDb`, lib suite for pure functions), Node ESM scripts.
 
+> **As built (2026-10-26):** the final review replaced `isPiIdentity` with the route-level `personPi` gate (an `actor` argument; the TEST_MODE_KEY identity is refused too), Approve sends `reviewed: {commitTo, title, blurbs}`, components live in `src/components/whatsnew/`, and v149 adds timestamp indexes. Rulings: `.superpowers/sdd/2026-10-26-whats-new-lab-pulse/progress.md` (local) and the commit messages.
+
 **Spec:** `docs/superpowers/specs/2026-10-26-whats-new-lab-pulse-design.md` (approved by Nick 2026-10-26). Read it first; this plan does not repeat its reasons.
 
 ## Global Constraints

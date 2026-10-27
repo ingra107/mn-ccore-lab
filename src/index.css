@@ -1468,7 +1468,7 @@ a:hover {
   }
 }
 .pulse-col { display: grid; gap: 10px; min-width: 0; }
-.pulse-eyebrow { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--sk-t3); }
+.pulse-eyebrow { font-size: 11.5px; font-weight: 500; color: var(--sk-t3); }
 .pulse-title { font-weight: 600; font-size: 14px; margin-top: 2px; text-wrap: balance; }
 .pulse-blurbs { margin: 6px 0 0; padding-left: 16px; display: grid; gap: 5px; color: var(--sk-t2); line-height: 1.45; }
 .pulse-blurbs b { color: var(--sk-t1); font-weight: 500; }
@@ -1488,7 +1488,7 @@ a:hover {
 .pulse-l { font-size: 11px; color: var(--sk-t3); line-height: 1.3; }
 .pulse-draft { border: 1px dashed var(--sk-line2); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
 .pulse-draft-h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.pulse-chip { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--job-wants); border: 1px solid color-mix(in srgb, var(--job-wants) 45%, transparent); border-radius: 999px; padding: 1px 7px; }
+.pulse-chip { font-size: 11px; font-weight: 600; color: var(--job-wants); border: 1px solid color-mix(in srgb, var(--job-wants) 45%, transparent); border-radius: 999px; padding: 1px 7px; }
 .pulse-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 12.5px; color: var(--sk-t1); background: var(--cream); border: 1px solid var(--field-edge); border-radius: 6px; padding: 6px 8px; resize: vertical; }
 .pulse-input:focus { outline: none; border-color: var(--job-accent); }
 .pulse-blurb-edit { display: grid; gap: 4px; }

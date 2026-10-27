@@ -16,12 +16,10 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { usePulse } from '../../hooks/usePulse'
 import { useUserPref, useUserPrefsStatus } from '../../hooks/useUserPref'
 import { useAuth } from '../../hooks/useAuth'
-import { PULSE_SEEN_NONE, pulsePillState, seenFor, type PulseSeen } from '../../lib/pulsePill'
+import { PULSE_SEEN_NONE, pulsePillState, seenFor, type PulseSeen, type PulseTab } from '../../lib/pulsePill'
 import { SegmentedToggle } from '../ui/SegmentedToggle'
 import { WhatsNewTab } from './WhatsNewTab'
 import { LabPulseTab } from './LabPulseTab'
-
-type Tab = 'news' | 'pulse'
 
 function validSeen(stored: unknown): PulseSeen {
   const s = stored as Partial<PulseSeen> | null
@@ -40,7 +38,7 @@ export default function PulsePill() {
   const seenLoaded = useUserPrefsStatus() !== 'loading'
   const state = pulsePillState(data, seen, isPi, seenLoaded)
   const [open, setOpen] = useState(false)
-  const [tab, setTab] = useState<Tab>('pulse')
+  const [tab, setTab] = useState<PulseTab>('pulse')
   const rootRef = useRef<HTMLDivElement>(null)
   const pillRef = useRef<HTMLButtonElement>(null)
 
@@ -98,7 +96,7 @@ export default function PulsePill() {
             exit={{ y: -4 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
           >
-            <SegmentedToggle<Tab>
+            <SegmentedToggle<PulseTab>
               ariaLabel="Panel"
               idPrefix="pulse"
               options={[{ value: 'news', label: "What's new" }, { value: 'pulse', label: 'Lab pulse' }]}

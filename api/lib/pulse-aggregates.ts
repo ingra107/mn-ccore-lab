@@ -33,6 +33,7 @@ const BULK_SYNC_ROWS = 5
 
 export const PULSE_SQL = {
   // rule-90-aggregate-exempt: #156 (slugs only; which entity is never returned)
+  // activity-hidden-exempt: presence only (who posted in the last day); no body, thread or count of a dismissed thread is returned
   active: `SELECT tm.slug AS slug, MAX(a.at) AS last_at
      FROM (
        SELECT viewer_slug AS slug, last_seen_at AS at FROM entity_seen WHERE last_seen_at > ?1

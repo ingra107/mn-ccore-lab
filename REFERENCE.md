@@ -277,7 +277,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `src/components/HermesMark.tsx` | Mercury alchemical glyph for AI assistant; replaces lucide Sparkles (Phase 36d) |
 | `src/components/CategoryIcon.tsx` | Lungs/flask/heartbeat/cap glyphs for CLIF/Lab/Nate/Mentee (Phase 36d) |
 | `src/components/EmptyStateArt.tsx` | 8 lab-aesthetic line illustrations for empty states (Phase 36d) |
-| `src/components/PhaseReleaseBanner.tsx` | Dismissible "what shipped" banner with heartbeat thread (Phase 36d) |
+| `src/components/whatsnew/PulsePill.tsx` + `WhatsNewTab` / `LabPulseTab` / `DraftReleaseCard` / `AnnouncementComposer` | Top-bar What's new / Lab pulse pill (#156, replaced PhaseReleaseBanner 2026-10-26): approved release notes, Nick's announcements, active faces + lab-wide counts. Data `GET /api/pulse`; tables `hub_releases`, `hub_announcements` (v148) |
 | `src/components/RequireAuth.tsx` | Branded sign-in splash, extracted from App.tsx (Phase 36d) |
 | `src/components/pulse/PulseScene.tsx` + `PulseMetric.tsx` + `PulseSparkline.tsx` | Cinematic kiosk primitives (Phase 36d) |
 | `functions/og/[type]/[slug].ts` | Per-route SVG share cards; logic in `api/routes/og-card.ts` (project/team/meeting/artifact/default; logged-out callers see only public data, Phase 36d, gated 2026-10-08) |
