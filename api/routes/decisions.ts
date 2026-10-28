@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { contains } from '../lib/sql-contains';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
 export async function handleGetDecisions(url: URL, env: Env): Promise<Response> {
@@ -12,9 +13,11 @@ export async function handleGetDecisions(url: URL, env: Env): Promise<Response> 
   let query = 'SELECT * FROM hub_decisions WHERE 1=1';
   const params: string[] = [];
 
-  if (projectSlug) { query += ' AND (project_slug = ? OR linked_projects LIKE ?)'; params.push(projectSlug, `%${projectSlug}%`); }
+  // instr(), not LIKE: D1 refuses a LIKE pattern over 50 bytes, and a long
+  // project slug built into '%slug%' made this panel error or come back empty.
+  if (projectSlug) { query += ` AND (project_slug = ? OR ${contains('linked_projects')})`; params.push(projectSlug, projectSlug); }
   if (status) { query += ' AND outcome_status = ?'; params.push(status); }
-  if (tag) { query += ' AND ("," || tags || ",") LIKE ?'; params.push(`%,${tag},%`); }
+  if (tag) { query += ` AND ${contains(`',' || tags || ','`)}`; params.push(`,${tag},`); }
 
   query += ' ORDER BY created_at DESC';
 

@@ -3,7 +3,7 @@
  *
  * Finds shelved artifacts by the words INSIDE them and returns ids only, so
  * bodies never ride a list response. Covers: the empty query short-circuit, the
- * AND-across-terms shape, lowercasing, LIKE-wildcard escaping, the term cap,
+ * AND-across-terms shape, lowercasing, raw (wildcard-free) terms, the term cap,
  * and the curation gate that keeps untagged artifacts off the shelf.
  */
 
@@ -51,26 +51,26 @@ describe('GET /api/artifacts/search', () => {
     const db = makeDb();
     await handleSearchArtifacts(url('Sedation'), { DB: db } as unknown as Env);
     const { sql, binds } = db.calls[0];
-    expect(sql).toMatch(/LOWER\(a\.title\) LIKE \?/);
-    expect(sql).toMatch(/LOWER\(a\.body_md\) LIKE \?/);
-    expect(binds).toEqual(['%sedation%', '%sedation%']);
+    expect(sql).toContain('instr(lower(a.title), lower(?)) > 0');
+    expect(sql).toContain('instr(lower(a.body_md), lower(?)) > 0');
+    expect(binds).toEqual(['sedation', 'sedation']);
   });
 
   it('ANDs the terms so every word must appear somewhere', async () => {
     const db = makeDb();
     await handleSearchArtifacts(url('sedation protocol'), { DB: db } as unknown as Env);
     const { sql, binds } = db.calls[0];
-    expect(sql.match(/LOWER\(a\.title\)/g)).toHaveLength(2);
+    expect(sql.match(/lower\(a\.title\)/g)).toHaveLength(2);
     expect(sql).toContain(') AND (');
-    expect(binds).toEqual(['%sedation%', '%sedation%', '%protocol%', '%protocol%']);
+    expect(binds).toEqual(['sedation', 'sedation', 'protocol', 'protocol']);
   });
 
-  it('escapes LIKE wildcards so a literal % or _ matches itself', async () => {
+  it('binds the term raw: instr() has no wildcards, so % and _ match themselves', async () => {
     const db = makeDb();
     await handleSearchArtifacts(url('50%_x'), { DB: db } as unknown as Env);
     const { sql, binds } = db.calls[0];
-    expect(binds[0]).toBe('%50\\%\\_x%');
-    expect(sql).toContain("ESCAPE '\\'");
+    expect(binds[0]).toBe('50%_x');
+    expect(sql).not.toMatch(/LIKE|ESCAPE/i);
   });
 
   it('caps the number of terms', async () => {

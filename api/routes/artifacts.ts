@@ -15,6 +15,7 @@
 
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, resolveActor, isPiRequest } from '../helpers';
+import { contains } from '../lib/sql-contains';
 
 // ── id mint ───────────────────────────────────────────────────────────────────
 // 'art_'-prefixed random hex (mirrors the conceptual 'ae_' scheme in
@@ -182,11 +183,6 @@ export async function handleGetArtifactGallery(url: URL, env: Env): Promise<Resp
 const MAX_SEARCH_TERMS = 6;
 const MAX_TERM_LEN = 64;
 
-/** Escapes the LIKE wildcards so a literal % or _ in a query matches itself. */
-function likeTerm(term: string): string {
-  return `%${term.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
-}
-
 export async function handleSearchArtifacts(url: URL, env: Env): Promise<Response> {
   const raw = (url.searchParams.get('q') || '').trim().toLowerCase();
   const terms = raw.split(/\s+/).filter(Boolean).slice(0, MAX_SEARCH_TERMS)
@@ -197,12 +193,11 @@ export async function handleSearchArtifacts(url: URL, env: Env): Promise<Respons
   // the cost of a scan.
   if (terms.length === 0) return json({ data: [], count: 0 });
 
-  const clauses = terms.map(() => "(LOWER(a.title) LIKE ? ESCAPE '\\' OR LOWER(a.body_md) LIKE ? ESCAPE '\\')");
+  // instr(), not LIKE: a 64-char term is a pattern over D1's 50-byte LIKE cap,
+  // and instr() has no wildcards, so a literal % or _ matches itself.
+  const clauses = terms.map(() => `(${contains('a.title')} OR ${contains('a.body_md')})`);
   const binds: string[] = [];
-  for (const term of terms) {
-    const like = likeTerm(term);
-    binds.push(like, like);
-  }
+  for (const term of terms) binds.push(term, term);
 
   const query =
     'SELECT a.id FROM artifacts a ' +

@@ -4,11 +4,10 @@
 // (better-sqlite3 allows 50,000 bytes) and 500s on prod the first time a long
 // id or slug comes by: the cold review hit it on /api/activity, 2026-10-14.
 // No local run can see the limit, so these tests ban the shape: a LIKE or GLOB
-// pattern is a literal or a bound ?, never an expression.
+// pattern is a short literal, never an expression and never a bound ? (a bound
+// slug or search string is the same bug; see like-pattern-gate.test.ts).
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
 import { labFeedWhere, prepActivityWhere } from './activity-feed-types'
 import { prodSchemaDb, insertRow } from '../test-support/prod-schema-db'
 
@@ -19,7 +18,7 @@ function builtPatterns(sql: string): string[] {
     const rest = sql.slice((m.index ?? 0) + m[0].length)
     const lit = rest.match(/^'(?:[^']|'')*'/)
     const tail = lit ? rest.slice(lit[0].length) : rest
-    const ok = rest.startsWith('?') || (lit && !/^\s*\|\|/.test(tail))
+    const ok = lit && !/^\s*\|\|/.test(tail)
     if (!ok) bad.push(sql.slice(m.index, (m.index ?? 0) + m[0].length + 60))
   }
   return bad
@@ -36,22 +35,12 @@ describe('no LIKE pattern is built from a column', () => {
     expect(builtPatterns(`a.description LIKE '% ' || a.related_id || ' deleted'`)).toHaveLength(1)
     expect(builtPatterns(`p.author_slugs LIKE '%"' || tm.slug || '"%'`)).toHaveLength(1)
     expect(builtPatterns(`x LIKE y.col`)).toHaveLength(1)
-    expect(builtPatterns(`x LIKE 'Bulk sync%' AND y LIKE ?`)).toEqual([])
+    expect(builtPatterns(`x LIKE 'Bulk sync%' AND y LIKE 'PB capture:%'`)).toEqual([])
+    expect(builtPatterns(`x LIKE ?`)).toHaveLength(1)
   })
 
-  it('no SQL under api/ concatenates a LIKE pattern', () => {
-    const files = (readdirSync('api', { recursive: true }) as string[])
-      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && !f.includes('test-support'))
-    const hits: string[] = []
-    for (const f of files) {
-      const src = readFileSync(join('api', f), 'utf8')
-      // Source form: a literal pattern followed by ||, or a bare column/table.col.
-      for (const m of src.matchAll(/\b(?:LIKE|GLOB)\s+(?:'(?:[^'\n]|'')*'\s*\|\||[A-Za-z_][\w]*\.[A-Za-z_]\w*\b|[A-Za-z_]\w*\s*\|\|)/g)) {
-        hits.push(`${f}: ${m[0]}`)
-      }
-    }
-    expect(hits).toEqual([])
-  })
+  // The whole-api source scan, which also bans a bound `?`, lives in
+  // like-pattern-gate.test.ts.
 })
 
 describe('the feed rule on long ids', () => {

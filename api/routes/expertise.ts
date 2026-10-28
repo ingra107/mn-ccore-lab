@@ -25,8 +25,8 @@ export async function handleGetExpertise(url: URL, env: Env): Promise<Response> 
     bindings.push(slug);
   }
   if (tag) {
-    conditions.push('LOWER(tag) LIKE ?');
-    bindings.push(`%${tag.toLowerCase()}%`);
+    conditions.push('instr(LOWER(tag), LOWER(?)) > 0');
+    bindings.push(tag.toLowerCase());
   }
 
   if (conditions.length > 0) {

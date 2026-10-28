@@ -186,8 +186,29 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
     }
     return [Object.fromEntries(vals.map((v, i) => [i + 1, v]))]
   }
+  // D1 refuses a LIKE or GLOB pattern over 50 bytes ("LIKE or GLOB pattern too
+  // complex", https://developers.cloudflare.com/d1/platform/limits/);
+  // better-sqlite3 allows 50,000, so a route that binds `%${slug}%` passes
+  // every local test and fails on prod for a long slug (decisions panel,
+  // 2026-10-28). Enforce the cap here, on a bound `?` and on a literal. An
+  // expression pattern (`'%' || col`) has no static length; the source gate in
+  // api/lib/like-pattern-gate.test.ts bans that shape.
+  const D1_LIKE_PATTERN_MAX = 50
+  function assertLikePatternLimit(sql: string, vals: unknown[]) {
+    let slot = 0
+    for (const m of sql.matchAll(/'(?:[^']|'')*'|\?(?!\d)|\b(?:LIKE|GLOB)\s+(?:'((?:[^']|'')*)'|(\?))/gi)) {
+      if (m[0].startsWith("'")) continue // a string literal that is not a LIKE pattern
+      if (m[0] === '?') { slot += 1; continue }
+      if (m[2] === '?') slot += 1
+      const pattern = m[2] === '?' ? vals[slot - 1] : m[1]
+      if (typeof pattern === 'string' && new TextEncoder().encode(pattern).length > D1_LIKE_PATTERN_MAX) {
+        throw new Error('D1_ERROR: LIKE or GLOB pattern too complex: SQLITE_ERROR')
+      }
+    }
+  }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
     assertNoUndefined(vals)
+    assertLikePatternLimit(sql, vals)
     hooks.onExec?.(sql, vals)
     if (hooks.failSql && hooks.failSql.test(sql) && (hooks.failTimes ?? 0) > 0) {
       hooks.failTimes = (hooks.failTimes ?? 0) - 1

@@ -9,8 +9,8 @@
 // (src/lib/publicationCounts.ts::isMemberPublication) checks author_slugs first.
 
 /** WHERE fragment; bind memberSlugParam(slug) to its one `?`. */
-export const MEMBER_PUBLICATIONS_WHERE = 'author_slugs LIKE ?'
+export const MEMBER_PUBLICATIONS_WHERE = 'instr(lower(author_slugs), lower(?)) > 0'
 
 export function memberSlugParam(slug: string): string {
-  return `%${slug}%`
+  return slug
 }

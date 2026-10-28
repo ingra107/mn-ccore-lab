@@ -40,9 +40,9 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
     // Task completion stats by month (last 12 months)
     env.DB.prepare(`
       SELECT strftime('%Y-%m', completed_at) as month, COUNT(*) as completed
-      FROM tasks WHERE completed_by LIKE ? AND completed = 1 AND completed_at > datetime('now', '-12 months')
+      FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND completed_at > datetime('now', '-12 months')
       GROUP BY month ORDER BY month
-    `).bind(`%${slug}%`).all(),
+    `).bind(slug).all(),
 
     // Active projects this person is involved in (as assignee on tasks), each
     // with its home product's kind and stage (contract phase step 1). Finished
@@ -53,9 +53,9 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       SELECT DISTINCT p.id, p.title, p.slug, p.status, p.category, ${homeProductCols('p')}
       FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE t.assignee LIKE ? AND NOT ${projectDoneSql('p')}
+      WHERE instr(lower(t.assignee), lower(?)) > 0 AND NOT ${projectDoneSql('p')}
       ORDER BY p.title
-    `).bind(`%${slug}%`).all(),
+    `).bind(slug).all(),
 
     // Milestones on their projects: milestone tasks on a project they have a
     // task on (grant_milestones, keyed by a grant id that was never a project
@@ -65,9 +65,9 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       FROM tasks m
       JOIN projects p ON p.id = m.project_id
       WHERE m.kind = 'milestone' AND m.deleted_at IS NULL
-        AND EXISTS (SELECT 1 FROM tasks t WHERE t.project_id = p.id AND t.assignee LIKE ?)
+        AND EXISTS (SELECT 1 FROM tasks t WHERE t.project_id = p.id AND instr(lower(t.assignee), lower(?)) > 0)
       ORDER BY COALESCE(m.due_date, m.deadline)
-    `).bind(`%${slug}%`).all(),
+    `).bind(slug).all(),
 
     // Task metrics: total, completed, overdue, avg days to complete
     env.DB.prepare(`
@@ -77,8 +77,8 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
         SUM(CASE WHEN completed = 0 AND due_date IS NOT NULL AND due_date < date('now') THEN 1 ELSE 0 END) as overdue,
         AVG(CASE WHEN completed = 1 AND completed_at IS NOT NULL
           THEN julianday(completed_at) - julianday(created_at) ELSE NULL END) as avg_days_to_complete
-      FROM tasks WHERE assignee LIKE ?
-    `).bind(`%${slug}%`).all(),
+      FROM tasks WHERE instr(lower(assignee), lower(?)) > 0
+    `).bind(slug).all(),
 
     // Project velocity: each unfinished project with days on its home
     // product's current rung (the product's own stage clock). Finished =
@@ -90,9 +90,9 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
         CAST(julianday('now') - julianday(p.created_at) AS INTEGER) as total_days
       FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE t.assignee LIKE ? AND NOT ${projectDoneSql('p')}
+      WHERE instr(lower(t.assignee), lower(?)) > 0 AND NOT ${projectDoneSql('p')}
       ORDER BY days_in_stage DESC
-    `).bind(`%${slug}%`).all(),
+    `).bind(slug).all(),
   ]);
 
   // Extract task metrics from aggregate result

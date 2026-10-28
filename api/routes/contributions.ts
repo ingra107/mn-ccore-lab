@@ -14,30 +14,30 @@ export async function handleGetContributions(slug: string, url: URL, env: Env, v
   const [tasks, updates, comments, decisions, meetings, publications] = await Promise.all([
     // Tasks completed
     env.DB.prepare(
-      "SELECT id, title, description, project_id, completed_at, priority FROM tasks WHERE completed_by LIKE ? AND completed = 1 AND completed_at > ? ORDER BY completed_at DESC"
-    ).bind(`%${slug}%`, cutoff).all(),
+      "SELECT id, title, description, project_id, completed_at, priority FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND completed_at > ? ORDER BY completed_at DESC"
+    ).bind(slug, cutoff).all(),
 
     // Project updates authored (activity_entries kind='update', entity_type='project')
     env.DB.prepare(
-      "SELECT id, project_id AS project_id, body AS content, update_type, created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
-    ).bind(`%${slug}%`, cutoff).all(),
+      "SELECT id, project_id AS project_id, body AS content, update_type, created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL AND instr(lower(actor_slug), lower(?)) > 0 AND created_at > ? ORDER BY created_at DESC"
+    ).bind(slug, cutoff).all(),
 
     // Comments made (activity_entries kind='comment')
     env.DB.prepare(
       // entity_type != 'day' — a private morning thought is not a lab contribution
       // (§3.2; this read has no entity_type predicate, so day comments would inflate it).
-      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND entity_type != 'day' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
-    ).bind(`%${slug}%`, cutoff).all(),
+      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND entity_type != 'day' AND hidden_at IS NULL AND instr(lower(actor_slug), lower(?)) > 0 AND created_at > ? ORDER BY created_at DESC"
+    ).bind(slug, cutoff).all(),
 
     // Decisions involved in
     env.DB.prepare(
-      "SELECT id, title, rationale, outcome_status, created_at FROM hub_decisions WHERE decided_by LIKE ? AND created_at > ? ORDER BY created_at DESC"
-    ).bind(`%${slug}%`, cutoff).all(),
+      "SELECT id, title, rationale, outcome_status, created_at FROM hub_decisions WHERE instr(lower(decided_by), lower(?)) > 0 AND created_at > ? ORDER BY created_at DESC"
+    ).bind(slug, cutoff).all(),
 
     // Meetings attended (via agenda items added)
     env.DB.prepare(
-      "SELECT DISTINCT m.id, m.title, m.date FROM meetings m INNER JOIN agenda_items ai ON m.id = ai.meeting_id WHERE ai.added_by LIKE ? AND m.date > ? ORDER BY m.date DESC"
-    ).bind(`%${slug}%`, cutoff.split('T')[0]).all(),
+      "SELECT DISTINCT m.id, m.title, m.date FROM meetings m INNER JOIN agenda_items ai ON m.id = ai.meeting_id WHERE instr(lower(ai.added_by), lower(?)) > 0 AND m.date > ? ORDER BY m.date DESC"
+    ).bind(slug, cutoff.split('T')[0]).all(),
 
     // Publications in period. A publication row carries only its year, so a
     // paper counts only when its WHOLE year falls inside the window (year

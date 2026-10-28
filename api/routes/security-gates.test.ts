@@ -129,7 +129,7 @@ describe('handleGetSearch — UX-5 source isolation on partial failure', () => {
               // and "(pr.title LIKE" (it joins the home product, contract phase
               // step 1) — make it throw to simulate a D1 timeout on that table
               // while every other source succeeds.
-              if (/FROM projects pr/i.test(sql) && /\(pr\.title LIKE/i.test(sql)) {
+              if (/FROM projects pr/i.test(sql) && sql.includes('instr(lower(pr.title)')) {
                 throw new Error('simulated D1 timeout on projects')
               }
               // tasks query — return one hit so we can verify it comes through
@@ -177,6 +177,22 @@ describe('handleGetSearch — UX-5 source isolation on partial failure', () => {
     const body = await res.json() as { partial?: boolean; failedSources?: string[] }
     expect(body.partial).toBe(true)
     expect(body.failedSources).toContain('projects')
+  })
+
+  it('answers 500, not an empty 200, when every source throws', async () => {
+    // D1 refusing a LIKE pattern over 50 bytes failed all 14 sources and the
+    // route said "no matches" (partial:true, data:[]).
+    const allFailEnv: Env = {
+      DB: {
+        prepare: (_sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            all: async () => { throw new Error('D1_ERROR: LIKE or GLOB pattern too complex: SQLITE_ERROR') },
+          }),
+        }),
+      },
+    } as unknown as Env
+    const res = await handleGetSearch(new URL('https://x/api/search?q=anything'), allFailEnv, new Request('https://internal/search'))
+    expect(res.status).toBe(500)
   })
 
   it('omits partial/failedSources when all sources succeed', async () => {

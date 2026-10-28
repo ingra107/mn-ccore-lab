@@ -23,9 +23,9 @@ export async function handleGetPublications(url: URL, env: Env): Promise<Respons
   }
 
   if (topic) {
-    // topics is stored as JSON array, use LIKE for simple matching
-    query += ' AND topics LIKE ?';
-    params.push(`%"${topic}"%`);
+    // topics is stored as JSON array, use instr() for simple matching
+    query += ' AND instr(lower(topics), lower(?)) > 0';
+    params.push(`"${topic}"`);
   }
 
   query += ' ORDER BY year DESC, title ASC';

@@ -95,8 +95,8 @@ export async function handleGetDigest(url: URL, env: Env, viewerSlug: string | n
   }
 
   if (topic) {
-    query += ' AND rd.topics LIKE ?';
-    params.push(`%"${topic}"%`);
+    query += ' AND instr(lower(rd.topics), lower(?)) > 0';
+    params.push(`"${topic}"`);
   }
 
   // A tab count (the Unprocessed tab spans every date) wants the number, not

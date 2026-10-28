@@ -90,14 +90,14 @@ export async function handleCommitments(url: URL, env: Env): Promise<Response> {
 
   if (toWhom) {
     // Match partial — "Emma Bromley" or just "emma-bromley"
-    query += ' AND (LOWER(to_whom) LIKE ? OR LOWER(to_whom) LIKE ?)';
-    params.push(`%${toWhom.toLowerCase()}%`, `%${toWhom.toLowerCase()}%`);
+    query += ' AND (instr(LOWER(to_whom), LOWER(?)) > 0 OR instr(LOWER(to_whom), LOWER(?)) > 0)';
+    params.push(toWhom.toLowerCase(), toWhom.toLowerCase());
   }
   if (slug) {
     // Prefer exact to_slug match (populated since schema-v69); also keep
     // fuzzy to_whom fallback for rows written before the column existed.
-    query += ' AND (LOWER(to_slug) = ? OR LOWER(to_whom) LIKE ?)';
-    params.push(slug.toLowerCase(), `%${slug.toLowerCase()}%`);
+    query += ' AND (LOWER(to_slug) = ? OR instr(LOWER(to_whom), LOWER(?)) > 0)';
+    params.push(slug.toLowerCase(), slug.toLowerCase());
   }
   if (status) {
     query += ' AND status = ?';

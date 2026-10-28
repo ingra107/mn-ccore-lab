@@ -1,6 +1,6 @@
 import type { Env } from '../helpers';
 import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
-import { json } from '../helpers';
+import { json, error } from '../helpers';
 import { activityVisibilityGate } from '../lib/activity-entry';
 import { legacyEchoExclude } from '../lib/posted-activity';
 import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
@@ -121,7 +121,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
   // avoid HTTP 500 on pathologically large LIKE patterns (deep-audit 13.M).
   if (q.length > 200) return json({ data: [], count: 0, truncated: true });
 
-  const like = `%${q}%`;
+  const like = q // raw needle; every source tests it with instr(), never LIKE (D1 caps a LIKE pattern at 50 bytes);
   const limit = 15;
 
   // ── @me privacy gate for the activity_entries sources ─────────────────────
@@ -174,49 +174,49 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
 
   const settled = await Promise.allSettled([
     env.DB.prepare(
-      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} LIMIT ?`
+      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} LIMIT ?`
     ).bind(like, like, limit).all(),
     env.DB.prepare(
       `SELECT pr.slug, pr.title, pr.category, pr.pi, pr.description, pr.updated_at, ${homeProductCols('pr')}
          FROM projects pr ${homeProductJoin('pr')}
-        WHERE (pr.title LIKE ? OR pr.category LIKE ? OR pr.description LIKE ?) AND pr.deleted_at IS NULL LIMIT ?`
+        WHERE (instr(lower(pr.title), lower(?)) > 0 OR instr(lower(pr.category), lower(?)) > 0 OR instr(lower(pr.description), lower(?)) > 0) AND pr.deleted_at IS NULL LIMIT ?`
     ).bind(like, like, like, limit).all(),
     env.DB.prepare(
-      'SELECT id, title, date, type, notes FROM meetings WHERE (title LIKE ? OR notes LIKE ?) LIMIT ?'
+      'SELECT id, title, date, type, notes FROM meetings WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(notes), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, limit).all(),
     env.DB.prepare(
-      'SELECT id, title, description, submitted_by, status, created_at FROM ideas WHERE (title LIKE ? OR description LIKE ?) LIMIT ?'
+      'SELECT id, title, description, submitted_by, status, created_at FROM ideas WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, limit).all(),
     // Project comments → activity_entries kind='comment', entity_type='project'
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.hidden_at IS NULL AND instr(lower(ae.body), lower(?)) > 0 AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     env.DB.prepare(
-      `SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? AND ${legacyEchoExclude()} ORDER BY timestamp DESC LIMIT ?`
+      `SELECT id, type, description, actor, timestamp FROM activity_log WHERE instr(lower(description), lower(?)) > 0 AND ${legacyEchoExclude()} ORDER BY timestamp DESC LIMIT ?`
     ).bind(like, limit).all(),
     // Project notes (activity_entries kind='update', entity_type='project')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND instr(lower(ae.body), lower(?)) > 0 AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Task notes (activity_entries kind='update', entity_type='task')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='update' AND ae.hidden_at IS NULL AND instr(lower(ae.body), lower(?)) > 0 AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Task comments (activity_entries kind='comment', entity_type='task')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='comment' AND ae.hidden_at IS NULL AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='comment' AND ae.hidden_at IS NULL AND instr(lower(ae.body), lower(?)) > 0 AND ${vis.clause} LIMIT ?`
     ).bind(like, ...vis.binds, limit).all(),
     // Decisions
     env.DB.prepare(
-      'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM hub_decisions WHERE (title LIKE ? OR rationale LIKE ? OR context LIKE ? OR outcome LIKE ?) LIMIT ?'
+      'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM hub_decisions WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(rationale), lower(?)) > 0 OR instr(lower(context), lower(?)) > 0 OR instr(lower(outcome), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, like, like, limit).all(),
     // File attachments (each follows its entity through the handle).
     env.DB.prepare(
-      'SELECT id, filename, entity_type, entity_id, content_type, uploaded_by, created_at FROM file_attachments WHERE filename LIKE ? LIMIT ?'
+      'SELECT id, filename, entity_type, entity_id, content_type, uploaded_by, created_at FROM file_attachments WHERE instr(lower(filename), lower(?)) > 0 LIMIT ?'
     ).bind(like, limit).all(),
     // Publications
     env.DB.prepare(
-      'SELECT id, title, journal, year, authors, status, created_at FROM publications WHERE (title LIKE ? OR journal LIKE ? OR authors LIKE ? OR abstract LIKE ?) LIMIT ?'
+      'SELECT id, title, journal, year, authors, status, created_at FROM publications WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(journal), lower(?)) > 0 OR instr(lower(authors), lower(?)) > 0 OR instr(lower(abstract), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, like, like, limit).all(),
     // Grants: the grant products (applications, awards, honors) of the
     // projects the caller can see (the nih_grants cache was retired 2026-10-12).
@@ -227,12 +227,12 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
          JOIN product_kinds k ON k.kind = p.kind
          JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
         WHERE p.deleted_at IS NULL AND p.kind IN ('grant_application', 'award', 'honor')
-          AND (pr.title LIKE ? OR pr.short_name LIKE ? OR p.title LIKE ? OR p.short_name LIKE ? OR p.venue LIKE ?)
+          AND (instr(lower(pr.title), lower(?)) > 0 OR instr(lower(pr.short_name), lower(?)) > 0 OR instr(lower(p.title), lower(?)) > 0 OR instr(lower(p.short_name), lower(?)) > 0 OR instr(lower(p.venue), lower(?)) > 0)
         LIMIT ?`
     ).bind(like, like, like, like, like, limit).all(),
     // Artifacts (Hermes deliverables) — title + body markdown.
     env.DB.prepare(
-      'SELECT id, title, body_md, version, created_by, updated_at FROM artifacts WHERE (title LIKE ? OR body_md LIKE ?) LIMIT ?'
+      'SELECT id, title, body_md, version, created_by, updated_at FROM artifacts WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(body_md), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, limit).all(),
   ]);
 
@@ -248,6 +248,10 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     console.error(`[search] source "${SOURCE_NAMES[i]}" failed:`, outcome.reason);
     return { results: [] };
   });
+
+  // Every source failing is an outage, not "no matches": an empty 200 here
+  // hid D1's LIKE-pattern limit as a search that found nothing.
+  if (failedSources.length === SOURCE_NAMES.length) return error('Search failed: every source errored', 500);
 
   const results: ScoredResult[] = [];
 
