@@ -130,10 +130,41 @@ describe('Obsidian vault markdown classification', () => {
     expect(c.href).toBe('mnccore://obsidian/Projects/clif/PROJECT')
   })
 
-  it('classifyUrl still treats a non-vault .md path as a plain folder open', () => {
+  it('classifyUrl opens the parent folder for a non-vault .md (open refuses files)', () => {
     const c = classifyUrl('C:/Users/ingra107/Box/Research/notes.md')
     expect(c.typeLabel).toBe('Folder')
-    expect(c.href).toBe('mnccore://open/C:/Users/ingra107/Box/Research/notes.md')
+    expect(c.href).toBe('mnccore://open/C:/Users/ingra107/Box/Research')
+  })
+
+  it('classifyUrl sends a Box .docx file URL to mnccore://file/', () => {
+    const c = classifyUrl(
+      'file:///C:/Users/ingra107/Box/Research/CLIF_nicks%20folder/.other_clif_projects/2026_Barker_NMBA/CLIF_paralytics_AJRCCM_10_22.docx',
+    )
+    expect(c.typeLabel).toBe('Document')
+    expect(c.href).toBe(
+      'mnccore://file/C:/Users/ingra107/Box/Research/CLIF_nicks%20folder/.other_clif_projects/2026_Barker_NMBA/CLIF_paralytics_AJRCCM_10_22.docx',
+    )
+  })
+
+  it('classifyUrl encodes spaces in a Box .pdf and the handler decode round-trips', () => {
+    const c = classifyUrl('C:/Users/ingra/Box/My Folder/Final Report.pdf')
+    expect(c.typeLabel).toBe('Document')
+    expect(c.href).toBe('mnccore://file/C:/Users/ingra/Box/My%20Folder/Final%20Report.pdf')
+    expect(decodeURIComponent(c.href.slice('mnccore://file/'.length))).toBe(
+      'C:/Users/ingra/Box/My Folder/Final Report.pdf',
+    )
+  })
+
+  it('classifyUrl opens the parent folder for a .docx outside Box', () => {
+    const c = classifyUrl('C:/Temp/drafts/paper.docx')
+    expect(c.typeLabel).toBe('Folder')
+    expect(c.href).toBe('mnccore://open/C:/Temp/drafts')
+  })
+
+  it('classifyUrl leaves a folder with a dot in its name as a folder open', () => {
+    const c = classifyUrl('C:/Users/ingra107/Box/Research/Study v1.2')
+    expect(c.typeLabel).toBe('Folder')
+    expect(c.href).toBe('mnccore://open/C:/Users/ingra107/Box/Research/Study v1.2')
   })
 
   it('shortLabelForUrl labels a vault note as "Obsidian · <name>"', () => {

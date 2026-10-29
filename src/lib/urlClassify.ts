@@ -6,13 +6,13 @@
  * and href rewriting for Box folder paths, .bat scripts, etc.
  */
 
-import { BookText, ExternalLink, FolderOpen, Mail, Play } from 'lucide-react'
+import { BookText, ExternalLink, FileText, FolderOpen, Mail, Play } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface ClassifiedUrl {
   href: string
   Icon: LucideIcon
-  typeLabel: 'Link' | 'Script' | 'Folder' | 'Obsidian' | 'Gmail'
+  typeLabel: 'Link' | 'Script' | 'Folder' | 'Document' | 'Obsidian' | 'Gmail'
   isHttp: boolean
 }
 
@@ -167,6 +167,22 @@ export function classifyUrl(url: string): ClassifiedUrl {
         isHttp: false,
       }
     }
+    // A document the handler's `file` verb can start (.docx/.pdf/.xlsx under the
+    // user's Box folder) opens the document. `open` refuses a file ("target is not
+    // a directory"), which is why these links did nothing before.
+    if (isHandlerFilePath(normalized)) {
+      return { href: buildOpenFileUri(normalized), Icon: FileText, typeLabel: 'Document', isHttp: false }
+    }
+    // Any other FILE (a .md outside the vault, a .csv, ...) opens its parent
+    // folder: `open` is directories-only, and the folder is where the file is.
+    if (looksLikeFile(normalized)) {
+      return {
+        href: buildOpenFolderUri(normalized.replace(/\/[^/]*$/, '')),
+        Icon: FolderOpen,
+        typeLabel: 'Folder',
+        isHttp: false,
+      }
+    }
     return {
       href: buildOpenFolderUri(url),
       Icon: FolderOpen,
@@ -188,6 +204,28 @@ export function classifyUrl(url: string): ClassifiedUrl {
  */
 export function buildWorkOnUri(folderPath: string): string {
   return `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`
+}
+
+/** Extensions scripts/mnccore_handler.py FILE_EXTS lets `mnccore://file/` start. */
+const HANDLER_FILE_EXTS = /\.(docx|pdf|xlsx)$/i
+/** The handler only starts files under %USERPROFILE%\Box\ (work and home users). */
+const BOX_FILE_RE = /^[A-Za-z]:\/Users\/[^/]+\/Box\//i
+/** Common file extensions; a folder name like "Study v1.2" is not in this list. */
+const OTHER_FILE_EXTS =
+  /\.(md|txt|csv|tsv|json|html?|rtf|docm?|xlsm?|xls|pptx?|png|jpe?g|gif|zip|r|rmd|qmd|py|sql|bib|tex)$/i
+
+/** True when a normalized path is a document the handler `file` verb accepts. */
+export function isHandlerFilePath(normalizedPath: string): boolean {
+  return HANDLER_FILE_EXTS.test(normalizedPath) && BOX_FILE_RE.test(normalizedPath)
+}
+
+function looksLikeFile(normalizedPath: string): boolean {
+  return HANDLER_FILE_EXTS.test(normalizedPath) || OTHER_FILE_EXTS.test(normalizedPath)
+}
+
+/** `mnccore://file/<encoded path>`; the handler decodes once (same as member links). */
+export function buildOpenFileUri(filePath: string): string {
+  return `mnccore://file/${encodeLocalFolderPath(filePath)}`
 }
 
 /** Build `mnccore://open/<folder>` for an Explorer open of a local path. */
