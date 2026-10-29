@@ -8,6 +8,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -102,6 +104,71 @@ describe('run-journey-spec.mjs --gate', () => {
     assert.equal(p.persist, null)
     assert.equal(p.viteCmd, 'vite --port 5173 --strictPort')
     assert.ok(!p.wranglerCmd.includes('--persist-to'))
+  })
+})
+
+describe('run-journey-spec.mjs keeps the stack log of a failed run (#8995)', () => {
+  // A stand-in for wrangler+vite+Playwright: prints what the 2026-10-22 run
+  // printed, on both streams, and exits with the given code.
+  function runWithStack(exitCode) {
+    const dir = mkdtempSync(join(tmpdir(), 'journey-stack-'))
+    const stack = join(dir, 'stack.mjs')
+    writeFileSync(stack,
+      "console.log('[0] PUT /api/user-prefs/dashboard.layout.primary 500')\n" +
+      "console.error('[0] D1_ERROR: internal error; reference = testref123')\n" +
+      `process.exitCode = ${exitCode}\n`)
+    try {
+      return spawnSync(process.execPath, ['scripts/run-journey-spec.mjs', SPEC], {
+        cwd: ROOT, encoding: 'utf8', env: { ...process.env, HUB_JOURNEY_TEST_STACK: stack },
+      })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  }
+  const keptLog = (stderr) => /log is kept at (\S+\.log)/.exec(stderr)?.[1]
+
+  it('dry-run names the per-run log under .wrangler/journey-gate/logs', () => {
+    assert.match(dryRun('--gate').log, /^\.wrangler\/journey-gate\/logs\/run-\d+\.log$/)
+  })
+
+  it('a failing run exits non-zero, keeps the log with the wrangler output in it, and names it', () => {
+    const r = runWithStack(3)
+    assert.equal(r.status, 3, r.stderr)
+    assert.match(r.stdout, /dashboard\.layout\.primary 500/) // still reaches the terminal
+    const path = keptLog(r.stderr)
+    assert.ok(path, `no kept-log line in stderr: ${r.stderr}`)
+    try {
+      const text = readFileSync(path, 'utf8')
+      assert.match(text, /internal error; reference = testref123/)
+      assert.match(text, /dashboard\.layout\.primary 500/)
+    } finally {
+      rmSync(path, { force: true })
+    }
+  })
+
+  it('--gate refuses HUB_JOURNEY_TEST_STACK: a stand-in can never pass the deploy gate', () => {
+    // A stack that would "pass": if the gate ran it, this test sees exit 0.
+    const dir = mkdtempSync(join(tmpdir(), 'journey-stack-'))
+    const stack = join(dir, 'stack.mjs')
+    writeFileSync(stack, 'process.exitCode = 0\n')
+    try {
+      const r = spawnSync(process.execPath, ['scripts/run-journey-spec.mjs', '--gate', SPEC], {
+        cwd: ROOT, encoding: 'utf8', env: { ...process.env, HUB_JOURNEY_TEST_STACK: stack },
+      })
+      assert.equal(r.status, 2, r.stderr)
+      assert.match(r.stderr, /refuses to run a stand-in stack/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('a passing run deletes its log and prints no kept-log line', () => {
+    const r = runWithStack(0)
+    assert.equal(r.status, 0, r.stderr)
+    assert.equal(keptLog(r.stderr), undefined)
+    const logs = join(ROOT, '.wrangler/journey-gate/logs')
+    const mine = existsSync(logs) ? readdirSync(logs).filter((f) => f === `run-${r.pid}.log`) : []
+    assert.deepEqual(mine, [])
   })
 })
 
