@@ -175,7 +175,8 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
   // The bind count must equal the highest ordinal, so an extra or missing
   // value throws here as a plain `?` list does. Limits: the scan is textual
   // (a `?3` inside a string literal counts), and a statement mixing `?` with
-  // `?NNN` is not supported (none exists in api/).
+  // `?NNN` is not supported (none exists in api/), and neither is a gapped
+  // list (`?100` alone: better-sqlite3 cannot bind the unnamed ?1..?99, D1 can).
   const ORDERED_PARAM = /\?(\d+)/g
   function engineArgs(sql: string, vals: unknown[]): unknown[] {
     const ordinals = [...sql.matchAll(ORDERED_PARAM)].map((m) => Number(m[1]))
@@ -206,8 +207,45 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
       }
     }
   }
+  // D1 refuses a statement with more than 100 bound parameters
+  // (https://developers.cloudflare.com/d1/platform/limits/); better-sqlite3
+  // allows 32,766, so an unchunked `IN (?, ?, ...)` over a long list passes
+  // every local test and fails on prod. SQLite's own rule under a variable
+  // limit of 100, with workerd's text and offset (measured on miniflare
+  // 4.20260415, 2026-10-28): a plain `?` numbered past 100 gives
+  //   "D1_ERROR: too many SQL variables at offset <byte offset of that ?>: SQLITE_ERROR"
+  // and a `?NNN` over 100 gives
+  //   "D1_ERROR: variable number must be between ?1 and ?100 at offset <byte offset>: SQLITE_ERROR".
+  // Offsets are UTF-8 bytes, as workerd reports them. The scan skips what
+  // SQLite's tokenizer never reads a parameter from: '...' strings, "...",
+  // `...` and [...] identifiers, `--` line comments and /* */ block comments.
+  // `:name` / `@name` / `$name` parameters are not counted (none exists in api/).
+  const D1_MAX_BOUND_PARAMETERS = 100
+  const NOT_A_PARAMETER = /'(?:[^']|'')*'|"(?:[^"]|"")*"|`(?:[^`]|``)*`|\[[^\]]*\]|--[^\n]*|\/\*[\s\S]*?\*\//
+  const PARAMETER_SCAN = new RegExp(`${NOT_A_PARAMETER.source}|\\?(\\d*)`, 'g')
+  function assertBoundParameterLimit(sql: string) {
+    let nVar = 0
+    for (const m of sql.matchAll(PARAMETER_SCAN)) {
+      if (m[0][0] !== '?') continue
+      const offset = new TextEncoder().encode(sql.slice(0, m.index)).length
+      let x: number
+      if (m[1] === '') {
+        x = ++nVar
+      } else {
+        x = Number(m[1])
+        if (x < 1 || x > D1_MAX_BOUND_PARAMETERS) {
+          throw new Error(`D1_ERROR: variable number must be between ?1 and ?${D1_MAX_BOUND_PARAMETERS} at offset ${offset}: SQLITE_ERROR`)
+        }
+        nVar = Math.max(nVar, x)
+      }
+      if (x > D1_MAX_BOUND_PARAMETERS) {
+        throw new Error(`D1_ERROR: too many SQL variables at offset ${offset}: SQLITE_ERROR`)
+      }
+    }
+  }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
     assertNoUndefined(vals)
+    assertBoundParameterLimit(sql)
     assertLikePatternLimit(sql, vals)
     hooks.onExec?.(sql, vals)
     if (hooks.failSql && hooks.failSql.test(sql) && (hooks.failTimes ?? 0) > 0) {
