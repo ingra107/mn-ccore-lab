@@ -206,8 +206,41 @@ export function d1Adapter(db: InstanceType<typeof Database>, hooks: {
       }
     }
   }
+  // D1 refuses a statement with more than 100 bound parameters
+  // (https://developers.cloudflare.com/d1/platform/limits/); better-sqlite3
+  // allows 32,766, so an unchunked `IN (?, ?, ...)` over a long list passes
+  // every local test and fails on prod. SQLite's own rule under a variable
+  // limit of 100, with workerd's text and offset (measured on miniflare
+  // 4.20260415, 2026-10-28): a plain `?` numbered past 100 gives
+  //   "D1_ERROR: too many SQL variables at offset <index of that ?>: SQLITE_ERROR"
+  // and a `?NNN` over 100 gives
+  //   "D1_ERROR: variable number must be between ?1 and ?100 at offset <index>: SQLITE_ERROR".
+  // The scan skips quoted strings and identifiers; a `?` inside a comment
+  // counts (none exists in api/), and `:name` / `@name` / `$name` parameters
+  // are not counted (none exists in api/).
+  const D1_MAX_BOUND_PARAMETERS = 100
+  function assertBoundParameterLimit(sql: string) {
+    let nVar = 0
+    for (const m of sql.matchAll(/'(?:[^']|'')*'|"(?:[^"]|"")*"|\?(\d*)/g)) {
+      if (m[0][0] !== '?') continue
+      let x: number
+      if (m[1] === '') {
+        x = ++nVar
+      } else {
+        x = Number(m[1])
+        if (x < 1 || x > D1_MAX_BOUND_PARAMETERS) {
+          throw new Error(`D1_ERROR: variable number must be between ?1 and ?${D1_MAX_BOUND_PARAMETERS} at offset ${m.index}: SQLITE_ERROR`)
+        }
+        nVar = Math.max(nVar, x)
+      }
+      if (x > D1_MAX_BOUND_PARAMETERS) {
+        throw new Error(`D1_ERROR: too many SQL variables at offset ${m.index}: SQLITE_ERROR`)
+      }
+    }
+  }
   function exec(sql: string, vals: unknown[], mode: 'all' | 'run') {
     assertNoUndefined(vals)
+    assertBoundParameterLimit(sql)
     assertLikePatternLimit(sql, vals)
     hooks.onExec?.(sql, vals)
     if (hooks.failSql && hooks.failSql.test(sql) && (hooks.failTimes ?? 0) > 0) {
