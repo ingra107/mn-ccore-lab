@@ -39,7 +39,11 @@ export function useLabFacts() {
     // Newest first; a stable sort keeps the API's order inside a year.
     const recent = [...published].sort((a, b) => b.year - a.year)
     const featured = recent.filter((p) => p.featured)
-    const activeGrants = (grantRows ?? []).filter((g) => g.bucket === 'active')
+    // Only grants with a named funding agency count toward the public
+    // "Funded by X through N grants" line: an award row with no agency (the
+    // ATS Early Career Award) made it read "2 active grants (K23)". Nick,
+    // 2026-10-30: "NHLBI only".
+    const activeGrants = (grantRows ?? []).filter((g) => g.bucket === 'active' && !!agencyOf(g.venue))
     return {
       loaded: publications !== undefined,
       papers: publications ? countPublications(list).published : null,
