@@ -17,7 +17,10 @@ import type { Context, Hono } from 'hono'
 import { projectAnonResponse, type AnonRowFilter, type AnonShape } from './anon-shape'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
-export type AuthLevel = 'public' | 'authed' | 'pi'
+// 'watcher' (schema-v151): reachable ONLY by the mail watcher's own key
+// (MAIL_WATCHER_KEY), and that key reaches nothing else. bindRegistryToHono
+// decides both halves from the matched route's metadata.
+export type AuthLevel = 'public' | 'authed' | 'pi' | 'watcher'
 
 // Canonical entity taxonomy. Add a new value here before declaring the first
 // route that maps to it — the generated test (Z1.4) asserts every non-public
@@ -77,6 +80,7 @@ export type EntityName =
   | 'decision-replay'
   | 'proactive-brief'
   | 'links'
+  | 'mail-watch'
   | 'misc'
 
 interface RouteMetadataBase {
@@ -141,6 +145,7 @@ const VALID_AUTH: ReadonlySet<AuthLevel> = new Set<AuthLevel>([
   'public',
   'authed',
   'pi',
+  'watcher',
 ])
 
 export const ROUTE_REGISTRY: RouteMetadata[] = []
@@ -148,7 +153,7 @@ export const ROUTE_REGISTRY: RouteMetadata[] = []
 export function defineRoute(meta: RouteMetadata): RouteMetadata {
   if (!VALID_AUTH.has(meta.auth)) {
     throw new Error(
-      `auth must be one of public|authed|pi, got "${meta.auth}" for ${meta.method} ${meta.path}`,
+      `auth must be one of public|authed|pi|watcher, got "${meta.auth}" for ${meta.method} ${meta.path}`,
     )
   }
   // The load-time half of the type rule, for callers that cast past it. Read
@@ -246,8 +251,11 @@ export function bindOrder(routes: readonly RouteMetadata[]): RouteMetadata[] {
  *                  no team_members row.
  *   - 'anonymous'  auth is enforced and the caller has neither a session nor
  *                  a valid API key.
+ *   - 'watcher'    the mail watcher's key (MAIL_WATCHER_KEY). It reaches a
+ *                  route with auth 'watcher' and nothing else; no other caller
+ *                  reaches such a route.
  */
-export type CallerKind = 'member' | 'non-member' | 'anonymous'
+export type CallerKind = 'member' | 'non-member' | 'anonymous' | 'watcher'
 
 export interface RouteGate {
   // Method syntax on purpose: api/index.ts passes handlers typed for its own
@@ -310,7 +318,14 @@ export function bindRegistryToHono(app: Hono<any>, gate: RouteGate): void {
       // Read by the version-bump middleware in api/index.ts after the handler runs.
       if (noVersionBump) c.set('noVersionBump', true)
       const kind = gate.callerKind(c)
+      // The watcher's key and the watcher's routes are a closed pair: a
+      // watcher route answers only the watcher, the watcher reaches only one.
+      if ((route.auth === 'watcher') !== (kind === 'watcher')) {
+        return kind === 'non-member' ? gate.denyNonMember(c) : gate.deny(c)
+      }
       switch (kind) {
+        case 'watcher':
+          return route.handler(c)
         case 'member':
           return route.handler(c)
         case 'non-member':

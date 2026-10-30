@@ -84,7 +84,7 @@ describe('version bump', () => {
     expect(version()).not.toBe('1')
   })
 
-  it('only the read-receipt, error-report, Hermes claim and release-intake routes opt out', () => {
+  it('only the read-receipt, error-report, Hermes claim, release-intake and mail-watcher routes opt out', () => {
     const optOut = ROUTE_REGISTRY.filter((r) => r.noVersionBump).map((r) => `${r.method} ${r.path}`).sort()
     expect(optOut).toEqual([
       'POST /api/ai-requests/:id/alert-sent',
@@ -102,6 +102,11 @@ describe('version bump', () => {
       'POST /api/releases/:id',
       'POST /api/seen',
       'POST /api/thread-seen',
+      // schema-v151: the mail watcher writes only Nick's private evidence; his
+      // Today card polls the snapshot itself, so no member's tab refetches.
+      'POST /api/watcher/runs',
+      'POST /api/watcher/runs/:id/alert',
+      'POST /api/watcher/runs/:id/close',
     ])
   })
 })

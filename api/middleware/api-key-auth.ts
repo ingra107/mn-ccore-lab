@@ -34,3 +34,21 @@ export function validateApiKey(request: Request, env: { PB_API_KEY?: string }): 
 
   return false;
 }
+
+/**
+ * True when the request carries the mail watcher's key (schema-v151) as
+ * `Authorization: Bearer <MAIL_WATCHER_KEY>`. Bearer only (no X-API-Key form).
+ * A watcher key equal to PB_API_KEY is a misconfiguration and matches nothing,
+ * so the watcher can never be mistaken for the all-powerful PB key or the
+ * reverse. Where this is true, api/index.ts makes the caller kind 'watcher',
+ * which reaches only the auth:'watcher' routes (route-dsl.ts).
+ */
+export function isMailWatcherKey(
+  request: Request, env: { PB_API_KEY?: string; MAIL_WATCHER_KEY?: string },
+): boolean {
+  const key = env.MAIL_WATCHER_KEY
+  if (!key || key === env.PB_API_KEY) return false
+  if (request.headers.get("X-API-Key")) return false
+  const [scheme, value] = (request.headers.get("Authorization") ?? "").split(" ")
+  return scheme === "Bearer" && value === key
+}

@@ -18,7 +18,7 @@ import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
 import type { HttpMethod, CallerKind } from './lib/route-dsl';
 import type { AnonRowFilter, AnonShape } from './lib/anon-shape';
 import type { AuthUser } from './helpers';
-import { validateApiKey } from './middleware/api-key-auth';
+import { validateApiKey, isMailWatcherKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { ctToday } from './lib/ct-date';
 import { nowInstant } from './lib/time';
@@ -103,6 +103,8 @@ import { withErrorLedger, logServerError } from './lib/error-ledger';
 import { testDbRequested } from './lib/test-mode';
 import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
+import { handleOpenRun, handleCloseRun, handleAlertReport, handleSnapshot } from './routes/mail-watch';
+import { checkMailWatcherAlarm } from './lib/mail-watch-alarm';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
@@ -294,6 +296,17 @@ app.use('*', async (c, next) => {
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('*', async (c, next) => {
   const env = c.get('env');
+  // The mail watcher's key (schema-v151) is its own caller kind. It is not an
+  // API key and not a person: it reaches only auth:'watcher' routes, and those
+  // routes answer nobody else (bindRegistryToHono). Its handle is nobody's.
+  if (isMailWatcherKey(c.req.raw, env)) {
+    c.set('apiKeyValid', false);
+    c.set('authedUser', null);
+    c.set('user', { email: 'mail-watcher', name: 'Mail watcher', slug: 'mail-watcher' });
+    c.set('callerKind', 'watcher');
+    await next();
+    return;
+  }
   const result = validateApiKey(c.req.raw, env);
   if (result === false) {
     return new Response('Unauthorized', { status: 401, headers: corsHeaders });
@@ -401,7 +414,8 @@ app.use('*', async (c, next) => {
   const authedUser = c.get('authedUser');
   const hasApiKey = c.get('apiKeyValid') === true;
   const requireAuth = authEnforced(env);
-  if (requireAuth && !authedUser && !hasApiKey) {
+  // The watcher passes here and is held to its own routes by bindRegistryToHono.
+  if (requireAuth && !authedUser && !hasApiKey && c.get('callerKind') !== 'watcher') {
     return error('Authentication required', 401);
   }
   // `user` was set by the first middleware (authed / PB service / anonymous,
@@ -443,7 +457,10 @@ app.use('/api/*', async (c, next) => {
   const pi = await isPiRequest(c.req.raw, env);
   c.set('isPi', pi);
   const authed = c.get('authedUser');
-  const viewer: Viewer = c.get('apiKeyValid') === true
+  // The mail watcher (schema-v151) reads on the service handle: it reaches only
+  // the auth:'watcher' routes (bindRegistryToHono), which read open tasks'
+  // thread ids and write only the watcher's own tables.
+  const viewer: Viewer = c.get('apiKeyValid') === true || c.get('callerKind') === 'watcher'
     ? serviceViewer()
     : authed && c.get('callerKind') === 'member'
       ? personViewer({ slug: authed.slug, email: authed.email, pi, allProjects: c.req.header(ALL_PROJECTS_HEADER) === '1' })
@@ -3120,6 +3137,47 @@ defineRoute({
   handler: (c) => handleHubErrorsWeekly(R(c), E(c)),
 });
 
+// The mail watcher (schema-v151, api/routes/mail-watch.ts). The three
+// auth:'watcher' routes answer only MAIL_WATCHER_KEY, and that key reaches
+// nothing else (bindRegistryToHono). They write only the watcher's tables.
+defineRoute({
+  method: 'POST',
+  path: '/api/watcher/runs',
+  auth: 'watcher',
+  entity: 'mail-watch',
+  noVersionBump: true,
+  handler: (c) => handleOpenRun(R(c), E(c).DB),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/watcher/runs/:id/close',
+  auth: 'watcher',
+  entity: 'mail-watch',
+  noVersionBump: true,
+  handler: (c) => handleCloseRun(c.req.param('id'), R(c), E(c).DB),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/watcher/runs/:id/alert',
+  auth: 'watcher',
+  entity: 'mail-watch',
+  noVersionBump: true,
+  handler: (c) => handleAlertReport(c.req.param('id'), R(c), E(c).DB),
+});
+// Nick only: his signed-in session (the site admin with the PI flag) or the PB
+// key. A second PI does not read Nick's mail. The table rules (table-scope.ts
+// nickOnly) say the same thing one layer down.
+defineRoute({
+  method: 'GET',
+  path: '/api/mail-watch/snapshot',
+  auth: 'pi',
+  entity: 'mail-watch',
+  handler: (c) => handleSnapshot(
+    E(c).DB,
+    SERVICE(c) || (c.get('callerKind') === 'member' && isSiteAdmin({ slug: USER(c).slug, pi: PI(c) })),
+  ),
+});
+
 // 404 fallback.
 // Hono's default 404 returns a text "404 Not Found" response — override so
 // clients get the same { error: "Not found" } JSON shape they got before.
@@ -3154,7 +3212,7 @@ app.notFound(() => error('Not found', 404));
 // - scheduled: dispatches by event.cron (explicit switch — each cron fires exactly
 //   one handler):
 //     "0 * * * *"      → ledger prune (all LEDGER_REGISTRY tables) + D1 health monitor
-//                         + calendar feed poller (iCal hourly, 24/day)
+//                         + mail watcher dead-man alarm + calendar feed poller (iCal hourly, 24/day)
 //     "0 13 * * 1-5"   → morning pulse email (weekday 7 AM CT)
 //     "0 11 * * *"     → coordinator daily digest (6 AM CT every day)
 //   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
@@ -3204,6 +3262,15 @@ export default withErrorLedger<Env>({
           await monitorD1Health(env.DB, pruneResults)
         } catch (e) {
           console.error('[D1Health] monitor failed (non-fatal):', (e as Error).message)
+        }
+
+        // Mail watcher dead-man alarm (schema-v151): one Telegram per outage,
+        // ping hours only. Non-fatal: a failure never blocks the calendar poll.
+        try {
+          const alarm = await checkMailWatcherAlarm(env.DB, env, Date.now())
+          if (alarm.raised) console.log(`[MailWatch] alarm raised, sent=${alarm.sent}${alarm.error ? ` error=${alarm.error}` : ''}`)
+        } catch (e) {
+          console.error('[MailWatch] alarm check failed (non-fatal):', (e as Error).message)
         }
 
         console.log('[CalendarCron] Starting iCal feed poll...')

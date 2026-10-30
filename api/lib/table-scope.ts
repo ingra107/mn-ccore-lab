@@ -50,7 +50,7 @@ export const HUB_TABLES = [
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
   'file_attachments', 'hub_announcements', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'hub_releases', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations',
-  'lab_settings', 'launch_log', 'link_kinds', 'links', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
+  'lab_settings', 'launch_log', 'link_kinds', 'links', 'mail_messages', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
@@ -59,7 +59,8 @@ export const HUB_TABLES = [
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
   'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
-  'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watchlist', 'workflow_templates',
+  'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watch_alarms', 'watch_run_threads', 'watch_runs', 'watch_threads',
+  'watchlist', 'workflow_templates',
 ] as const
 
 export type HubTable = (typeof HUB_TABLES)[number]
@@ -268,6 +269,15 @@ function entityVisible(v: ScopedViewer, typeCol: string, idCol: string, extra: R
 
 const ALL_PARENTS: readonly HubTable[] = ['meetings', 'projects', 'tasks']
 
+/** Nick's slug. Equal to viewer-db's SITE_ADMIN_SLUG (table-scope.mail-watch.test.ts
+ *  pins it); written out because viewer-db imports this module. */
+export const MAIL_OWNER_SLUG = 'nick-ingraham'
+
+/** Nick's own rows: his signed-in session with the PI flag, and no one else. */
+function nickOnly(v: ScopedViewer): string | null {
+  return v.kind === 'person' && v.pi && v.slug === MAIL_OWNER_SLUG ? null : '0'
+}
+
 export const TABLE_SCOPE: Record<HubTable, Scope> = {
   meetings: { kind: 'scoped', key: 'id', dependsOn: [], where: meetingRule },
   // Error text (schema-v123) can carry SQL, paths and other members' input.
@@ -275,6 +285,15 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // viewer, so only a raw handle (the PB key's service viewer, and the
   // ledger's own flush in api/lib/error-ledger.ts) sees the table.
   hub_errors: { kind: 'scoped', key: ['fingerprint', 'day'], dependsOn: [], where: () => '0' },
+  // The mail watcher's evidence (schema-v151): excerpts of collaborators'
+  // mail to Nick. Nick alone reads a row; every other person and nobody read
+  // none. The PB key (service viewer) and the watcher's own routes use the raw
+  // handle. Not the PI flag: a second PI must not read Nick's mail.
+  mail_messages: { kind: 'scoped', key: 'message_id', dependsOn: [], where: nickOnly },
+  watch_runs: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
+  watch_run_threads: { kind: 'scoped', key: ['run_id', 'thread_id'], dependsOn: [], where: nickOnly },
+  watch_threads: { kind: 'scoped', key: 'thread_id', dependsOn: [], where: nickOnly },
+  watch_alarms: { kind: 'scoped', key: 'missed_slot_at', dependsOn: [], where: nickOnly },
   // What's new releases (schema-v148, #156). A draft is Nick's until he
   // approves it: a PI reads every row, anyone else only approved ones. The
   // PB key (service viewer) gets the raw handle, so the deploy step sees the

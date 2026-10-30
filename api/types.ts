@@ -12,6 +12,15 @@ export interface Env {
   DIGEST_RECIPIENTS?: string;
   NOTIFICATION_HUB?: DurableObjectNamespace;
   PB_API_KEY?: string;
+  /** The mail watcher's key (schema-v151). Reaches only the auth:'watcher'
+   *  routes (api/lib/route-dsl.ts); every other route refuses it. Set on the
+   *  Pages project only; the watcher never calls the Worker. */
+  MAIL_WATCHER_KEY?: string;
+  /** The dead-watcher alarm's Telegram sender (api/lib/telegram.ts). Set on
+   *  the Worker only, which runs the hourly cron. Unset = the alarm is recorded
+   *  with send_error 'telegram_not_configured' and shown on the Today card. */
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_CHAT_ID?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
   /** "1" in prod. No longer needed to enforce sign-in (a missing value now

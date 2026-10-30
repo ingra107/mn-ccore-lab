@@ -87,6 +87,26 @@ export const LEDGER_REGISTRY: readonly LedgerEntry[] = [
       'Hub error ledger (schema-v123). One row per fingerprint per day (PK upsert), ' +
       'so rows are bounded by distinct errors x days. 400d keeps a year of weekly counts.',
   },
+  {
+    table: 'watch_runs',
+    retentionColumn: 'opened_at',
+    retentionDays: 60,
+    maxRows: 2_000,
+    requiredIndex: 'idx_watch_runs_opened',
+    note:
+      'Mail watcher runs (schema-v151), at most 9 per weekday. Freshness reads only the ' +
+      'latest few; a pruned run takes its watch_run_threads receipts with it (ON DELETE CASCADE).',
+  },
+  {
+    table: 'mail_messages',
+    retentionColumn: 'internal_at',
+    retentionDays: 120,
+    maxRows: 50_000,
+    requiredIndex: 'idx_mail_messages_internal',
+    note:
+      'Mail watcher evidence (schema-v151): metadata + a 200-char snippet per message on ' +
+      'threads tied to open tasks. watch_threads (never pruned) keeps a quiet thread out of baseline.',
+  },
 ] as const;
 
 // ── Pruning ──────────────────────────────────────────────────────────────────

@@ -57,6 +57,7 @@ import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
 import { NewActivityCard } from '../../components/today/rail/NewActivityCard'
 import { CommitmentsCard } from '../../components/today/rail/CommitmentsCard'
+import { MailWatchCard } from '../../components/today/rail/MailWatchCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
@@ -861,6 +862,8 @@ export default function TodayPage() {
 
       <aside className="b2-rail">
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
+        {/* Nick only (the site admin): mail where the ball is his (schema-v151). */}
+        <MailWatchCard isNick={!!user?.canShowAllProjects} />
         <NewActivityCard />
         <CommitmentsCard />
         <ProjectsCard projects={projectsForRail} />

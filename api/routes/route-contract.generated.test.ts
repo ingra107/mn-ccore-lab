@@ -28,7 +28,7 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
   })
 
   it('every registered route has a valid auth level', () => {
-    const valid = new Set(['public', 'authed', 'pi'])
+    const valid = new Set(['public', 'authed', 'pi', 'watcher'])
     for (const route of ROUTE_REGISTRY) {
       expect(
         valid.has(route.auth),
@@ -227,7 +227,11 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 274 as of 2026-10-26 -- a product's current draft (+3, schema-v150):
     //   GET + POST /api/products/:id/current-draft and POST
     //   /api/products/:id/current-draft/undo (api/routes/current-draft.ts).
-    expect(ROUTE_REGISTRY).toHaveLength(274)
+    // 278 as of 2026-10-29 -- the mail watcher (+4, schema-v151): POST
+    //   /api/watcher/runs, /api/watcher/runs/:id/close and
+    //   /api/watcher/runs/:id/alert (auth 'watcher', MAIL_WATCHER_KEY only) and
+    //   GET /api/mail-watch/snapshot (Nick only), api/routes/mail-watch.ts.
+    expect(ROUTE_REGISTRY).toHaveLength(278)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
