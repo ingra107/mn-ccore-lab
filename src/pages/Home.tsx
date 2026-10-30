@@ -109,7 +109,7 @@ export default function Home() {
 
       {recent.length > 0 && (
         <>
-          <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers`} />
+          <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers, all years`} />
           <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
             {recent.map((p) => <PubRow key={p.id} pub={p} />)}
           </div>

@@ -476,9 +476,10 @@ export default function TodayPage() {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
     planned: state.plannedIds().length,
-    // The number matches the list its link opens: the Meetings page's meeting
-    // records for today (calendar-only events are on the Today section below).
-    meetings: (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).length,
+    // Counts what the Today timeline on this page shows (meeting records plus
+    // calendar events, minus dismissed ones). Counting records alone read
+    // "0 meetings" beside a timeline of 7 (fresh-eyes review, 2026-10-30).
+    meetings: todaysMeetings.filter((e) => !dismissedEventIds[e.id]).length,
     doneToday: doneTodayCount,
   }
 

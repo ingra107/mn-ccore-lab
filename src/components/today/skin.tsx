@@ -6,6 +6,7 @@
 import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable, photoFor, slugForName } from '../../lib/personLabel'
 import { fullNameForSlug } from '../../lib/nameUtils'
 import HermesMark from '../HermesMark'
+import { useState } from 'react'
 import type React from 'react'
 
 /** THE face circle: the photo when there is one, else the initials
@@ -32,14 +33,17 @@ export function FaceDisc({ initials, photo, label, title, lg = false, sm = false
   variant?: 'hue' | 'brand'
   hermes?: boolean
 }) {
-  const cls = `tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}${photo && !hermes ? ' tk-photo' : ''}${px ? ' tk-fd' : ''}${variant ? ` tk-${variant}` : ''}${hermes ? ' tk-herm' : ''}`
+  // A photo that fails to load falls back to initials instead of a blank disc.
+  const [broken, setBroken] = useState(false)
+  const showPhoto = !!photo && !broken && !hermes
+  const cls = `tk-face${lg ? ' tk-lg' : ''}${sm ? ' tk-sm' : ''}${showPhoto ? ' tk-photo' : ''}${px ? ' tk-fd' : ''}${variant ? ` tk-${variant}` : ''}${hermes ? ' tk-herm' : ''}`
   const a11y = decorative ? { 'aria-hidden': true as const } : { role: 'img', 'aria-label': label }
   const style = px ? ({ '--fd': `${px}px`, '--fdm': `${pxSm ?? px}px` } as React.CSSProperties) : undefined
   return (
     <span className={cls} style={style} title={title ?? label} {...a11y}>
       {hermes
         ? <HermesMark variant="icon" size={px ? Math.round(px * 0.7) : 14} pulse />
-        : photo ? <img src={photo} alt="" loading="lazy" decoding="async" /> : initials}
+        : showPhoto ? <img src={photo} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} /> : initials}
     </span>
   )
 }

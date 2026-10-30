@@ -74,7 +74,7 @@ export function StatLine({ counts, doneThisWeek, pending, failed, needsYou }: {
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
     { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'u', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
     { key: 'planned', value: counts.planned, label: 'planned', rule: 'n', to: `${PATHS.myTasks}?filter=planned`, dest: 'Tasks planned for today' },
-    { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "Today's meeting records" },
+    { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "The Meetings page (today's calendar is on the timeline below)" },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },
   ]
   const week = useConfirmedCount(doneThisWeek ?? 0)

@@ -32,6 +32,16 @@ describe('Today faces', () => {
     expect(face.getAttribute('aria-label')).toBe('Nick Ingraham')
   })
 
+  it('a photo that fails to load falls back to the initials, not a blank disc', async () => {
+    const host = await mount(tk(<FaceDisc initials="ZZ" photo="/does-not-exist.jpg" label="Zed Zed" />), {
+      ready: (h) => h.querySelector('.tk-face') && !h.querySelector('.tk-face img') ? h.querySelector('.tk-face') : null,
+      label: 'broken photo falls back',
+    })
+    const face = host.querySelector('.tk-face')!
+    expect(face.classList.contains('tk-photo')).toBe(false)
+    expect(face.textContent).toBe('ZZ')
+  })
+
   it('a member with no photo keeps the initials disc', async () => {
     const host = await mount(tk(<Face slug="casey-eddington" />), { ready: (h) => h.querySelector('.tk-face'), label: 'face' })
     const face = host.querySelector('.tk-face')!
