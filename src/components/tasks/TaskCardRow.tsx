@@ -38,8 +38,23 @@ import { Button } from '../ui/Button'
 // The complete control on a card (.tk-ck). Same contract as DoneBox: the square
 // is COMPLETE, everywhere. `done-box` keeps the invisible 24px+ hit area.
 // `taskId` plays the completion moment's ring once the Hub accepts the write.
-export function CardCheck({ done, onToggle, taskId }: { done: boolean; onToggle: () => void; taskId?: string }) {
+export function CardCheck({ done, onToggle, taskId, locked }: { done: boolean; onToggle: () => void; taskId?: string; locked?: string }) {
   const ring = useCompletionRing(done ? taskId : undefined)
+  // A parent with an open step cannot close (the Hub refuses it): the box
+  // stays, dimmed, and says why, rather than offering a write that fails.
+  if (locked && !done) {
+    return (
+      <button
+        type="button"
+        className="done-box tip tk-ck tk-lock"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        data-tip={locked}
+        aria-label={locked}
+        aria-disabled="true"
+      />
+    )
+  }
   return (
     <button
       type="button"
@@ -161,7 +176,7 @@ export function CardRow(props: CardTaskRowProps) {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
     onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showGroupOverridePin = false,
-    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, children,
+    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, children,
   } = props
 
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
@@ -275,7 +290,7 @@ export function CardRow(props: CardTaskRowProps) {
           }
         }}
       >
-        <CardCheck done={isDone} onToggle={onToggleDone} taskId={task.id} />
+        <CardCheck done={isDone} onToggle={onToggleDone} taskId={task.id} locked={doneLocked} />
         <div className="tk-hdr">
           <div className="tk-ct" style={tailReserve > 0 ? { paddingRight: tailReserve } : undefined}>
             {urgent && <span className="sr-only">Urgent: </span>}
@@ -306,6 +321,7 @@ export function CardRow(props: CardTaskRowProps) {
               <span className="tk-mks">{meetingSlot}</span>
             </span>
           </div>
+          {!isDone && stepsSlot}
         </div>
         <div className="tk-tr-r">
           <span className="tk-av">{showOwnerFace && <Face slug={task.assignee!} lg />}</span>

@@ -18,6 +18,8 @@ import { MilestoneDrawer } from './MilestoneDrawer'
 import { isTaskDone, type MilestoneRole } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, type TaskLink } from './primitives'
+import { StepsNext } from './StepsNext'
+import { isParent } from '../../lib/taskSteps'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Users, Hourglass, Handshake, Repeat } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -28,7 +30,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import type { ReactNode } from 'react'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills }: {
+export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps }: {
   task: TaskRowData
   project: { name: string; slug: string; primary_folder?: string | null } | null
   state: TodayStateApi
@@ -52,6 +54,9 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
    *  done card (a declined meeting task is done, and still needs Re-accept);
    *  the caller decides which of its pills a done card keeps. */
   extraPills?: ReactNode
+  /** The parent's open steps, in next-step order (lib/taskSteps). Only a parent
+   *  (step_total > 0) reads it; it gets the steps block and a locked box. */
+  openSteps?: TaskRowData[]
 }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id] || done
@@ -219,6 +224,10 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       linksSlot={linkMeta}
       meetingSlot={meetingMeta}
       workSlot={workOnMeta}
+      stepsSlot={isParent(task) ? (
+        <StepsNext parent={task} openSteps={openSteps ?? []} state={state} onSeeAll={() => { if (onOpen) onOpen(); else onExpand(task.id) }} />
+      ) : undefined}
+      doneLocked={isParent(task) && (task.step_done ?? 0) < (task.step_total ?? 0) ? 'Complete the steps first' : undefined}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>

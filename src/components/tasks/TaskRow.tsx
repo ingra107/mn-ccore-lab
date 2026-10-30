@@ -340,6 +340,12 @@ export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 
   meetingSlot?: ReactNode
   /** folder + Work-on, pinned bottom-right under the assignee face. */
   workSlot?: ReactNode
+  /** A parent with steps (Today): a full-width block under the context line
+   *  (the "Next:" row, dots, count). Nothing renders when absent. */
+  stepsSlot?: ReactNode
+  /** The complete box is not offered: a parent cannot close while a step is
+   *  open (the Hub refuses it). Text is the tooltip. */
+  doneLocked?: string
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.

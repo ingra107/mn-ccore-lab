@@ -2919,6 +2919,26 @@ button.tk-mact-hd:hover{color:var(--sk-t1)}
    "waiting for Dr. Grandon to respond" ran 72px past the edge). */
 .tk .tk-ctx>*{max-width:100%}
 .tk .tk-ctx>.tk-pill{min-width:0}
+/* Steps on a parent card (Nick 2026-10-30, "B: next step only"). Teal is
+   progress, gold is wants-you-now, everything else grey. Tokens only. */
+.tk .tk-steps{margin-top:6px;min-width:0}
+.tk .tk-next{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--job-accent) 12%,transparent);font-size:13px;color:var(--sk-t1);min-width:0}
+.tk .tk-next-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .tk-next-t b{font-weight:600}
+.tk .tk-next-d{flex-shrink:0;font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk .tk-next-d.tk-late{color:var(--job-overdue)}
+.tk .tk-ck.tk-nxck{width:14px;height:14px;margin-top:0;border-radius:4px}
+.tk .tk-steps-m{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk .tk-dots{display:inline-flex;gap:3px}
+.tk .tk-dots i{width:14px;height:4px;border-radius:2px;background:var(--sk-line2)}
+.tk .tk-dots i.f{background:var(--job-accent)}
+.tk .tk-more{margin-left:auto;padding:0;border:0;background:none;font:inherit;font-size:12px;color:var(--job-accent);cursor:pointer;white-space:nowrap}
+.tk .tk-more:hover{text-decoration:underline;text-underline-offset:2px}
+.tk .tk-ask{margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid color-mix(in srgb,var(--job-wants) 55%,transparent);background:color-mix(in srgb,var(--job-wants) 14%,transparent)}
+.tk .tk-ask-t{font-size:13px;font-weight:600;color:var(--sk-t1)}
+.tk .tk-ask-go{margin-top:7px;padding:5px 11px;border-radius:7px;border:0;background:var(--job-accent);color:var(--sk-ac-fg);font-size:12.5px;font-weight:600;cursor:pointer}
+/* A parent's box while a step is open: still there, dimmed, not offered. */
+.tk .tk-ck.tk-lock{opacity:.45;cursor:not-allowed}
 .tk .tk-pill>svg{flex-shrink:0}
 /* min-width keeps a few letters + the ellipsis when the line is tight (the
    phone list), instead of the name shrinking to nothing beside its label. A

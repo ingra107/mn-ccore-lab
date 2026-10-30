@@ -64,6 +64,7 @@ import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
 import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
+import { hideStepsOfPresentParents, openStepsByParent } from '../../lib/taskSteps'
 import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, isQuestionSnoozed, civilDatePlusDays } from '../../lib/taskGrouping'
 import { isStalledProject, projectMovedAt } from '../../lib/taskConstants'
 import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
@@ -326,13 +327,19 @@ export default function TodayPage() {
   // Group bucketing.
   const grouped = useMemo(() => {
     const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
-    for (const t of visibleTasks) {
-      if (cardRowIds.has(t.id)) continue
+    // A step shows on its parent's card (Nick 2026-10-30), not as a row of its
+    // own -- but only when that parent is in these lists. A step whose parent
+    // is filtered out or not Today's keeps its row.
+    const listed = visibleTasks.filter((t) => !cardRowIds.has(t.id))
+    for (const t of hideStepsOfPresentParents(listed)) {
       const key = getGroupForTask(t, projectsByPid)
       g[key].push(t)
     }
     return g
   }, [visibleTasks, projectsByPid, cardRowIds])
+  // The open steps of each parent, for the "Next:" row on its card. From the
+  // full open set, so a step outside the due window is still the parent's next.
+  const stepsByParent = useMemo(() => openStepsByParent(tasks), [tasks])
 
   // Derived counts.
   const overdueTasks = useMemo(() => {
@@ -862,6 +869,7 @@ export default function TodayPage() {
               tasks={grouped[gkey]}
               projectsByPid={projectsByPid}
               state={state}
+              stepsByParent={stepsByParent}
             />
           ))
         )}

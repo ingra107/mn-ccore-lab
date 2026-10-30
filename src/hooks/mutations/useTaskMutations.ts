@@ -4,6 +4,7 @@ import type { TaskRow } from '../../lib/api'
 import type { TaskKind } from '../../../shared/taskKinds'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
+import { bumpParentStepDone } from '../../lib/taskSteps'
 import { beginCompletion, settleCompletion, settleBatchCompletion } from '../../lib/completionMoment'
 
 // Which ids a write completes, for the completion moment (lib/completionMoment):
@@ -47,7 +48,8 @@ export function useUpdateTaskStatus() {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
-        (tasks) => tasks.map((t) => t.id === id
+        // A step's parent counts it now ("1 of 4"), not after the refetch.
+        (tasks) => bumpParentStepDone(tasks, id, status === TASK_STATUS.DONE).map((t) => t.id === id
           ? { ...t, status, completed: status === TASK_STATUS.DONE ? 1 : 0, completed_at: status === TASK_STATUS.DONE ? nowInstant() : null }
           : t
         ),

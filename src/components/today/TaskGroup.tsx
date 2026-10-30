@@ -16,7 +16,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // expandedId/onExpand no longer come from TodayPage — TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlannedTodaySection (Item 2 fix, 2026-06-22).
-export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number }) {
+export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5, stepsByParent }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number; stepsByParent?: Map<string, TaskRowData[]> }) {
   const meta = GROUP_META[gkey]
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   // Return type is MilestoneEntry[] (a TaskRow + optional milestoneRole/
@@ -102,6 +102,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5 
                 projectsByPid={projectsByPid}
                 milestoneRole={t.milestoneRole}
                 done={isTaskDone(t)}
+                openSteps={stepsByParent?.get(t.id)}
               />
             ))}
           </div>
