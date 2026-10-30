@@ -128,6 +128,27 @@ describe('watchFreshness is derived, never stored', () => {
     expect(at2.missed_since).toBe(at1.missed_since)
   })
 
+  it('an outage longer than the 6-day due window keeps one missed_since (F1)', () => {
+    const runs = [run('2026-10-28T15:00:00Z')] // Wed 10:00 ok, then nothing for weeks
+    const keys = new Set<string | null>()
+    for (let d = 1; d < 14; d++) {
+      for (const h of ['12:20', '17:20', '23:30']) {
+        const f = watchFreshness(T('2026-10-28T00:00:00Z') + d * 86_400_000 + T(`1970-01-01T${h}:00Z`), runs, [])
+        if (f.state === 'down') keys.add(f.missed_since)
+      }
+    }
+    expect([...keys]).toEqual(['2026-10-28T16:00:00.000Z'])
+  })
+
+  it('a not_found thread is not a read: it reads partial and is counted (F2)', () => {
+    const runs = [run('2026-10-28T15:00:00Z')]
+    const f = watchFreshness(T('2026-10-28T16:30:00Z'), runs, [
+      { thread_id: 'a', observed_at: '2026-10-28T15:02:00.000Z', last_result: 'read' },
+      { thread_id: 'b', observed_at: null, last_result: 'not_found' },
+    ])
+    expect(f).toMatchObject({ state: 'partial', not_found: 1, unchecked: 0 })
+  })
+
   it('off_hours: current, and the next slot is more than an hour away', () => {
     const r = run('2026-10-28T23:00:00Z') // 18:00 CDT
     const f = watchFreshness(T('2026-10-29T03:00:00Z'), [r], [receipt('a', r.closed_at)])
@@ -181,6 +202,15 @@ describe('classifyParty: inbound mail is classified before any ping', () => {
     expect(classifyParty(facts({ headers: { subject: 'Automatic reply: data' } }), SELF)).toBe('machine')
     expect(classifyParty(facts({ headers: { subject: 'Out of Office: back Monday' } }), SELF)).toBe('machine')
   })
+  it('a colleague\'s Gmail reaction and calendar invites are machine: they never ping (L5)', () => {
+    expect(classifyParty(facts({ snippet: 'Jane Doe reacted via Gmail' }), SELF)).toBe('machine')
+    expect(classifyParty(facts({ headers: { subject: 'Invitation: Data pull @ Thu Oct 30, 2026 10am' } }), SELF)).toBe('machine')
+    expect(classifyParty(facts({ headers: { subject: 'Accepted: Data pull @ Thu' } }), SELF)).toBe('machine')
+    expect(classifyParty(facts({ headers: { subject: 'Updated invitation with note: Data pull' } }), SELF)).toBe('machine')
+    expect(classifyParty(facts({ headers: { from: 'Google Calendar <calendar-notification@google.com>' } }), SELF)).toBe('machine')
+    // A real reply quoting an invite's subject is still a person.
+    expect(classifyParty(facts({ headers: { subject: 'Re: Invitation: Data pull' } }), SELF)).toBe('other')
+  })
   it('mail from Nick\'s own address without SENT, or with no From, is unsure', () => {
     expect(classifyParty(facts({ headers: { from: 'Nick <ingra107@umn.edu>' } }), SELF)).toBe('unsure')
     expect(classifyParty({ message_id: 'm', internal_date_ms: 0, label_ids: ['INBOX'], headers: {}, snippet: '' }, SELF)).toBe('unsure')
@@ -226,5 +256,8 @@ describe('thread ids in gmail_thread links', () => {
     expect(threadIdFromUrl('https://mail.google.com/mail/u/1/#all/1a0e5f718220a235')).toBe('1a0e5f718220a235')
     expect(threadIdFromUrl('https://mail.google.com/mail/u/0/#inbox/1A0E5F718220A235/')).toBe('1a0e5f718220a235')
     expect(threadIdFromUrl('https://mail.google.com/mail/u/1/#inbox/FMfcgzQbgRnJxHqPwMsLcKtVfZdNwXbj')).toBeNull()
+    // A longer token whose tail is 16 hex is not an id (L4): anchored to / or #.
+    expect(threadIdFromUrl('https://mail.google.com/mail/u/1/#inbox/QgrcJ1a0e5f718220a235')).toBeNull()
+    expect(threadIdFromUrl('1a0e5f718220a235')).toBe('1a0e5f718220a235')
   })
 })

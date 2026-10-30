@@ -82,6 +82,30 @@ describe('checkMailWatcherAlarm: one ping per outage', () => {
     expect(calls).toHaveLength(2)
   })
 
+  it('an outage of 7+ days pings exactly once (F1)', async () => {
+    const { db, d1, run } = world()
+    run('2026-10-28T15:00:00Z') // Wed 10:00 ok, then dead
+    const { f, calls } = fakeFetch()
+    // A cron tick every 5 hours for 10 days: it lands in ping hours on every
+    // weekday and walks past the 6-day window that used to move the key.
+    for (let h = 0; h < 240; h += 5) await checkMailWatcherAlarm(d1, ENV, T('2026-10-28T18:30:00Z') + h * 3_600_000, f)
+    expect(calls).toHaveLength(1)
+    expect(db.prepare('SELECT missed_slot_at FROM watch_alarms').all()).toEqual([{ missed_slot_at: '2026-10-28T16:00:00.000Z' }])
+  }, 30_000)
+
+  it('a script that opens runs but never closes them still alarms after 80+ open runs', async () => {
+    const { db, d1, run } = world()
+    run('2026-10-20T15:00:00Z')
+    for (let i = 0; i < 90; i++) {
+      db.prepare(`INSERT INTO watch_runs (id, slot_at, opened_at, threads_expected, script_version) VALUES (?, ?, ?, 0, 't')`)
+        .run(`wr_open_${i}`, new Date(T('2026-10-21T11:00:00Z') + i * 3_600_000).toISOString(), '2026-10-21T11:01:00Z')
+    }
+    const { f, calls } = fakeFetch()
+    const out = await checkMailWatcherAlarm(d1, ENV, T('2026-10-28T18:20:00Z'), f)
+    expect(out).toMatchObject({ state: 'down', raised: true })
+    expect(calls).toHaveLength(1)
+  })
+
   it('one missed slot is late, not down: no alarm', async () => {
     const { d1, run } = world()
     run('2026-10-28T15:00:00Z'); run('2026-10-28T16:00:00Z')

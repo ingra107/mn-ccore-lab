@@ -14,6 +14,11 @@
 //
 // Freshness is derived at read time (shared/mailWatch.ts watchFreshness); no
 // route returns thread evidence without it.
+//
+// Every run re-reads each whole thread. watch_threads.evaluated_through (never
+// pruned) is the per-thread high-water mark: a message at or below it was
+// evaluated by an earlier run and is not stored as new again, so the
+// mail_messages retention prune cannot re-arm an old reply as a fresh ping.
 
 import {
   alertAllowed, ballOf, classifyParty, displayOf, fromAddress, gmailThreadUrl, GMAIL_THREAD_ID_RX,
@@ -196,38 +201,70 @@ export async function handleCloseRun(id: string, request: Request, db: D1Databas
       .filter((a): a is string => typeof a === 'string').map((a) => a.trim().toLowerCase()),
   )
   const readIds = parsed.filter((t) => t.result === 'read').map((t) => t.thread_id)
-  const known = new Set<string>()
+  // thread -> its high-water mark (null = known, no mark yet). Absent = first read.
+  const marks = new Map<string, string | null>()
   for (let i = 0; i < readIds.length; i += 90) {
     const chunk = readIds.slice(i, i + 90)
     const rows = await db.prepare(
-      `SELECT thread_id FROM watch_threads WHERE thread_id IN (${chunk.map(() => '?').join(', ')})`,
-    ).bind(...chunk).all<{ thread_id: string }>()
-    for (const r of rows.results ?? []) known.add(r.thread_id)
+      `SELECT thread_id, evaluated_through FROM watch_threads WHERE thread_id IN (${chunk.map(() => '?').join(', ')})`,
+    ).bind(...chunk).all<{ thread_id: string; evaluated_through: string | null }>()
+    for (const r of rows.results ?? []) marks.set(r.thread_id, r.evaluated_through)
   }
   const now = nowInstant()
   const stmts: D1PreparedStatement[] = []
+  const insertMessage = (m: MessageFacts, threadId: string, party: StoredMessage['party'], at: string, baseline: 0 | 1) =>
+    stmts.push(db.prepare(
+      `INSERT OR IGNORE INTO mail_messages
+         (message_id, thread_id, internal_at, party, from_display, from_addr, excerpt, first_run_id, baseline)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      m.message_id, threadId, at, party,
+      displayOf(m.headers['from']).slice(0, 120) || null, fromAddress(m.headers['from']).slice(0, 200) || null,
+      m.snippet ? m.snippet.slice(0, 200) : null, id, baseline,
+    ))
   for (const t of parsed) {
     if (t.result === 'read') {
-      const baseline = known.has(t.thread_id) ? 0 : 1
+      const firstRead = !marks.has(t.thread_id)
+      const mark = marks.get(t.thread_id) ?? null
+      let through: string | null = null
+      // The latest human message at or below the mark: kept (as baseline) so
+      // the alert rule still knows whose move it was before a new reply, even
+      // after the retention prune took the original row.
+      let context: { m: MessageFacts; party: StoredMessage['party']; at: string } | null = null
       for (const m of t.messages) {
         const party = classifyParty(m, self)
         if (party === 'draft') continue
-        stmts.push(db.prepare(
-          `INSERT OR IGNORE INTO mail_messages
-             (message_id, thread_id, internal_at, party, from_display, from_addr, excerpt, first_run_id, baseline)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ).bind(
-          m.message_id, t.thread_id, new Date(m.internal_date_ms).toISOString(), party,
-          displayOf(m.headers['from']).slice(0, 120) || null, fromAddress(m.headers['from']).slice(0, 200) || null,
-          m.snippet ? m.snippet.slice(0, 200) : null, id, baseline,
-        ))
+        const at = new Date(m.internal_date_ms).toISOString()
+        if (through === null || at > through) through = at
+        if (mark !== null && at <= mark) {
+          // Already evaluated by an earlier run: never stored as new again
+          // (the B1 re-arm), and not re-inserted at all (bounds the batch).
+          if ((party === 'nick' || party === 'other') && (!context || at > context.at)) context = { m, party, at }
+          continue
+        }
+        insertMessage(m, t.thread_id, party, at, firstRead ? 1 : 0)
       }
-      stmts.push(db.prepare('INSERT OR IGNORE INTO watch_threads (thread_id, first_read_at) VALUES (?, ?)').bind(t.thread_id, now))
+      if (context) insertMessage(context.m, t.thread_id, context.party, context.at, 1)
+      // Two plain statements, not an upsert: viewer-db refuses ON CONFLICT DO
+      // UPDATE on a scoped table. The mark only ever moves forward.
+      stmts.push(db.prepare(
+        'INSERT OR IGNORE INTO watch_threads (thread_id, first_read_at, evaluated_through) VALUES (?, ?, ?)',
+      ).bind(t.thread_id, now, through))
+      if (through !== null) {
+        stmts.push(db.prepare(
+          `UPDATE watch_threads SET evaluated_through = ?
+            WHERE thread_id = ? AND (evaluated_through IS NULL OR evaluated_through < ?)`,
+        ).bind(through, t.thread_id, through))
+      }
     }
     stmts.push(db.prepare('UPDATE watch_run_threads SET result = ?, error = ? WHERE run_id = ? AND thread_id = ?')
       .bind(t.result, t.error, id, t.thread_id))
   }
-  const outcome = parsed.some((t) => t.result === 'error') ? 'partial' : 'complete'
+  // A run where most threads came back not_found is not a clean read: the
+  // script is likely reading the wrong mailbox (personal Gmail).
+  const notFound = parsed.filter((t) => t.result === 'not_found').length
+  const outcome = parsed.some((t) => t.result === 'error') || (notFound > 0 && notFound * 2 > parsed.length)
+    ? 'partial' : 'complete'
   stmts.push(db.prepare('UPDATE watch_runs SET closed_at = ?, outcome = ? WHERE id = ? AND closed_at IS NULL')
     .bind(now, outcome, id))
   await db.batch(stmts)
@@ -278,24 +315,39 @@ export async function handleAlertReport(id: string, request: Request, db: D1Data
 
 // ── reads ────────────────────────────────────────────────────────────────
 
+/** The latest runs, plus the latest CLOSED run wherever it sits: a script
+ *  that opens runs but never closes them must not push the last good run out
+ *  of the window and read as 'never' (no alarm). */
 export async function loadRuns(db: D1Database, limit = 80): Promise<RunRow[]> {
   const rows = await db.prepare(
-    'SELECT id, slot_at, opened_at, closed_at, outcome FROM watch_runs ORDER BY slot_at DESC LIMIT ?',
+    `SELECT id, slot_at, opened_at, closed_at, outcome FROM (
+       SELECT * FROM (SELECT * FROM watch_runs ORDER BY slot_at DESC LIMIT ?)
+       UNION
+       SELECT * FROM (SELECT * FROM watch_runs WHERE closed_at IS NOT NULL ORDER BY slot_at DESC LIMIT 1))
+     ORDER BY slot_at DESC`,
   ).bind(limit).all<RunRow>()
   return rows.results ?? []
 }
 
-/** Per-thread receipts: the latest closed run that read each thread. A thread
- *  a run skipped or failed on keeps its older receipt, so it ages honestly. */
+/** Per-thread receipts: the latest closed run that READ each thread, and the
+ *  thread's result in the latest closed run that handed it out. A thread a
+ *  run skipped, failed on, or could not find keeps its older read receipt, so
+ *  it ages honestly. */
 async function loadReceipts(db: D1Database, threadIds: readonly string[]): Promise<ThreadReceipt[]> {
   const rows = await db.prepare(
-    `SELECT wrt.thread_id, MAX(r.closed_at) AS observed_at
-       FROM watch_run_threads wrt JOIN watch_runs r ON r.id = wrt.run_id
-      WHERE r.closed_at IS NOT NULL AND wrt.result IN ('read', 'not_found')
-      GROUP BY wrt.thread_id`,
-  ).all<{ thread_id: string; observed_at: string }>()
-  const seen = new Map((rows.results ?? []).map((r) => [r.thread_id, r.observed_at]))
-  return threadIds.map((tid) => ({ thread_id: tid, observed_at: seen.get(tid) ?? null }))
+    `SELECT thread_id,
+            MAX(CASE WHEN result = 'read' THEN closed_at END) AS observed_at,
+            MAX(CASE WHEN rn = 1 THEN result END) AS last_result
+       FROM (SELECT wrt.thread_id, wrt.result, r.closed_at,
+                    ROW_NUMBER() OVER (PARTITION BY wrt.thread_id ORDER BY r.closed_at DESC) AS rn
+               FROM watch_run_threads wrt JOIN watch_runs r ON r.id = wrt.run_id
+              WHERE r.closed_at IS NOT NULL AND wrt.result IS NOT NULL)
+      GROUP BY thread_id`,
+  ).all<{ thread_id: string; observed_at: string | null; last_result: ThreadReceipt['last_result'] }>()
+  const seen = new Map((rows.results ?? []).map((r) => [r.thread_id, r]))
+  return threadIds.map((tid) => ({
+    thread_id: tid, observed_at: seen.get(tid)?.observed_at ?? null, last_result: seen.get(tid)?.last_result ?? null,
+  }))
 }
 
 export interface SnapshotThread {

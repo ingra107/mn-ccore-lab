@@ -8,7 +8,9 @@
 // This file is the ONE copy of the schedule. The Apps Script watcher holds no
 // schedule: it fires hourly and asks POST /api/watcher/runs, which answers
 // {run:false} outside a slot. The Today card and the hourly dead-watcher alarm
-// read the same constant, so the three cannot disagree.
+// read the same constant, so the three cannot disagree. The script's trigger
+// fires every 30 minutes (an hourly trigger's jitter can skip a slot hour);
+// a second fire in a served slot gets {run:false, reason:'slot_done'}.
 //
 // Freshness is never stored. watchFreshness() derives it at read time from the
 // run rows, the per-thread receipts and the clock, so a dead watcher cannot be
@@ -24,7 +26,7 @@ export const MAIL_WATCH_SCHEDULE = {
   /** Our inference from Nick's words (2026-10-29), not a quote. */
   weekdaysOnly: true,
   /** A slot with no closed run this long after it starts reads as missed. Absorbs
-   *  Apps Script hourly-trigger jitter (a fire can land late in the hour). */
+   *  Apps Script trigger jitter (a fire can land late in the half hour). */
   graceMinutes: 75,
   /** A run's alert may go out only this long after its slot starts. Past it, the
    *  close returns no alert, so a run that finishes late cannot ping off-hours. */
@@ -143,9 +145,12 @@ export interface RunRow {
 
 export interface ThreadReceipt {
   thread_id: string
-  /** The closed_at of the latest closed run that read this thread (result read
-   *  or not_found). null = no run has read it. */
+  /** The closed_at of the latest closed run that READ this thread. A not_found
+   *  is not a read: a watcher installed under the wrong mailbox gets not_found
+   *  for every thread, and that must not read as checked. null = never read. */
   observed_at: string | null
+  /** The thread's result in the latest closed run that handed it out. */
+  last_result?: 'read' | 'not_found' | 'error' | null
 }
 
 export type FreshnessState = 'current' | 'partial' | 'late' | 'down' | 'off_hours' | 'never'
@@ -161,8 +166,12 @@ export interface Freshness {
   next_slot_at: string | null
   /** Threads the Hub would hand out now. */
   threads: number
-  /** Of those, threads no closed run has read since the latest due slot. */
+  /** Of those, threads no closed run has read since the latest due slot
+   *  (not counting the not_found ones below). */
   unchecked: number
+  /** Of those, threads whose latest result was not_found (deleted, or the
+   *  watcher is reading the wrong mailbox). Any of these reads partial. */
+  not_found: number
 }
 
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -196,6 +205,7 @@ export function watchFreshness(
     next_slot_at: next === null ? null : iso(next),
     threads: receipts.length,
     unchecked: 0,
+    not_found: 0,
   }
   const closedFor = (slotMs: number) => closed.find((r) => ms(r.slot_at) === slotMs)
   const due = dueSlots(nowMs, 60, s) // newest first
@@ -204,22 +214,23 @@ export function watchFreshness(
     return { ...base, state: 'never', missed_since: d1 === undefined ? null : iso(d1), unchecked: receipts.length }
   }
   if (d1 === undefined) return { ...base, state: 'current', missed_since: null }
-  const unchecked = receipts.filter((r) => !r.observed_at || ms(r.observed_at) < d1).length
+  const notFound = receipts.filter((r) => r.last_result === 'not_found').length
+  const unchecked = receipts.filter((r) => r.last_result !== 'not_found' && (!r.observed_at || ms(r.observed_at) < d1)).length
+  const counts = { unchecked, not_found: notFound }
   const r1 = closedFor(d1)
   if (!r1) {
-    // The outage starts at the earliest of the consecutive missed slots, so
-    // the alarm's key (watch_alarms.missed_slot_at) stays put while it lasts.
-    let start = d1
-    for (const slot of due) {
-      if (closedFor(slot)) break
-      start = slot
-    }
+    // The outage starts at the first slot after the latest closed run's slot.
+    // That is a fixed fact, so the alarm's key (watch_alarms.missed_slot_at)
+    // cannot slide while the outage lasts, however long; the due-slot window
+    // above only looks back 6 days.
+    const latestServed = Math.max(...closed.map((r) => ms(r.slot_at)))
+    const start = slotsBetween(latestServed + 1, d1, s)[0] ?? d1
     const r2 = d2 === undefined ? undefined : closedFor(d2)
-    return { ...base, unchecked, state: r2 ? 'late' : 'down', missed_since: iso(start) }
+    return { ...base, ...counts, state: r2 ? 'late' : 'down', missed_since: iso(start) }
   }
-  if (r1.outcome === 'partial' || unchecked > 0) return { ...base, unchecked, state: 'partial', missed_since: null }
+  if (r1.outcome === 'partial' || unchecked > 0 || notFound > 0) return { ...base, ...counts, state: 'partial', missed_since: null }
   const offHours = next !== null && next - nowMs > HOUR && nowMs - d1 > HOUR
-  return { ...base, unchecked, state: offHours ? 'off_hours' : 'current', missed_since: null }
+  return { ...base, ...counts, state: offHours ? 'off_hours' : 'current', missed_since: null }
 }
 
 // ── classification ───────────────────────────────────────────────────────────
@@ -238,7 +249,7 @@ export interface MessageFacts {
  *   nick     Nick wrote and sent it (PB's HumanSent rule: SENT, not a draft,
  *            no Auto-Submitted, no Sender header, not a forward or reaction)
  *   other    a person wrote it to him
- *   machine  a service, list, auto-reply or bounce
+ *   machine  a service, list, auto-reply, bounce, Gmail reaction or calendar invite
  *   unsure   could be either; never moves the ball and never pings
  *   draft    unsent; not stored
  */
@@ -246,6 +257,10 @@ export type Party = 'nick' | 'other' | 'machine' | 'unsure' | 'draft'
 
 const FWD_RX = /^\s*(fwd?|fw)\s*:/i
 const REACTION_RX = /reacted via gmail/i
+/** Google Calendar's invitation and RSVP mail: a person's name in From, but no
+ *  reply from them. Never moves the ball. */
+const CALENDAR_SUBJECT_RX = /^\s*(invitation|updated invitation|new event|accepted|declined|tentatively accepted|canceled event|cancelled event|event canceled|event cancelled)(\s+with note)?\s*:/i
+const CALENDAR_SENDER_RX = /^calendar-(notification|server)@google\.com$/i
 const AUTO_SUBJECT_RX = /^\s*(automatic reply|auto(-|\s)?reply|out of (the )?office|auto:|autoreply|undeliverable|delivery status notification|mail delivery (failed|subsystem))/i
 const MACHINE_LOCAL_RX = /^(no-?reply|do-?not-?reply|donotreply|mailer-daemon|postmaster|notifications?|notify|bounce[s]?|alerts?|automated|system)([+._-].*)?$/i
 const MACHINE_PRECEDENCE = new Set(['bulk', 'list', 'junk', 'auto_reply'])
@@ -288,6 +303,10 @@ export function classifyParty(f: MessageFacts, nickAddresses: ReadonlySet<string
   if (h['list-id'] || h['list-unsubscribe'] || h['x-autoreply'] || h['x-autorespond'] || h['x-auto-response-suppress']) return 'machine'
   if (MACHINE_LOCAL_RX.test(addr.split('@')[0] ?? '')) return 'machine'
   if (AUTO_SUBJECT_RX.test(h['subject'] ?? '')) return 'machine'
+  // A colleague's Gmail emoji reaction, and calendar invites/RSVPs, carry a
+  // person's From but are not a reply: never ping on them.
+  if (REACTION_RX.test(f.snippet)) return 'machine'
+  if (CALENDAR_SENDER_RX.test(addr) || CALENDAR_SUBJECT_RX.test(h['subject'] ?? '')) return 'machine'
   if (nickAddresses.has(addr)) return 'unsure'
   return 'other'
 }
@@ -336,11 +355,12 @@ export function gmailThreadUrl(threadId: string): string {
   return `https://mail.google.com/mail/u/1/#all/${threadId}`
 }
 
-/** A Gmail API thread id inside a gmail_thread link URL (16 hex chars at the
- *  end), the same rule as PB process_catch_up._THREAD_IN_URL. A 32-char web
- *  token is not an API id and yields null. */
+/** A Gmail API thread id inside a gmail_thread link URL: exactly 16 hex chars
+ *  as the last path or fragment segment, the same rule as PB
+ *  process_catch_up._THREAD_IN_URL. A 32-char web token, or any longer token
+ *  whose tail happens to be hex, is not an API id and yields null. */
 export function threadIdFromUrl(url: string | null | undefined): string | null {
-  const m = (url ?? '').match(/([0-9a-f]{16})\/?\s*$/i)
+  const m = (url ?? '').match(/(?:^|[/#])([0-9a-f]{16})\/?\s*$/i)
   return m ? m[1].toLowerCase() : null
 }
 

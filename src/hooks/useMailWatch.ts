@@ -18,6 +18,7 @@ export interface MailWatchSnapshot {
     next_slot_at: string | null
     threads: number
     unchecked: number
+    not_found: number
   }
   alert_error: string | null
   threads: Array<{

@@ -18,7 +18,7 @@ import { collapseToggleProps } from '../collapseToggleProps'
 import { PATHS } from '../../../constants/paths'
 import { formatRelativeTime } from '../../../lib/dateUtils'
 import { useMailWatch } from '../../../hooks/useMailWatch'
-import { mailStatusLine, type StatusTone } from '../../../lib/mailStatusLine'
+import { mailCardStatus, type StatusTone } from '../../../lib/mailStatusLine'
 
 const TONE_COLOR: Record<StatusTone, string> = {
   ok: 'var(--sk-t3)',
@@ -31,10 +31,9 @@ export function MailWatchCard({ isNick }: { isNick: boolean }) {
   const [open, setOpen] = useState(true)
   const { data, isError, isPending, dataUpdatedAt } = useMailWatch(isNick)
   if (!isNick) return null
-  // The line is read as of the fetch (refetched every 5 minutes and on focus).
-  const status = data
-    ? mailStatusLine(data, dataUpdatedAt)
-    : isError ? { text: 'Mail status unavailable', tone: 'overdue' as StatusTone } : null
+  // The line is read as of the fetch (refetched every 5 minutes and on focus);
+  // a failed refetch wins over the last good snapshot (mailCardStatus).
+  const status = mailCardStatus({ data, isError, dataUpdatedAt })
   const rows = data?.threads ?? []
   return (
     <section className="tk-panel" data-b2-mail-watch>

@@ -3,7 +3,7 @@
 // freshness says the watcher is current; a dead watcher says so in red.
 
 import { describe, it, expect } from 'vitest'
-import { mailStatusLine } from '../mailStatusLine'
+import { mailCardStatus, mailStatusLine } from '../mailStatusLine'
 import type { MailWatchSnapshot } from '../../hooks/useMailWatch'
 
 const NOW = Date.parse('2026-10-28T16:30:00Z') // Wed 11:30 CDT
@@ -12,13 +12,27 @@ function snap(f: Partial<MailWatchSnapshot['freshness']>, alert_error: string | 
   return {
     freshness: {
       state: 'current', last_checked_at: '2026-10-28T15:42:00Z', last_complete_at: '2026-10-28T15:42:00Z',
-      missed_since: null, next_slot_at: '2026-10-28T17:00:00Z', threads: 14, unchecked: 0, ...f,
+      missed_since: null, next_slot_at: '2026-10-28T17:00:00Z', threads: 14, unchecked: 0, not_found: 0, ...f,
     },
     alert_error, threads: [],
   }
 }
 
+describe('mailCardStatus: a failed refetch is never shown as the last good line (F3)', () => {
+  it('isError wins over retained data', () => {
+    const r = mailCardStatus({ data: snap({}), isError: true, dataUpdatedAt: NOW })
+    expect(r).toEqual({ text: 'Mail status unavailable · last known check 10:42', tone: 'overdue' })
+  })
+  it('no error: the snapshot line', () => {
+    expect(mailCardStatus({ data: snap({}), isError: false, dataUpdatedAt: NOW })?.text).toBe('Email checked 10:42 · 14 threads')
+    expect(mailCardStatus({ data: undefined, isError: false, dataUpdatedAt: 0 })).toBeNull()
+  })
+})
+
 describe('mailStatusLine', () => {
+  it('partial names the not_found threads (F2)', () => {
+    expect(mailStatusLine(snap({ state: 'partial', not_found: 3 }), NOW).text).toBe('Email checked 10:42 · 14 threads · 3 not found')
+  })
   it('current: "Email checked 10:42 · 14 threads"', () => {
     expect(mailStatusLine(snap({}), NOW)).toEqual({ text: 'Email checked 10:42 · 14 threads', tone: 'ok' })
   })

@@ -5,7 +5,9 @@
 // latest due slots both have no closed run, one Telegram message per outage.
 //
 //   * one alarm per outage: watch_alarms' key is the outage's first missed
-//     slot (watchFreshness missed_since), which stays put while it lasts;
+//     slot (watchFreshness missed_since = the first slot after the latest
+//     closed run), a fixed fact, so it cannot slide however long the outage
+//     runs (the 6-day due-slot window used to move it, F1 2026-10-29);
 //   * only during ping hours (sendTelegram refuses outside them, and this
 //     returns before inserting, so a night-time outage alarms at 06:00);
 //   * 'never' (no run has ever closed, e.g. before the script is installed)

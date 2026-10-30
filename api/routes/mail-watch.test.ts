@@ -218,6 +218,58 @@ describe('a run: open in a slot, close with every thread', () => {
     expect(replay.body).toMatchObject({ alert: null, replayed: true })
   })
 
+  it('a retention prune between runs does not re-arm old mail (B1), and old mail is not re-stored', async () => {
+    const old = [
+      message('m1', '2026-05-01T15:00:00Z', 'Nick <ingra107@umn.edu>', ['SENT']),
+      message('m2', '2026-05-02T15:00:00Z', 'Jane Doe <jane@umn.edu>'),
+    ]
+    const r1 = await openRun()
+    await closeRun(r1.run_id, [{ thread_id: T1, result: 'read', messages: old }, { thread_id: T2, result: 'read', messages: [] }])
+    expect(one('SELECT evaluated_through FROM watch_threads WHERE thread_id = ?', T1)?.evaluated_through).toBe('2026-05-02T15:00:00.000Z')
+    // The ledger prune takes every row older than 120 days.
+    db.prepare('DELETE FROM mail_messages').run()
+    for (const [slot, close] of [['2026-10-28T17:06:00Z', '2026-10-28T17:07:00Z'], ['2026-10-28T18:06:00Z', '2026-10-28T18:07:00Z']]) {
+      at(slot)
+      const r = await openRun()
+      at(close)
+      const c = await closeRun(r.run_id, [{ thread_id: T1, result: 'read', messages: old }, { thread_id: T2, result: 'read', messages: [] }])
+      expect(c.status).toBe(200)
+      expect(c.body.alert).toBeNull()
+      db.prepare('DELETE FROM mail_messages').run()
+    }
+    // Only the latest human message at or below the mark comes back, as baseline.
+    at('2026-10-28T19:06:00Z')
+    const r4 = await openRun()
+    at('2026-10-28T19:07:00Z')
+    const c4 = await closeRun(r4.run_id, [
+      { thread_id: T1, result: 'read', messages: [...old, message('m3', '2026-10-28T19:00:00Z', 'Nick <ingra107@umn.edu>', ['SENT'])] },
+      { thread_id: T2, result: 'read', messages: [] },
+    ])
+    expect(c4.body.alert).toBeNull()
+    expect(rows('SELECT message_id, baseline FROM mail_messages ORDER BY message_id')).toEqual([
+      { message_id: 'm2', baseline: 1 }, { message_id: 'm3', baseline: 0 },
+    ])
+    // A real new reply after Nick's still pings.
+    at('2026-10-28T20:06:00Z')
+    const r5 = await openRun()
+    at('2026-10-28T20:07:00Z')
+    const c5 = await closeRun(r5.run_id, [
+      { thread_id: T1, result: 'read', messages: [...old, message('m3', '2026-10-28T19:00:00Z', 'Nick <ingra107@umn.edu>', ['SENT']),
+        message('m4', '2026-10-28T20:01:00Z', 'Jane Doe <jane@umn.edu>')] },
+      { thread_id: T2, result: 'read', messages: [] },
+    ])
+    expect((c5.body.alert as { threads: number }).threads).toBe(1)
+  })
+
+  it('a run where most threads are not_found closes partial and the card counts them (F2)', async () => {
+    const r1 = await openRun()
+    const c = await closeRun(r1.run_id, [{ thread_id: T1, result: 'not_found' }, { thread_id: T2, result: 'not_found' }])
+    expect(c.body.outcome).toBe('partial')
+    at('2026-10-28T17:30:00Z') // 12:30: 11:00 is due, 12:00 is in grace
+    const s = await call('GET', '/api/mail-watch/snapshot', { pb: true })
+    expect(s.body.freshness).toMatchObject({ state: 'partial', not_found: 2 })
+  })
+
   it('a run that closes after its alert window returns no alert text (no off-hours ping)', async () => {
     const r1 = await openRun()
     await closeRun(r1.run_id, [

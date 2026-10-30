@@ -11,7 +11,7 @@
 -- per-thread results. Only api/routes/mail-watch.ts writes these tables, and
 -- only under MAIL_WATCHER_KEY, which no task, project or mutation route accepts.
 --
--- What is structural here:
+-- What the schema itself enforces:
 --   * No table carries a task id or any task column, so a watcher row has
 --     nothing a status could be written through. The thread-to-task join is
 --     computed at read time from tasks.source_thread_id and gmail_thread links.
@@ -19,14 +19,22 @@
 --     characters by a CHECK.
 --   * No stored "healthy" / "last checked" field. Freshness is derived at read
 --     time (watchFreshness) from watch_runs + watch_run_threads.
---   * A run closes only when every thread handed out at open has a result:
---     trg_watch_run_close_requires_every_thread aborts the close otherwise, so
---     "complete run, thread silently skipped" cannot be stored.
---   * One run per slot (UNIQUE slot_at), one alarm per outage (PK missed_slot_at).
---   * watch_threads records the first time each thread was read. A message seen
---     on a thread's first read is baseline and never alerts, so the first run
---     cannot ping for old mail; the row is never pruned, so a thread quiet past
---     mail_messages' retention still alerts on its next reply.
+--   * One run per slot (UNIQUE slot_at); one alarm row per missed_slot_at.
+--
+-- What the ROUTE code enforces, with the schema as a partial backstop (only
+-- api/routes/mail-watch.ts writes these tables):
+--   * A run closes only when every thread handed out at open has a result. The
+--     route refuses such a close (409), and trg_watch_run_close_requires_every_thread
+--     aborts an UPDATE that sets closed_at while a thread row is unresolved. The
+--     trigger does NOT cover an INSERT of an already-closed run, or edits to
+--     watch_run_threads after the close.
+--   * One alarm per outage: watchFreshness keys missed_since on the first slot
+--     after the latest closed run, so the key cannot move while the outage lasts.
+--   * watch_threads (never pruned) holds each thread's first read and its
+--     high-water mark, evaluated_through: the latest internal_at already
+--     evaluated. A message on a thread's first read is baseline; a message at
+--     or below the mark is never re-stored as new, so mail_messages' retention
+--     prune cannot re-arm an old reply.
 --
 -- Visibility: all five tables are Nick-only in api/lib/table-scope.ts.
 -- Retention: watch_runs (and its thread receipts, by cascade) and mail_messages
@@ -74,8 +82,9 @@ WHEN NEW.closed_at IS NOT NULL AND EXISTS (
 BEGIN SELECT RAISE(ABORT, 'watch_run_incomplete'); END;
 
 CREATE TABLE IF NOT EXISTS watch_threads (
-  thread_id     TEXT PRIMARY KEY,
-  first_read_at TEXT NOT NULL
+  thread_id         TEXT PRIMARY KEY,
+  first_read_at     TEXT NOT NULL,
+  evaluated_through TEXT                             -- ISO UTC: latest internal_at already evaluated
 );
 
 CREATE TABLE IF NOT EXISTS mail_messages (
