@@ -43,6 +43,7 @@
       "next_checkin_date",
       "nick_followup_date",
       "notes",
+      "parent_id",
       "plan_rank",
       "plan_slot",
       "plan_start_min",

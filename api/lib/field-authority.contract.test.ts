@@ -203,6 +203,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   key_link_3: 'direct',
   key_link_3_desc: 'direct',
   meeting_id: 'direct',
+  parent_id: 'direct',           // body.parent_id when set (schema-v152); the triggers judge it
   related_message_ids: 'direct',
   short_title: 'direct',
   source_thread_id: 'direct',

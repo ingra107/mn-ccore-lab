@@ -142,6 +142,7 @@ const BUILDERS: Record<string, string> = {
   declineOrphanedEventProductSql: 'builds the statement that declines a talk or moderated-session product left with no live task; decideAndCommitDelete and decideAndCommitUpdate gate it into the task delete batch, so it commits or rolls back with the task write',
   restoreDeclinedEventProductSql: 'builds the statement that puts an event product back to Invited when the task delete that declined it is undone; gated into the task update batch like its decline twin',
   orphanProjectTasksSql: 'builds the project-delete task statement (project_id and product_id cleared together) that decideAndCommitDelete gates into its batch; Archive/2026-10-12-v130-retired-seedless-scripts/probe-v124-products.ts (archived) ran the same text on local D1',
+  releaseStepsSql: 'builds the task-delete statement that releases the deleted parent\'s live steps (parent_id cleared, schema-v152) that decideAndCommitDelete gates into its batch; api/routes/tasks.steps.test.ts runs it on the migration-chain database',
 }
 
 const WRITE_SQL = /\b(?:INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM)\b/i

@@ -1296,6 +1296,17 @@ export function orphanProjectTasksSql(): string {
 }
 
 /**
+ * A task soft-delete's step statement (schema-v152): the parent's live steps
+ * lose the parent and stay live, ordinary tasks. A restore of the parent does
+ * not re-attach them. Soft-deleted steps keep their parent_id; if one is
+ * restored later, trg_tasks_parent_restore_release clears it. Bind: the
+ * parent's id.
+ */
+export function releaseStepsSql(): string {
+  return "UPDATE tasks SET parent_id = NULL, updated_at = datetime('now') WHERE parent_id = ? AND deleted_at IS NULL";
+}
+
+/**
  * A task delete's product statement. A talk (or moderated session) product is
  * minted for one task by handleCreateTask (the `talk` spec). When that task is
  * deleted and nothing else live sits on the product, the product is declined in
@@ -1411,6 +1422,10 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
         gated("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?", mut.record_id),
         gated("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?", mut.record_id),
         gated('DELETE FROM task_subtasks WHERE task_id = ?', mut.record_id),
+        // schema-v152: deleting a parent releases its live steps. Each stays a
+        // full task (Nick 2026-10-30: "archive, never delete"); the seq trigger
+        // bumps each one, so PB pulls the release.
+        gated(releaseStepsSql(), mut.record_id),
       ];
     }
     if (mut.table === 'projects') {

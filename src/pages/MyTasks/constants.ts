@@ -3,7 +3,7 @@
 // by 2+ files in src/pages/MyTasks/ lives here.
 
 import type { TaskRow } from '../../lib/api'
-import { isMilestone } from '../../../shared/taskKinds'
+import { isCheckin, isMilestone } from '../../../shared/taskKinds'
 import { researchTeam } from '../../data/team'
 
 // Shared primitives re-exported from taskGrouping (also used by Today landing).
@@ -105,6 +105,9 @@ export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { categor
   // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
   // whatever its priority says. Only an explicit Move (above) outranks this.
   if (isMilestone(t)) return 'deep'
+  // A check-in is a one-tap follow-up, never Deep Work (Nick 2026-10-30:
+  // "outside the Deep Work cap"). Same line in components/today/constants.ts.
+  if (isCheckin(t)) return 'quick'
   if (t.source === 'pb' || /^pb:/i.test(t.title)) return 'pb'
   const proj = t.project_id ? projectsByPid.get(t.project_id) : null
   const projSlug = proj?.slug || ''

@@ -231,7 +231,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   /api/watcher/runs, /api/watcher/runs/:id/close and
     //   /api/watcher/runs/:id/alert (auth 'watcher', MAIL_WATCHER_KEY only) and
     //   GET /api/mail-watch/snapshot (Nick only), api/routes/mail-watch.ts.
-    expect(ROUTE_REGISTRY).toHaveLength(278)
+    // 279 as of 2026-10-30 -- GET /api/projects/next-step-gaps (+1,
+    //   schema-v152): active projects with no next step, computed on read.
+    expect(ROUTE_REGISTRY).toHaveLength(279)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

@@ -122,7 +122,8 @@ async function main() {
 
     section(s, '12.K  subtasks with parent task_id missing')
     const orphanSubtasks = d1Query<{ count: number }>(
-      'SELECT COUNT(*) as count FROM task_subtasks WHERE parent_task_id NOT IN (SELECT id FROM tasks)'
+      // The column is task_id (schema-v38); parent_task_id never existed on this table.
+      'SELECT COUNT(*) as count FROM task_subtasks WHERE task_id NOT IN (SELECT id FROM tasks)'
     )
     const osub = Number(orphanSubtasks?.[0]?.count ?? 0)
     if (osub === 0) pass(s, '12.K All subtasks have existing parent tasks')
