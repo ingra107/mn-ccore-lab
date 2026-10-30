@@ -44,6 +44,9 @@ export const USER_PREF_FAMILIES = [
   { key: 'today.dueWindow', param: false, merge: 'scalar' },
   // Today: the whole Needs you card folded into the stat line (a boolean).
   { key: 'today.needsYouCollapsed', param: false, merge: 'scalar' },
+  // Today's What is slipping card: rows marked Fine, id -> hidden-until date,
+  // so a row dismissed on one laptop stays hidden on the other.
+  { key: 'today.quietFine', param: false, merge: 'scalar' },
   // The What's new / Lab pulse pill (#156): ids of the release and the
   // announcement last opened, so reading on the phone clears the laptop.
   { key: 'hub.pulse.seen', param: false, merge: 'scalar' },
