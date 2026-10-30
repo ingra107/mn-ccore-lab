@@ -660,18 +660,6 @@
     "sample": "borderRadius: 4px → var(--radius-sm)"
   },
   {
-    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
-    "line": 63,
-    "kind": "spacing-px-literal",
-    "sample": "marginBottom: 8px → var(--sp-sm)"
-  },
-  {
-    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
-    "line": 67,
-    "kind": "spacing-px-literal",
-    "sample": "marginBottom: 8px → var(--sp-sm)"
-  },
-  {
     "file": "src/components/today/rail/NeedsAttentionCard.tsx",
     "line": 20,
     "kind": "spacing-px-literal",

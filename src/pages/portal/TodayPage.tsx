@@ -52,7 +52,6 @@ import { MorningThoughtCompose } from '../../components/today/MorningThoughtComp
 import { PastThoughts } from '../../components/today/PastThoughts'
 import { DayActivityFeed } from '../../components/today/DayActivityFeed'
 import { PomodoroControl } from '../../components/today/PomodoroControl'
-import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
@@ -861,7 +860,6 @@ export default function TodayPage() {
       </main>
 
       <aside className="b2-rail">
-        <HermesSuggestsCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} menteesWithDue={mentees} />
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
         <NewActivityCard />
         <CommitmentsCard />

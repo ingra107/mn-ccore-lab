@@ -840,18 +840,6 @@
     "sample": "rgba(201,168,76,0.30)"
   },
   {
-    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
-    "line": 62,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.06)"
-  },
-  {
-    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
-    "line": 62,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.20)"
-  },
-  {
     "file": "src/components/today/rail/NeedsAttentionCard.tsx",
     "line": 24,
     "kind": "token-rgba-literal",
