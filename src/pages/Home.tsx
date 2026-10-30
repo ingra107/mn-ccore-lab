@@ -7,8 +7,13 @@ import { rosterPeople } from '../lib/roster'
 import { areaHref } from '../lib/researchAreas'
 import PubRow from '../components/public/PubRow'
 
-const SELECTED = 5
-const RECENT = 6
+// Public home, pick A (2026-10-30 UI pairs desk, Nick: "A: Current opening,
+// short lists"): the opening and the dark band stay exactly as they are; the
+// lists under them are cut hard to three papers and five faces, each with a
+// link to the full list. The separate Recent list is gone: it overlapped
+// Selected work (fresh-eyes critique 7) and the full list is one click away.
+const SELECTED = 3
+const PEOPLE = 5
 const dash = '—'
 
 export default function Home() {
@@ -46,8 +51,8 @@ export default function Home() {
   }, [])
 
   const selected = (facts.featured.length >= 3 ? facts.featured : facts.recent).slice(0, SELECTED)
-  const selectedIds = new Set(selected.map((p) => p.id))
-  const recent = facts.recent.filter((p) => !selectedIds.has(p.id)).slice(0, RECENT)
+  const people = rosterPeople.slice(0, PEOPLE)
+  const morePeople = rosterPeople.length - people.length
   const maxYear = Math.max(1, ...facts.byYear.map((y) => y.n))
   const thisYear = facts.byYear[facts.byYear.length - 1]
   const firstYear = facts.byYear[0]
@@ -102,23 +107,15 @@ export default function Home() {
         ))}
       </div>
 
-      <SecHead title="Selected work" right={<Link to="/publications">All publications</Link>} />
+      <SecHead title="Selected work" right={<Link to="/publications">{facts.papersShown ? `All ${facts.papersShown} papers` : 'All publications'}</Link>} />
       <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
         {selected.map((p) => <PubRow key={p.id} pub={p} />)}
       </div>
 
-      {recent.length > 0 && (
-        <>
-          <SecHead title="Recent" count={`newest of ${facts.papers ?? ''} papers, all years`} />
-          <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
-            {recent.map((p) => <PubRow key={p.id} pub={p} />)}
-          </div>
-        </>
-      )}
-
       <SecHead title="The people" count={facts.people} right={<Link to="/team">Meet the team</Link>} />
       <div className="pub-faces">
-        {rosterPeople.map((m) => <PersonLink key={m.slug ?? m.name} m={m} />)}
+        {people.map((m) => <PersonLink key={m.slug ?? m.name} m={m} />)}
+        {morePeople > 0 && <Link to="/team" className="pub-person" style={{ alignSelf: 'center' }}>+{morePeople} more on the team page</Link>}
       </div>
     </div>
   )

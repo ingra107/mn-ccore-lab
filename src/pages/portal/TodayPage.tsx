@@ -74,6 +74,14 @@ import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import PageHeartbeat from '../../components/moments/PageHeartbeat'
 import LabPulseLine from '../../components/labpulse/LabPulseLine'
+// 2026-10-30 UI pairs desk picks, added beside what Today already shows
+// (Nick: "start by adding things and then slowly take away duplicative things").
+import { HideViewerFaceContext } from '../../components/today/hideViewerFace'
+import { DecisionDesk } from '../../components/today/DecisionDesk'
+import { WalkInCard } from '../../components/today/WalkInCard'
+import { GapStack } from '../../components/today/GapStack'
+import { SlippingCard } from '../../components/today/rail/SlippingCard'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
 
@@ -232,6 +240,9 @@ export default function TodayPage() {
   // Phase 2: Timeline⇄Agenda view toggle. Ephemeral session view + persisted
   // default. The toggle buttons live in the Timeline section header.
   const { view: todayView, setView: setTodayView } = useTodayView()
+  // Picks: the Gap Stack is the phone's (below 640px); it and the Walk-in
+  // card read the wall clock in minutes.
+  const isPhone = useIsMobile(640)
 
 
   // #105: how far ahead the TASK POOL reaches. A view preference, not task state.
@@ -534,6 +545,9 @@ export default function TodayPage() {
   // index.css "Today skin"). Layout order, top to bottom (Nick 2026-10-09):
   // title, Needs you, meeting triage, stat line, how-to hint, compose.
   return (
+    // Faces only for others (Nick 2026-10-30): the viewer's own task rows on
+    // Today show no owner face; a row someone else owns still shows theirs.
+    <HideViewerFaceContext.Provider value={userSlug || null}>
     <div className="b2-grid tk" style={{ color: 'var(--sk-t1)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
       <style>{`
         @keyframes b2pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -608,12 +622,29 @@ export default function TodayPage() {
         {/* The heartbeat line under the title (color-back pick 10). */}
         <PageHeartbeat className="pg-hb-gap" />
 
+        {/* Pick P2, phone only: what fits before the next meeting. */}
+        {isPhone && (
+          <GapStack
+            events={todaysMeetings}
+            tasks={tasks}
+            state={state}
+            projectsByPid={projectsByPid}
+            viewerSlug={userSlug}
+            dismissed={dismissedEventIds}
+          />
+        )}
+
         {/* "Needs you" questions — a process is waiting on Nick's answer. Shown
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
         {!needsYouFolded && (
-          <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} band={false} onCollapse={collapseNeedsYou} />
+          // Pick P1, the Decision desk, is the questions section INSIDE this card
+          // (Nick 2026-10-30: one gold card on Today).
+          <QuestionsCard
+            tasks={questionTasks} snoozed={snoozedQuestions} band={false} onCollapse={collapseNeedsYou}
+            renderWaiting={(waiting, hold) => <DecisionDesk waiting={waiting} projectsByPid={projectsByPid} onHold={hold} />}
+          />
         )}
 
         {/* Asks to join a project (schema-v139): Nick and Nate only; renders
@@ -627,6 +658,14 @@ export default function TodayPage() {
         {/* First login: until the profile has a title, bio and photo,
             a snoozable "Set up your profile" (replaces My Hub's checklist). */}
         <ProfileSetupPrompt />
+
+        {/* Pick P5: a brief before the next meeting, when last time left something. */}
+        <WalkInCard
+          events={todaysMeetings}
+          meetings={meetingsQuery.data ?? []}
+          viewerSlug={userSlug}
+          dismissed={dismissedEventIds}
+        />
 
         {/* Each number waits on the query it counts: a dash, never a false 0. */}
         <StatLine
@@ -863,6 +902,8 @@ export default function TodayPage() {
 
       <aside className="b2-rail">
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
+        {/* Pick P3: Silence Map + Backward Shadows, combined. */}
+        <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} />
         {/* Nick only (the site admin): mail where the ball is his (schema-v151). */}
         <MailWatchCard isNick={!!user?.canShowAllProjects} />
         <NewActivityCard />
@@ -871,5 +912,6 @@ export default function TodayPage() {
         <PulseCard focusMin={focusMin} milestones={milestones} mentees={mentees} />
       </aside>
     </div>
+    </HideViewerFaceContext.Provider>
   )
 }

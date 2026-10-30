@@ -35,7 +35,7 @@
 // reads as not part of the everyday page. Styles: .tk-attn in index.css; the
 // .tk wrapper scopes them so the card looks the same on My Tasks.
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Check, ChevronUp } from 'lucide-react'
 import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
@@ -56,9 +56,13 @@ interface QuestionsCardProps {
    *  keeps the flag and shows an "N needs you" stat in its place). Absent =
    *  no control, as on My Tasks. */
   onCollapse?: () => void
+  /** Today only (pick P1, the Decision desk): renders the waiting questions
+   *  in place of the plain rows, INSIDE this card, so Today keeps one gold
+   *  card and each question shows once. Absent = the plain rows, as on My Tasks. */
+  renderWaiting?: (waiting: TaskRow[], hold: (ids: string[]) => void) => ReactNode
 }
 
-export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [], onCollapse }: QuestionsCardProps) {
+export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [], onCollapse, renderWaiting }: QuestionsCardProps) {
   // A request to join (source 'project_join', schema-v139) is answered on
   // JoinRequestsCard, where Nate decides too; its question row exists for
   // Nick's Telegram card alone, so it is not shown here a second time.
@@ -74,9 +78,13 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
     .sort((a, b) => answeredAt(a) - answeredAt(b))
   const acted = tasks.filter((t) => questionCardState(t) === 'acted')
   const [showSnoozed, setShowSnoozed] = useState(false)
+  // Rows the desk (renderWaiting) is showing as folded outcomes this visit:
+  // the card keeps the desk mounted for them and does not list them again.
+  const [held, setHeld] = useState<string[]>([])
+  const shownAnswered = renderWaiting ? answered.filter((t) => !held.includes(t.id)) : answered
   // Acted-on rows alone are not a reason to show the gold card: nothing on it
   // would want him.
-  if (waiting.length === 0 && answered.length === 0) return null
+  if (waiting.length === 0 && shownAnswered.length === 0 && held.length === 0) return null
 
   const card = (
     <div className="tk">
@@ -99,15 +107,15 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
             </Button>
           )}
         </div>
-        {waiting.map((task) => (
-          <QuestionRow key={task.id} task={task} />
-        ))}
-        {answered.length > 0 && (
+        {renderWaiting
+          ? (waiting.length > 0 || held.length > 0) && renderWaiting(waiting, setHeld)
+          : waiting.map((task) => <QuestionRow key={task.id} task={task} />)}
+        {shownAnswered.length > 0 && (
           <div className="tk-qrow" data-testid="q-answered">
             <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginBottom: 4 }}>
               Answered, not acted on yet
             </div>
-            {answered.map((task) => (
+            {shownAnswered.map((task) => (
               <AnsweredRow key={task.id} task={task} />
             ))}
           </div>
@@ -176,7 +184,7 @@ const SNOOZE_OPTIONS = [
 function useSnooze(task: TaskRow) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
-  return (days: number) => {
+  return (days: number): string => {
     const previous = task.due_date ?? null
     const until = civilDatePlusDays(todayKey(), days)
     mutateTask({ id: task.id, fields: { due_date: until } })
@@ -184,6 +192,7 @@ function useSnooze(task: TaskRow) {
       `Snoozed until ${dayLabel(until)}`,
       () => mutateTask({ id: task.id, fields: { due_date: previous } }),
     )
+    return until
   }
 }
 
@@ -291,7 +300,13 @@ function AnsweredRow({ task }: { task: TaskRow }) {
   )
 }
 
-function QuestionRow({ task }: { task: TaskRow }) {
+/** One waiting question with its full chooser. Exported for the Decision desk
+ *  (today/DecisionDesk.tsx), which opens it in place for "Choose another". */
+export function QuestionRow({ task, onAnswered }: {
+  task: TaskRow
+  /** The desk's hook: told what this row wrote, after it wrote it. */
+  onAnswered?: (o: { kind: 'answered' | 'later'; label: string; previousDue: string | null }) => void
+}) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
   const snooze = useSnooze(task)
@@ -321,7 +336,9 @@ function QuestionRow({ task }: { task: TaskRow }) {
   const submit = () => {
     if (!canSubmit || choice == null) return
     if (snoozeDays != null) {
-      snooze(snoozeDays)
+      const previousDue = task.due_date ?? null
+      const until = snooze(snoozeDays)
+      onAnswered?.({ kind: 'later', label: `Back ${dayLabel(until)}`, previousDue })
       return
     }
     const answer = {
@@ -336,6 +353,8 @@ function QuestionRow({ task }: { task: TaskRow }) {
       'Answered',
       () => mutateTask({ id: task.id, fields: { question_answer_json: null } }),
     )
+    const picked = spec.choices.find((c) => c.key === choice)
+    onAnswered?.({ kind: 'answered', label: choice === 'other' ? (text.trim() || 'Other') : (picked?.label ?? choice), previousDue: null })
   }
 
   return (

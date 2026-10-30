@@ -1,0 +1,75 @@
+/* Today picks, 2026-10-30 UI pairs desk: Decision desk, Gap Stack, Walk-in
+   card, Silence Map + Backward Shadows. Same skin as the rest of Today (.tk
+   scope, the --sk-* surface ramp, one job per --job-* color). Gold only on the
+   Decision desk (it is a Needs-you ask); teal for the "now" rule and primary
+   action; orange = going quiet / at risk; red = overdue or a start already
+   missed. Everything else is the gray ramp. */
+
+/* Field rows inside a card: a small dim label over its value. */
+.tk .pk-k{font-size:11px;color:var(--sk-t3);margin:8px 0 2px}
+.tk .pk-v{font-size:12.5px;color:var(--sk-t2);line-height:1.45}
+.tk .pk-q{font-size:12.5px;color:var(--sk-t1);line-height:1.45;font-style:italic}
+.tk .pk-s{font-size:11.5px;color:var(--sk-t3)}
+.tk .pk-t{font-size:13px;font-weight:600;color:var(--sk-t1);line-height:1.35}
+.tk .pk-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.tk .pk-link{color:var(--sk-t3);font-size:11.5px;text-decoration:underline;text-underline-offset:2px;background:none;border:0;padding:4px 2px;cursor:pointer;touch-action:manipulation}
+.tk .pk-link:hover{color:var(--sk-t1)}
+.tk .pk-hr{height:1px;background:color-mix(in srgb,var(--job-wants) 22%,transparent);margin:10px 0}
+.tk .pk-foot{font-size:11.5px;color:var(--sk-t3);padding:8px 14px 11px 17px;border-top:1px solid color-mix(in srgb,var(--job-wants) 22%,transparent)}
+.tk .pk-row{display:flex;align-items:center;gap:10px;padding:6px 0;min-width:0}
+.tk .pk-row .pk-g{flex:1;min-width:0}
+.tk .pk-row .pk-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.tk .pk-ins{color:var(--sk-t1);font-size:12.5px;line-height:1.45;background:color-mix(in srgb,var(--job-accent) 9%,transparent);box-shadow:inset 2px 0 0 var(--job-accent);padding:4px 8px;border-radius:4px}
+
+/* Decision desk: the lead decision gets room; the rest are one line each. */
+.tk .pk-desk .pk-foot{padding:8px 0 0;margin-top:8px}
+.tk .pk-desk .pk-sep{border-top:1px solid color-mix(in srgb,var(--job-wants) 18%,transparent)}
+.tk .pk-desk .pk-dq{padding:8px 0 10px}
+.tk .pk-desk .pk-rowbtn{width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;cursor:pointer;color:inherit;font:inherit}
+.tk .pk-desk .pk-rowbtn:not(.pk-sep){border-top:0}
+.tk .pk-desk .pk-rowbtn .pk-g{display:flex;flex-direction:column}
+.tk .pk-desk .pk-rowbtn:hover .pk-t{color:var(--sk-t1);text-decoration:underline;text-underline-offset:2px}
+.tk .pk-desk .pk-done{padding:10px 0 2px;font-size:13px;font-weight:600;color:var(--sk-t1);outline:none}
+
+/* Walk-in card: everyday card material with a teal "now" edge. */
+.tk .pk-walk{margin:14px 0 10px;padding:12px 14px 12px 16px;background:linear-gradient(180deg,var(--sk-card) 0%,var(--sk-panel) 100%);border:1px solid var(--sk-line);border-radius:var(--r-card);box-shadow:inset 3px 0 0 var(--job-accent),var(--sk-amb)}
+.tk .pk-walk-h{display:flex;align-items:center;gap:8px;min-width:0}
+.tk .pk-walk-h .pk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .pk-when{font-size:11.5px;color:var(--job-accent);font-weight:500;white-space:nowrap}
+.tk .pk-items{list-style:none;margin:2px 0 0;padding:0}
+.tk .pk-items li{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--sk-t2);padding:2px 0;min-width:0}
+.tk .pk-items li span.pk-it{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .pk-items li.pk-done span.pk-it{color:var(--sk-t3);text-decoration:line-through}
+
+/* Gap Stack (phone): the minutes left before the next meeting, a teal rule. */
+.tk .pk-gap{margin:12px 0 14px}
+.tk .pk-gap-h{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:600;color:var(--sk-t1)}
+.tk .pk-gap-h .tk-r{margin-left:auto;font-size:12px;font-weight:500;color:var(--sk-t3)}
+.tk .pk-rule{height:3px;border-radius:2px;background:var(--sk-line);margin:8px 0 10px;overflow:hidden}
+.tk .pk-rule i{display:block;height:100%;background:linear-gradient(90deg,color-mix(in srgb,var(--job-accent) 55%,transparent),var(--job-accent));border-radius:2px}
+.tk .pk-card{background:linear-gradient(180deg,var(--sk-card) 0%,var(--sk-panel) 100%);border:1px solid var(--sk-line);border-radius:var(--r-card);padding:8px 12px;margin-bottom:8px;box-shadow:var(--sk-amb)}
+.tk .pk-card-h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--sk-t1);margin:2px 0 2px}
+.tk .pk-card-h .tk-cnt{font-weight:500}
+.tk .pk-min{font-size:11.5px;color:var(--sk-t3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tk .pk-min.pk-fit{color:var(--job-accent);font-weight:500}
+
+/* Silence Map + Backward Shadows (rail): orange = going quiet / at risk. */
+.tk .pk-quiet{color:var(--job-stale);font-weight:500}
+.tk .pk-late{color:var(--job-overdue);font-weight:500}
+.tk .pk-tag{font-size:10.5px;padding:1px 6px;border-radius:999px;white-space:nowrap;color:var(--sk-t3);box-shadow:inset 0 0 0 1px var(--sk-line2)}
+.tk .pk-tag.pk-late{color:var(--job-overdue);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--job-overdue) 45%,transparent)}
+.tk .pk-tag.pk-risk{color:var(--job-stale);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--job-stale) 45%,transparent)}
+.tk .pk-fine{font-size:11px;color:var(--sk-t3);background:none;border:0;padding:4px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;touch-action:manipulation}
+.tk .pk-fine:hover{color:var(--sk-t1)}
+.tk .pk-cal{display:grid;grid-template-columns:62px repeat(var(--pk-days),minmax(0,1fr));gap:2px;margin:6px 0 8px;align-items:center}
+.tk .pk-cal .pk-dh{font-size:9.5px;color:var(--sk-t3);text-align:center;white-space:nowrap;overflow:hidden}
+.tk .pk-cal .pk-dh.pk-today{color:var(--job-accent);font-weight:600}
+.tk .pk-cal .pk-l{font-size:10.5px;color:var(--sk-t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px}
+.tk .pk-cal .pk-c{height:12px;border-radius:3px;background:color-mix(in srgb,var(--sk-line) 60%,transparent)}
+.tk .pk-cal .pk-c.pk-busy{background:color-mix(in srgb,var(--sk-t3) calc(var(--pk-b,0) * 70%),var(--sk-line))}
+.tk .pk-cal .pk-c.pk-sh{background:color-mix(in srgb,var(--sk-t3) 35%,transparent)}
+.tk .pk-cal .pk-c.pk-sh.pk-risk{background:color-mix(in srgb,var(--job-stale) 45%,transparent)}
+.tk .pk-cal .pk-c.pk-sh.pk-late{background:color-mix(in srgb,var(--job-overdue) 45%,transparent)}
+.tk .pk-cal .pk-c.pk-due{background:var(--sk-t2);box-shadow:inset 0 0 0 1px var(--sk-t1)}
+.tk .pk-cal .pk-c.pk-due.pk-hard{background:var(--job-milestone)}
+.tk .pk-cal .pk-c.pk-off{background:repeating-linear-gradient(135deg,transparent 0 3px,color-mix(in srgb,var(--sk-line) 80%,transparent) 3px 5px)}
