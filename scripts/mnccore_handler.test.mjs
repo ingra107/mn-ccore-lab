@@ -116,6 +116,7 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
     mkdirSync(utils, { recursive: true })
     resolver = join(utils, 'resolve_launch.py')
     writeFileSync(resolver, '# stub\n')
+    writeFileSync(join(utils, 'resume_phone_session.py'), '# stub\n')
     writeFileSync(join(home, 'Peripheral-Brain', 'Quick_Process.bat'), '@exit /b 0\n')
     writeFileSync(join(home, 'Peripheral-Brain', 'Quick_Chat_seeded.bat'), '@exit /b 0\n')
     mkdirSync(join(home, 'LocalAppData'), { recursive: true })
@@ -246,6 +247,36 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
       const r = fire(url)
       assert.equal(r.code, 1, r.out)
       assert.equal(existsSync(MARK), false, `${url} executed: ${r.out}`)
+    }
+  })
+
+  describe('resume/<latest|session id>', () => {
+    for (const ref of ['latest', '7cc038e5-c185-59c8-bc14-b5de6d1cbc63', 'cse_01Le6AbCdEfGhIjK']) {
+      it(`routes ${ref} to the PB resume script`, () => {
+        const r = fire(`mnccore://resume/${ref}`)
+        assert.equal(r.code, 0, r.out)
+        const p = plan(r.out, 'resume')
+        assert.ok(p, r.out)
+        assert.match(p.argv[0], /python\.exe$/i)
+        assert.match(p.argv[3], /resume_phone_session\.py$/)
+        assert.deepEqual(p.argv.slice(4), [ref, '--notify'])
+      })
+    }
+
+    it('bare resume means latest', () => {
+      const r = fire('mnccore://resume')
+      assert.equal(r.code, 0, r.out)
+      assert.deepEqual(plan(r.out, 'resume').argv.slice(4), ['latest', '--notify'])
+    })
+
+    for (const url of ['mnccore://resume/../x', `mnccore://resume/x&echo PWNED>${MARK}`,
+                       'mnccore://resume/%22', 'mnccore://resume/LATEST', 'mnccore://resume/cse_short']) {
+      it(`refuses ${url}`, () => {
+        const r = fire(url)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(!r.out.includes('DRYRUN'), r.out)
+        assert.equal(existsSync(MARK), false, r.out)
+      })
     }
   })
 

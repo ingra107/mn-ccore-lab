@@ -44,6 +44,7 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
                                `lnch_<alnum>` passes; no decode.
   mnccore://desk/<slug>/<desk> working-desk session -> resolve_launch.py desk mode.
                                Identifier only, no decode; a resolver refusal is loud.
+  mnccore://resume[/latest|/<session id>] move a phone session to a terminal -> PB resume_phone_session.py.
   mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd (no
                                dialog, Nick 2026-10-12).
                                Local drive only, and only a folder under the PB
@@ -431,6 +432,31 @@ def verb_desk(arg: str) -> int:
     return _act("desk", {"argv": argv}, run)
 
 
+RESUME_REF_RE = re.compile(
+    r"latest|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    r"|(?:session|cse)_[A-Za-z0-9]{10,64}", re.ASCII)
+
+
+def verb_resume(arg: str) -> int:
+    """mnccore://resume/latest | resume/<uuid|session_..|cse_..>: move a phone
+    (Remote Control) session to a terminal. PB's resume_phone_session.py does the
+    lookup, the kill and the refusals (message boxes, via --notify)."""
+    if not RESUME_REF_RE.fullmatch(arg):
+        raise Refused(f"resume: refused, not latest or a session id: {arg}")
+    script = os.path.join(_home(), "Peripheral-Brain", "scripts", "utils", "resume_phone_session.py")
+    if not _exists(script):
+        raise Refused(f"resume: script not found at {script}")
+    argv = [_python_exe(), "-X", "utf8", script, arg, "--notify"]
+
+    def run() -> int:
+        # Not waited on: a busy session asks Yes/No in a message box.
+        subprocess.Popen(argv, cwd=_pb_root(), close_fds=True, creationflags=CREATE_NO_WINDOW,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
+        return 0
+    return _act("resume", {"argv": argv}, run)
+
+
 def _pb_root() -> str:
     """The PB repo, junctions resolved (home's C:\\Users\\ingra107 -> C:\\Users\\ingra)."""
     return os.path.realpath(os.path.join(_home(), "Peripheral-Brain"))
@@ -564,9 +590,11 @@ def verb_obsidian(arg: str) -> int:
 
 
 PATH_VERBS = (("open/", verb_open), ("launch/", verb_launch), ("desk/", verb_desk),
-              ("file/", verb_file), ("workon/", verb_workon), ("obsidian/", verb_obsidian))
+              ("file/", verb_file), ("workon/", verb_workon), ("obsidian/", verb_obsidian),
+              ("resume/", verb_resume))
 BARE_VERBS = {"process": verb_process, "bugsquash": verb_bugsquash,
-              "backlogwave": verb_backlogwave, "quickchat": verb_quickchat}
+              "backlogwave": verb_backlogwave, "quickchat": verb_quickchat,
+              "resume": lambda: verb_resume("latest")}
 
 
 def route(url: str) -> int:
