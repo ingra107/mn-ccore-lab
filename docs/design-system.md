@@ -82,7 +82,7 @@ hand-rolled initials discs (use `FaceDisc`); counts only go down.
 - Active: `--teal-subtle` bg fill (desaturated), full teal on text/icon. No left border.
 - Inactive: `--slate` color, icon opacity 0.7.
 - Borders: `--border-subtle` (neutral), NOT `--border-light` (gold).
-- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
+- Section labels: sentence case, never uppercase. The "My projects" label is 11px `--slate` at 0.85 opacity; avatar-menu labels (`.sb-menu-label`) are 10px `--slate` at 0.85. Divider lines between groups.
 - Row height: py-2 (compact). Font: 12px. Group gap: 4px. Section divider margin: 6px/8px.
 - Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
 
@@ -162,14 +162,14 @@ Full spec details archived in `docs/archived/CLAUDE.md-history-2026-05-15.md`.
 
 ## Table Pattern Reference
 
-- Shared `ColumnHeader` + `TableContainer` in `src/components/table/`
-- Column headers: uppercase, 11px, 0.55 opacity, 0.06em letter-spacing
+- Table rows and headers: `table/SleekRows` (`.sr`). Column headers (`.sr-hd`) are sentence case, 11px, weight 500, `--sk-t3`, no letter-spacing, in a sticky blurred header with one hairline; the sorted column turns `--sk-t1`.
+- Legacy: `ColumnHeader` (`.col-header`, uppercase 11px/600 with 0.06em tracking) still renders in `TaskGridView` and `IdeasPage`. The legacy-look ratchet counts its `uppercase`; do not reuse it on a new table.
 - Column resize: drag handles on right edge, min widths, persisted via `useTableConfig`
 - Column reorder: drag headers horizontally, persisted to localStorage
 - Cell focus: 2px teal outline, Tab/Shift+Tab between editable cells
 - Multi-sort: Shift+Click for secondary sort, ①② rank indicators
 - Frozen columns: checkbox + title sticky at ≤1024px viewport
-- Stage group headers: quiet uppercase labels with extending rule line
+- Stage group headers: sentence-case `ui/SectionHead` / `CollapsibleSection` heads with the fading hairline (see the shared-pieces table above)
 - Row hover: `rgba(255,255,255,0.02)` (dark), barely-there luminance shift
 - Row separators: `var(--row-separator)` token (dark: `rgba(255,255,255,0.03)`, light: `rgba(0,0,0,0.04)`)
 - Hover-only badges: `.hover-badge` CSS class — use `visibility: hidden`, not `opacity: 0`
@@ -301,9 +301,9 @@ anatomy — do not mint new active styles.
 The Slack-style seen model shipped 2026-06-11 (auto-acknowledge, entity_seen v81, portal
 bell). These principles are CANON for any future badge, chip, counter, or notification:
 
-1. **Two distinct attention signals, never conflated.** Gold ✦ NEW = an ASSIGNMENT you've
+1. **Two distinct attention signals, never conflated.** Gold ✦ New (`--job-wants`) = an ASSIGNMENT you've
    never opened (`tasks.acknowledged_at IS NULL`; one-shot, cleared by opening; reset by
-   reassignment). Teal ● n NEW = new CONVERSATION on something you've already seen
+   reassignment). Accent ● n new (`--job-accent`) = new CONVERSATION on something you've already seen
    (`entity_seen` vs `activity_entries`; recurring). Gold wins when both could apply.
    Render ONLY through `src/components/tasks/AttentionChip.tsx` — never fork a chip.
 2. **Badge honesty.** A count in the nav must be (a) what it claims, (b) drainable by
@@ -322,9 +322,10 @@ bell). These principles are CANON for any future badge, chip, counter, or notifi
    produces exactly the "lands on a bare page" failure (209 notification links were dead
    for weeks this way).
 5. **Premium chip anatomy** (the AttentionChip recipe — reuse for any future signal pill):
-   full-radius pill, hairline border at ~28% of the accent, whisper fill at ~9%, 8.5px
-   700-weight caps with 0.12em tracking, tabular numerals, glyph not punctuation (✦ /
-   ringed 5px dot). No animation (Rule 44); the Right-Now glow stays the page's only glow.
+   full-radius pill, hairline border at ~28% of the accent, whisper fill at ~9%, 10px
+   600-weight sentence case ("New", "3 new") with no letter-spacing, like Today's cards
+   (design principle: sentence case, never caps), tabular numerals, glyph not punctuation
+   (✦ / ringed 5px dot). No animation (Rule 44); the Right-Now glow stays the page's only glow.
 
 ## ICON DISCIPLINE (Nick 2026-06-11: "looks pixely and not premium")
 
