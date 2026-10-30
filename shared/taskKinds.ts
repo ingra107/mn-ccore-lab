@@ -19,8 +19,16 @@
 // anyway. Answered is not done: the consumer closes the row after its durable
 // effect (api/routes/mutations.ts applyPatch refuses done/deleted while the
 // answer is NULL).
+//
+// A check-in is a task row with kind='checkin' (schema-v152, PB mig 155,
+// 2026-10-30): a one-line, one-tap follow-up titled "Check in: ...". It groups
+// as Quick, never Deep Work, and it is not a project's next step. The title
+// prefix is stored (schema-v152 trg_tasks_checkin_title_*), so a check-in reads
+// as one on every surface that renders `title`. Not in TASK_KIND_OPTIONS yet:
+// flipping an ordinary task to a check-in would fail on its title, and the
+// check-in UI waits on Nick's mockup pick.
 
-export const TASK_KINDS = ['task', 'milestone', 'question'] as const;
+export const TASK_KINDS = ['task', 'milestone', 'question', 'checkin'] as const;
 export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const DEFAULT_TASK_KIND: TaskKind = 'task';
@@ -42,6 +50,13 @@ export function isMilestone(t: { kind?: string | null } | null | undefined): boo
 
 export function isQuestion(t: { kind?: string | null } | null | undefined): boolean {
   return t?.kind === 'question';
+}
+
+/** The title every check-in starts with (schema-v152 refuses any other). */
+export const CHECKIN_TITLE_PREFIX = 'Check in: ';
+
+export function isCheckin(t: { kind?: string | null } | null | undefined): boolean {
+  return t?.kind === 'checkin';
 }
 
 /**

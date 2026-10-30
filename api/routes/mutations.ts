@@ -1411,6 +1411,9 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
         gated("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?", mut.record_id),
         gated("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?", mut.record_id),
         gated('DELETE FROM task_subtasks WHERE task_id = ?', mut.record_id),
+        // Steps are NOT released here: schema-v152's
+        // trg_tasks_parent_soft_delete_release does it on every soft-delete
+        // path, including applyPatch's status='deleted' tombstone.
       ];
     }
     if (mut.table === 'projects') {

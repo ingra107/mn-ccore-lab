@@ -45,7 +45,9 @@ export const PULSE_SQL = {
     GROUP BY tm.slug
     ORDER BY last_at DESC, tm.slug ASC`,
   // rule-90-aggregate-exempt: #156 (counts only)
-  tasks: `SELECT COALESCE(SUM(CASE WHEN kind = 'milestone' THEN 0 ELSE 1 END), 0) AS done,
+  // A check-in (schema-v152) is a one-tap follow-up, not work done: it counts
+  // in neither tile.
+  tasks: `SELECT COALESCE(SUM(CASE WHEN kind IN ('milestone', 'checkin') THEN 0 ELSE 1 END), 0) AS done,
           COALESCE(SUM(CASE WHEN kind = 'milestone' THEN 1 ELSE 0 END), 0) AS milestones
      FROM tasks
     WHERE completed_at >= ?1

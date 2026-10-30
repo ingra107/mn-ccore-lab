@@ -215,6 +215,11 @@ export interface TaskRow {
    *  Vocabulary: shared/taskKinds.ts. Optional here only for rows built by
    *  tests/fixtures; the API always returns it (NOT NULL DEFAULT 'task'). */
   kind?: TaskKind
+  /** Steps (schema v152): the parent task this row is a step of, or null. A
+   *  parent is any task with live steps; its progress is counted on read. */
+  parent_id?: string | null
+  step_total?: number
+  step_done?: number
   /** Operational follow-up fields (schema v55). Returned by the task GET
    *  endpoints and accepted by the mutation allowlist; typed here so callers
    *  can read them without `as any`. No UI surfacing yet (INFRA-7). */
@@ -297,7 +302,7 @@ export const TASK_ROW_KEYS = [
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date',
   'planned_for', 'plan_slot', 'plan_rank', 'estimated_minutes',
   'plan_start_min', 'created_at', 'updated_at', 'meeting_title',
-  'meeting_date', 'meeting_ref', 'approval_status', 'kind',
+  'meeting_date', 'meeting_ref', 'approval_status', 'kind', 'parent_id', 'step_total', 'step_done',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',
