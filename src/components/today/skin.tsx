@@ -6,8 +6,15 @@
 import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable, photoFor, slugForName } from '../../lib/personLabel'
 import { fullNameForSlug } from '../../lib/nameUtils'
 import HermesMark from '../HermesMark'
-import { useState } from 'react'
+import { createContext, useState } from 'react'
 import type React from 'react'
+
+/** The viewer whose OWN rows show no owner face (Nick 2026-10-30, Today task
+ *  rows: "Show faces only for others"). A row someone else owns still shows
+ *  theirs. Null, the default, shows every owner face, so only a surface that
+ *  provides it (Today) changes; the face slot keeps its width either way, so
+ *  every card's right edge still lines up. */
+export const HideViewerFaceContext = createContext<string | null>(null)
 
 /** THE face circle: the photo when there is one, else the initials
  *  (rules-ui-design 18). Same size and ring either way. Every face in the Hub

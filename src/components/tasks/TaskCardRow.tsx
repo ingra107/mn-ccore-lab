@@ -25,7 +25,8 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { civilDaysOverdue, dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/dateUtils'
 import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
-import { Face, Faces, CheckGlyph } from '../today/skin'
+import { useContext } from 'react'
+import { Face, Faces, CheckGlyph, HideViewerFaceContext } from '../today/skin'
 import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
 import type { CardTaskRowProps } from './TaskRow'
@@ -163,13 +164,16 @@ export function CardRow(props: CardTaskRowProps) {
   } = props
 
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
+  // Today: the viewer's own rows carry no owner face (HideViewerFaceContext).
+  const hideFaceOf = useContext(HideViewerFaceContext)
+  const showOwnerFace = !!task.assignee && task.assignee !== hideFaceOf
 
   const urgent = !isDone && task.priority === 'urgent'
   const displayTitle = taskShortLabel(task)
   const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
     // assigned_by is often stored as an email, assignee as a slug: compare slugs.
     .map((s) => (s && s.includes('@') ? slugForEmail(s) : s))
-    .filter((s): s is string => !!s && s !== task.assignee)
+    .filter((s): s is string => !!s && s !== task.assignee && s !== hideFaceOf)
 
   const titleNode = onOpenEditor ? (
     <span
@@ -303,7 +307,7 @@ export function CardRow(props: CardTaskRowProps) {
           </div>
         </div>
         <div className="tk-tr-r">
-          <span className="tk-av">{task.assignee && <Face slug={task.assignee} lg />}</span>
+          <span className="tk-av">{showOwnerFace && <Face slug={task.assignee!} lg />}</span>
           <span className="tk-wk">{workSlot}</span>
         </div>
       </div>

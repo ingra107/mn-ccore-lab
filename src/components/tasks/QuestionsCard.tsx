@@ -291,7 +291,9 @@ function AnsweredRow({ task }: { task: TaskRow }) {
   )
 }
 
-function QuestionRow({ task }: { task: TaskRow }) {
+/** One waiting question with its full chooser. Exported for the Decision desk
+ *  (today/DecisionDesk.tsx), which opens it in place for "Choose another". */
+export function QuestionRow({ task }: { task: TaskRow }) {
   const { mutate: mutateTask } = useUpdateTask()
   const { showUndo } = useUndoToast()
   const snooze = useSnooze(task)
