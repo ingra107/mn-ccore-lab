@@ -19,7 +19,7 @@ export {
 import { todayKey } from '../../lib/taskGrouping'
 import type { GroupKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
-import { isMilestone } from '../../../shared/taskKinds'
+import { isCheckin, isMilestone } from '../../../shared/taskKinds'
 import { grantedProjectList } from '../../lib/projectMeetings'
 import { projectShortLabel } from '../../lib/displayNames'
 
@@ -161,6 +161,9 @@ export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { catego
   // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
   // whatever its priority says. Only an explicit Move (above) outranks this.
   if (isMilestone(t)) return 'deep'
+  // A check-in is a one-tap follow-up, never Deep Work (Nick 2026-10-30:
+  // "outside the Deep Work cap"). Same line in MyTasks/constants.ts.
+  if (isCheckin(t)) return 'quick'
   // PB bucket — broadened: source flag, title prefix, project slug pattern,
   // or project category. Catches "Peripheral Brain" variations that the
   // narrow source='pb' check missed in the eval (review/pre-merge-2026-04-25/EVAL.md Issue 4).

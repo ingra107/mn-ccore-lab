@@ -15,6 +15,7 @@ import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activit
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
+import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
 
 // guardTaskProject: reads the live task through the caller's handle. A task
 // the caller may not read (api/lib/table-scope.ts taskRule) is absent, so
@@ -123,9 +124,13 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   const selectCols = wireTyped ? TASK_SELECT_COLS_TYPED : TASK_SELECT_COLS;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
+  // schema-v152: a UI read carries each task's step progress ("1 of 4"),
+  // counted here so a parent's count covers steps the page did not load. The
+  // PB sync read (seq_after / wire=typed) mirrors stored columns only.
+  const stepCols = seqAfterRaw === null && !wireTyped ? `, ${TASK_STEP_COUNT_COLS}` : '';
   // Which tasks the caller sees is the viewer-bound handle's rule,
   // api/lib/table-scope.ts (#145 Lane B).
-  let query = `SELECT ${selectCols}, ${TASK_MEETING_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE ${deletedFilter}`;
+  let query = `SELECT ${selectCols}, ${TASK_MEETING_COLS}${stepCols} FROM tasks t ${TASK_MEETING_JOIN} WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -268,12 +273,24 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // read is a 404.
 export async function handleGetTask(id: string, env: Env): Promise<Response> {
   const task = await env.DB.prepare(
-    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
+    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS}, ${TASK_STEP_COUNT_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
   // meeting_ref comes from TASK_MEETING_JOIN, the same join as the list read,
   // so the row and the detail panel always agree on the meeting.
   return json({ data: task });
+}
+
+// GET /api/projects/next-step-gaps — active projects with no next step
+// (schema-v152 plan, divergence 3). Computed on every read and never stored,
+// so a gap closes the moment a task is added. The predicate lives in
+// api/lib/task-steps.ts (NEXT_STEP_GAPS_SQL). Read through the caller's
+// handle, so each person sees gaps only among the projects they can read.
+// The PB nightly job reads this to log the count; nothing is minted.
+export async function handleGetNextStepGaps(env: Env): Promise<Response> {
+  const res = await env.DB.prepare(NEXT_STEP_GAPS_SQL).all();
+  const rows = res.results ?? [];
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/action-items and POST /api/action-items/:id/toggle (handleActionItems,
@@ -556,6 +573,9 @@ export async function handleCreateTask(
     approval_status?: 'pending' | 'accepted' | 'declined' | null;
     // schema-v109 (2026-09-16): 'task' (default) | 'milestone'.
     kind?: TaskKind | null;
+    // schema-v152: create this task as a step of that task. The v152
+    // triggers refuse a missing/deleted parent, a step of a step, a question.
+    parent_id?: string | null;
     // A talk (or a moderated session) the task is for: minted as its OWN
     // product in the task's project, and the task sits on it. parseEventSpec.
     talk?: unknown;
@@ -666,6 +686,7 @@ export async function handleCreateTask(
       meeting_id: body.meeting_id ?? null,
       project_id: resolvedProjectId,
       ...(productId ? { product_id: productId } : {}),
+      ...(body.parent_id ? { parent_id: body.parent_id } : {}),
       due_date: body.due_date ?? null,
       deadline: body.deadline ?? null,
       priority,
@@ -895,7 +916,7 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   // actor + summary. The activity_entries read covers ALL kinds; the noteUpdates
   // mapping below renders them as kind:'note'.
   const vis = await activityVisibilityGate(request, env);
-  const [updatesRes, activityRes, subtasksRes, blocksRes] = await Promise.all([
+  const [updatesRes, activityRes, subtasksRes, blocksRes, stepsRes] = await Promise.all([
     env.DB.prepare(
       // #98: roots only. This fan-out flattens each row into a standalone
       // kind:'note'; without the guard a reply would surface here detached from
@@ -916,6 +937,8 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     env.DB.prepare(
       `SELECT id, title FROM tasks WHERE deleted_at IS NULL AND id != ? AND ${blockedByContainsSql('blocked_by')} LIMIT 10`
     ).bind(taskId, taskId).all(),
+    // schema-v152: this task's live steps (full task rows, tasks.parent_id).
+    env.DB.prepare(TASK_STEPS_SQL).bind(taskId).all(),
   ]);
 
   type UpdateRow = { id: string; content: string; author_slug: string | null; update_type: string | null; created_at: string };
@@ -951,6 +974,7 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
       updates,
       subtasks: subtasksRes.results ?? [],
       blocks: blocksRes.results ?? [],
+      steps: stepsRes.results ?? [],
     },
   });
 }

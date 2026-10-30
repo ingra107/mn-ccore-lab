@@ -27,7 +27,7 @@ import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleGetNextStepGaps, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMarkThreadSeen } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -848,6 +848,14 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   handler: (c) => handleGetDeletedProjectsSince(U(c), E(c)),
+});
+// schema-v152: active projects with no next step (computed, never stored).
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/next-step-gaps',
+  auth: 'authed',
+  entity: 'projects',
+  handler: (c) => handleGetNextStepGaps(E(c)),
 });
 defineRoute({
   method: 'GET',
