@@ -22,6 +22,7 @@ import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldControls'
 import { ActivityPeek } from './ActivityPeek'
+import { StepsList } from './StepsList'
 import TaskDetailPanel from '../tasks/LazyTaskDetailPanel'
 import { LinkCards } from './LinkCards'
 import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
@@ -231,6 +232,15 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       {isFromMeeting(task) && (
         <div style={{ marginTop: 12, fontSize: 11, color: INK_DIM }}>
           <MeetingOriginTag task={task} color={'var(--sk-t2)'} />
+        </div>
+      )}
+
+      {/* Steps (schema v152): a parent lists every step, same order as the
+          card's Next row. Shown from the counts, so it holds a slot while the
+          detail loads only if the parent has steps. */}
+      {(task.step_total ?? 0) > 0 && (detail?.steps?.length ?? 0) > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <StepsList steps={detail!.steps!} state={state} />
         </div>
       )}
 

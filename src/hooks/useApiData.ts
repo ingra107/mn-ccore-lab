@@ -1030,10 +1030,23 @@ export function useSubtasks(taskId: string) {
 export interface TaskDetailUpdate { id: string; when: string; who: string; text: string; kind: 'note' | 'event' }
 export interface TaskDetailSubtask { id: string; title: string; completed: number }
 export interface TaskDetailBlock { id: string; title: string }
+/** A live step of this task (tasks.parent_id), in next-step order: due date
+ *  (undated last), then oldest. Done steps are included. */
+export interface TaskDetailStep {
+  id: string
+  title: string | null
+  short_title: string | null
+  status: string
+  due_date: string | null
+  assignee: string | null
+  kind: string | null
+}
 export interface TaskDetailPayload {
   updates: TaskDetailUpdate[]
   subtasks: TaskDetailSubtask[]
   blocks: TaskDetailBlock[]
+  /** schema-v152. Empty on a task with no steps. */
+  steps?: TaskDetailStep[]
 }
 
 export function useTaskDetail(taskId: string | null) {

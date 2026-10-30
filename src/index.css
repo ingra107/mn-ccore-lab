@@ -2937,6 +2937,15 @@ button.tk-mact-hd:hover{color:var(--sk-t1)}
 .tk .tk-ask{margin-top:6px;padding:9px 11px;border-radius:10px;border:1px solid color-mix(in srgb,var(--job-wants) 55%,transparent);background:color-mix(in srgb,var(--job-wants) 14%,transparent)}
 .tk .tk-ask-t{font-size:13px;font-weight:600;color:var(--sk-t1)}
 .tk .tk-ask-go{margin-top:7px;padding:5px 11px;border-radius:7px;border:0;background:var(--job-accent);color:var(--sk-ac-fg);font-size:12.5px;font-weight:600;cursor:pointer}
+/* Steps list in the parent's drawer. */
+.tk-sl-ul{list-style:none;margin:4px 0 0;padding:0}
+.tk-sl-ul li{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12.5px;color:var(--sk-t1)}
+.tk-sl-ul li.tk-sl-d .tk-sl-t{color:var(--sk-t3);text-decoration:line-through}
+.tk-sl-t{flex:1;min-width:0}
+.tk-sl-ul .tk-ck.tk-nxck{width:14px;height:14px;margin-top:0;border-radius:4px;flex-shrink:0;box-shadow:inset 0 0 0 1.5px var(--sk-t3);display:grid;place-items:center;color:var(--sk-ac-fg)}
+.tk-sl-ul .tk-ck.tk-nxck.tk-on{background:var(--job-accent);box-shadow:none}
+.tk-sl-ul .tk-next-d{flex-shrink:0;font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
+.tk-sl-ul .tk-next-d.tk-late{color:var(--job-overdue)}
 /* A parent's box while a step is open: still there, dimmed, not offered. */
 .tk .tk-ck.tk-lock{opacity:.45;cursor:not-allowed}
 .tk .tk-pill>svg{flex-shrink:0}

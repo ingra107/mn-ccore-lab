@@ -68,6 +68,9 @@ export function useUpdateTaskStatus() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // A parent's drawer lists its steps (task-detail); a step ticked from
+      // the card or the drawer must show in both.
+      queryClient.invalidateQueries({ queryKey: ['task-detail'] })
       queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },

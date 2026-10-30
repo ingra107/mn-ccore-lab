@@ -173,3 +173,33 @@ describe('optimistic parent count', () => {
     expect(bumpParentStepDone(all, 's1', true).find((t) => t.id === 'p')!.step_done).toBe(4)
   })
 })
+
+describe('steps list in the drawer', () => {
+  const detail = (): import('../../hooks/useApiData').TaskDetailStep[] => [
+    { id: 's1', title: 'Upgrade to CLIFpy 3.0', short_title: null, status: 'done', due_date: '2020-01-01', assignee: 'nick', kind: 'task' },
+    { id: 's2', title: 'Shelter stable-vs-stable', short_title: null, status: 'todo', due_date: '2020-01-01', assignee: 'nick', kind: 'task' },
+    { id: 's3', title: 'Backbone Git phase 2', short_title: 'Backbone Git 2', status: 'todo', due_date: null, assignee: 'nick', kind: 'task' },
+  ]
+
+  it('lists every step in the order given, with box, title and due date', async () => {
+    const { StepsList } = await import('./StepsList')
+    const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={stateWith([])} /></div>)
+    const lis = [...h.querySelectorAll('[data-step-id]')]
+    expect(lis.map((l) => l.getAttribute('data-step-id'))).toEqual(['s1', 's2', 's3'])
+    expect(lis[0].querySelector('button')!.getAttribute('aria-pressed')).toBe('true')
+    expect(lis[1].textContent).toContain('Shelter stable-vs-stable')
+    expect(lis[1].querySelector('.tk-next-d')!.textContent).toMatch(/d late$/)
+    expect(lis[2].textContent).toContain('Backbone Git 2')
+    expect(lis[2].querySelector('.tk-next-d')).toBeNull()
+  })
+
+  it('ticking an open step completes it; a done step reopens', async () => {
+    const calls: string[] = []
+    const state = { ...stateWith(calls), uncheck: (id: string) => { calls.push(`un:${id}`) } } as unknown as TodayStateApi
+    const { StepsList } = await import('./StepsList')
+    const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={state} /></div>)
+    ;(h.querySelector('[data-step-id="s2"] button') as HTMLButtonElement).click()
+    ;(h.querySelector('[data-step-id="s1"] button') as HTMLButtonElement).click()
+    expect(calls).toEqual(['s2', 'un:s1'])
+  })
+})
