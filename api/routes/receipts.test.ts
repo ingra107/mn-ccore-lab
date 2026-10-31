@@ -424,6 +424,16 @@ describe('the catch-all', () => {
       return c.json({ ok: true })
     })
     a.post('/api/refused', (c) => c.json({ error: 'no' }, 409))
+    // A POST that only reads (the listener's queue poll is one).
+    a.post('/api/read-post', async (c) => { await c.get('env').DB.prepare('SELECT id FROM tasks WHERE id = ?').bind('task_a').all(); return c.json({ ok: true }) })
+    // A POST whose write matched nothing.
+    a.post('/api/no-change', async (c) => { await c.get('env').DB.prepare("UPDATE tasks SET priority = 'urgent' WHERE id = ?").bind('no_such_task').run(); return c.json({ ok: true }) })
+    // A raw write inside a batch, next to a read.
+    a.post('/api/batch-write/:id', async (c) => {
+      const db = c.get('env').DB
+      await db.batch([db.prepare('SELECT 1'), db.prepare("UPDATE tasks SET priority = 'low' WHERE id = ?").bind(c.req.param('id'))])
+      return c.json({ ok: true })
+    })
     a.get('/api/read', (c) => c.json({ ok: true }))
     return a
   }
@@ -446,6 +456,28 @@ describe('the catch-all', () => {
     await hit(a, 'POST', '/api/refused')
     await hit(a, 'POST', '/api/raw/task_a', false)
     expect(lines()).toHaveLength(1)
+  })
+
+  it('a PB POST that only reads, or whose write changed 0 rows, gets no line', async () => {
+    const a = app()
+    expect((await hit(a, 'POST', '/api/read-post')).status).toBe(200)
+    expect((await hit(a, 'POST', '/api/no-change')).status).toBe(200)
+    expect(lines()).toHaveLength(0)
+  })
+
+  it('a raw write inside a batch is counted: one summary line', async () => {
+    const a = app()
+    expect((await hit(a, 'POST', '/api/batch-write/task_a')).status).toBe(200)
+    expect(lines().map((l) => l.summary)).toEqual(['POST /api/batch-write/:id'])
+    expect(task().priority).toBe('low')
+  })
+
+  it('the listener queue poll through the worker writes no line', async () => {
+    const res = await worker.fetch(new Request('https://hub.test/api/ai-requests/queue', {
+      method: 'POST', headers: { Authorization: `Bearer ${PB_KEY}`, 'Content-Type': 'application/json' }, body: '{}',
+    }), env, CTX)
+    expect(res.status).toBeLessThan(300)
+    expect(lines()).toHaveLength(0)
   })
 })
 

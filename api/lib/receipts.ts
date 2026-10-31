@@ -48,6 +48,10 @@ export interface ReceiptOrigin {
    *  PB write the request never considered gets a summary line. Mutable on
    *  purpose -- every env copy of one request shares this one object. */
   handled: boolean
+  /** Rows this request changed, counted at the DB handle (receiptsMiddleware
+   *  wraps env.DB with changeCountingDb). The catch-all owes a line only when
+   *  this is above 0: a POST that only read, or wrote nothing, is not a write. */
+  changes: number
 }
 
 /** An env carrying the request's receipt origin. Optional so every existing
@@ -79,9 +83,9 @@ export function receiptOriginOf(request: Request, isPbKey: boolean, now: Date = 
   const machine = headerName(request, MACHINE_HEADER) ?? 'unknown'
   const run = headerName(request, RUN_HEADER, RUN_ID_RX)
   if (run && !run.startsWith('unattributed:')) {
-    return { runId: run, lane: headerName(request, LANE_HEADER) ?? 'unknown', machine, origin: 'pb', handled: false }
+    return { runId: run, lane: headerName(request, LANE_HEADER) ?? 'unknown', machine, origin: 'pb', handled: false, changes: 0 }
   }
-  return { runId: `unattributed:${machine}:${ctDateString(now)}`, lane: 'unattributed', machine, origin: 'unattributed', handled: false }
+  return { runId: `unattributed:${machine}:${ctDateString(now)}`, lane: 'unattributed', machine, origin: 'unattributed', handled: false, changes: 0 }
 }
 
 /** env with RECEIPT_ORIGIN set from this request (or cleared). The one setter. */
@@ -497,14 +501,16 @@ export function tombstoneUnworked(recordId: string, createActionId: string): Gat
 
 // ── the catch-all: a PB write no boundary receipted ──────────────────────────
 
-// ai-requests/queue is the listener's polling READ that happens to be a POST;
-// without the skip every poll wrote a line.
-const CATCH_ALL_SKIP = /^\/api\/(receipts|mutations)(\/|$)|^\/api\/ai-requests\/queue$/
+// The receipt routes are the record themselves; /api/mutations answers every
+// write at its own boundary. A POST that only reads (the listener's
+// /api/ai-requests/queue poll) needs no entry here: it changes 0 rows.
+const CATCH_ALL_SKIP = /^\/api\/(receipts|mutations)(\/|$)/
 
 /**
  * One summary line for a PB-key write request that no receipt boundary saw:
  * {kind 'change', op 'external', summary '<METHOD> <route pattern>', inverse
- * 'none'}. Called by the /api/* middleware after the handler. Not for reads,
+ * 'none'}. Owed only when the request changed at least one row
+ * (origin.changes, counted by api/lib/change-counting-db.ts). Called by the /api/* middleware after the handler. Not for reads,
  * failed requests, the receipt routes themselves, or /api/mutations (which
  * answers every write itself). Returns [] when nothing is owed.
  *
@@ -513,7 +519,7 @@ const CATCH_ALL_SKIP = /^\/api\/(receipts|mutations)(\/|$)|^\/api\/ai-requests\/
  */
 export function catchAllStatements(env: Env, method: string, pattern: string, status: number, now: string): D1PreparedStatement[] {
   const origin = originOf(env)
-  if (!origin || origin.handled) return []
+  if (!origin || origin.handled || origin.changes <= 0) return []
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return []
   if (status < 200 || status >= 300) return []
   if (CATCH_ALL_SKIP.test(pattern)) return []

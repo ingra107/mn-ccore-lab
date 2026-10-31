@@ -60,6 +60,7 @@ import { PulseCard } from '../../components/today/rail/PulseCard'
 import { NewActivityCard } from '../../components/today/rail/NewActivityCard'
 import { CommitmentsCard } from '../../components/today/rail/CommitmentsCard'
 import { MailWatchCard } from '../../components/today/rail/MailWatchCard'
+import { OvernightCard } from '../../components/today/rail/OvernightCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
@@ -931,6 +932,8 @@ export default function TodayPage() {
       </main>
 
       <aside className="b2-rail">
+        {/* Nick only (the site admin): what PB changed overnight, with Undo (receipts v154). */}
+        <OvernightCard isNick={!!user?.canShowAllProjects} />
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
         {/* Pick P3: Silence Map + Backward Shadows, combined. */}
         <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} />

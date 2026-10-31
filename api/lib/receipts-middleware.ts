@@ -9,14 +9,16 @@
 //     a PB write with no per-route call.
 //   - after the handler: a PB-key non-GET that answered 2xx and that no
 //     receipt boundary saw gets one summary line '<METHOD> <route pattern>'
-//     (receiptCatchAll). The origin's `handled` flag is the counter: every
-//     builder sets it, so the middleware knows the request wrote its own
-//     lines (or decided, at a boundary, that it had nothing to record).
+//     (receiptCatchAll), and only when the request changed rows: env.DB is
+//     wrapped with changeCountingDb, which adds each write's meta.changes to
+//     origin.changes. The origin's `handled` flag says a receipt boundary
+//     already wrote the request's lines (or decided it had nothing to record).
 
 import type { Context, MiddlewareHandler } from 'hono'
 import { routePath } from 'hono/route'
 import type { Env } from '../types'
 import { withReceiptOrigin, receiptCatchAll } from './receipts'
+import { changeCountingDb } from './change-counting-db'
 
 export interface ReceiptsMiddlewareCtx<C extends Context> {
   /** The request's env as routes will read it (E(c)). */
@@ -29,7 +31,11 @@ export interface ReceiptsMiddlewareCtx<C extends Context> {
 export function receiptsMiddleware<C extends Context>(ctx: ReceiptsMiddlewareCtx<C>): MiddlewareHandler {
   return async (c, next) => {
     const cc = c as C
-    const env = withReceiptOrigin(ctx.getEnv(cc), cc.req.raw, ctx.pbKey(cc))
+    let env = withReceiptOrigin(ctx.getEnv(cc), cc.req.raw, ctx.pbKey(cc))
+    const origin = env.RECEIPT_ORIGIN
+    // A PB request's DB handle counts the rows it changes (over the viewer-db
+    // handle, so scoping is unchanged); a browser request keeps its handle.
+    if (origin) env = { ...env, DB: changeCountingDb(env.DB, (n) => { origin.changes += n }) }
     ctx.setEnv(cc, env)
     await next()
     if (!env.RECEIPT_ORIGIN) return
