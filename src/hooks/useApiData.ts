@@ -1526,6 +1526,32 @@ export function useManuscriptsAttention(params?: { reviewDays?: number; staleDay
   })
 }
 
+// ── Projects with no next step ────────────────────────────
+
+/** One row of GET /api/projects/next-step-gaps (api/lib/task-steps.ts NEXT_STEP_GAPS_SQL). */
+export interface NextStepGap {
+  id: string
+  slug: string | null
+  title: string | null
+  tier: number | null
+  last_movement: string | null
+}
+
+/** Active projects with no open task. Computed on read by the server, so a gap
+ *  closes the moment a task is added (invalidate this key after a create). */
+export function useNextStepGaps() {
+  return useQuery({
+    queryKey: ['next-step-gaps'],
+    queryFn: async (): Promise<NextStepGap[]> => {
+      const res = await fetch('/api/projects/next-step-gaps', { credentials: 'include' })
+      if (!res.ok) throw new Error(`next-step-gaps fetch failed: ${res.status}`)
+      return ((await res.json()) as { data: NextStepGap[] }).data ?? []
+    },
+    staleTime: 60 * 1000,
+    retry: false,
+  })
+}
+
 // ── Mentee Milestones ─────────────────────────────────────
 
 export function useMenteeMilestones(params?: { mentee?: string; status?: string; type?: string }) {

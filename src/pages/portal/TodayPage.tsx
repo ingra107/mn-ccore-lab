@@ -82,6 +82,7 @@ import { DecisionDesk } from '../../components/today/DecisionDesk'
 import { WalkInCard } from '../../components/today/WalkInCard'
 import { GapStack } from '../../components/today/GapStack'
 import { SlippingCard } from '../../components/today/rail/SlippingCard'
+import { NoNextStepCard } from '../../components/today/rail/NoNextStepCard'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 const SHOW_MILESTONES_KEY = 'hub-today-show-milestones'
@@ -912,6 +913,8 @@ export default function TodayPage() {
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
         {/* Pick P3: Silence Map + Backward Shadows, combined. */}
         <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} />
+        {/* Active projects with no open task; hides itself at zero. */}
+        <NoNextStepCard />
         {/* Nick only (the site admin): mail where the ball is his (schema-v151). */}
         <MailWatchCard isNick={!!user?.canShowAllProjects} />
         <NewActivityCard />
