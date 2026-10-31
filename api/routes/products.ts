@@ -437,7 +437,10 @@ export async function handleProjectProductWrite(
 
   if (result.status !== 'accepted' && result.status !== 'merged_clean') {
     const refusal = plainRefusal(result, body.action as string);
-    return json({ error: refusal.message, code: result.code ?? result.status }, refusal.status);
+    return json({
+      error: refusal.message, code: result.code ?? result.status,
+      ...(result.rule_id === undefined ? {} : { rule_id: result.rule_id }),
+    }, refusal.status);
   }
   // The row the write produced is on the result (commitRowWrite / applyInsert
   // read it inside the same request); only the stage's rung is looked up.
@@ -523,20 +526,19 @@ export function termsRefusal(
  * is the caller's input (400); a row that moved, or contention, is a 409.
  */
 export function plainRefusal(
-  result: { status: string; code?: string; reason?: string },
+  result: { status: string; code?: string; reason?: string; rule_id?: string },
   action: string,
 ): { status: 400 | 409; message: string } {
-  const reason = result.reason ?? '';
   if (result.status === 'conflict' || result.code === 'cas_contention') {
     return { status: 409, message: 'Someone changed this a moment ago; the page has refreshed. Try again.' };
   }
-  if (/product_home_live/.test(reason)) {
+  if (result.rule_id === 'product_home_live') {
     return { status: 409, message: 'Mark another product home first.' };
   }
-  if (/product_last_live/.test(reason)) {
+  if (result.rule_id === 'product_last_live') {
     return { status: 409, message: 'A project keeps at least one product.' };
   }
-  if (['constraint', 'value_invalid', 'enum_domain', 'unknown_field', 'protected_null'].includes(result.code ?? '')) {
+  if (['constraint', 'business_rule', 'value_invalid', 'enum_domain', 'unknown_field', 'protected_null'].includes(result.code ?? '')) {
     if (action === 'add') return { status: 400, message: 'That kind and stage do not go together.' };
     if (action === 'stage') return { status: 400, message: "That stage is not on this product's ladder." };
     return { status: 400, message: 'That change is not allowed for this product.' };

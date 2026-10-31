@@ -60,8 +60,11 @@
 -- which cascaded task_subtasks/task_handoffs/task_files). Copy
 -- (id, parent_id) aside and restore it after the rebuild.
 --
--- Errors: every RAISE(ABORT) arrives at /api/mutations as code 'constraint'
--- (applyErrorResult -> isConstraintFailure), which PB maps to refuse_loud.
+-- Errors: a RAISE(ABORT) arrives at /api/mutations by its leading rule id
+-- (api/lib/trigger-rule-codes.ts): task_parent_open_steps, task_parent_done,
+-- task_parent_depth and task_parent_question as code 'business_rule' (PB:
+-- refuse_quiet, told to the caller); task_parent_not_live and checkin_title as
+-- 'constraint' (PB: refuse_loud, a writer bug).
 --
 -- Rollback (Worker first, so nothing writes parent_id or kind='checkin'):
 --   SELECT id, parent_id FROM tasks WHERE parent_id IS NOT NULL;   -- record first

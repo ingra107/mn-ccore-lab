@@ -21,9 +21,7 @@ import worker from '../index'
 import type { Env } from '../types'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
-import { PENDING_REFUSAL_CODES } from './mutations'
 import { nowInstant } from '../lib/time'
-import { REFUSAL_CODES } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -260,13 +258,5 @@ describe('contract phase step 3: projects.stage is refused, loud, on every write
     expect(named.status, named.reason).toBe('accepted')
     expect(row('SELECT kind, stage, is_home FROM products WHERE project_id = ?', 'proj_named'))
       .toEqual({ kind: 'abstract', stage: 'planning', is_home: 1 })
-  })
-})
-
-describe('the pending refusal code', () => {
-  it('is not in pb-schema yet; when it is, delete it from PENDING_REFUSAL_CODES', () => {
-    for (const code of PENDING_REFUSAL_CODES) {
-      expect(REFUSAL_CODES as readonly string[], `pb-schema now lists ${code}: remove it from PENDING_REFUSAL_CODES`).not.toContain(code)
-    }
   })
 })

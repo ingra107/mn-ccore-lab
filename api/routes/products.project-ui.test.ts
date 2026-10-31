@@ -265,9 +265,9 @@ describe('refusals answer in plain words (cold review s61 M5) and the seq comes 
   })
 
   it('a trigger refusal (home or last live product) becomes a sentence, never the trigger text', () => {
-    const home = plainRefusal({ status: 'error', code: 'constraint', reason: 'product_home_live: mark another product home before tombstoning this one' }, 'stage')
+    const home = plainRefusal({ status: 'error', code: 'business_rule', rule_id: 'product_home_live', reason: 'product_home_live: mark another product home before tombstoning this one' }, 'stage')
     expect(home).toEqual({ status: 409, message: 'Mark another product home first.' })
-    const last = plainRefusal({ status: 'error', code: 'apply_error', reason: 'product_last_live: a live project keeps at least one live product' }, 'stage')
+    const last = plainRefusal({ status: 'error', code: 'business_rule', rule_id: 'product_last_live', reason: 'product_last_live: a live project keeps at least one live product' }, 'stage')
     expect(last).toEqual({ status: 409, message: 'A project keeps at least one product.' })
     expect(plainRefusal({ status: 'error', code: 'infra', reason: 'D1_ERROR: seq 41' }, 'stage').message).not.toMatch(/seq|D1/)
   })

@@ -35,6 +35,7 @@ import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, que
 import { weekPlanStart } from '../lib/week-plan-start';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
+import { classifyTriggerFailure } from '../lib/trigger-rule-codes';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
 import {
   rowChangeStatements, insertStatements, projectMoveStatements, markReceiptHandled,
@@ -298,19 +299,6 @@ export interface Mutation {
 }
 
 /**
- * Refusal codes this build emits that the pb-schema REFUSAL_CODES artifact does
- * not list yet. PB owns the vocabulary (scripts/db/schema_dsl.py section 7) and
- * the Hub cannot regenerate the artifact, so a new code is declared here until
- * the pb-schema bump lands; mutations.products-step5.test.ts fails the day
- * REFUSAL_CODES lists a code still named here, so this list only empties.
- * Until PB maps it, PB reads the code as UNCODED: retried to max_attempts, then
- * dead-lettered with the code named in last_error (outbox.py flush loop).
- */
-// 'daily_cap' (a week plan's Start past the day's packet cap) landed in
-// pb-schema with the planning conversation, so it is not pending.
-export const PENDING_REFUSAL_CODES = [] as const;
-
-/**
  * Fields a table no longer accepts, each with the words an unknown_field
  * refusal adds so a stale writer learns where the value went (contract phase
  * step 3, PB Scratch/plans/2026-10-12-contract-phase-retire-project-stage.md).
@@ -323,7 +311,7 @@ const RETIRED_FIELDS: Record<string, Record<string, string>> = {
     stage_entered_at: 'projects.stage_entered_at is retired: the stage clock is products.stage_entered_at',
   },
 };
-type HubRefusalCode = RefusalCode | (typeof PENDING_REFUSAL_CODES)[number];
+type HubRefusalCode = RefusalCode;
 
 interface MutationResult {
   mutation_id: string;
@@ -336,6 +324,10 @@ interface MutationResult {
   // (mutErr requires it). Absent on a stored receipt from before codes, which
   // replays verbatim; PB treats a code-less error as UNCODED, never as a class.
   code?: HubRefusalCode;
+  // The trigger rule id behind a code from a registered trigger RAISE (api/lib/
+  // trigger-rule-codes.ts), e.g. 'task_parent_open_steps' under business_rule.
+  // For people, Hub routes and PB's insight note; PB never branches on it.
+  rule_id?: string;
   // Phase A1 (V3 dedup): when an insert is deduped onto an existing canonical
   // row (serial path OR race-loser path), Hub returns the WINNER's PK here so
   // the PB outbox ack handler can adopt it via a hub_slug alias instead of
@@ -2202,8 +2194,10 @@ function mkResult(
  * alert / stay quiet from `code` alone; `reason` is for people and the Hub UI
  * toasts, and keeps the exact text it always had (an older PB still reads it).
  */
-function mutErr(mutation_id: string, code: HubRefusalCode, reason: string): MutationResult {
-  return { mutation_id, status: 'error', code, reason };
+function mutErr(mutation_id: string, code: HubRefusalCode, reason: string, rule_id?: string): MutationResult {
+  return rule_id === undefined
+    ? { mutation_id, status: 'error', code, reason }
+    : { mutation_id, status: 'error', code, reason, rule_id };
 }
 
 /**
@@ -2230,6 +2224,14 @@ async function applyErrorResult(env: Env, mut: Mutation, e: unknown): Promise<Mu
   const reason = `apply error: ${(e as Error).message}`;
   if (e instanceof RefusalError) return mutErr(mut.mutation_id, e.code, reason);
   if (!isConstraintFailure(e)) return mutErr(mut.mutation_id, 'apply_error', reason);
+  // A trigger's RAISE(ABORT, '<rule_id>: ...') arrives as a constraint failure
+  // like NOT NULL, CHECK and FK do. Read the LEADING rule id (never a search of
+  // the message) and take the code its registry row carries: a designed refusal
+  // (business_rule, question_rule) is told to the caller, anything unregistered
+  // stays 'constraint', loud. A trigger is never a UNIQUE failure, so the links
+  // natural-key branch below is unaffected.
+  const rule = classifyTriggerFailure((e as Error).message ?? '');
+  if (rule.rule_id !== undefined) return mutErr(mut.mutation_id, rule.code, reason, rule.rule_id);
   // Only a UNIQUE failure can be the natural key. A write that breaks NOT
   // NULL or CHECK while also sharing a live row's key is a malformed write,
   // and must not read as "adopt the holder".
@@ -2297,7 +2299,10 @@ class CommitNotLandedError extends Error {}
 
 /**
  * A statement in the batch broke a constraint: NOT NULL, CHECK, UNIQUE, FK,
- * or a trigger's RAISE(ABORT) (the tasks completion-triad guard, schema-v98).
+ * or a trigger's RAISE(ABORT) (the tasks completion-triad guard, schema-v98;
+ * the v152 step rules). applyErrorResult sorts a trigger's refusal by its rule
+ * id (api/lib/trigger-rule-codes.ts): a designed rule is business_rule or
+ * question_rule, everything else 'constraint'.
  * D1 reports every one of them with `SQLITE_CONSTRAINT` in the message
  * (measured on workerd 2026-09-23: "D1_ERROR: <text>: SQLITE_CONSTRAINT
  * (extended: SQLITE_CONSTRAINT_TRIGGER)"). Such a failure is deterministic:

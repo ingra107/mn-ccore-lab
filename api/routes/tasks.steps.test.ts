@@ -75,12 +75,13 @@ describe('a done parent never holds an open step', () => {
   const done = { status: 'done', completed: 1, completed_at: '2026-10-30 12:00:00', completed_by: 'ingra107@umn.edu' }
   const reopen = { status: 'todo', completed: 0, completed_at: null, completed_by: null }
 
-  it('attaching a step to a done parent is refused with code constraint', async () => {
+  it('attaching a step to a done parent is refused with code business_rule', async () => {
     task('task_P', done)
     task('task_X')
     const r = await applyMutation(env, { table: 'tasks', record_id: 'task_X', op: 'update', patch: { parent_id: 'task_P' }, route: 'test', user })
     expect(r.status).toBe('error')
-    expect(r.code).toBe('constraint')
+    expect(r.code).toBe('business_rule')
+    expect(r.rule_id).toBe('task_parent_done')
     expect(r.reason).toMatch(/task_parent_done/)
     expect(row('task_X').parent_id).toBeNull()
   })
@@ -99,14 +100,15 @@ describe('a done parent never holds an open step', () => {
 })
 
 describe('/api/mutations refuses a parent close while a step is open', () => {
-  it('arrives as code constraint, and lands once the step is done', async () => {
+  it('arrives as code business_rule, and lands once the step is done', async () => {
     task('task_P')
     task('task_S', { parent_id: 'task_P' })
     const close = { status: 'done', completed: 1, completed_at: '2026-10-30 12:00:00', completed_by: 'ingra107@umn.edu' }
     const patch = (record_id: string) => applyMutation(env, { table: 'tasks', record_id, op: 'update', patch: close, route: 'test', user })
     const refused = await patch('task_P')
     expect(refused.status).toBe('error')
-    expect(refused.code).toBe('constraint')
+    expect(refused.code).toBe('business_rule')
+    expect(refused.rule_id).toBe('task_parent_open_steps')
     expect(refused.reason).toMatch(/task_parent_open_steps/)
     expect(row('task_P').status).toBe('todo')
 
@@ -115,7 +117,7 @@ describe('/api/mutations refuses a parent close while a step is open', () => {
     expect(row('task_P').status).toBe('done')
   })
 
-  it('an insert of a step under a step is refused with code constraint', async () => {
+  it('an insert of a step under a step is refused with code business_rule', async () => {
     task('task_P')
     task('task_S', { parent_id: 'task_P' })
     const r = await applyMutation(env, {
@@ -123,7 +125,8 @@ describe('/api/mutations refuses a parent close while a step is open', () => {
       payload: { title: 'grandchild', assignee: 'nick-ingraham', status: 'todo', parent_id: 'task_S' },
     })
     expect(r.status).toBe('error')
-    expect(r.code).toBe('constraint')
+    expect(r.code).toBe('business_rule')
+    expect(r.rule_id).toBe('task_parent_depth')
     expect(db.prepare("SELECT 1 FROM tasks WHERE id = 'task_G'").get()).toBeUndefined()
   })
 })
