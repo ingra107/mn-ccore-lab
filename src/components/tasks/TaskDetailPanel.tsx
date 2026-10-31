@@ -51,7 +51,6 @@ import { PATHS } from '../../constants/paths'
 import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect, WorkflowSection, type WorkflowFields } from './detail/FieldControls'
 import { MeLockToggle } from '../ui/MeLockToggle'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
-import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
@@ -738,13 +737,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onUpdate={(json) => handleFieldUpdate('description_json', json)}
             />
 
-            {/* Subtasks + Workflow — side-by-side (#113). Two equal columns
-                so users see planning context (who/what I'm waiting on,
-                commitments) alongside the checklist without scrolling.
-                WorkflowSection already has an inner grid-cols-2 for its 4
-                fields, so this is purely a layout promotion. */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-xl)', alignItems: 'start' }}>
-              <SubtaskSection taskId={task.id} />
+            {/* Workflow. The task_subtasks checklist that sat beside it was
+                retired 2026-10-30 (steps are real tasks now). */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--sp-xl)', alignItems: 'start' }}>
               <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
                 <SectionHead as="h3" title="Workflow" />
                 <WorkflowSection

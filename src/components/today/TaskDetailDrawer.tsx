@@ -1,20 +1,19 @@
 // TaskDetailDrawer — inline expand drawer for tasks on TodayPage.
 // Shown when the user clicks a task row body. Segmented action bar (Plan /
 // Set section / Due / Full editor) then a Links block; SmartCompose directly under action bar;
-// full-width activity feed under composer; chips + subtasks/blocks/workflow
+// full-width activity feed under composer; chips + blocks/workflow
 // below the feed.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_TaskDetail). Same Move→
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from '../tasks/MeetingOriginTag'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import BodyText from '../BodyText'
-import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
+import { useUpdateTask } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../UndoToast'
 
@@ -66,11 +65,8 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const overflowLinks = taskOwnOverflowLinks(linksData?.links, [
     task.key_link_1, task.key_link_2, task.key_link_3,
   ])
-  const subtasks = detail?.subtasks ?? []
   const blocks = detail?.blocks ?? []
 
-  // Next step: first open subtask (Option 1 per design doc B).
-  const nextStep = subtasks.find((s) => s.completed !== 1) ?? null
   const isDone = isTaskDone(task)
   const dueOverdue = !isDone && isOverdue(task.due_date, task.status)
 
@@ -79,11 +75,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const undoToast = useUndoToast()
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
 
-  // Subtask toggle — TP-03. The drawer's subtasks come from useTaskDetail
-  // (`['task-detail', taskId]`), not the `['subtasks', taskId]` cache that
-  // useToggleSubtask invalidates. Invalidate task-detail too so the UI flips.
-  const toggleSubtask = useToggleSubtask(task.id)
-  const queryClient = useQueryClient()
   const [moveOpen, setMoveOpen] = useState(false)
   const moveRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -244,19 +235,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         </div>
       )}
 
-      {/* Next step — first open subtask */}
-      {nextStep && (
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-          <span style={{ fontSize: 10, color: INK_DIM, flexShrink: 0, paddingTop: 1 }}>Next step</span>
-          <button
-            onClick={() => toggleSubtask.mutate(nextStep.id, {
-              onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-            })}
-            style={{ fontSize: 12, color: INK, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', lineHeight: 1.4 }}
-          >☐ {nextStep.title}</button>
-        </div>
-      )}
-
       {/* Description — static context below the live feed; ghost opener when empty.
           stripMeetingMarker removes the machine dedup token [meeting:cal-...:hash]
           from display; stored value stays intact. */}
@@ -333,24 +311,9 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             >+</Button>
           </div>
 
-          {/* Subtasks + Blocks */}
+          {/* Blocks (the old task_subtasks checklist was retired 2026-10-30:
+              steps are real tasks now, listed above). */}
           <div>
-            <div className="tk-lbl">Subtasks</div>
-            {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-            {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
-            {subtasks.map((s) => (
-              <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-                <input
-                  type="checkbox"
-                  checked={s.completed === 1}
-                  onChange={() => toggleSubtask.mutate(s.id, {
-                    onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-                  })}
-                  style={{ marginTop: 2, accentColor: 'var(--job-accent)', cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
-              </div>
-            ))}
             {blocks.length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sk-t2)', marginBottom: 4 }}>Blocks</div>

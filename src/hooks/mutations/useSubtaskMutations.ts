@@ -44,28 +44,6 @@ export function useToggleSubtask(taskId: string) {
   })
 }
 
-export function useDeleteSubtask(taskId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (subtaskId: string) =>
-      fetchApi(`/api/subtasks/${subtaskId}/delete`, { method: 'POST' }),
-    onMutate: async (subtaskId) => {
-      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
-      const prev = queryClient.getQueryData<SubtaskRow[]>(['subtasks', taskId])
-      if (prev) {
-        queryClient.setQueryData(['subtasks', taskId], prev.filter(s => s.id !== subtaskId))
-      }
-      return { prev }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(['subtasks', taskId], context.prev)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', taskId] })
-    },
-  })
-}
-
 export function useReorderSubtasks(taskId: string) {
   const queryClient = useQueryClient()
   return useMutation({

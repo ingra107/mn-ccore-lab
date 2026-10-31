@@ -10,9 +10,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import SmartCompose from '../../../components/SmartCompose'
-import { useUpdateTask, useBulkUpdateTasks, useToggleSubtask } from '../../../hooks/useMutations'
-import { useTaskDetail, useTaskLinks, type StoredLink } from '../../../hooks/useApiData'
-import { useQueryClient } from '@tanstack/react-query'
+import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
+import { useTaskLinks, type StoredLink } from '../../../hooks/useApiData'
 import { useTaskViewTracking } from '../../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../../../components/UndoToast'
 import { localDateKey } from '../../../lib/dateUtils'
@@ -70,13 +69,8 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
   const undoToast = useUndoToast()
-  const detailQuery = useTaskDetail(task.id)
-  const detail = detailQuery.data
   const { data: linksData } = useTaskLinks(task.id)
   const projectLinks = linksData?.projectLinks ?? []
-  const nextStep = detail?.subtasks?.find((s) => s.completed !== 1) ?? null
-  const toggleSubtask = useToggleSubtask(task.id)
-  const queryClient = useQueryClient()
   const plan = useTodayPlan()
   // Slack-style seen (Nick 2026-06-11): expanding the row acknowledges the
   // assignment silently when the viewer is the assignee.
@@ -250,19 +244,6 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
       <div style={{ marginBottom: 10 }}>
         <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle alwaysShowToolbar launchContext={{ projectSlug: task.project_id ?? null }} />
       </div>
-
-      {/* Next step — first open subtask, silent when none */}
-      {nextStep && (
-        <div style={{ marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-          <span style={{ fontSize: 10, color: INK_DIM, flexShrink: 0, paddingTop: 1 }}>Next step</span>
-          <button
-            onClick={() => toggleSubtask.mutate(nextStep.id, {
-              onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-            })}
-            style={{ fontSize: 12, color: INK, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', lineHeight: 1.4 }}
-          >☐ {nextStep.title}</button>
-        </div>
-      )}
 
       {/* Activity peek — 3-entry newest-first; "view all →" opens full editor */}
       <div style={{ marginBottom: 10, paddingTop: 8 }}>

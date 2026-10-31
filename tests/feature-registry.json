@@ -2145,15 +2145,6 @@
       "covered": true
     },
     {
-      "id": "toggle-subtask-checkbox",
-      "component": "src/components/tasks/detail/SubtaskSection.tsx",
-      "type": "toggle",
-      "description": "Toggle subtask completion checkbox",
-      "test_file": "tests/daily-superuser.spec.ts",
-      "test_name": "Subtask: expand → check off subtask → progress updates",
-      "covered": true
-    },
-    {
       "id": "toggle-collapsible-section",
       "component": "src/components/CollapsibleSection.tsx",
       "type": "toggle",
@@ -2412,15 +2403,6 @@
       "description": "Task handoff form submission",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "API POST: Create task handoff",
-      "covered": true
-    },
-    {
-      "id": "form-subtask-add",
-      "component": "src/components/tasks/detail/SubtaskSection.tsx",
-      "type": "form",
-      "description": "Add subtask inline form",
-      "test_file": "tests/daily-superuser.spec.ts",
-      "test_name": "Expand subtasks → see subtask list → add input",
       "covered": true
     },
     {

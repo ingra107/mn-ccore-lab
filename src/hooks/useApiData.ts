@@ -1028,7 +1028,6 @@ export function useSubtasks(taskId: string) {
 // blocks). See api/routes/tasks.ts:handleGetTaskDetail.
 
 export interface TaskDetailUpdate { id: string; when: string; who: string; text: string; kind: 'note' | 'event' }
-export interface TaskDetailSubtask { id: string; title: string; completed: number }
 export interface TaskDetailBlock { id: string; title: string }
 /** A live step of this task (tasks.parent_id), in next-step order: due date
  *  (undated last), then oldest. Done steps are included. */
@@ -1043,7 +1042,6 @@ export interface TaskDetailStep {
 }
 export interface TaskDetailPayload {
   updates: TaskDetailUpdate[]
-  subtasks: TaskDetailSubtask[]
   blocks: TaskDetailBlock[]
   /** schema-v152. Empty on a task with no steps. */
   steps?: TaskDetailStep[]
@@ -1053,7 +1051,7 @@ export function useTaskDetail(taskId: string | null) {
   return useQuery({
     queryKey: ['task-detail', taskId],
     queryFn: async (): Promise<TaskDetailPayload> => {
-      if (!taskId) return { updates: [], subtasks: [], blocks: [] }
+      if (!taskId) return { updates: [], blocks: [] }
       const data = await fetchJson<{ data: TaskDetailPayload }>(`/api/tasks/${taskId}/detail`)
       return data.data
     },
