@@ -2,7 +2,7 @@
 // per call anchor. Kept out of PacketBlock.tsx so that file exports only
 // components (react-refresh).
 
-import type { PacketCall } from '../../shared/packets'
+import type { DeliverableKind, PacketCall } from '../../shared/packets'
 
 /** Split the body into plain text and numbered highlights, one per call anchor.
  *  An anchor that is missing or overlaps an earlier one is left unmarked. */
@@ -26,4 +26,12 @@ export function segmentBody(body: string, calls: PacketCall[]): Array<{ text: st
   }
   if (at < body.length) out.push({ text: body.slice(at) })
   return out
+}
+
+/** Button and note wording per deliverable kind. Only gmail_draft opens a tab;
+ *  doc_text copies the body; answer just records the click. */
+export function kindCopy(kind: DeliverableKind): { button: string; used: string; dismissed: string } {
+  if (kind === 'doc_text') return { button: 'Copy text', used: 'Copied. Paste it where it goes.', dismissed: 'Dismissed.' }
+  if (kind === 'answer') return { button: 'Got it', used: 'Marked as used.', dismissed: 'Dismissed.' }
+  return { button: 'Use', used: 'Opened in Gmail. Nothing was sent.', dismissed: 'Dismissed here; draft stays in Gmail.' }
 }

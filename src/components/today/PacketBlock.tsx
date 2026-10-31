@@ -12,7 +12,8 @@
 
 import { Fragment, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { segmentBody } from '../../lib/packetBody'
+import { kindCopy, segmentBody } from '../../lib/packetBody'
+import type { DeliverableKind } from '../../../shared/packets'
 
 export type PacketFreshnessState = 'ready' | 'changed' | 'unverified'
 
@@ -27,7 +28,7 @@ export interface PacketVersion {
   minutes?: number | null
   body: string
   calls: PacketCall[]
-  deliverable: { kind: string; url: string; to?: string | null; subject?: string | null }
+  deliverable: { kind: DeliverableKind; url?: string | null; to?: string | string[] | null; subject?: string | null; title?: string | null }
 }
 
 export interface PacketPayload {
@@ -67,6 +68,7 @@ export function PacketBlock({ taskId }: { taskId: string }) {
   const key = packetQueryKey(taskId)
   const query = useQuery({ queryKey: key, queryFn: () => fetchPacket(taskId), staleTime: 30 * 1000, retry: false })
   const [refused, setRefused] = useState<string[] | null>(null)
+  const [copyFailed, setCopyFailed] = useState(false)
   const [done, setDone] = useState<'used' | 'dismissed' | null>(null)
 
   const refreshAll = () => {
@@ -83,7 +85,9 @@ export function PacketBlock({ taskId }: { taskId: string }) {
       if (!packet || !version) throw new Error('no packet')
       // Open the tab now, inside the click, so the browser does not block it
       // after the await. Closed again if the POST refuses.
-      const tab = window.open('about:blank', '_blank')
+      setCopyFailed(false)
+      const isGmail = version.deliverable.kind === 'gmail_draft'
+      const tab = isGmail ? window.open('about:blank', '_blank') : null
       try {
         const res = await fetch(`/api/packets/${packet.id}/use`, {
           method: 'POST',
@@ -93,6 +97,7 @@ export function PacketBlock({ taskId }: { taskId: string }) {
         if (res.status === 409) {
           const j = (await res.json().catch(() => ({}))) as { code?: string; reasons?: unknown[]; url?: string | null; close_reason?: string }
           // Already used: the draft exists, so reopen it rather than refuse.
+          if (j.code === 'already_used' && !isGmail) return null
           if (j.code === 'already_used' && j.url) {
             if (tab) tab.location.href = j.url
             else window.open(j.url, '_blank')
@@ -102,6 +107,12 @@ export function PacketBlock({ taskId }: { taskId: string }) {
           throw new UseRefused((j.reasons ?? []).map(asText))
         }
         if (!res.ok) throw new Error(`use failed: ${res.status}`)
+        if (!isGmail) {
+          if (version.deliverable.kind === 'doc_text') {
+            try { await navigator.clipboard.writeText(version.body) } catch { setCopyFailed(true) }
+          }
+          return null
+        }
         const { url } = (await res.json()) as { url: string | null }
         if (!url) { tab?.close(); return null }
         if (tab) tab.location.href = url
@@ -126,7 +137,7 @@ export function PacketBlock({ taskId }: { taskId: string }) {
   })
 
   if (done === 'dismissed') {
-    return <div className="tk-pk tk-pk-note" data-testid="packet-dismissed">Dismissed here; draft stays in Gmail.</div>
+    return <div className="tk-pk tk-pk-note" data-testid="packet-dismissed">{kindCopy(version?.deliverable.kind ?? 'gmail_draft').dismissed}</div>
   }
   if (!packet || !version || !data?.freshness) return null
 
@@ -135,6 +146,8 @@ export function PacketBlock({ taskId }: { taskId: string }) {
   const segs = segmentBody(version.body, version.calls)
   const blocked = refused !== null
   const d = version.deliverable
+  const copy = kindCopy(d.kind)
+  const toText = Array.isArray(d.to) ? d.to.join(', ') : d.to
 
   return (
     <section className="tk-pk" data-testid="packet-block" data-state={state} aria-label="Prepared first step">
@@ -167,9 +180,9 @@ export function PacketBlock({ taskId }: { taskId: string }) {
       )}
 
       <div className="tk-pk-draft" data-testid="packet-draft">
-        {(d.to || d.subject) && (
+        {(toText || d.subject) && (
           <div className="tk-pk-meta">
-            {d.to && <span>To {d.to}</span>}
+            {toText && <span>To {toText}</span>}
             {d.subject && <span>{d.subject}</span>}
           </div>
         )}
@@ -188,8 +201,15 @@ export function PacketBlock({ taskId }: { taskId: string }) {
           {refused!.length > 0 && <ul>{refused!.map((r, i) => <li key={i}>{r}</li>)}</ul>}
         </div>
       )}
-      {use.isError && !blocked && <div className="tk-pk-why" role="alert">Could not open the draft. Try again.</div>}
-      {done === 'used' && <div className="tk-pk-note">Opened in Gmail. Nothing was sent.</div>}
+      {use.isError && !blocked && <div className="tk-pk-why" role="alert">{d.kind === 'gmail_draft' ? 'Could not open the draft. Try again.' : 'Could not mark this as used. Try again.'}</div>}
+      {done === 'used' && (
+        <div className="tk-pk-note">
+          {d.kind === 'doc_text' && copyFailed ? 'Marked as used, but the copy failed. Select the text above and copy it.' : copy.used}
+        </div>
+      )}
+      {d.kind === 'doc_text' && d.url && (
+        <a className="tk-pk-link" href={d.url} target="_blank" rel="noreferrer">Open the doc</a>
+      )}
 
       <div className="tk-pk-acts">
         {blocked ? (
@@ -199,7 +219,7 @@ export function PacketBlock({ taskId }: { taskId: string }) {
             disabled={query.isFetching}
           >Refresh, then use</button>
         ) : (
-          <button type="button" className="tk-ask-go" onClick={() => use.mutate()} disabled={use.isPending}>Use</button>
+          <button type="button" className="tk-ask-go" onClick={() => use.mutate()} disabled={use.isPending}>{copy.button}</button>
         )}
         <button type="button" className="tk-pk-dis" onClick={() => dismiss.mutate()} disabled={dismiss.isPending}>Dismiss</button>
       </div>

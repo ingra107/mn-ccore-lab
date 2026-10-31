@@ -139,6 +139,65 @@ describe('PacketBlock', () => {
   })
 })
 
+describe('PacketBlock other deliverable kinds', () => {
+  const withKind = (deliverable: NonNullable<PacketPayload['version']>['deliverable']): PacketPayload => {
+    const p = payload('ready')
+    return { ...p, version: { ...p.version!, deliverable } }
+  }
+  const click = (host: HTMLElement) => (host.querySelector('.tk-pk-acts .tk-ask-go') as HTMLButtonElement)
+
+  it('doc_text: Copy text posts the same body, copies the body, opens no tab', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const write = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: write }, configurable: true })
+    const { host, calls } = await mountPacket(withKind({ kind: 'doc_text', url: 'https://docs.google.com/d/1' }), () => json({}))
+    await waitFor(() => host.querySelector('.tk-pk-acts'), 'actions')
+    expect(click(host).textContent).toBe('Copy text')
+    expect((host.querySelector('.tk-pk-link') as HTMLAnchorElement).textContent).toBe('Open the doc')
+    const f = window.fetch as unknown as { mock: { calls: [unknown, RequestInit?][] } }
+    click(host).click()
+    await expect.poll(() => host.textContent).toContain('Copied. Paste it where it goes.')
+    expect(calls).toEqual(['/api/packets/pk1/use'])
+    const post = f.mock.calls.find(([, init]) => init?.method === 'POST')!
+    expect(JSON.parse(String(post[1]!.body))).toEqual({ version: 2, manifest_hash: 'abc' })
+    expect(write).toHaveBeenCalledWith(BODY)
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  it('doc_text: a 409 copies nothing and shows the reasons', async () => {
+    const write = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: write }, configurable: true })
+    const { host } = await mountPacket(withKind({ kind: 'doc_text' }), () => json({ reasons: ['A reply landed'] }, 409))
+    await waitFor(() => host.querySelector('.tk-pk-acts'), 'actions')
+    expect(host.querySelector('.tk-pk-link')).toBeNull()
+    click(host).click()
+    await waitFor(() => host.querySelector('[data-testid="packet-refused"]'), 'refusal')
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  it('answer: Got it posts, copies nothing, opens no tab', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const write = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: write }, configurable: true })
+    const { host, calls } = await mountPacket(withKind({ kind: 'answer' }), () => json({}))
+    await waitFor(() => host.querySelector('.tk-pk-acts'), 'actions')
+    expect(click(host).textContent).toBe('Got it')
+    click(host).click()
+    await expect.poll(() => host.textContent).toContain('Marked as used.')
+    expect(calls).toEqual(['/api/packets/pk1/use'])
+    expect(write).not.toHaveBeenCalled()
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  it('non-gmail Dismiss says only "Dismissed."', async () => {
+    const { host } = await mountPacket(withKind({ kind: 'answer' }))
+    await waitFor(() => host.querySelector('.tk-pk-dis'), 'dismiss')
+    ;(host.querySelector('.tk-pk-dis') as HTMLButtonElement).click()
+    await waitFor(() => host.querySelector('[data-testid="packet-dismissed"]'), 'dismissed note')
+    expect(host.querySelector('[data-testid="packet-dismissed"]')!.textContent).toBe('Dismissed.')
+  })
+})
+
 describe('row tag', () => {
   const tags = (state: string | null) => {
     const host = document.createElement('div')
