@@ -583,6 +583,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       after: { kind: 'value', after: { entity_type: entityType, entity_id: entityId, kind, body: body.slice(0, 2000) }, version: null },
       summary: `Posted a ${kind} on ${entityType} ${entityId}: ${body.replace(/\s+/g, ' ').slice(0, 300)}`,
       inverseKind: 'hide_entry',
+      // activity-hidden-exempt: receipt gate -- checks that the entry this batch just inserted exists; shows nothing.
       gate: { sql: 'EXISTS (SELECT 1 FROM activity_entries WHERE id = ?)', vals: [id] },
     }, nowInstant()) : [];
 

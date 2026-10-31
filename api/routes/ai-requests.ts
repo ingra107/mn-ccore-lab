@@ -36,7 +36,6 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
   // attaches Nick's mail tools and repo access only to a private landing, and
   // reads a missing value as "not private". Computed, never stored: the one
   // fact lives on the entry, so it cannot drift.
-  // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
   let query = `SELECT ai_requests.*,
     ${LANDING_VISIBILITY_SQL} AS landing_visibility
     FROM ai_requests WHERE 1=1`;
@@ -180,6 +179,7 @@ export function aiRequestInsert(
  * the subquery reads NULL, and the listener would give Nick's own pick the
  * member tier. PB's answer_lands_private must list packet_prepare too.
  */
+// activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
 const LANDING_VISIBILITY_SQL = `CASE WHEN ai_requests.source_type = '${PACKET_PREPARE_SOURCE_TYPE}'
       THEN CASE WHEN ${packetOwnerEmailSql('ai_requests.requested_by')} THEN 'author' ELSE NULL END
     ELSE (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) END`;
@@ -411,7 +411,6 @@ export async function handleClaimAIRequest(id: string, request: Request, env: En
   ).bind(machine, token, id).run();
   if (won.meta.changes !== 1) return claimRefusal(env, id);
 
-  // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
   const row = await env.DB.prepare(
     `SELECT ai_requests.*,
        ${LANDING_VISIBILITY_SQL} AS landing_visibility
