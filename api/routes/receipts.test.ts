@@ -528,3 +528,48 @@ describe('through the worker: who may read, undo and acknowledge', () => {
     expect(lines().some((l) => l.inverse_reason === 'route not individually receipted' && String(l.summary).includes('/api/receipts'))).toBe(false)
   })
 })
+
+describe('pb_origin on the task-updates and task-comments feeds', () => {
+  async function as(method: string, path: string, pb: boolean, body?: unknown) {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (pb) { headers.Authorization = `Bearer ${PB_KEY}`; headers['X-PB-Run'] = RUN }
+    else { headers['X-Test-Mode-Key'] = TEST_KEY; headers['X-Test-User'] = NICK }
+    const res = await worker.fetch(new Request(`https://hub.test${path}`, {
+      method, headers, body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
+    }), env, CTX)
+    return { status: res.status, body: await res.json() as { data: Record<string, unknown>[] } }
+  }
+  const post = (kind: 'updates' | 'comments', pb: boolean, content: string) =>
+    as('POST', `/api/tasks/task_a/${kind}`, pb, { content, author_slug: 'nick-ingraham' })
+  const feed = async (name: 'task-updates' | 'task-comments', pb: boolean) => {
+    const r = await as('GET', `/api/${name}/recent?since=2000-01-01T00:00:00Z`, pb)
+    expect(r.status).toBe(200)
+    return Object.fromEntries(r.body.data.map((row) => [String(row.content), row.pb_origin]))
+  }
+
+  it('a PB-key post reads true, Nick\'s own browser post false, on both feeds, for both readers', async () => {
+    for (const kind of ['updates', 'comments'] as const) {
+      expect((await post(kind, true, `pb ${kind}`)).status).toBeLessThan(300)
+      expect((await post(kind, false, `nick ${kind}`)).status).toBeLessThan(300)
+    }
+    for (const reader of [true, false]) {
+      expect(await feed('task-updates', reader)).toEqual({ 'pb updates': true, 'nick updates': false })
+      expect(await feed('task-comments', reader)).toEqual({ 'pb comments': true, 'nick comments': false })
+    }
+  })
+
+  it('either source is enough: the row metadata or the append receipt line; neither reads false', async () => {
+    await post('comments', true, 'pb by receipt')
+    await post('comments', true, 'pb by metadata')
+    await post('comments', true, 'pb before v154')
+    db.prepare("UPDATE activity_entries SET metadata_json = NULL WHERE body IN ('pb by receipt', 'pb before v154')").run()
+    db.prepare("DELETE FROM receipt_lines WHERE entity_id IN (SELECT id FROM activity_entries WHERE body IN ('pb by metadata', 'pb before v154'))").run()
+    expect(await feed('task-comments', true)).toEqual({ 'pb by receipt': true, 'pb by metadata': true, 'pb before v154': false })
+  })
+
+  it('a malformed metadata_json does not break the feed', async () => {
+    await post('updates', false, 'odd row')
+    db.prepare("UPDATE activity_entries SET metadata_json = 'not json' WHERE body = 'odd row'").run()
+    expect(await feed('task-updates', true)).toEqual({ 'odd row': false })
+  })
+})

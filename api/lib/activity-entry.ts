@@ -65,7 +65,7 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './ke
 // #196: mirror artifact URLs into the synced `links` table (P5 readers) too —
 // the slot write alone is invisible to TODAY.md / the Hub link panel.
 import { mirrorArtifactLink } from './artifact-link-mirror';
-import { receiptStatements } from './receipts';
+import { receiptStatements, originOf } from './receipts';
 import { nowInstant } from './time';
 
 export type EntityType = 'task' | 'project' | 'artifact' | 'day' | 'meeting';
@@ -496,6 +496,12 @@ export async function prepareActivityEntry(
 
   const id = generateId(); // 'ae_'-prefix is conceptual; generateId() mints a hex id (matches comments/updates legacy ids)
   // hidden_at (index 14): NULL for a root; inherited from the parent for a reply.
+  // pb_origin (schema-v154 receipts): a PB-key post says so in its own row, so
+  // the feeds can tell PB's notes from Nick's after the receipt line ages out
+  // (90 days). Same condition as the receipt line: a live post with side
+  // effects under a PB-key request. Column-free: the metadata readers
+  // (edited, lifecycle event) read only their own keys.
+  const storedMetadata = input.fireSideEffects !== false && !input.sourceTable && originOf(input.env) ? { ...(metadata ?? {}), pb_origin: true } : metadata;
   const binds = [
     id,
     entityType,
@@ -507,7 +513,7 @@ export async function prepareActivityEntry(
     body,
     mentionsJson,
     updateType,
-    metadata ? JSON.stringify(metadata) : null,
+    storedMetadata ? JSON.stringify(storedMetadata) : null,
     sourceTable,
     sourceId,
     parentId,

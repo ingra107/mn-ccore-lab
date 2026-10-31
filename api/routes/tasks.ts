@@ -1511,21 +1511,36 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, isPi = fals
   // Which updates the caller sees follows their task through the viewer-bound
   // handle (activity_entries rule, api/lib/table-scope.ts, #145 Lane B); a
   // non-PI caller additionally sees only team-visibility rows.
-  const teamOnly = isPi ? '' : ` AND visibility = 'team'`
-  const cols = `id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at`
-  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update' AND hidden_at IS NULL`
+  const teamOnly = isPi ? '' : ` AND ae.visibility = 'team'`
+  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.update_type, ae.created_at, ${PB_ORIGIN_COL}`
+  let query = `SELECT ${cols} FROM activity_entries ae WHERE ae.entity_type = 'task' AND ae.kind = 'update' AND ae.hidden_at IS NULL`
   const binds: unknown[] = []
   if (since) {
-    query += ` AND created_at > ?${teamOnly}`
+    query += ` AND ae.created_at > ?${teamOnly}`
     binds.push(since)
-    query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
+    query += ' ORDER BY ae.created_at ASC, ae.id ASC LIMIT ?'
   } else {
-    query += `${teamOnly} ORDER BY created_at DESC, id DESC LIMIT ?`
+    query += `${teamOnly} ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`
   }
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
   const result = await (binds.length === 2 ? stmt.bind(binds[0], binds[1]) : stmt.bind(binds[0])).all()
-  return json({ data: result.results || [], count: result.results?.length || 0 })
+  const data = withPbOrigin(result.results || [])
+  return json({ data, count: data.length })
+}
+
+// pb_origin on the two feeds the headless /process triage reads: true when a
+// PB-key request wrote the entry. PB-key posts are authored as Nick, so
+// author_slug cannot tell them apart. Two sources, either is enough: the row's
+// own metadata_json.pb_origin (written by postActivityEntry since it was
+// added), and the append receipt line (schema-v154, kept 90 days) for posts
+// made before that. A post older than v154 reads false. receipt_lines is a
+// Nick-only table, so a member's handle sees no lines and reads false too.
+const PB_ORIGIN_COL = `CASE WHEN (CASE WHEN json_valid(ae.metadata_json) THEN json_extract(ae.metadata_json, '$.pb_origin') END) = 1
+    OR EXISTS (SELECT 1 FROM receipt_lines rl WHERE rl.entity_type = 'activity_entries' AND rl.entity_id = ae.id AND rl.op = 'append')
+    THEN 1 ELSE 0 END AS pb_origin`
+function withPbOrigin(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  return rows.map((r) => ({ ...r, pb_origin: r.pb_origin === 1 || r.pb_origin === true }))
 }
 
 // GET /api/task-comments/recent — cross-task feed for activity drawers / digest
@@ -1555,7 +1570,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, isPi = fal
   // `since` cursor stays backward-compatible with a plain timestamp, upgraded
   // internally to a compound (created_at, id) forward-cursor so a page boundary
   // sharing a created_at can't skip a row.
-  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.created_at, t.title AS task_title`;
+  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.created_at, t.title AS task_title, ${PB_ORIGIN_COL}`;
   // Optional compound cursor: ?since=<created_at>&since_id=<id> advances past
   // the exact (created_at,id) the collector last saw. Plain ?since=<created_at>
   // still works (since_id defaults empty → pure created_at > ?).
@@ -1580,7 +1595,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, isPi = fal
        ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`;
     result = await env.DB.prepare(q).bind(limit).all();
   }
-  return json({ data: result.results || [] });
+  return json({ data: withPbOrigin(result.results || []) });
 }
 
 // POST /api/tasks/:id/updates — post a task note/update

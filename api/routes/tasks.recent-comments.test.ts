@@ -103,6 +103,7 @@ describe('handleGetRecentTaskComments', () => {
     const { env } = makeEnv(rows)
     const res = await handleGetRecentTaskComments(makeUrl(''), env, true)
     const body = await res.json() as { data: unknown[] }
-    expect(body.data).toEqual(rows)
+    // pb_origin is normalized to a boolean on every row (receipts, schema-v154).
+    expect(body.data).toEqual(rows.map((r) => ({ ...r, pb_origin: false })))
   })
 })
