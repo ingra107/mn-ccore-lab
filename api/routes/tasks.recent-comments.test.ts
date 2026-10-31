@@ -99,7 +99,7 @@ describe('handleGetRecentTaskComments', () => {
   })
 
   it('returns the rows under data', async () => {
-    const rows = [{ id: 'c1', task_id: 't1', author_slug: 'nick-ingraham', content: 'hi', created_at: '2026-06-10T00:00:00Z', task_title: 'Task One' }]
+    const rows = [{ id: 'c1', task_id: 't1', author_slug: 'nick-ingraham', content: 'hi', created_at: '2026-06-10T00:00:00Z', task_title: 'Task One', source_table: null }]
     const { env } = makeEnv(rows)
     const res = await handleGetRecentTaskComments(makeUrl(''), env, true)
     const body = await res.json() as { data: unknown[] }

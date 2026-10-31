@@ -1512,7 +1512,7 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, isPi = fals
   // handle (activity_entries rule, api/lib/table-scope.ts, #145 Lane B); a
   // non-PI caller additionally sees only team-visibility rows.
   const teamOnly = isPi ? '' : ` AND ae.visibility = 'team'`
-  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.update_type, ae.created_at, ${PB_ORIGIN_COL}`
+  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.update_type, ae.created_at, ae.source_table, ${PB_ORIGIN_COL}`
   let query = `SELECT ${cols} FROM activity_entries ae WHERE ae.entity_type = 'task' AND ae.kind = 'update' AND ae.hidden_at IS NULL`
   const binds: unknown[] = []
   if (since) {
@@ -1532,10 +1532,12 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, isPi = fals
 // pb_origin on the two feeds the headless /process triage reads: true when a
 // PB-key request wrote the entry. PB-key posts are authored as Nick, so
 // author_slug cannot tell them apart. Two sources, either is enough: the row's
-// own metadata_json.pb_origin (written by postActivityEntry since it was
-// added), and the append receipt line (schema-v154, kept 90 days) for posts
+// own metadata_json.pb_origin (written for every row a PB-key request writes,
+// sourceTable posts included), and the append receipt line (schema-v154, kept 90 days) for posts
 // made before that. A post older than v154 reads false. receipt_lines is a
 // Nick-only table, so a member's handle sees no lines and reads false too.
+// source_table rides along so the triage can tell PB's session notes
+// ('pb_progress_note') from other PB posts.
 const PB_ORIGIN_COL = `CASE WHEN (CASE WHEN json_valid(ae.metadata_json) THEN json_extract(ae.metadata_json, '$.pb_origin') END) = 1
     OR EXISTS (SELECT 1 FROM receipt_lines rl WHERE rl.entity_type = 'activity_entries' AND rl.entity_id = ae.id AND rl.op = 'append')
     THEN 1 ELSE 0 END AS pb_origin`
@@ -1570,7 +1572,7 @@ export async function handleGetRecentTaskComments(url: URL, env: Env, isPi = fal
   // `since` cursor stays backward-compatible with a plain timestamp, upgraded
   // internally to a compound (created_at, id) forward-cursor so a page boundary
   // sharing a created_at can't skip a row.
-  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.created_at, t.title AS task_title, ${PB_ORIGIN_COL}`;
+  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.created_at, t.title AS task_title, ae.source_table, ${PB_ORIGIN_COL}`;
   // Optional compound cursor: ?since=<created_at>&since_id=<id> advances past
   // the exact (created_at,id) the collector last saw. Plain ?since=<created_at>
   // still works (since_id defaults empty → pure created_at > ?).

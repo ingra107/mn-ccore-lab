@@ -498,10 +498,13 @@ export async function prepareActivityEntry(
   // hidden_at (index 14): NULL for a root; inherited from the parent for a reply.
   // pb_origin (schema-v154 receipts): a PB-key post says so in its own row, so
   // the feeds can tell PB's notes from Nick's after the receipt line ages out
-  // (90 days). Same condition as the receipt line: a live post with side
-  // effects under a PB-key request. Column-free: the metadata readers
-  // (edited, lifecycle event) read only their own keys.
-  const storedMetadata = input.fireSideEffects !== false && !input.sourceTable && originOf(input.env) ? { ...(metadata ?? {}), pb_origin: true } : metadata;
+  // (90 days). Every row a PB-key request writes, whatever the path: a
+  // sourceTable post (PB's session TASK_NOTEs, source_table
+  // 'pb_progress_note') and a side-effect-free row (the Hermes answer the
+  // listener publishes) are PB's too. A browser request never sets it.
+  // Column-free: the metadata readers (edited, lifecycle event) read only
+  // their own keys.
+  const storedMetadata = originOf(input.env) ? { ...(metadata ?? {}), pb_origin: true } : metadata;
   const binds = [
     id,
     entityType,

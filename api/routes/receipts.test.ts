@@ -567,6 +567,28 @@ describe('pb_origin on the task-updates and task-comments feeds', () => {
     expect(await feed('task-comments', true)).toEqual({ 'pb by receipt': true, 'pb by metadata': true, 'pb before v154': false })
   })
 
+  it('a PB session note (source_table pb_progress_note) reads true and carries source_table', async () => {
+    const r = await as('POST', '/api/tasks/task_a/updates', true, { content: 'pb session note', author_slug: 'nick-ingraham', source_table: 'pb_progress_note', source_id: 'note-1' })
+    expect(r.status).toBeLessThan(300)
+    await post('updates', false, 'nick note')
+    const res = await as('GET', '/api/task-updates/recent?since=2000-01-01T00:00:00Z', true)
+    const byContent = Object.fromEntries(res.body.data.map((row) => [String(row.content), row]))
+    expect(byContent['pb session note']).toMatchObject({ pb_origin: true, source_table: 'pb_progress_note' })
+    expect(byContent['nick note']).toMatchObject({ pb_origin: false, source_table: null })
+    await post('comments', true, 'pb comment')
+    const c = await as('GET', '/api/task-comments/recent?since=2000-01-01T00:00:00Z', true)
+    expect(c.body.data.find((row) => row.content === 'pb comment')).toMatchObject({ pb_origin: true, source_table: null })
+  })
+
+  it('the Hermes placeholder reads false under a browser ask and true under a PB-key ask', async () => {
+    await post('comments', false, '@hermes from nick')
+    await post('comments', true, '@hermes from pb')
+    // Both posts land in the same second, so key each placeholder to its ask, never to row order.
+    const rows = all("SELECT ask.body AS ask, ph.metadata_json FROM activity_entries ph JOIN activity_entries ask ON ask.id = ph.parent_id WHERE ph.actor_slug = 'claude-ai'")
+    const byAsk = Object.fromEntries(rows.map((r) => [String(r.ask), r.metadata_json === null ? false : JSON.parse(String(r.metadata_json)).pb_origin === true]))
+    expect(byAsk).toEqual({ '@hermes from nick': false, '@hermes from pb': true })
+  })
+
   it('a malformed metadata_json does not break the feed', async () => {
     await post('updates', false, 'odd row')
     db.prepare("UPDATE activity_entries SET metadata_json = 'not json' WHERE body = 'odd row'").run()
