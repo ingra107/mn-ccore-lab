@@ -497,7 +497,9 @@ export function tombstoneUnworked(recordId: string, createActionId: string): Gat
 
 // ── the catch-all: a PB write no boundary receipted ──────────────────────────
 
-const CATCH_ALL_SKIP = /^\/api\/(receipts|mutations)(\/|$)/
+// ai-requests/queue is the listener's polling READ that happens to be a POST;
+// without the skip every poll wrote a line.
+const CATCH_ALL_SKIP = /^\/api\/(receipts|mutations)(\/|$)|^\/api\/ai-requests\/queue$/
 
 /**
  * One summary line for a PB-key write request that no receipt boundary saw:
