@@ -236,7 +236,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 283 as of 2026-10-30 -- the prepared first step (+4, schema-v153): POST
     //   /api/tasks/:id/packets, GET /api/tasks/:id/packet, POST
     //   /api/packets/:id/use and /dismiss (Nick only), api/routes/packets.ts.
-    expect(ROUTE_REGISTRY).toHaveLength(283)
+    // 284 as of 2026-10-30 -- GET /api/packets/daily-count (+1, the planning
+    //   conversation's packet cap, Nick only), api/lib/week-plan-start.ts.
+    // 292 as of 2026-10-31 -- receipts (+8, schema-v154): POST
+    //   /api/receipts/runs, /runs/:id/finish, /runs/:id/lines, /claims,
+    //   /claims/:key/settle (PB key or Nick), GET /api/receipts/overnight,
+    //   POST /api/receipts/lines/:id/undo and /seen (Nick only),
+    //   api/routes/receipts.ts.
+    expect(ROUTE_REGISTRY).toHaveLength(292)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

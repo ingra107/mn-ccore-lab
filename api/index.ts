@@ -106,6 +106,9 @@ import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { handleOpenRun, handleCloseRun, handleAlertReport, handleSnapshot } from './routes/mail-watch';
 import { checkMailWatcherAlarm } from './lib/mail-watch-alarm';
 import { handlePublishPacket, handleGetPacket, handleUsePacket, handleDismissPacket } from './routes/packets';
+import { registerReceiptRoutes } from './routes/receipts';
+import { receiptsMiddleware } from './lib/receipts-middleware';
+import { handleDailyPacketCount } from './lib/week-plan-start';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
@@ -471,6 +474,17 @@ app.use('/api/*', async (c, next) => {
   c.set('env', { ...env, DB: viewerDb(env.DB, viewer) });
   await next();
 });
+
+// Receipts (schema-v154, api/lib/receipts-middleware.ts): every request gets
+// its receipt origin from the authenticating key (never a header), so every
+// write boundary receipts a PB write; after the handler, a PB-key 2xx write no
+// boundary saw gets one '<METHOD> <route>' summary line. After the viewer
+// middleware, so the env it stamps is the one E(c) returns.
+app.use('/api/*', receiptsMiddleware<Context<AppEnv>>({
+  getEnv: (c) => c.get('env'),
+  setEnv: (c, env) => c.set('env', env),
+  pbKey: (c) => c.get('apiKeyValid') === true,
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEC-10.4: Rate limiting — ABSENT from this middleware stack (2026-05-27).
@@ -3215,12 +3229,29 @@ defineRoute({
   entity: 'packets',
   handler: (c) => handleUsePacket(c.req.param('id'), R(c), E(c).DB, PACKET_OWNER(c), PACKET_ACTOR(c)),
 });
+// The day's count against the packet cap (planning conversation, v1 contract:
+// PB Context/Decisions/2026-10-30-planning-conversation.md). The 05:15 PB job
+// reads it before preparing; the planning panel shows it beside Start.
+defineRoute({
+  method: 'GET',
+  path: '/api/packets/daily-count',
+  auth: 'pi',
+  entity: 'packets',
+  handler: (c) => handleDailyPacketCount(U(c), E(c).DB, PACKET_OWNER(c)),
+});
 defineRoute({
   method: 'POST',
   path: '/api/packets/:id/dismiss',
   auth: 'pi',
   entity: 'packets',
   handler: (c) => handleDismissPacket(c.req.param('id'), E(c).DB, PACKET_OWNER(c), PACKET_ACTOR(c)),
+});
+
+// Receipts (schema-v154, api/routes/receipts.ts): writes are the PB key or
+// Nick; overnight / undo / seen are Nick's own session only (isReceiptOwner).
+registerReceiptRoutes<Context<AppEnv>>({
+  env: E, request: R, user: USER,
+  caller: (c) => ({ pbKey: SERVICE(c), callerKind: c.get('callerKind'), slug: USER(c)?.slug, pi: PI(c) }),
 });
 
 // 404 fallback.

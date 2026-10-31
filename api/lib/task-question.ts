@@ -25,6 +25,12 @@
 //   unanswered a kind='question' row cannot land at status 'done' or 'deleted'
 //             while the answer is NULL. Answered is not done: the CONSUMER
 //             closes the row after its durable effect. -> question_unanswered
+//   week_plan a source='week_plan' question's spec follows shared/weekPlan.ts
+//             weekPlanSpecError -> question_spec_invalid; its answer carries a
+//             typed `picks` array that weekPlanPicksError accepts against that
+//             spec -> question_answer_invalid. On any other question an answer
+//             MAY carry `picks`; when it does, the shape rules apply (no spec).
+//             (PB decision 2026-10-30-planning-conversation.md, v1 contract.)
 //   telegram  a non-null handle must parse to an object -> question_telegram_invalid
 //   non-question  a spec or answer only on a kind='question' row
 //             -> question_field_on_non_question
@@ -42,6 +48,8 @@
 // would manufacture a false conflict on the next PB update.
 
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
+import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanSpecError } from '../../shared/weekPlan';
+import { nowInstant } from './time';
 
 /**
  * Every error code this module returns -> the /api/mutations refusal code
@@ -59,6 +67,8 @@ export const QUESTION_ERROR_CODES = {
   question_choice_unknown: 'question_rule',
   question_choice_is_snooze: 'question_rule',
   question_answer_frozen: 'question_rule',
+  question_expired: 'question_rule',
+  week_plan_answered: 'question_rule',
   question_kind_immutable: 'question_rule',
   question_spec_missing: 'question_shape',
   question_spec_invalid: 'question_shape',
@@ -151,6 +161,11 @@ export function questionRowError(effective: Record<string, unknown>): QuestionEr
     if (!parsed.ok) return `question_spec_invalid: question_spec_json is not JSON (${parsed.why})`;
     if (!isPlainObject(parsed.value)) return 'question_spec_invalid: question_spec_json must be a JSON object';
   }
+  const isWeekPlan = isQuestion && effective.source === WEEK_PLAN_SOURCE;
+  if (isWeekPlan) {
+    const why = weekPlanSpecError(spec);
+    if (why) return `question_spec_invalid: ${why}`;
+  }
 
   // answer: NULL = unanswered; non-null must name a choice.
   const answer = effective.question_answer_json;
@@ -168,6 +183,15 @@ export function questionRowError(effective: Record<string, unknown>): QuestionEr
       if (typeof text !== 'string' || text.trim() === '') {
         return `question_answer_invalid: choice '${QUESTION_OTHER_CHOICE}' requires non-empty question_answer_json.text`;
       }
+    }
+    // picks (v1 contract, 2026-10-30): required on a week_plan answer and
+    // judged against its spec; optional elsewhere, shape-judged when present.
+    if (isWeekPlan) {
+      const why = weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec));
+      if (why) return `question_answer_invalid: ${why}`;
+    } else if (parsed.value.picks !== undefined) {
+      const why = weekPlanPicksError(parsed.value.picks, null);
+      if (why) return `question_answer_invalid: ${why}`;
     }
   }
 
@@ -326,6 +350,31 @@ export function questionAnswerFrozenError(
   patch: Record<string, unknown>,
 ): QuestionError | null {
   if (!Object.prototype.hasOwnProperty.call(patch, 'question_answer_json')) return null;
+  // A week plan's answer is the work it started (v1 contract, 2026-10-30): the
+  // same write created one ai_request per started pick, so a second answer
+  // (or an Undo then a re-answer) would start them again. One answer per
+  // offer; Re-plan mints a new offer. Same refusal as a decided join request.
+  //
+  // One follow-up shape is allowed (2026-10-31): a start flip, the stored
+  // answer with saved picks flipped start false -> true and nothing else
+  // (shared/weekPlan.ts weekPlanFlipError). It starts only the flipped picks,
+  // through the same cap and batch as a first Start.
+  //
+  // An offer past its expires_at takes no answer and no flip: its options were
+  // written for a week that is over (question_expired, quiet). An Undo to null
+  // is still refused as frozen when an answer is stored.
+  if (current.source === WEEK_PLAN_SOURCE) {
+    const storedPlan = current.question_answer_json;
+    const next = patch.question_answer_json;
+    if (next === storedPlan) return null;
+    const spec = parseWeekPlanSpec(current.question_spec_json);
+    if (next !== null && next !== undefined && spec && weekPlanExpired(spec, nowInstant())) {
+      return `question_expired: this week plan expired at ${spec.expires_at}; a new one is offered Sunday`;
+    }
+    if (storedPlan === null || storedPlan === undefined) return null;
+    if (spec && next !== null && next !== undefined && weekPlanFlipError(storedPlan, next, spec) === null) return null;
+    return 'question_answer_frozen: this week plan was already answered; only starting saved picks may follow (Re-plan asks again)';
+  }
   if (current.source !== 'project_join') return null;
   const stored = current.question_answer_json;
   if (stored === null || stored === undefined) return null;
@@ -429,4 +478,38 @@ export function questionConsumedError(
     return "question_unconsumed: a question enters 'done' only with the PB consumer's receipt in the same write (question_consumed_json); to retire it instead, delete the task (op=delete)";
   }
   return null;
+}
+
+/**
+ * A week plan is minted unanswered (2026-10-31): an answer born with the row
+ * would skip the Start path (week-plan-start.ts acts on updates only), so its
+ * started picks would never become requests. Checked on the insert arm only.
+ */
+export function weekPlanInsertError(payload: Record<string, unknown>): QuestionError | null {
+  if (payload.source !== WEEK_PLAN_SOURCE) return null;
+  const a = payload.question_answer_json;
+  return a === null || a === undefined ? null : 'question_answer_invalid: a week plan is minted unanswered';
+}
+
+/**
+ * An answered week plan is the week's plan (2026-10-31): its picks are This
+ * week on Today and its started requests point back at it
+ * (plan_question_id), so it is never deleted. PB's Sunday supersede deletes
+ * only unanswered offers, but it reads before it writes; this refusal closes
+ * that race on every path (applyPatch for a status 'deleted' / deleted_at
+ * patch, decideAndCommitDelete for op=delete). The CAS on the evaluated row
+ * means an answer landing between the read and the delete makes the delete
+ * re-read and refuse.
+ */
+export function weekPlanDeleteError(
+  current: Record<string, unknown>,
+  patch: Record<string, unknown> | null,
+): QuestionError | null {
+  if (current.source !== WEEK_PLAN_SOURCE || (current.kind ?? 'task') !== 'question') return null;
+  const a = current.question_answer_json;
+  if (a === null || a === undefined) return null;
+  const deleting = patch === null
+    || patch.status === 'deleted'
+    || (patch.deleted_at !== undefined && patch.deleted_at !== null);
+  return deleting ? 'week_plan_answered: an answered week plan is the week\'s plan and cannot be deleted' : null;
 }

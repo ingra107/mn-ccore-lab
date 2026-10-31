@@ -47,6 +47,8 @@ import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
+import { ThisWeekSection } from '../../components/today/ThisWeekSection'
+import { currentWeekPlan } from '../../lib/weekPlan'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { PastThoughts } from '../../components/today/PastThoughts'
@@ -144,6 +146,12 @@ export default function TodayPage() {
   const questionDay = todayKey()
   const questionTasks: TaskRow[] = useMemo(
     () => (tasksQuery.data ?? []).filter((t) => isQuestionOnCard(t, questionDay)),
+    [tasksQuery.data, questionDay],
+  )
+  // This week (planning conversation): the answered week plan covering today,
+  // or null. When set it takes Planned today's place in both view modes.
+  const weekPlan = useMemo(
+    () => currentWeekPlan(tasksQuery.data ?? [], questionDay),
     [tasksQuery.data, questionDay],
   )
   // The whole card can be folded into the stat line ("N needs you").
@@ -768,7 +776,19 @@ export default function TodayPage() {
             renders them with PlannedTaskRow — including the × unplan button — so
             mounting this in Agenda mode put a strip task on screen THREE times
             (here, in the agenda body, and in the task pool). */}
-        {todayView === 'timeline' && (
+        {/* This week replaces it, in BOTH modes, while an answered week plan
+            covers today (Nick's pick, 2026-10-30). It lists the strip tasks
+            that are not picks itself, and the agenda hides its strip tail, so
+            each still shows once. */}
+        {weekPlan ? (
+          <ThisWeekSection
+            plan={weekPlan}
+            allTasks={tasksQuery.data ?? []}
+            stripTasks={stripTasks}
+            state={state}
+            projectsByPid={projectsByPid}
+          />
+        ) : todayView === 'timeline' && (
           <PlannedTodaySection
             stripTasks={stripTasks}
             state={state}
@@ -815,6 +835,7 @@ export default function TodayPage() {
                 projectsByPid={projectsByPid}
                 dismissedIds={dismissedEventIds}
                 onDismiss={onDismissEvent}
+                hideStrip={weekPlan !== null}
               />
             )}
           </section>

@@ -84,7 +84,7 @@ describe('version bump', () => {
     expect(version()).not.toBe('1')
   })
 
-  it('only the read-receipt, error-report, Hermes claim, release-intake and mail-watcher routes opt out', () => {
+  it('only the read-receipt, error-report, Hermes claim, release-intake, mail-watcher and receipt-log routes opt out', () => {
     const optOut = ROUTE_REGISTRY.filter((r) => r.noVersionBump).map((r) => `${r.method} ${r.path}`).sort()
     expect(optOut).toEqual([
       'POST /api/ai-requests/:id/alert-sent',
@@ -97,6 +97,15 @@ describe('version bump', () => {
       'POST /api/client-errors',
       'POST /api/notifications/:id/read',
       'POST /api/notifications/read-all',
+      // schema-v154: the receipt log is Nick-only (nickOnly scope) and his
+      // morning view reads it on open; no member's tab can see a receipt.
+      // The undo route bumps: it changes a task/project/product row.
+      'POST /api/receipts/claims',
+      'POST /api/receipts/claims/:key/settle',
+      'POST /api/receipts/runs',
+      'POST /api/receipts/runs/:id/finish',
+      'POST /api/receipts/runs/:id/lines',
+      'POST /api/receipts/seen',
       // #156: the deploy's release intake writes a draft only Nick can read.
       'POST /api/releases',
       'POST /api/releases/:id',

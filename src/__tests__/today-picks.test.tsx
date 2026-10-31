@@ -178,8 +178,12 @@ describe('WalkInCard', () => {
 
 // ── Decision desk ───────────────────────────────────────────────────────────
 
+// A fixed span before now, plus an hour: askedAgo floors whole UTC days, so a
+// civil-date fixture at a fixed hour read one day short before 15:00 UTC.
+const agedInstant = (ageDays: number) => new Date(Date.now() - ageDays * 86400000 - 3600000).toISOString()
+
 const question = (id: string, prompt: string, ageDays: number, over: Partial<TaskRow> = {}) => task({
-  id, kind: 'question' as TaskRow['kind'], title: prompt, created_at: `${day(-ageDays)} 15:00:00`, source: 'fix_approval',
+  id, kind: 'question' as TaskRow['kind'], title: prompt, created_at: agedInstant(ageDays), source: 'fix_approval',
   question_spec_json: JSON.stringify({
     v: 1, kind: 'approval', prompt,
     choices: [{ key: 'yes', label: 'Build it' }, { key: 'no', label: 'Not this one' }, { key: 'other', label: 'Other' }],

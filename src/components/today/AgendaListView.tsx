@@ -115,6 +115,9 @@ export interface AgendaListViewProps {
   // does not reset dismissed meetings).
   dismissedIds: Record<string, boolean>
   onDismiss: (id: string) => void
+  /** True while This week (ThisWeekSection) is shown: it lists the no-time
+   *  planned tasks itself, so the agenda's trailing strip would repeat them. */
+  hideStrip?: boolean
   // `now` is NO LONGER a prop (#168 — was computed once at render in TodayPage,
   // freezing the now-marker. AgendaListView now calls useNowMinutes() itself
   // for a live 60s ticker, same as Timeline.
@@ -129,6 +132,7 @@ export function AgendaListView({
   projectsByPid,
   dismissedIds,
   onDismiss,
+  hideStrip = false,
 }: AgendaListViewProps) {
   // Live 60s ticker — fixes #168 (stale now-marker in Agenda mode).
   const now = useNowMinutes()
@@ -347,7 +351,7 @@ export function AgendaListView({
         })}
 
         {/* Strip tasks: planned tasks not in any gap slot */}
-        {stripTasks.length > 0 && (
+        {!hideStrip && stripTasks.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
             {stripTasks.map((task) => (
               <PlannedTaskRow

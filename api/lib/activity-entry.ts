@@ -65,6 +65,8 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './ke
 // #196: mirror artifact URLs into the synced `links` table (P5 readers) too —
 // the slot write alone is invisible to TODAY.md / the Hub link panel.
 import { mirrorArtifactLink } from './artifact-link-mirror';
+import { receiptStatements } from './receipts';
+import { nowInstant } from './time';
 
 export type EntityType = 'task' | 'project' | 'artifact' | 'day' | 'meeting';
 
@@ -569,21 +571,39 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       `INSERT INTO activity_entries ${cols} ${vals} RETURNING *`
     ).bind(...binds);
 
-    if (artifactUrls.length === 0) {
+    // Receipts (schema-v154): a PB-key post records an 'append' line in the
+    // insert's own batch; Undo hides the entry. Not for a side-effect-free
+    // post (the Hermes placeholder), which is the Hub's, not PB's.
+    const receipt = fireSideEffects ? receiptStatements(env, {
+      actionId: `activity:${id}`,
+      entityType: 'activity_entries',
+      entityId: id,
+      op: 'append',
+      before: null,
+      after: { kind: 'value', after: { entity_type: entityType, entity_id: entityId, kind, body: body.slice(0, 2000) }, version: null },
+      summary: `Posted a ${kind} on ${entityType} ${entityId}: ${body.replace(/\s+/g, ' ').slice(0, 300)}`,
+      inverseKind: 'hide_entry',
+      gate: { sql: 'EXISTS (SELECT 1 FROM activity_entries WHERE id = ?)', vals: [id] },
+    }, nowInstant()) : [];
+
+    if (artifactUrls.length === 0 && receipt.length) {
+      const results = await env.DB.batch([insertStmt, ...receipt]);
+      row = (results[0]?.results as Record<string, unknown>[] | undefined)?.[0] ?? null;
+    } else if (artifactUrls.length === 0) {
       // Common path: no artifact URL — single-statement insert, RETURNING * in
       // one round trip (unchanged from before the hook).
       row = await insertStmt.first<Record<string, unknown>>();
     } else {
       const linkResult = await buildArtifactKeyLinkUpdates(env, entityId, artifactUrls);
       linkSkipped = linkResult.linkSkipped;
-      if (linkResult.updates.length === 0) {
+      if (linkResult.updates.length === 0 && !receipt.length) {
         // Nothing to link (all already-present and/or no free slots) — plain
         // insert. linkSkipped still reports the reason.
         row = await insertStmt.first<Record<string, unknown>>();
       } else {
         // Atomic: comment insert + every key_link UPDATE in one batch. The first
         // batch result holds the RETURNING * row from the insert.
-        const results = await env.DB.batch([insertStmt, ...linkResult.updates]);
+        const results = await env.DB.batch([insertStmt, ...linkResult.updates, ...receipt]);
         row = (results[0]?.results as Record<string, unknown>[] | undefined)?.[0] ?? null;
         if (!row) {
           // Defensive: re-read if the batch driver didn't surface RETURNING rows.

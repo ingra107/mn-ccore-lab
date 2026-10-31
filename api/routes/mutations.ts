@@ -31,10 +31,14 @@ import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
-import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError } from '../lib/task-question';
+import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
+import { weekPlanStart } from '../lib/week-plan-start';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
+import {
+  rowChangeStatements, insertStatements, projectMoveStatements, markReceiptHandled,
+} from '../lib/receipts';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -302,6 +306,8 @@ export interface Mutation {
  * Until PB maps it, PB reads the code as UNCODED: retried to max_attempts, then
  * dead-lettered with the code named in last_error (outbox.py flush loop).
  */
+// 'daily_cap' (a week plan's Start past the day's packet cap) landed in
+// pb-schema with the planning conversation, so it is not pending.
 export const PENDING_REFUSAL_CODES = [] as const;
 
 /**
@@ -339,6 +345,8 @@ interface MutationResult {
   // Today only `links`, written by the key_link slot mirror (lib/key-link.ts);
   // PB caches them so its next add_link sees the row the Hub just made.
   dependents?: { links: Record<string, unknown>[] };
+  // code 'daily_cap' only: the day's count and the cap the Start would pass.
+  daily_cap?: { used: number; cap: number };
 }
 
 export async function handleMutations(
@@ -358,6 +366,13 @@ export async function handleMutations(
   if (!(await isPiRequest(request, env))) {
     return error('Forbidden — PI access only', 403);
   }
+  // Receipts (schema-v154): a PB-key request's writes each get a receipt line
+  // in their own batch. Decided from the key, here, so this route is covered
+  // whether or not a middleware already stamped env (api/lib/receipts.ts).
+  // RECEIPT_ORIGIN comes from the /api/* receipts middleware (index.ts),
+  // decided from the API key. Every write here records its own line or none on purpose (a no-op, a
+  // replay, a refusal): the catch-all owes this route nothing.
+  markReceiptHandled(env);
 
   let body: { mutations?: Mutation[] };
   try {
@@ -400,6 +415,9 @@ async function processOne(
   inBatchResults: Map<string, MutationResult>,
   user: AuthUser,
   flags: ValidationFlags,
+  // Receipts Undo only (applyReceiptUndo): the version check and the undo's
+  // own receipt statements, run inside the decide + commit of an update/delete.
+  guard?: UndoGuard,
 ): Promise<MutationResult> {
   // Validate envelope — ALL required fields checked BEFORE any DB access.
   // Fail-fast here prevents partial-batch commits: if a later mutation in the
@@ -596,9 +614,9 @@ async function processOne(
     if (mut.op === 'insert') {
       result = await applyInsert(env, mut, user, flags);
     } else if (mut.op === 'update' || mut.op === 'append') {
-      result = await applyUpdate(env, mut, user, flags);
+      result = await applyUpdate(env, mut, user, flags, guard);
     } else if (mut.op === 'delete') {
-      result = await applyDelete(env, mut, user);
+      result = await applyDelete(env, mut, user, guard);
     } else {
       result = mutErr(mut.mutation_id, 'envelope_invalid', `op ${mut.op} not implemented`);
     }
@@ -736,6 +754,10 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     mut.payload = normalizeQuestionJsonFields(mut.payload as Record<string, unknown>);
     const qErr = questionRowError(mut.payload as Record<string, unknown>);
     if (qErr) return mutErr(mut.mutation_id, questionRefusalCode(qErr), qErr);
+    // A week plan is minted unanswered: an answer born with the row would
+    // skip the Start path, which acts on updates only.
+    const wpErr = weekPlanInsertError(mut.payload as Record<string, unknown>);
+    if (wpErr) return mutErr(mut.mutation_id, questionRefusalCode(wpErr), wpErr);
     // L-Q23: an answer born with the row names one of its spec's choices.
     const pErr = questionPatchError({}, mut.payload as Record<string, unknown>);
     if (pErr) return mutErr(mut.mutation_id, questionRefusalCode(pErr), pErr);
@@ -954,13 +976,21 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     ? [env.DB.prepare('DELETE FROM project_home_seed WHERE project_id = ?').bind(mut.record_id)]
     : [];
 
+  // Receipts (schema-v154): a PB-key insert records its line in the insert's
+  // own batch, gated on the row carrying this mutation id.
+  const insertPk = pkWhere(mut.table, mut.record_id);
+  const insertLanded: SqlFragment = {
+    sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${insertPk.sql} AND last_mutation_id = ?)`,
+    vals: [...insertPk.vals, mut.mutation_id],
+  };
+  const receipt = insertStatements(env, {
+    table: mut.table, recordId: mut.record_id, mutationId: mut.mutation_id,
+    payload: mut.payload as Record<string, unknown>, pk: insertPk, landed: insertLanded,
+  }, nowInstant());
+
   try {
-    if (mirrorSlots || creatorJoins || homeSeed.length) {
-      const pk = pkWhere(mut.table, mut.record_id);
-      const landed: SqlFragment = {
-        sql: `EXISTS (SELECT 1 FROM ${mut.table} WHERE ${pk.sql} AND last_mutation_id = ?)`,
-        vals: [...pk.vals, mut.mutation_id],
-      };
+    if (mirrorSlots || creatorJoins || homeSeed.length || receipt.length) {
+      const landed = insertLanded;
       const res = await env.DB.batch<Record<string, unknown>>([
         ...homeSeed,
         env.DB.prepare(sql).bind(...vals),
@@ -972,6 +1002,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
           )
           : []),
         ...(creatorJoins ? [creatorJoins] : []),
+        ...receipt,
         ...(mirrorSlots ? [touchedLinksRead(env.DB, mut.mutation_id)] : []),
       ]);
       if (mirrorSlots) touchedLinks = (res[res.length - 1]?.results ?? []) as Record<string, unknown>[];
@@ -1063,19 +1094,26 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
 // fields if absent, UPDATE if present. Stage 3 Phase 3.6 fix 2026-05-11.
 const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
-export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
+export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
   // Each attempt re-reads the row and re-runs every check below, so a retry
   // after a CAS miss decides against the row that is actually there.
-  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags));
+  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags, guard));
 }
 
 async function decideAndCommitUpdate(
-  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags,
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard,
 ): Promise<MutationResult | CasMiss> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);
+  // Receipts Undo: refuse unless the row is still exactly what the receipt
+  // line landed. Re-checked on every CAS attempt, and commitRowWrite's CAS term
+  // then makes the write land only on this same version.
+  if (guard) {
+    const moved = current ? await guard.check(current) : 'changed_since';
+    if (moved) return undoRefused(mut, current, moved);
+  }
   if (!current) {
     // For tables that support upsert-on-miss (insert-update race window),
     // synthesize an INSERT ... ON CONFLICT DO UPDATE instead of dead-lettering.
@@ -1253,11 +1291,36 @@ async function decideAndCommitUpdate(
       env.DB.prepare(restoreDeclinedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, String(current.last_mutation_id), ...landed.vals),
     ]);
   }
+  const write = await applyPatch(env, mut, current);
+  // A week plan answer (or start flip) starts its picked work: one
+  // ai_requests row per newly started pick, in this batch, and the row write
+  // carries the cap term so the cap holds inside the transaction
+  // (api/lib/week-plan-start.ts). After applyPatch, so a bad answer reports
+  // its own question code first.
+  const planStart = await weekPlanStart(env, mut, current, user);
+  if (planStart && 'forbidden' in planStart) {
+    return mutErr(mut.mutation_id, 'question_rule', planStart.forbidden);
+  }
+  if (planStart && 'refusal' in planStart) {
+    // Not recorded in processed_mutations: the cap is today's state, so the
+    // same mutation must be retryable tomorrow (or once a request finishes).
+    const capped: MutationResult = { ...mutErr(mut.mutation_id, 'daily_cap', planStart.refusal.reason), daily_cap: { used: planStart.refusal.used, cap: planStart.refusal.cap } };
+    RECEIPT_HANDLED.add(capped);
+    return capped;
+  }
+  if (planStart) dependents.push(planStart.dependents);
+  // Advance a PROJECT's own last_meaningful_movement on its own content
+  // edits, inside this batch (no-op for task mutations).
+  const ownMovement = projectOwnMovementDependents(env, mut, current);
+  if (ownMovement) dependents.push(ownMovement);
   const committed = await commitRowWrite(
-    env, mut, current, await applyPatch(env, mut, current), outcome,
+    env, mut, current, write, outcome,
     {
+      ...(planStart ? { extraWhere: planStart.capWhere } : {}),
       ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
+      receipt: { op: 'update', fields: write.fields, patch: mut.patch as Record<string, unknown> },
+      ...(guard ? { undo: guard.statements, undoWhere: guard.where } : {}),
     },
   );
   if (committed === CAS_MISS) return CAS_MISS;
@@ -1274,9 +1337,8 @@ async function decideAndCommitUpdate(
   }
   if (restoringTask) await traceEventProduct(env, mut.record_id, user, 'invited', mut.mutation_id);
   await advanceProjectMovement(env, mut, current);
-  // Advance a PROJECT's own last_meaningful_movement on its own content
-  // edits (no-op for task mutations — see the table==='projects' guard).
-  await advanceProjectOwnMovement(env, mut, current);
+  // A project's own last_meaningful_movement stamp now rides the batch
+  // (projectOwnMovementDependents, pushed before commitRowWrite).
   // Lifecycle activity: complete / reopen / key-change lines. `current` is the
   // pre-patch before-image. Non-fatal.
   await emitLifecycleActivity(env, mut, user, current);
@@ -1356,7 +1418,7 @@ async function traceEventProduct(
   }
 }
 
-export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+export async function applyDelete(env: Env, mut: Mutation, user: AuthUser, guard?: UndoGuard): Promise<MutationResult> {
   // Soft-delete via deleted_at. Not all ALLOWED_TABLES carry deleted_at — guard
   // here so a delete on a non-capable table returns a clear error instead of a
   // D1_ERROR at runtime. See DELETE_CAPABLE_TABLES / TABLES_WITH_UPDATED_AT.
@@ -1364,12 +1426,16 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   if (!DELETE_CAPABLE_TABLES.has(mut.table)) {
     return mutErr(mut.mutation_id, 'envelope_invalid', `op=delete not supported on ${mut.table} (no deleted_at column)`);
   }
-  return withCasRetry(env, mut, () => decideAndCommitDelete(env, mut, user));
+  return withCasRetry(env, mut, () => decideAndCommitDelete(env, mut, user, guard));
 }
 
-async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult | CasMiss> {
+async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser, guard?: UndoGuard): Promise<MutationResult | CasMiss> {
   // Idempotent: already-deleted returns accepted.
   const current = await readCanonical(env, mut.table, mut.record_id);
+  if (guard) {
+    const moved = current ? await guard.check(current) : 'changed_since';
+    if (moved) return undoRefused(mut, current, moved);
+  }
   if (!current) {
     // Not found -- treat as already-gone (idempotent delete)
     return mkResult(mut.mutation_id, 'accepted', { reason: 'already absent' });
@@ -1380,6 +1446,11 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
       result_seq: current.seq as number,
       canonical_payload: current,
     });
+  }
+  // An answered week plan is never deleted (api/lib/task-question.ts).
+  if (mut.table === 'tasks') {
+    const wpDelErr = weekPlanDeleteError(current, null);
+    if (wpDelErr) return mutErr(mut.mutation_id, questionRefusalCode(wpDelErr), wpDelErr);
   }
   // schema-v150: tombstoning a product's current draft would leave it none.
   if (mut.table === 'links') {
@@ -1462,7 +1533,11 @@ async function decideAndCommitDelete(env: Env, mut: Mutation, user: AuthUser): P
     env, mut, current,
     { sql: `UPDATE ${mut.table} SET ${setClause}`, vals: [mut.mutation_id] },
     'accepted',
-    { extraWhere: ' AND deleted_at IS NULL', dependents },
+    {
+      extraWhere: ' AND deleted_at IS NULL', dependents,
+      receipt: { op: 'delete', fields: ['deleted_at', ...(statusClause ? ['status'] : [])] },
+      ...(guard ? { undo: guard.statements, undoWhere: guard.where } : {}),
+    },
   );
   if (committed === CAS_MISS) return CAS_MISS;
 
@@ -1537,6 +1612,69 @@ export async function applyMutation(
   // closure exempts 'hub_ui:' origins (base_seq=null is deliberate here).
   const flags = await getValidationFlags(env);
   return await processOne(env, mut, new Map(), args.user, flags);
+}
+
+/**
+ * Receipts Undo (schema-v154): what an undo threads through the ordinary
+ * update/delete decide + commit. `check` runs against the CAS pre-image on
+ * every attempt; commitRowWrite's CAS term then lands the write only on that
+ * same version, so the check and the write cannot see different rows.
+ * `statements` are the undo's own receipt line and the stamp on the line it
+ * undoes, gated on the inverse write having landed.
+ */
+export interface UndoGuard {
+  check: (current: Record<string, unknown>) => Promise<'changed_since' | null>;
+  statements: (landed: SqlFragment) => D1PreparedStatement[];
+  /** Also required by the row write itself, inside the batch. */
+  where?: SqlFragment;
+}
+
+export const RECEIPT_UNDO_REFUSED = 'receipt_changed_since';
+
+function undoRefused(mut: Mutation, current: Record<string, unknown> | null, why: 'changed_since'): MutationResult {
+  // Nothing was written, and an undo's mutation id is never reused, so no
+  // processed_mutations row is recorded for the refusal.
+  const r = mutErr(mut.mutation_id, 'value_invalid',
+    `${RECEIPT_UNDO_REFUSED}: ${mut.table} ${mut.record_id} ${why} (now at version ${current?.seq ?? 'gone'})`);
+  RECEIPT_HANDLED.add(r);
+  return r;
+}
+
+/**
+ * Write a receipt line's inverse through the one mutation path: a 'patch'
+ * line becomes an update restoring fields_before, a 'tombstone' line a delete.
+ * The caller (api/routes/receipts.ts) builds the guard; every validation the
+ * forward write passed runs again on the inverse.
+ */
+export async function applyReceiptUndo(
+  env: Env,
+  args: {
+    table: string; record_id: string; op: 'update' | 'delete';
+    patch?: Record<string, unknown>; user: AuthUser; guard: UndoGuard;
+  },
+): Promise<MutationResult> {
+  const mut: Mutation = {
+    mutation_id: generateId('mut'),
+    origin_machine: 'hub_ui:receipt_undo',
+    table: args.table,
+    record_id: args.record_id,
+    op: args.op,
+    base_seq: null,
+    base_row_hash: null,
+    patch: args.patch,
+    depends_on: null,
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  };
+  // Never under a PB origin: the undo's line is the guard's, not a second one.
+  const plain = { ...env, RECEIPT_ORIGIN: null } as Env;
+  const flags = await getValidationFlags(plain);
+  return await processOne(plain, mut, new Map(), args.user, flags, args.guard);
+}
+
+/** The fields the wire accepts per table: an undo patch is limited to them. */
+export function wireFields(table: string): ReadonlySet<string> {
+  return TABLE_FIELDS[table] ?? new Set();
 }
 
 /**
@@ -1627,7 +1765,15 @@ async function advanceProjectMovement(
   // Non-fatal wrapper: a missing projects row (orphaned task) or transient D1
   // error must not abort the task mutation that already succeeded. Log clearly
   // so operational issues surface in wrangler tail without aborting the caller.
-  await env.DB.prepare(`
+  // Receipts: a PB-key completion records the project stamp it caused, in the
+  // stamp's own batch and ahead of it, so it reads the row with no pre-read
+  // (api/lib/receipts.ts projectMoveStatements). A failed batch is logged
+  // below: neither the stamp nor its line lands.
+  await env.DB.batch([
+    ...projectMoveStatements(env, {
+      mutationId: mut.mutation_id, projectId, tsUtc, clearsStale: true, cause: 'a task under it was completed',
+    }, nowInstant()),
+    env.DB.prepare(`
     UPDATE projects
     SET last_meaningful_movement = CASE
         WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?
@@ -1637,7 +1783,8 @@ async function advanceProjectMovement(
       stale_active_since = NULL,
       updated_at = datetime('now')
     WHERE id = ?
-  `).bind(tsUtc, tsUtc, projectId).run().catch((e: Error) => {
+  `).bind(tsUtc, tsUtc, projectId),
+  ]).catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
   });
 }
@@ -1687,37 +1834,53 @@ const PROJECT_MOVEMENT_EXCLUDED_FIELDS = new Set([
  * part of the same PATCH) -- don't fight a more precise write with a second,
  * less-precise stamp of our own.
  */
-async function advanceProjectOwnMovement(
+function projectOwnMovementDependents(
   env: Env,
   mut: Mutation,
   current: Record<string, unknown>,
-): Promise<void> {
-  if (mut.table !== 'projects') return;
+): Dependents | null {
+  if (mut.table !== 'projects') return null;
 
   const patch = (mut.patch ?? {}) as Record<string, unknown>;
-  if (Object.prototype.hasOwnProperty.call(patch, 'last_meaningful_movement')) return;
+  if (Object.prototype.hasOwnProperty.call(patch, 'last_meaningful_movement')) return null;
 
   const touchedMeaningfulField = Object.keys(patch).some(
     (f) => !PROJECT_MOVEMENT_EXCLUDED_FIELDS.has(f) && patch[f] !== current[f]
   );
-  if (!touchedMeaningfulField) return;
+  if (!touchedMeaningfulField) return null;
 
   const tsUtc =
     normalizeToUtcSpaceSep(mut.client_ts) ??
     nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
 
-  await env.DB.prepare(`
+  // In the project write's own batch (receipts, 2026-10-30): the stamp lands
+  // with the edit or not at all, and the edit's receipt line, written after
+  // the dependents, reads the seq the stamp leaves. A separate post-commit
+  // stamp bumped seq past the line's landed_version, so the line's Undo
+  // refused forever (cold review probe).
+  return (landed) => [
+    ...projectMoveStatements(env, {
+      mutationId: mut.mutation_id, projectId: mut.record_id, tsUtc, clearsStale: false,
+      cause: 'its own fields were edited', gate: landed,
+    }, nowInstant()),
+    env.DB.prepare(`
     UPDATE projects
     SET last_meaningful_movement = CASE
         WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?
         THEN ?
         ELSE last_meaningful_movement
       END
-    WHERE id = ?
-  `).bind(tsUtc, tsUtc, mut.record_id).run().catch((e: Error) => {
-    console.error('advanceProjectOwnMovement: project update failed:', e.message);
-  });
+    WHERE id = ? AND ${landed.sql}
+  `).bind(tsUtc, tsUtc, mut.record_id, ...landed.vals),
+  ];
 }
+
+/** applyPatch's write plus the columns it sets (co-flips included), which a
+ *  receipt line compares and records. A named type, not an inline one: the
+ *  co-flip lint (mutations.schema-drift.test.ts) reads applyPatch's body from
+ *  its first brace. */
+type PatchFragment = SqlFragment & PatchFields;
+interface PatchFields { fields: string[] }
 
 /** Statements that commit or roll back with a row write (commitRowWrite opts.dependents). */
 type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
@@ -1731,7 +1894,7 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  */
 async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
-): Promise<SqlFragment> {
+): Promise<PatchFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
   // verbatim to D1. Without this guard, any future projects patch (Hub UI,
@@ -1869,6 +2032,8 @@ async function applyPatch(
     // checked first so an Undo is not reported as question_unanswered).
     const frozenErr = questionAnswerFrozenError(current, effectivePatch);
     if (frozenErr) throw new RefusalError(questionRefusalCode(frozenErr), frozenErr);
+    const wpDelErr = weekPlanDeleteError(current, effectivePatch);
+    if (wpDelErr) throw new RefusalError(questionRefusalCode(wpDelErr), wpDelErr);
     const qErr = questionRowError({ ...current, ...effectivePatch });
     if (qErr) throw new RefusalError(questionRefusalCode(qErr), qErr);
     // L-Q23: what this write carries -- a changed spec, an unknown choice.
@@ -1954,9 +2119,17 @@ async function applyPatch(
     setClauses.push("stage_entered_at = datetime('now')");
   }
 
+  // The columns this write sets, co-flips included: what a receipt line
+  // compares and records (api/lib/receipts.ts). Bookkeeping columns excluded.
+  const fields = [
+    ...patchKeys,
+    ...(isTaskDeleteByStatus || isTaskUndeleteByStatus ? ['deleted_at'] : []),
+    ...(isProductStageChange ? ['stage_entered_at'] : []),
+  ];
+
   // No WHERE here: commitRowWrite adds the PK, the compare-and-swap term and
   // the same-id guard, and runs this inside the batch with the receipt.
-  return { sql: `UPDATE ${mut.table} SET ${setClauses.join(', ')}`, vals };
+  return { sql: `UPDATE ${mut.table} SET ${setClauses.join(', ')}`, vals, fields };
 }
 
 async function readCanonical(
@@ -2227,6 +2400,16 @@ async function commitRowWrite(
     // the whole result.
     dependentLinksRead?: D1PreparedStatement;
     reason?: string;
+    // Receipts (schema-v154): what this write changes, for its receipt line
+    // (written only for a PB-key request, api/lib/receipts.ts). Omitted, or
+    // replaced by `undo`, when the write is a receipt Undo: that line is the
+    // undo's own, built by applyReceiptUndo.
+    receipt?: { op: 'update' | 'delete'; fields: readonly string[]; patch?: Record<string, unknown> | null };
+    undo?: (landed: SqlFragment) => D1PreparedStatement[];
+    // A receipt Undo's own precondition, in the row write's WHERE: when it
+    // fails the write does not land (CAS miss), so a check-then-write race
+    // cannot slip a change past it.
+    undoWhere?: SqlFragment;
   } = {},
 ): Promise<MutationResult | CasMiss> {
   const pk = pkWhere(mut.table, mut.record_id);
@@ -2242,9 +2425,16 @@ async function commitRowWrite(
     // PK term LAST so its binds are last, the order every row write in this
     // file has always used.
     env.DB.prepare(
-      `${write.sql} WHERE ${cas.sql} AND NOT ${TERMINAL_RECEIPT_SQL}${opts.extraWhere ?? ''} AND ${pk.sql}`,
-    ).bind(...write.vals, ...cas.vals, mut.mutation_id, ...pk.vals),
+      `${write.sql} WHERE ${cas.sql} AND NOT ${TERMINAL_RECEIPT_SQL}${opts.extraWhere ?? ''}${opts.undoWhere ? ` AND ${opts.undoWhere.sql}` : ''} AND ${pk.sql}`,
+    ).bind(...write.vals, ...cas.vals, mut.mutation_id, ...(opts.undoWhere?.vals ?? []), ...pk.vals),
     ...(opts.dependents ? opts.dependents(landed) : []),
+    // The receipt line rides the same batch, gated on `landed`: a line that
+    // fails to insert fails the batch, so the write rolls back with it.
+    ...(opts.receipt && !opts.undo ? rowChangeStatements(env, {
+      table: mut.table, recordId: mut.record_id, mutationId: mut.mutation_id, op: opts.receipt.op,
+      current, fields: opts.receipt.fields, patch: opts.receipt.patch ?? null, pk, landed,
+    }, nowInstant()) : []),
+    ...(opts.undo ? opts.undo(landed) : []),
     // Folds the M46 dependency_failed -> terminal upgrade into the same
     // statement: a stored dependency_failed row is overwritten, any other
     // stored verdict is left alone.

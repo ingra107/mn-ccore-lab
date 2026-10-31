@@ -10,6 +10,7 @@
 // Extracted from src/pages/portal/TodayPage.tsx. Same TaskDetailDrawer
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useDraggable } from '@dnd-kit/core'
 import { GripHorizontal, Clock, MapPin } from 'lucide-react'
@@ -27,7 +28,10 @@ import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { usePairName } from '../../hooks/useProjectPairs'
 import { Button } from '../ui/Button'
 
-export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
+// `badges` (after the title) and `note` (a dim line under the project) let This
+// week show a pick's packet tag and chosen direction on the same row that
+// finishes and unplans it (ThisWeekSection, 2026-10-31).
+export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId, badges, note }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; badges?: ReactNode; note?: ReactNode }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
   const projectName = usePairName(task, project?.name ?? '')
   const expanded = expandedId === task.id
@@ -57,6 +61,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
               the expanded drawer), matching the unplanned cards below. */}
           <div className="tk-ct" style={isDone ? { textDecoration: 'line-through', color: 'var(--sk-t3)', fontWeight: 500 } : undefined}>
             <span title={taskFullTitleHint(task)}>{taskShortLabel(task)}</span>
+            {badges}
             {task.group_override && (
               <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
                 <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
@@ -85,6 +90,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
               <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} aria-label={`Open ${projectName}`}>{projectName}</Link>
             ) : 'No project'}
           </div>
+          {note && <div className="tk-plan-why">{note}</div>}
         </div>
         <div className="tk-tr-r">
           {/* Duration — read-only; shows estimated_minutes ?? 30 */}

@@ -123,11 +123,6 @@ const EXECUTORS: Record<string, { runs: number; tables: string[]; reason: string
     tables: ['projects'],
     reason: 'LEDGER. forward-only last_meaningful_movement stamp on the parent project after a task completes (MAX semantics)',
   },
-  advanceProjectOwnMovement: {
-    runs: 1,
-    tables: ['projects'],
-    reason: 'LEDGER. the same stamp for a project that itself completed',
-  },
   decideAndCommitUpdate: {
     runs: 1,
     tables: ['*'],
@@ -141,6 +136,7 @@ const BUILDERS: Record<string, string> = {
   decideAndCommitDelete: 'builds the soft-delete SET clause and the gated child-cascade dependents for commitRowWrite',
   declineOrphanedEventProductSql: 'builds the statement that declines a talk or moderated-session product left with no live task; decideAndCommitDelete and decideAndCommitUpdate gate it into the task delete batch, so it commits or rolls back with the task write',
   restoreDeclinedEventProductSql: 'builds the statement that puts an event product back to Invited when the task delete that declined it is undone; gated into the task update batch like its decline twin',
+  projectOwnMovementDependents: 'builds a project edit\'s own last_meaningful_movement stamp (and its receipt line) as dependents of that edit\'s commitRowWrite batch, gated on the edit landing (receipts, schema-v154: a post-commit stamp moved seq past the receipt line\'s landed_version)',
   orphanProjectTasksSql: 'builds the project-delete task statement (project_id and product_id cleared together) that decideAndCommitDelete gates into its batch; Archive/2026-10-12-v130-retired-seedless-scripts/probe-v124-products.ts (archived) ran the same text on local D1',
 }
 

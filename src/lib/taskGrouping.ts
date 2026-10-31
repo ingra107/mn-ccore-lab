@@ -7,6 +7,7 @@
 // getGroupForTask, move options, view types, mentee slugs, localStorage
 // helpers) remain in each surface's own constants.ts.
 
+import { WEEK_PLAN_SOURCE } from '../../shared/weekPlan'
 import type { TaskRow } from './api'
 import { isMilestone, isQuestion } from '../../shared/taskKinds'
 import { parseDbUtc } from './time'
@@ -214,7 +215,7 @@ export interface QuestionReceipt {
  */
 export const QUESTION_CONSUMERS: ReadonlySet<string> = new Set([
   'fix_approval', 'meeting_match', 'nightly_work_product',
-  'project_join', 'response_required', 'upstream_brief',
+  'project_join', 'response_required', 'upstream_brief', 'week_plan',
 ])
 /** PB enums.QUESTION_ANSWER_VIA. */
 const QUESTION_ANSWER_VIA: ReadonlySet<string> = new Set(['hub', 'telegram', 'policy'])
@@ -333,11 +334,16 @@ export function cardQuestionCount(tasks: Array<{
   status?: string | null
   source?: string | null
 }>): number {
-  return tasks.filter((t) => {
-    if (t.source === 'project_join') return false
+  // A week plan asks once (the gold "Plan your week" row shows the newest
+  // waiting one only), so at most one counts; once answered, This week is its
+  // surface, not Needs you, so it stops counting.
+  const others = tasks.filter((t) => {
+    if (t.source === 'project_join' || t.source === WEEK_PLAN_SOURCE) return false
     const s = questionCardState(t)
     return s === 'waiting' || s === 'answered'
   }).length
+  const plan = tasks.some((t) => t.source === WEEK_PLAN_SOURCE && questionCardState(t) === 'waiting') ? 1 : 0
+  return others + plan
 }
 
 /**

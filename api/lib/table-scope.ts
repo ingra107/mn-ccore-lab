@@ -54,6 +54,7 @@ export const HUB_TABLES = [
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
   'narrative_projects', 'notifications', 'open_science_resources', 'paper_project_links',
   'pb_sessions', 'pomodoro_sessions', 'processed_mutations', 'product_author_positions', 'product_event_roles',
+  'receipt_claims', 'receipt_lines', 'receipt_runs',
   'product_funding', 'product_kinds', 'product_stages', 'products', 'project_dependencies', 'project_home_seed',
   'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
@@ -303,6 +304,12 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   task_packets: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
   task_packet_versions: { kind: 'scoped', key: ['packet_id', 'version'], dependsOn: [], where: nickOnly },
   task_packet_actions: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
+  // Receipts (schema-v154): what PB changed for Nick, with the before-image of
+  // each change. Same rule: Nick alone; the PB key writes and reads the raw
+  // handle. A member's handle reads no row, so nothing a route forgets can leak.
+  receipt_runs: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
+  receipt_lines: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
+  receipt_claims: { kind: 'scoped', key: 'source_key', dependsOn: [], where: nickOnly },
   // What's new releases (schema-v148, #156). A draft is Nick's until he
   // approves it: a PI reads every row, anyone else only approved ones. The
   // PB key (service viewer) gets the raw handle, so the deploy step sees the

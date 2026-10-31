@@ -28,6 +28,12 @@
 // return day and a "Bring back now" that writes due_date = today. The 1-day
 // snooze reads "For today", which is what it does.
 //
+// Week plan (source 'week_plan', PB decision 2026-10-30-planning-conversation.md):
+// a waiting one is ONE row, "Plan your week", above the other questions, so
+// Today still has one gold card. Tapping it opens the planning conversation in
+// a side panel (PlanPanel). It has no snooze and no Answered line: answered,
+// it leaves this card and shows as This week on Today.
+//
 // Renders null when tasks is empty (no card appears when nothing is waiting).
 //
 // Look (Today reskin, 2026-10-09): ONE warm gold attention card, title inside
@@ -43,6 +49,8 @@ import { Button } from '../ui/Button'
 import { nowInstant, parseDbUtc } from '../../lib/time'
 import { civilDatePlusDays, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
+import { isWeekPlan } from '../../lib/weekPlan'
+import { PlanPanel } from '../today/PlanPanel'
 
 interface QuestionsCardProps {
   tasks: TaskRow[]
@@ -66,8 +74,13 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   // A request to join (source 'project_join', schema-v139) is answered on
   // JoinRequestsCard, where Nate decides too; its question row exists for
   // Nick's Telegram card alone, so it is not shown here a second time.
-  const tasks = all.filter((t) => t.source !== 'project_join')
-  const snoozed = allSnoozed.filter((t) => t.source !== 'project_join')
+  const tasks = all.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
+  const snoozed = allSnoozed.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
+  // The newest waiting week plan; an older waiting one is superseded by it.
+  const plan = all
+    .filter((t) => isWeekPlan(t) && questionCardState(t) === 'waiting')
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))[0] ?? null
+  const [planOpen, setPlanOpen] = useState(false)
   // Three states, each read off the row (questionCardState). Waiting rows are
   // his turn; answered rows stay on the card until the PB lane acts, so an
   // answer nothing picked up cannot drop off every surface; acted-on rows are
@@ -84,7 +97,7 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   const shownAnswered = renderWaiting ? answered.filter((t) => !held.includes(t.id)) : answered
   // Acted-on rows alone are not a reason to show the gold card: nothing on it
   // would want him.
-  if (waiting.length === 0 && shownAnswered.length === 0 && held.length === 0) return null
+  if (!plan && waiting.length === 0 && shownAnswered.length === 0 && held.length === 0) return null
 
   const card = (
     <div className="tk">
@@ -92,7 +105,7 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
         <div className="tk-attn-h">
           <span className="tk-attn-dot" aria-hidden="true" />
           Needs you
-          {waiting.length > 0 && <span className="tk-cnt">{waiting.length}</span>}
+          {waiting.length + (plan ? 1 : 0) > 0 && <span className="tk-cnt">{waiting.length + (plan ? 1 : 0)}</span>}
           {onCollapse && (
             <Button
               size="icon"
@@ -107,6 +120,20 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
             </Button>
           )}
         </div>
+        {plan && (
+          <div className="tk-qrow" data-testid="q-week-plan">
+            <button
+              type="button"
+              className="tk-plan-row"
+              onClick={(e) => { e.stopPropagation(); setPlanOpen(true) }}
+              aria-haspopup="dialog"
+            >
+              <span style={{ fontWeight: 600, color: 'var(--sk-t1)' }}>Plan your week</span>
+              <span style={{ fontSize: 12, color: 'var(--sk-t3)' }}>{planSubtitle(plan)}</span>
+            </button>
+            {planOpen && <PlanPanel task={plan} onClose={() => setPlanOpen(false)} />}
+          </div>
+        )}
         {renderWaiting
           ? (waiting.length > 0 || held.length > 0) && renderWaiting(waiting, setHeld)
           : waiting.map((task) => <QuestionRow key={task.id} task={task} />)}
@@ -155,6 +182,16 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
     </div>
   )
   return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{card}</div> : card
+}
+
+/** "4 to choose from" off the offer's spec; the title when it does not parse. */
+function planSubtitle(task: TaskRow): string {
+  try {
+    const n = (JSON.parse(task.question_spec_json ?? '{}') as { candidates?: unknown[] }).candidates?.length ?? 0
+    return n > 0 ? `${n} to choose from · pick what to start on` : 'Pick what to start on'
+  } catch {
+    return 'Pick what to start on'
+  }
 }
 
 /** The earliest date a snoozed row comes back. */

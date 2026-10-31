@@ -3,6 +3,8 @@ import { json, error, generateId, projectRefToCanonical, resolveSlug, isPiReques
 import { prepareActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
+import { PACKET_PREPARE_SOURCE_TYPE } from '../../shared/weekPlan';
+import { packetOwnerEmailSql } from '../lib/packet-owner';
 
 // GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
 //
@@ -36,7 +38,7 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
   // fact lives on the entry, so it cannot drift.
   // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
   let query = `SELECT ai_requests.*,
-    (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) AS landing_visibility
+    ${LANDING_VISIBILITY_SQL} AS landing_visibility
     FROM ai_requests WHERE 1=1`;
   const params: string[] = [];
 
@@ -77,6 +79,9 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
     query += ' AND source_type = ?';
     params.push(sourceType);
   }
+
+  // Claim capability: packet_prepare rows only for a caller that handles them.
+  if (!acceptsPacketPrepare(request)) query += ` AND ${NOT_PACKET_PREPARE}`;
 
   if (sourceId) {
     query += ' AND source_id = ?';
@@ -136,6 +141,49 @@ function deriveEntityContext(sourceId: string): string | null {
   return null;
 }
 
+/** The columns a new ai_requests row is written with. `requested_by` is the
+ *  Hub-authenticated email: the PB listener's owner tier keys on it. */
+export interface AIRequestInsertRow {
+  id: string;
+  source_type: string;
+  source_id: string;
+  project_slug: string | null;
+  prompt: string;
+  context: string | null;
+  requested_by: string;
+}
+
+/**
+ * The ONE ai_requests INSERT (POST /api/ai-requests, and a week plan's Start,
+ * api/lib/week-plan-start.ts). `guard`, when given, makes it an
+ * INSERT ... SELECT ... WHERE <guard>, so it can ride another write's batch and
+ * fire only when that write landed.
+ */
+export function aiRequestInsert(
+  db: D1Database,
+  row: AIRequestInsertRow,
+  guard?: { sql: string; vals: unknown[] },
+): D1PreparedStatement {
+  const cols = 'id, source_type, source_id, project_slug, prompt, context, requested_by';
+  const vals = [row.id, row.source_type, row.source_id, row.project_slug, row.prompt, row.context, row.requested_by];
+  if (!guard) return db.prepare(`INSERT INTO ai_requests (${cols}) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(...vals);
+  return db.prepare(`INSERT INTO ai_requests (${cols}) SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${guard.sql}`)
+    .bind(...vals, ...guard.vals);
+}
+
+/**
+ * Where a request's answer lands, as the listener reads it (#119): the
+ * triggering activity entry's visibility, or NULL. A packet_prepare request
+ * (a week plan's started pick) answers into task_packets, which only Nick and
+ * the PB key can read (table-scope.ts nickOnly), so it lands private by
+ * construction: 'author'. Without this its source_id (a task id) is no entry,
+ * the subquery reads NULL, and the listener would give Nick's own pick the
+ * member tier. PB's answer_lands_private must list packet_prepare too.
+ */
+const LANDING_VISIBILITY_SQL = `CASE WHEN ai_requests.source_type = '${PACKET_PREPARE_SOURCE_TYPE}'
+      THEN CASE WHEN ${packetOwnerEmailSql('ai_requests.requested_by')} THEN 'author' ELSE NULL END
+    ELSE (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) END`;
+
 // POST /api/ai-requests — create a new AI request
 export async function handleCreateAIRequest(
   request: Request,
@@ -153,6 +201,12 @@ export async function handleCreateAIRequest(
   if (!body.source_type || !body.source_id || !body.prompt?.trim()) {
     return error('source_type, source_id, and prompt are required', 400);
   }
+  // Only a week plan's Start makes a packet_prepare request (api/lib/
+  // week-plan-start.ts, in the answer's own batch, under the cap). One posted
+  // here would skip the cap and the owner check.
+  if (body.source_type === PACKET_PREPARE_SOURCE_TYPE) {
+    return error('packet_prepare requests are made by starting a week plan, not posted', 400);
+  }
 
   // Z3.2: canonicalize project_slug before insert so stored refs are stable
   // slugs (not raw ids or stale aliases). Unresolvable refs store NULL.
@@ -161,17 +215,15 @@ export async function handleCreateAIRequest(
     : null;
 
   const id = generateId();
-  await env.DB.prepare(
-    'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
+  await aiRequestInsert(env.DB, {
     id,
-    body.source_type,
-    body.source_id,
-    canonicalProjectSlug,
-    body.prompt.trim(),
-    body.context || deriveEntityContext(body.source_id),
-    user.email,
-  ).run();
+    source_type: body.source_type,
+    source_id: body.source_id,
+    project_slug: canonicalProjectSlug,
+    prompt: body.prompt.trim(),
+    context: body.context || deriveEntityContext(body.source_id),
+    requested_by: user.email,
+  }).run();
 
   const created = await env.DB.prepare('SELECT * FROM ai_requests WHERE id = ?').bind(id).first<Record<string, unknown>>();
   return json({ data: created ? withoutClaimToken(created) : null }, 201);
@@ -251,6 +303,28 @@ interface AIRequestRow {
   [k: string]: unknown;
 }
 
+/**
+ * Claim capability (2026-10-31). A packet_prepare request (a week plan's
+ * Start, api/lib/week-plan-start.ts) must reach only a listener that has the
+ * packet_prepare branch: an older listener would answer it as a public Hermes
+ * reply. So the pending list, the queue and /claim hand such rows only to a
+ * caller that says `accepts=packet_prepare`, as a query parameter (all three)
+ * or as a body field on the POSTs (a string, comma list, or array). Without
+ * it, packet_prepare rows are not listed and a claim refuses 409
+ * {code:'capability_required'}.
+ */
+export function acceptsPacketPrepare(request: Request, body?: unknown): boolean {
+  const parts: string[] = [];
+  parts.push(new URL(request.url).searchParams.get('accepts') ?? '');
+  const b = typeof body === 'object' && body !== null ? (body as { accepts?: unknown }).accepts : undefined;
+  if (typeof b === 'string') parts.push(b);
+  if (Array.isArray(b)) parts.push(...b.filter((x): x is string => typeof x === 'string'));
+  return parts.join(',').split(',').map((x) => x.trim()).includes(PACKET_PREPARE_SOURCE_TYPE);
+}
+
+/** SQL: rows a caller without the packet_prepare capability may see. */
+const NOT_PACKET_PREPARE = `source_type != '${PACKET_PREPARE_SOURCE_TYPE}'`;
+
 async function readRequest(env: Env, id: string): Promise<AIRequestRow | null> {
   return env.DB.prepare('SELECT * FROM ai_requests WHERE id = ?').bind(id).first<AIRequestRow>();
 }
@@ -266,6 +340,14 @@ async function readRequest(env: Env, id: string): Promise<AIRequestRow | null> {
 // two listeners polling inside one window can both alert.
 export async function handleAIRequestQueue(request: Request, env: Env): Promise<Response> {
   if (!(await isPiRequest(request, env))) return error(PI_ONLY, 403);
+  let body: unknown = null;
+  try {
+    body = await request.json();
+  } catch {
+    // Total fallback on the next line: a bodyless poll is the usual one.
+    body = null;
+  }
+  const capable = acceptsPacketPrepare(request, body);
   const [, swept, claimable] = await env.DB.batch([
     env.DB.prepare(
       `UPDATE ai_requests SET status = 'failed', response = ?, responded_at = datetime('now'), exhaustion_alert = 'owed'
@@ -275,7 +357,7 @@ export async function handleAIRequestQueue(request: Request, env: Env): Promise<
       `SELECT id, source_type, source_id, requested_by, claimed_by, claim_attempts, claim_releases
          FROM ai_requests WHERE exhaustion_alert = 'owed' ORDER BY responded_at ASC, id ASC`
     ),
-    env.DB.prepare(`SELECT ${QUEUE_COLS} FROM ai_requests WHERE ${CLAIMABLE} ORDER BY created_at ASC, id ASC`),
+    env.DB.prepare(`SELECT ${QUEUE_COLS} FROM ai_requests WHERE ${CLAIMABLE}${capable ? '' : ` AND ${NOT_PACKET_PREPARE}`} ORDER BY created_at ASC, id ASC`),
   ]);
   return json({ data: claimable.results ?? [], swept: swept.results ?? [] });
 }
@@ -304,13 +386,21 @@ export async function handleAIRequestAlertSent(id: string, request: Request, env
 export async function handleClaimAIRequest(id: string, request: Request, env: Env): Promise<Response> {
   if (!(await isPiRequest(request, env))) return error(PI_ONLY, 403);
   let machine: string | null = null;
+  let body: unknown = null;
   try {
-    const body = await request.json() as { machine?: unknown };
-    if (typeof body?.machine === 'string') machine = body.machine.trim().slice(0, 120) || null;
+    body = await request.json();
+    const m = (body as { machine?: unknown } | null)?.machine;
+    if (typeof m === 'string') machine = m.trim().slice(0, 120) || null;
   } catch {
     // Total fallback on the next line: a bodyless claim is legal, and
     // claimed_by is diagnostic only.
     machine = null;
+  }
+  if (!acceptsPacketPrepare(request, body)) {
+    const kind = await env.DB.prepare('SELECT source_type FROM ai_requests WHERE id = ?').bind(id).first<{ source_type: string }>();
+    if (kind?.source_type === PACKET_PREPARE_SOURCE_TYPE) {
+      return json({ error: 'This request needs a runner that handles packet_prepare (send accepts=packet_prepare)', code: 'capability_required' }, 409);
+    }
   }
   const token = crypto.randomUUID();
   const won = await env.DB.prepare(
@@ -324,7 +414,7 @@ export async function handleClaimAIRequest(id: string, request: Request, env: En
   // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
   const row = await env.DB.prepare(
     `SELECT ai_requests.*,
-       (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) AS landing_visibility
+       ${LANDING_VISIBILITY_SQL} AS landing_visibility
        FROM ai_requests WHERE id = ?`
   ).bind(id).first<AIRequestRow & { claim_expires_at: number }>();
   return json({
@@ -466,7 +556,10 @@ export async function handleUpdateAIResponse(
            OR (? IS NULL AND claim_token IS NULL AND ${NEVER_CLAIMED}))`
     ).bind(responseText, status, inTok, outTok, commitId, id, token, token, token),
   ];
-  if (status === 'completed') {
+  // A packet_prepare answer is a status line for the PB runner; its work lands
+  // as a packet on the task (the Ready tag), so it posts no comment and sends
+  // no "Hermes replied" notification.
+  if (status === 'completed' && current.source_type !== PACKET_PREPARE_SOURCE_TYPE) {
     stmts.push(...await _hermesPublication(env, current, responseText, guard));
     stmts.push(...await _submitterNotification(env, current, responseText, guard));
   }

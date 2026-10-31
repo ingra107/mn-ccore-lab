@@ -460,6 +460,14 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     route: 'handleUpdateTask',
     user,
   });
+  // A week plan's Start that would pass the day's packet cap: a typed 409 the
+  // planning panel reads ({code:'daily_cap', used, cap}); nothing was stored.
+  if (updateMutResult.code === 'daily_cap' && updateMutResult.daily_cap) {
+    return json({
+      error: 'Starting these would pass today\'s cap of prepared first steps',
+      code: 'daily_cap', used: updateMutResult.daily_cap.used, cap: updateMutResult.daily_cap.cap,
+    }, 409);
+  }
   if (updateMutResult.status !== 'accepted' && updateMutResult.status !== 'merged_clean') {
     return error(`mutation rejected: ${updateMutResult.status} — ${updateMutResult.reason ?? ''}`, 409);
   }

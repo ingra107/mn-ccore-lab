@@ -62,6 +62,7 @@ import { json, error, generateId, assertProjectVisible } from '../helpers'
 import { nowInstant } from '../lib/time'
 import { CURRENT_DRAFT_ROLE } from '../lib/current-draft'
 import { PI_ONLY_LINK_TYPES, withoutPiOnlyLinks } from '../lib/pi-only-project-fields'
+import { receiptStatements } from '../lib/receipts'
 
 // The sync lane's column set (api/routes/links.ts LINKS_SELECT_COLS): PB
 // caches the returned rows through its pull's own per-row write.
@@ -352,6 +353,21 @@ export async function handleSetCurrentDraft(
     ).bind(newId, p.project_id, p.id, type, url, title, sourceRaw, (maxRow?.m ?? -1) + 1, kind, changeId, now, now, changeId))
   }
 
+  // Receipts (schema-v154): a PB-key promotion records its line in this
+  // batch, gated on the change row; Undo is this route's own undo.
+  stmts.push(...receiptStatements(env, {
+    actionId: changeId,
+    entityType: 'products',
+    entityId: p.id,
+    op: 'update',
+    before: { current_draft_link_id: expected },
+    after: { kind: 'value', after: { current_draft_link_id: afterId, current_draft_url: url }, version: null },
+    summary: `Made ${url} the current draft of product ${p.id}`,
+    sourceRef: `current_draft_change:${changeId}`,
+    inverseKind: 'current_draft_undo',
+    gate: { sql: receiptExists, vals: [changeId] },
+  }, now))
+
   try {
     await env.DB.batch(stmts)
   } catch (e) {
@@ -380,6 +396,9 @@ export async function handleSetCurrentDraft(
 // Body: { change_id: 'cdc_...', idempotency_key: string, origin?: string }
 export async function handleUndoCurrentDraft(
   productId: string, request: Request, user: AuthUser, env: Env, isPi: boolean,
+  // Receipts Undo only (api/routes/receipts.ts): statements that land with
+  // this undo, each gated on the undo's change row (the argument).
+  extra?: (undoChangeId: string) => D1PreparedStatement[],
 ): Promise<Response> {
   const body = await readBody(request)
   if (!body) return error('JSON body required', 400)
@@ -448,6 +467,24 @@ export async function handleUndoCurrentDraft(
   stmts.push(env.DB.prepare(
     `UPDATE current_draft_changes SET undone_by = ? WHERE id = ? AND ${receiptExists}`,
   ).bind(undoId, promo.id, undoId))
+  if (extra) {
+    stmts.push(...extra(undoId))
+  } else {
+    // A PB-key undo through this route directly is a change of its own.
+    stmts.push(...receiptStatements(env, {
+      actionId: undoId,
+      entityType: 'products',
+      entityId: p.id,
+      op: 'update',
+      before: { current_draft_link_id: promo.after_link_id },
+      after: { kind: 'value', after: { current_draft_link_id: restore }, version: null },
+      summary: `Undid the current-draft promotion ${promo.id} on product ${p.id}`,
+      sourceRef: `current_draft_change:${undoId}`,
+      inverseKind: 'none',
+      inverseReason: 'an undo of a promotion; promote the draft again to reverse it',
+      gate: { sql: receiptExists, vals: [undoId] },
+    }, now))
+  }
 
   try {
     await env.DB.batch(stmts)

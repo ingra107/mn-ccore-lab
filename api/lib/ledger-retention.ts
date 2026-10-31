@@ -107,6 +107,28 @@ export const LEDGER_REGISTRY: readonly LedgerEntry[] = [
       'Mail watcher evidence (schema-v151): metadata + a 200-char snippet per message on ' +
       'threads tied to open tasks. watch_threads (never pruned) keeps a quiet thread out of baseline.',
   },
+  {
+    table: 'receipt_runs',
+    retentionColumn: 'active_at',
+    retentionDays: 90,
+    maxRows: 20_000,
+    requiredIndex: 'idx_receipt_runs_active',
+    note:
+      'PB run receipts (schema-v154). A pruned run takes its receipt_lines with it (ON DELETE CASCADE), so it is ' +
+      'aged by active_at (max of started, finished and its newest line, kept by trg_receipt_lines_run_active): a ' +
+      'run whose id PB reuses daily is kept while it still collects lines. ' +
+      'receipt_claims is deliberately NOT here: a claim is a source\'s consumption identity and outlives its receipt.',
+  },
+  {
+    table: 'receipt_lines',
+    retentionColumn: 'created_at',
+    retentionDays: 90,
+    maxRows: 100_000,
+    requiredIndex: 'idx_receipt_lines_created',
+    note:
+      'What PB changed, one line per landed change / failure / left-for-Nick (schema-v154), ~200/day sized. ' +
+      'Changed fields only. Undo needs the line, so 90 days is also the Undo window.',
+  },
 ] as const;
 
 // ── Pruning ──────────────────────────────────────────────────────────────────
