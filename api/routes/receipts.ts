@@ -243,6 +243,38 @@ export async function handleClaim(request: Request, env: Env, allowed: boolean):
     409, held ? claimOut(held) : {})
 }
 
+// GET /api/receipts/claims?keys=k1,k2  (or repeated ?key=k)
+// The claims that exist for these source keys; absent keys are omitted. A key
+// holding a comma must use the repeated key= form (keys= splits on commas);
+// ':' and '/' need nothing. At most CLAIM_LOOKUP_MAX distinct keys. lane and
+// machine come from the claim's run (null once the run is pruned at 90 days).
+// updated_at is claimed_at: a claim's row records when it was last claimed or
+// taken over, and settling it records no time. Read-only.
+export const CLAIM_LOOKUP_MAX = 200
+const D1_BIND_CHUNK = 90 // D1 allows 100 bound parameters per statement
+export async function handleGetClaims(url: URL, env: Env, allowed: boolean): Promise<Response> {
+  if (!allowed) return error('Forbidden', 403)
+  const keys = [...new Set([
+    ...url.searchParams.getAll('keys').flatMap((v) => v.split(',')),
+    ...url.searchParams.getAll('key'),
+  ].map((k) => k.trim()).filter(Boolean))]
+  if (keys.length === 0) return error('keys required', 400)
+  if (keys.length > CLAIM_LOOKUP_MAX) return error(`at most ${CLAIM_LOOKUP_MAX} keys`, 400)
+  const stmts: D1PreparedStatement[] = []
+  for (let i = 0; i < keys.length; i += D1_BIND_CHUNK) {
+    const chunk = keys.slice(i, i + D1_BIND_CHUNK)
+    stmts.push(env.DB.prepare(
+      `SELECT c.source_key AS key, c.state, c.generation, r.lane, r.machine, c.claimed_at AS updated_at
+       FROM receipt_claims c LEFT JOIN receipt_runs r ON r.id = c.run_id
+       WHERE c.source_key IN (${chunk.map(() => '?').join(', ')})`,
+    ).bind(...chunk))
+  }
+  const results = await env.DB.batch(stmts)
+  const byKey = new Map<string, Record<string, unknown>>()
+  for (const r of results) for (const row of (r.results ?? []) as Record<string, unknown>[]) byKey.set(String(row.key), row)
+  return json({ data: keys.filter((k) => byKey.has(k)).map((k) => byKey.get(k)!) })
+}
+
 // POST /api/receipts/claims/:key/settle  { state: done|failed|left, generation }
 // Fenced on the generation: a run whose claim was taken over cannot settle it.
 export async function handleSettleClaim(key: string, request: Request, env: Env, allowed: boolean): Promise<Response> {
@@ -619,6 +651,8 @@ export function registerReceiptRoutes<C extends Context = Context>(ctx: ReceiptR
     handler: (c: C) => handlePostLine(c.req.param('id') ?? '', ctx.request(c), ctx.env(c), writer(c)) })
   defineRoute({ method: 'POST', path: '/api/receipts/claims', auth: 'pi', entity: 'pb', noVersionBump: true,
     handler: (c: C) => handleClaim(ctx.request(c), ctx.env(c), writer(c)) })
+  defineRoute({ method: 'GET', path: '/api/receipts/claims', auth: 'pi', entity: 'pb',
+    handler: (c: C) => handleGetClaims(new URL(ctx.request(c).url), ctx.env(c), writer(c)) })
   defineRoute({ method: 'POST', path: '/api/receipts/claims/:key/settle', auth: 'pi', entity: 'pb', noVersionBump: true,
     handler: (c: C) => handleSettleClaim(decodeURIComponent(c.req.param('key') ?? ''), ctx.request(c), ctx.env(c), writer(c)) })
   defineRoute({ method: 'GET', path: '/api/receipts/overnight', auth: 'pi', entity: 'pb',

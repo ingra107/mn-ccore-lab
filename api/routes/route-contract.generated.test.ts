@@ -243,7 +243,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   /claims/:key/settle (PB key or Nick), GET /api/receipts/overnight,
     //   POST /api/receipts/lines/:id/undo and /seen (Nick only),
     //   api/routes/receipts.ts.
-    expect(ROUTE_REGISTRY).toHaveLength(292)
+    // 293 as of 2026-10-31 -- GET /api/receipts/claims (+1, the claim states
+    //   for a list of source keys, PB key or Nick), api/routes/receipts.ts.
+    expect(ROUTE_REGISTRY).toHaveLength(293)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

@@ -595,3 +595,56 @@ describe('pb_origin on the task-updates and task-comments feeds', () => {
     expect(await feed('task-updates', true)).toEqual({ 'odd row': false })
   })
 })
+
+describe('GET /api/receipts/claims', () => {
+  const CASEY = 'eddin022@umn.edu'
+  beforeEach(() => {
+    insertRow(db, 'team_members', { id: 'tm-casey', name: 'Casey Eddington', slug: 'casey-eddington', role: 'Analyst', member_type: 'member', email: CASEY })
+  })
+  async function get(qs: string, who: 'pb' | 'nick' | 'casey' = 'pb') {
+    const headers: Record<string, string> = who === 'pb'
+      ? { Authorization: `Bearer ${PB_KEY}`, 'X-PB-Run': RUN }
+      : { 'X-Test-Mode-Key': TEST_KEY, 'X-Test-User': who === 'nick' ? NICK : CASEY }
+    const res = await worker.fetch(new Request(`https://hub.test/api/receipts/claims?${qs}`, { headers }), env, CTX)
+    return { status: res.status, body: await res.json() as { data: Record<string, unknown>[] } }
+  }
+  const K1 = 'comment:ae_9:1'
+  const K2 = 'file:home:ab/cd%2Bef'
+  beforeEach(async () => {
+    await handleStartRun(post({ lane: 'process', machine: 'home', run_id: 'run_a' }), env, true)
+    await handleClaim(post({ source_key: K1, run_id: 'run_a', lease_seconds: 60 }), env, true)
+    await handleClaim(post({ source_key: K2, run_id: 'run_a', lease_seconds: 60 }), env, true)
+    await handleSettleClaim(K2, post({ state: 'done', generation: 1 }), env, true)
+  })
+
+  it('returns the claims that exist, in the asked order, absent keys omitted; both query forms', async () => {
+    const want = [
+      { key: K2, state: 'done', generation: 1, lane: 'process', machine: 'home' },
+      { key: K1, state: 'claimed', generation: 1, lane: 'process', machine: 'home' },
+    ]
+    const a = await get(`keys=${encodeURIComponent(`${K2},inbox:missing,${K1}`)}`)
+    expect(a.status).toBe(200)
+    expect(a.body.data).toMatchObject(want)
+    expect(a.body.data[0].updated_at).toBeTruthy()
+    const b = await get(`key=${encodeURIComponent(K2)}&key=${encodeURIComponent('question:none')}&key=${encodeURIComponent(K1)}`)
+    expect(b.body.data).toMatchObject(want)
+    expect((await get(`keys=${encodeURIComponent('inbox:missing')}`)).body.data).toEqual([])
+  })
+
+  it('caps the lookup at 200 keys and needs at least one', async () => {
+    const keys = Array.from({ length: 200 }, (_, i) => `inbox:k${i}`)
+    const ok = await get(`keys=${encodeURIComponent([...keys.slice(0, 199), K1].join(','))}`)
+    expect(ok.status).toBe(200)
+    expect(ok.body.data.map((r) => r.key)).toEqual([K1])
+    expect((await get(`keys=${encodeURIComponent([...keys, 'inbox:k200'].join(','))}`)).status).toBe(400)
+    expect((await get('keys=')).status).toBe(400)
+  })
+
+  it('PB key and Nick read it; a member is refused; the read writes no receipt line', async () => {
+    const before = lines().length
+    expect((await get(`keys=${encodeURIComponent(K1)}`, 'nick')).status).toBe(200)
+    expect((await get(`keys=${encodeURIComponent(K1)}`, 'casey')).status).toBe(403)
+    expect((await get(`keys=${encodeURIComponent(K1)}`, 'pb')).status).toBe(200)
+    expect(lines().length).toBe(before)
+  })
+})
