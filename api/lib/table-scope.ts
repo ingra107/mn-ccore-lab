@@ -58,7 +58,8 @@ export const HUB_TABLES = [
   'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
-  'task_files', 'task_handoffs', 'task_subtasks', 'tasks', 'team_members', 'trainee_milestones',
+  'task_files', 'task_handoffs', 'task_packet_actions', 'task_packet_versions', 'task_packets', 'task_subtasks', 'tasks',
+  'team_members', 'trainee_milestones',
   'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watch_alarms', 'watch_run_threads', 'watch_runs', 'watch_threads',
   'watchlist', 'workflow_templates',
 ] as const
@@ -294,6 +295,14 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   watch_run_threads: { kind: 'scoped', key: ['run_id', 'thread_id'], dependsOn: [], where: nickOnly },
   watch_threads: { kind: 'scoped', key: 'thread_id', dependsOn: [], where: nickOnly },
   watch_alarms: { kind: 'scoped', key: 'missed_slot_at', dependsOn: [], where: nickOnly },
+  // The prepared first step (schema-v153): Nick's drafts to collaborators and
+  // the evidence they were prepared from. Same rule as the mail watcher's
+  // tables: Nick alone; the PB key reads the raw handle. Because a task read's
+  // packet_state subquery reads these through the viewer's copy, every other
+  // viewer gets NULL without the route deciding anything.
+  task_packets: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
+  task_packet_versions: { kind: 'scoped', key: ['packet_id', 'version'], dependsOn: [], where: nickOnly },
+  task_packet_actions: { kind: 'scoped', key: 'id', dependsOn: [], where: nickOnly },
   // What's new releases (schema-v148, #156). A draft is Nick's until he
   // approves it: a PI reads every row, anyone else only approved ones. The
   // PB key (service viewer) gets the raw handle, so the deploy step sees the

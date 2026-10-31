@@ -16,6 +16,7 @@ import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-f
 import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
 import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
+import { TASK_PACKET_ID_COL, attachPacketStates, livePacketView } from './packets';
 
 // guardTaskProject: reads the live task through the caller's handle. A task
 // the caller may not read (api/lib/table-scope.ts taskRule) is absent, so
@@ -127,7 +128,11 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   // schema-v152: a UI read carries each task's step progress ("1 of 4"),
   // counted here so a parent's count covers steps the page did not load. The
   // PB sync read (seq_after / wire=typed) mirrors stored columns only.
-  const stepCols = seqAfterRaw === null && !wireTyped ? `, ${TASK_STEP_COUNT_COLS}` : '';
+  // schema-v153: and its prepared first step's freshness (packet_state), which
+  // is null for every viewer but Nick: the packet tables are Nick-only, so the
+  // packet_id subquery reads an empty copy for anyone else.
+  const uiRead = seqAfterRaw === null && !wireTyped;
+  const stepCols = uiRead ? `, ${TASK_STEP_COUNT_COLS}, ${TASK_PACKET_ID_COL}` : '';
   // Which tasks the caller sees is the viewer-bound handle's rule,
   // api/lib/table-scope.ts (#145 Lane B).
   let query = `SELECT ${selectCols}, ${TASK_MEETING_COLS}${stepCols} FROM tasks t ${TASK_MEETING_JOIN} WHERE ${deletedFilter}`;
@@ -193,6 +198,7 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const rows = filterFixtures(result.results, 'title', includeFixtures);
+  if (uiRead) await attachPacketStates(env.DB, rows as Record<string, unknown>[]);
   return json({ data: rows, count: rows.length });
 }
 
@@ -273,9 +279,10 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // read is a 404.
 export async function handleGetTask(id: string, env: Env): Promise<Response> {
   const task = await env.DB.prepare(
-    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS}, ${TASK_STEP_COUNT_COLS} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
+    `SELECT ${TASK_SELECT_COLS}, ${TASK_MEETING_COLS}, ${TASK_STEP_COUNT_COLS}, ${TASK_PACKET_ID_COL} FROM tasks t ${TASK_MEETING_JOIN} WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
+  await attachPacketStates(env.DB, [task]);
   // meeting_ref comes from TASK_MEETING_JOIN, the same join as the list read,
   // so the row and the detail panel always agree on the meeting.
   return json({ data: task });
@@ -940,6 +947,10 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     // schema-v152: this task's live steps (full task rows, tasks.parent_id).
     env.DB.prepare(TASK_STEPS_SQL).bind(taskId).all(),
   ]);
+  // schema-v153: the live prepared first step, with its freshness. {packet:
+  // null} for everyone but Nick and the PB key (the packet tables are
+  // Nick-only, so their copy is empty), and for a task with no live packet.
+  const packet = await livePacketView(env.DB, taskId);
 
   type UpdateRow = { id: string; content: string; author_slug: string | null; update_type: string | null; created_at: string };
   type ActivityRow = { id: string; actor: string | null; type: string; description: string | null; timestamp: string };
@@ -975,6 +986,7 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
       subtasks: subtasksRes.results ?? [],
       blocks: blocksRes.results ?? [],
       steps: stepsRes.results ?? [],
+      packet,
     },
   });
 }

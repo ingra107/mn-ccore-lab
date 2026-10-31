@@ -81,6 +81,7 @@ export type EntityName =
   | 'proactive-brief'
   | 'links'
   | 'mail-watch'
+  | 'packets'
   | 'misc'
 
 interface RouteMetadataBase {

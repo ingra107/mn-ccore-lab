@@ -233,7 +233,10 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET /api/mail-watch/snapshot (Nick only), api/routes/mail-watch.ts.
     // 279 as of 2026-10-30 -- GET /api/projects/next-step-gaps (+1,
     //   schema-v152): active projects with no next step, computed on read.
-    expect(ROUTE_REGISTRY).toHaveLength(279)
+    // 283 as of 2026-10-30 -- the prepared first step (+4, schema-v153): POST
+    //   /api/tasks/:id/packets, GET /api/tasks/:id/packet, POST
+    //   /api/packets/:id/use and /dismiss (Nick only), api/routes/packets.ts.
+    expect(ROUTE_REGISTRY).toHaveLength(283)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

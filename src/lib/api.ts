@@ -220,6 +220,9 @@ export interface TaskRow {
   parent_id?: string | null
   step_total?: number
   step_done?: number
+  /** Prepared first step (packet) state on Today list rows: derived on read,
+   *  null for no packet and for any viewer who may not see packets. */
+  packet_state?: 'ready' | 'changed' | 'unverified' | null
   /** Operational follow-up fields (schema v55). Returned by the task GET
    *  endpoints and accepted by the mutation allowlist; typed here so callers
    *  can read them without `as any`. No UI surfacing yet (INFRA-7). */
@@ -302,7 +305,7 @@ export const TASK_ROW_KEYS = [
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date',
   'planned_for', 'plan_slot', 'plan_rank', 'estimated_minutes',
   'plan_start_min', 'created_at', 'updated_at', 'meeting_title',
-  'meeting_date', 'meeting_ref', 'approval_status', 'kind', 'parent_id', 'step_total', 'step_done',
+  'meeting_date', 'meeting_ref', 'approval_status', 'kind', 'parent_id', 'step_total', 'step_done', 'packet_state',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
   'source_thread_id', 'waiting_since',

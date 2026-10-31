@@ -153,9 +153,11 @@ export function useTaskAttention(task: { id: string; assignee?: string | null; a
 }
 
 /** The title-line tags: New, "n new" activity, and the moved-manually pin. */
-export function CardTags({ task, isNew, activityCount = 0, showMoved = false }: { task: { group_override?: string | null }; isNew: boolean; activityCount?: number; showMoved?: boolean }) {
+export function CardTags({ task, isNew, activityCount = 0, showMoved = false }: { task: { group_override?: string | null; packet_state?: string | null }; isNew: boolean; activityCount?: number; showMoved?: boolean }) {
   return (
     <>
+      {task.packet_state === 'ready' && <span className="tk-tag tk-ac" title="A first step is prepared. Open the task to see it.">Ready</span>}
+      {task.packet_state === 'changed' && <span className="tk-tag tk-stale" title="The prepared first step changed since it was drafted.">Changed</span>}
       {isNew && <span className="tk-tag" title="New to you: you have not opened this yet">New</span>}
       {!isNew && activityCount > 0 && (
         <span className="tk-tag tk-ac" title={`${activityCount} new ${activityCount === 1 ? 'entry' : 'entries'} since you last opened this`}>

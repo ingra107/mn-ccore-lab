@@ -105,6 +105,7 @@ import { authEnforced } from './lib/auth-mode';
 import { handleClientErrors, handleHubErrorsWeekly } from './routes/hub-errors';
 import { handleOpenRun, handleCloseRun, handleAlertReport, handleSnapshot } from './routes/mail-watch';
 import { checkMailWatcherAlarm } from './lib/mail-watch-alarm';
+import { handlePublishPacket, handleGetPacket, handleUsePacket, handleDismissPacket } from './routes/packets';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
@@ -3184,6 +3185,42 @@ defineRoute({
     E(c).DB,
     SERVICE(c) || (c.get('callerKind') === 'member' && isSiteAdmin({ slug: USER(c).slug, pi: PI(c) })),
   ),
+});
+
+// The prepared first step (schema-v153, api/routes/packets.ts). Nick only, the
+// mail-watch rule: his signed-in session (the site admin with the PI flag) or
+// the PB key, which publishes. Anyone else gets 403; the packet tables are
+// Nick-only one layer down too (table-scope.ts).
+const PACKET_OWNER = (c: Context<AppEnv>) =>
+  SERVICE(c) || (c.get('callerKind') === 'member' && isSiteAdmin({ slug: USER(c).slug, pi: PI(c) }));
+const PACKET_ACTOR = (c: Context<AppEnv>) => (SERVICE(c) ? 'pb' : USER(c)?.slug || 'unknown');
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/packets',
+  auth: 'pi',
+  entity: 'packets',
+  handler: (c) => handlePublishPacket(c.req.param('id'), R(c), E(c).DB, PACKET_OWNER(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/packet',
+  auth: 'pi',
+  entity: 'packets',
+  handler: (c) => handleGetPacket(c.req.param('id'), E(c).DB, PACKET_OWNER(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/packets/:id/use',
+  auth: 'pi',
+  entity: 'packets',
+  handler: (c) => handleUsePacket(c.req.param('id'), R(c), E(c).DB, PACKET_OWNER(c), PACKET_ACTOR(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/packets/:id/dismiss',
+  auth: 'pi',
+  entity: 'packets',
+  handler: (c) => handleDismissPacket(c.req.param('id'), E(c).DB, PACKET_OWNER(c), PACKET_ACTOR(c)),
 });
 
 // 404 fallback.

@@ -22,6 +22,7 @@ import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldControls'
 import { ActivityPeek } from './ActivityPeek'
 import { StepsList } from './StepsList'
+import { PacketBlock } from './PacketBlock'
 import TaskDetailPanel from '../tasks/LazyTaskDetailPanel'
 import { LinkCards } from './LinkCards'
 import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
@@ -124,6 +125,9 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // drawer hugs the row instead of opening with a gap.
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid var(--border-subtle)' }}>
+      {/* Prepared first step (packet): instruction first, draft never collapsed.
+          Renders nothing when the task has no packet. */}
+      <PacketBlock taskId={task.id} />
       {/* Action row — ONE quiet segmented control (Today round 2, 2026-10-09):
           Plan / Set section / Due / Full editor share a hairline-outlined
           capsule with hairline dividers, t2 text, t3 icons. Overdue keeps red
