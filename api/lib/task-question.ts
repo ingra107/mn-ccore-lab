@@ -69,6 +69,7 @@ export const QUESTION_ERROR_CODES = {
   question_answer_frozen: 'question_rule',
   question_expired: 'question_rule',
   week_plan_answered: 'question_rule',
+  week_plan_superseded: 'question_rule',
   question_kind_immutable: 'question_rule',
   question_spec_missing: 'question_shape',
   question_spec_invalid: 'question_shape',
@@ -369,7 +370,7 @@ export function questionAnswerFrozenError(
     if (next === storedPlan) return null;
     const spec = parseWeekPlanSpec(current.question_spec_json);
     if (next !== null && next !== undefined && spec && weekPlanExpired(spec, nowInstant())) {
-      return `question_expired: this week plan expired at ${spec.expires_at}; a new one is offered Sunday`;
+      return `question_expired: this week plan expired at ${spec.expires_at}; press Re-plan or wait for Sunday's`;
     }
     if (storedPlan === null || storedPlan === undefined) return null;
     if (spec && next !== null && next !== undefined && weekPlanFlipError(storedPlan, next, spec) === null) return null;

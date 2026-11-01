@@ -23,6 +23,22 @@ import { DELIVERABLE_KINDS, type DeliverableKind } from './packets'
 export const WEEK_PLAN_SOURCE = 'week_plan'
 /** ai_requests.source_type of a started pick. */
 export const PACKET_PREPARE_SOURCE_TYPE = 'packet_prepare'
+/** ai_requests.source_type of a Re-plan press (api/lib/week-plan-replan.ts). */
+export const WEEK_REPLAN_SOURCE_TYPE = 'week_replan'
+/**
+ * The LANE sources: ai_requests rows that are not questions. Each is made only
+ * by its own Hub route, answered by a PB runner with a status line (no
+ * comment, no notification), lands private for Nick, and is listed or claimed
+ * only by a listener that names it in `accepts` (an older listener would
+ * answer it as a public Hermes reply). Declared once here; api/routes/
+ * ai-requests.ts reads it at every lane seam. PB's twin is
+ * scripts/scheduled/hub_ai_listener.py LANE_SOURCES (parity-tested from PB).
+ */
+export const LANE_SOURCE_TYPES = [PACKET_PREPARE_SOURCE_TYPE, WEEK_REPLAN_SOURCE_TYPE] as const
+export type LaneSourceType = (typeof LANE_SOURCE_TYPES)[number]
+export function isLaneSourceType(v: unknown): v is LaneSourceType {
+  return (LANE_SOURCE_TYPES as readonly unknown[]).includes(v)
+}
 /** Packets a day may start, across the 05:15 job and Start, counted on the Hub. */
 export const PACKET_DAILY_CAP = 3
 /** Options a candidate offers. */
@@ -78,6 +94,69 @@ export interface PacketPreparePayload {
   option_key: string | null
   plan_question_id: string
   expected_packet: { id: string; version: number } | null
+}
+
+/** The payload of one week_replan ai_request (JSON in ai_requests.context):
+ *  the Chicago date of the press. PB picks the week with its one rule
+ *  (week_plan.week_start_for): a Sunday press plans next week, any other day
+ *  this one. */
+export interface WeekReplanPayload {
+  v: 1
+  pressed_on: string
+}
+
+/** A press no PB listener has ever claimed after this long is treated as
+ *  not picked up (an old listener that does not name week_replan, or no
+ *  listener running): the button offers Try again, and the next press fails
+ *  the stale row and makes a new one, so an unclaimed row cannot block
+ *  Re-plan forever (api/lib/week-plan-replan.ts). */
+export const REPLAN_UNCLAIMED_S = 10 * 60
+
+/** GET /api/week-plan/replan: the latest re-plan request, as the button
+ *  reads it. Never the claim token. */
+export interface ReplanState {
+  id: string
+  status: 'pending' | 'completed' | 'failed'
+  /** A runner holds a live lease on it: PB is preparing the offer. */
+  claimed: boolean
+  response: string | null
+  /** Seconds since the press, on D1's clock. */
+  age_s: number
+}
+
+/**
+ * The newest-offer rule, the one every reader of week_plan offers shares:
+ * offers OF ONE WEEK (weekPlanSpecWeek) are ordered by (created_at, id), and
+ * only the NEWEST non-deleted offer of that week counts. PB's supersede
+ * (scripts/planning/week_plan.py offer_order, offer_week) keeps that one and
+ * deletes the week's other waiting ones; the Worker refuses a first answer to
+ * any other of the week (week_plan_superseded); Needs you shows it only while
+ * it waits and has not expired (src/lib/taskGrouping.ts newestWaitingWeekPlan,
+ * weekPlanExpired). Per week since the 2026-11-01 refuter: a late run for one
+ * week must never retire or block a LATER week's offer. A run does delete the
+ * waiting offers of EARLIER weeks, which can no longer take an answer.
+ */
+export function weekPlanOfferNewer(
+  a: { created_at?: string | null; id?: string | null },
+  b: { created_at?: string | null; id?: string | null },
+): boolean {
+  const ka = a.created_at ?? ''
+  const kb = b.created_at ?? ''
+  if (ka !== kb) return ka > kb
+  return (a.id ?? '') > (b.id ?? '')
+}
+
+/** The week an offer plans (its spec's week_start), or null when the spec
+ *  does not parse or carries none. The key of the per-week newest rule. */
+export function weekPlanSpecWeek(specJson: string | null | undefined): string | null {
+  if (!specJson) return null
+  try {
+    const spec = JSON.parse(specJson) as unknown
+    const ws = typeof spec === 'object' && spec !== null ? (spec as { week_start?: unknown }).week_start : null
+    return typeof ws === 'string' && ws !== '' ? ws : null
+  } catch {
+    return null // total fallback: an unreadable spec belongs to no week
+  }
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> =>

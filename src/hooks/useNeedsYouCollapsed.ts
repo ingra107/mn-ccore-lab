@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useUserPref } from './useUserPref'
+import { useWeekPlanNow } from './useWeekPlanNow'
 import { cardQuestionCount } from '../lib/taskGrouping'
 import type { TaskRow } from '../lib/api'
 
@@ -26,7 +27,9 @@ export function useNeedsYouCollapsed(questionTasks: TaskRow[]): {
   restore: () => void
 } {
   const [collapsed, setCollapsed] = useUserPref<boolean>('today.needsYouCollapsed', false, validate)
-  const count = useMemo(() => cardQuestionCount(questionTasks), [questionTasks])
+  // The week plan's offer stops counting at its expires_at with no data change.
+  const now = useWeekPlanNow(questionTasks)
+  const count = useMemo(() => cardQuestionCount(questionTasks, now), [questionTasks, now])
   const collapse = useCallback(() => setCollapsed(true), [setCollapsed])
   const restore = useCallback(() => setCollapsed(false), [setCollapsed])
   return { folded: collapsed && count > 0, count, collapse, restore }

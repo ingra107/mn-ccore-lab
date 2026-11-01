@@ -32,7 +32,7 @@ import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
-import { weekPlanStart } from '../lib/week-plan-start';
+import { weekPlanStart, weekPlanSupersededCheck } from '../lib/week-plan-start';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
 import { classifyTriggerFailure } from '../lib/trigger-rule-codes';
@@ -1284,6 +1284,14 @@ async function decideAndCommitUpdate(
     ]);
   }
   const write = await applyPatch(env, mut, current);
+  // Only the newest week_plan offer takes a first answer (Re-plan,
+  // 2026-11-01): read here for the refusal code (before Start, so a
+  // superseded offer says so rather than naming the cap), and carried in the
+  // row write's WHERE so a newer offer minted meanwhile makes the write miss.
+  const superseded = await weekPlanSupersededCheck(env, mut, current);
+  if (superseded && 'refusal' in superseded) {
+    return mutErr(mut.mutation_id, 'question_rule', superseded.refusal);
+  }
   // A week plan answer (or start flip) starts its picked work: one
   // ai_requests row per newly started pick, in this batch, and the row write
   // carries the cap term so the cap holds inside the transaction
@@ -1301,6 +1309,7 @@ async function decideAndCommitUpdate(
     return capped;
   }
   if (planStart) dependents.push(planStart.dependents);
+  const extraWhere = `${planStart ? planStart.capWhere : ''}${superseded ? superseded.where : ''}`;
   // Advance a PROJECT's own last_meaningful_movement on its own content
   // edits, inside this batch (no-op for task mutations).
   const ownMovement = projectOwnMovementDependents(env, mut, current);
@@ -1308,7 +1317,7 @@ async function decideAndCommitUpdate(
   const committed = await commitRowWrite(
     env, mut, current, write, outcome,
     {
-      ...(planStart ? { extraWhere: planStart.capWhere } : {}),
+      ...(extraWhere ? { extraWhere } : {}),
       ...(dependents.length ? { dependents: (landed: SqlFragment) => dependents.flatMap((d) => d(landed)) } : {}),
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
       receipt: { op: 'update', fields: write.fields, patch: mut.patch as Record<string, unknown> },

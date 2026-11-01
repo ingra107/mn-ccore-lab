@@ -47,9 +47,10 @@ import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { Button } from '../ui/Button'
 import { nowInstant, parseDbUtc } from '../../lib/time'
-import { civilDatePlusDays, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
+import { civilDatePlusDays, newestWaitingWeekPlan, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 import { isWeekPlan } from '../../lib/weekPlan'
+import { useWeekPlanNow } from '../../hooks/useWeekPlanNow'
 import { PlanPanel } from '../today/PlanPanel'
 
 interface QuestionsCardProps {
@@ -76,10 +77,11 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   // Nick's Telegram card alone, so it is not shown here a second time.
   const tasks = all.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
   const snoozed = allSnoozed.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
-  // The newest waiting week plan; an older waiting one is superseded by it.
-  const plan = all
-    .filter((t) => isWeekPlan(t) && questionCardState(t) === 'waiting')
-    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))[0] ?? null
+  // The week plan he is asked to answer: the newest offer, only while it
+  // waits (newestWaitingWeekPlan, the one rule the count shares).
+  // useWeekPlanNow re-renders at the offer's expires_at, so the row drops then.
+  const planNow = useWeekPlanNow(all)
+  const plan = newestWaitingWeekPlan(all, planNow)
   const [planOpen, setPlanOpen] = useState(false)
   // Three states, each read off the row (questionCardState). Waiting rows are
   // his turn; answered rows stay on the card until the PB lane acts, so an

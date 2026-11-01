@@ -94,6 +94,26 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
       setErr(`Today's ${r.cap} are already used or queued (${r.used}). Save without starting, or start fewer.`)
       return
     }
+    if (r.error.includes('week_plan_superseded')) {
+      // A Re-plan offered a newer plan while this one was open: the Worker
+      // refuses a first answer to an older offer (api/lib/week-plan-start.ts).
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setErr('A newer plan was offered. Answer that one in Needs you.')
+      return
+    }
+    if (r.error.includes('question_expired')) {
+      // The week this plan was for is over (task-question.ts
+      // questionAnswerFrozenError, the same weekPlanExpired).
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setErr('This plan was for a week that is over. Press Re-plan or wait for Sunday\'s.')
+      return
+    }
+    if (r.code === 'not_found') {
+      // The offer was deleted while open (PB retires an older offer).
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setErr('This plan was replaced. Answer the current one in Needs you.')
+      return
+    }
     setErr(`Not saved: ${r.error}`)
   }
 
