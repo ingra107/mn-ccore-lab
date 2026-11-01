@@ -6,7 +6,7 @@
 // react-dom directly like QuestionsCard.test.tsx. fetch is stubbed, so the
 // test reads the exact request body the Worker would receive.
 
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { DndContext } from '@dnd-kit/core'
@@ -14,13 +14,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../UndoToast'
 import { QuestionsCard } from '../tasks/QuestionsCard'
 import { ThisWeekSection } from './ThisWeekSection'
-import { currentWeekPlan, pickTag } from '../../lib/weekPlan'
-import { cardQuestionCount } from '../../lib/taskGrouping'
+import { PlannedTodaySection } from './PlannedTodaySection'
+import { currentWeekPlan, pickTag, replanButtonState, REPLAN_RESULT_SHOWN_S, REPLAN_UNCLAIMED_WARN_S } from '../../lib/weekPlan'
+import { cardQuestionCount, newestWaitingWeekPlan } from '../../lib/taskGrouping'
+import type { ReplanState } from '../../../shared/weekPlan'
 import type { TaskRow } from '../../lib/api'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
+// The fixture offer expires 2026-11-02T05:00Z and an expired offer never asks
+// (newestWaitingWeekPlan), so the clock is pinned inside that week. Only Date
+// is faked: `until` still needs real timers.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-11-01T18:00:00Z'))
+})
 afterEach(() => {
+  vi.useRealTimers()
   for (const { host, root } of mounted) { root.unmount(); host.remove() }
   mounted = []
   document.querySelectorAll('[data-testid="plan-panel"]').forEach((n) => n.parentElement?.remove())
@@ -63,13 +73,24 @@ const task = (id: string, extra: Partial<TaskRow> = {}): TaskRow =>
   ({ id, title: `Task ${id}`, status: 'todo', completed: 0, kind: 'task', project_id: null, ...extra } as TaskRow)
 
 type Call = { url: string; method: string; body: unknown }
-function stubFetch(count: { used: number; cap: number } | 'fail', answer: (body: unknown) => Response = () => new Response('{}', { status: 200 })) {
+/** The Re-plan route's stub: `get` answers GET /api/week-plan/replan (a
+ *  function so a test can change the state after a press), `post` the press. */
+type ReplanStub = { get: () => Response; post?: () => Response }
+const replanNone: ReplanStub = { get: () => new Response(JSON.stringify({ data: null }), { status: 200 }) }
+function stubFetch(
+  count: { used: number; cap: number } | 'fail',
+  answer: (body: unknown) => Response = () => new Response('{}', { status: 200 }),
+  replan: ReplanStub = replanNone,
+) {
   const calls: Call[] = []
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const body = init?.body ? JSON.parse(String(init.body)) : undefined
     calls.push({ url, method: init?.method ?? 'GET', body })
     if (url.startsWith('/api/packets/daily-count')) {
       return count === 'fail' ? new Response('{}', { status: 500 }) : new Response(JSON.stringify({ date: '2026-10-28', ...count }), { status: 200 })
+    }
+    if (url.startsWith('/api/week-plan/replan')) {
+      return init?.method === 'POST' ? (replan.post ?? (() => new Response('{}', { status: 201 })))() : replan.get()
     }
     if (url.startsWith('/api/tasks/')) return answer(body)
     return new Response('[]', { status: 200 })
@@ -202,6 +223,18 @@ describe('PlanConversation', () => {
     expect(panel()).not.toBeNull()
   })
 
+  it('a week_plan_superseded refusal says a newer plan was offered', async () => {
+    stubFetch({ used: 0, cap: 3 }, () => new Response(JSON.stringify({
+      error: 'week_plan_superseded: a newer week plan was offered; answer that one', code: 'question_rule',
+    }), { status: 409 }))
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    const p = await walkToConfirm(['Answer Jane'])
+    await click(buttonNamed(p, /^Next/))
+    await click(buttonNamed(p, /Save without starting/))
+    await until(() => !!p.querySelector('[role="alert"]'), 'the refusal')
+    expect(p.querySelector('[role="alert"]')!.textContent).toBe('A newer plan was offered. Answer that one in Needs you.')
+  })
+
   it('closing writes nothing', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
@@ -291,14 +324,203 @@ describe('This week', () => {
     const extra = host.querySelector('[data-testid="this-week-planned"]')!
     expect(extra.textContent).toContain('Task task_x')
     expect(extra.textContent).not.toContain('Task task_a')
-    const replan = buttonNamed(host, /Re-plan/)!
-    expect(replan.disabled).toBe(true)
-    expect(replan.title).toMatch(/Sunday/)
   })
 
   it('pickTag: Preparing for a started pick with no packet yet; Done wins', () => {
     expect(pickTag(task('a'), true)?.label).toBe('Preparing')
     expect(pickTag(undefined, false)?.label).toBe('Saved')
     expect(pickTag(task('a', { status: 'done', completed: 1, packet_state: 'ready' }), true)?.label).toBe('Done')
+  })
+})
+
+describe('Re-plan', () => {
+  const state = (planned: Record<string, { slot: string }>): TodayStateApi => ({
+    planned, done: {}, plannedIds: () => Object.keys(planned),
+    markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {},
+  } as unknown as TodayStateApi)
+  const rs = (o: Partial<ReplanState>): ReplanState => ({ id: 'r1', status: 'pending', claimed: false, response: null, age_s: 5, ...o })
+  const stored = () => currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
+
+  it('replanButtonState: every state is pressable or disabled with its reason', () => {
+    expect(replanButtonState(undefined, false)).toMatchObject({ kind: 'unknown', enabled: false })
+    expect(replanButtonState(undefined, false, true).note).toMatch(/Could not read/)
+    expect(replanButtonState(null, false)).toMatchObject({ kind: 'ready', enabled: true, note: null })
+    expect(replanButtonState(rs({}), false)).toMatchObject({ kind: 'queued', enabled: false, stuck: false })
+    // Never claimed past the Worker's limit: pressable again (the press
+    // replaces the stale row), so an old listener cannot trap the button.
+    expect(replanButtonState(rs({ age_s: REPLAN_UNCLAIMED_WARN_S }), false)).toMatchObject({ kind: 'queued', enabled: true, label: 'Try again', stuck: true, note: expect.stringMatching(/not picked this up/) })
+    expect(replanButtonState(rs({ age_s: REPLAN_UNCLAIMED_WARN_S - 1 }), false)).toMatchObject({ kind: 'queued', enabled: false })
+    expect(replanButtonState(rs({ claimed: true }), true)).toMatchObject({ kind: 'preparing', enabled: false })
+    // A waiting offer does not lock the button: a new run supersedes it.
+    expect(replanButtonState(rs({ status: 'completed', response: 'Offered a new plan ...' }), true)).toMatchObject({ kind: 'ready', enabled: true, note: expect.stringMatching(/waiting in Needs you/) })
+    expect(replanButtonState(rs({ status: 'failed', response: 'lease expired' }), false)).toMatchObject({ kind: 'ready', enabled: true, failed: true, note: 'Not re-planned: lease expired' })
+    expect(replanButtonState(rs({ status: 'completed', response: 'Nothing open to re-plan for the week of 2026-10-26.' }), false).note).toMatch(/Nothing open/)
+    expect(replanButtonState(rs({ status: 'completed', response: 'Offered a new plan (3 tasks): q1' }), false).note).toBeNull()
+    expect(replanButtonState(rs({ status: 'failed', response: 'x', age_s: REPLAN_RESULT_SHOWN_S + 1 }), false).note).toBeNull()
+  })
+
+  it('press: POSTs the route, then the re-read state shows Queued and disabled', async () => {
+    let latest: ReplanState | null = null
+    const calls = stubFetch({ used: 0, cap: 3 }, undefined, {
+      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
+      post: () => { latest = rs({}); return new Response(JSON.stringify({ data: latest }), { status: 201 }) },
+    })
+    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
+    await until(() => btn()?.dataset.state === 'ready', 'Re-plan ready')
+    expect(btn().disabled).toBe(false)
+    await click(btn())
+    await until(() => calls.some((c) => c.url === '/api/week-plan/replan' && c.method === 'POST'), 'the press')
+    await until(() => btn().dataset.state === 'queued', 'Queued')
+    expect(btn().disabled).toBe(true)
+    expect(btn().textContent).toBe('Queued')
+  })
+
+  it('a 409 replan_pending shows no error; the state re-read says Queued', async () => {
+    let latest: ReplanState | null = null
+    stubFetch({ used: 0, cap: 3 }, undefined, {
+      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
+      post: () => { latest = rs({ claimed: true }); return new Response(JSON.stringify({ error: 'queued', code: 'replan_pending', id: 'r1' }), { status: 409 }) },
+    })
+    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
+    await until(() => btn()?.dataset.state === 'ready', 'ready')
+    await click(btn())
+    await until(() => btn().dataset.state === 'preparing', 'Preparing')
+    expect(host.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('a refused press never leaves the button pressable: disabled, with the reason, until the row changes', async () => {
+    // The refuter's dead button: the state reads Try again, but the press is
+    // refused and the row does not change. Before, the 409 was swallowed and
+    // the button stayed enabled.
+    const latest = rs({ age_s: REPLAN_UNCLAIMED_WARN_S + 5 })
+    let status = 409
+    stubFetch({ used: 0, cap: 3 }, undefined, {
+      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
+      post: () => new Response(JSON.stringify(status === 409 ? { error: 'queued', code: 'replan_pending', id: 'r1' } : { error: 'boom' }), { status }),
+    })
+    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
+    await until(() => btn()?.textContent === 'Try again' && !btn().disabled, 'Try again')
+    await click(btn())
+    await until(() => btn().dataset.state === 'refused', 'refused')
+    expect(btn().disabled).toBe(true)
+    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/already queued or running/)
+
+    status = 500
+    const host2 = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const btn2 = () => host2.querySelector('[data-testid="replan"]') as HTMLButtonElement
+    await until(() => btn2()?.textContent === 'Try again' && !btn2().disabled, 'Try again (2)')
+    await click(btn2())
+    await until(() => btn2().dataset.state === 'refused', 'refused (2)')
+    expect(btn2().disabled).toBe(true)
+    expect(host2.querySelector('[role="alert"]')?.textContent).toMatch(/^Not re-planned: /)
+  })
+
+  it('Planned today (no answered plan) carries the same Re-plan button for Nick, and none for a member', async () => {
+    const calls = stubFetch({ used: 0, cap: 3 })
+    const nick = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} replanTasks={[task('task_a')]} />)
+    const btn = () => nick.querySelector('[data-testid="replan"]') as HTMLButtonElement
+    await until(() => btn()?.dataset.state === 'ready', 'Re-plan ready in Planned today')
+    expect(btn().disabled).toBe(false)
+    expect(btn().textContent).toBe(replanButtonState(null, false).label)
+    const before = calls.filter((c) => c.url.startsWith('/api/week-plan/replan')).length
+    const member = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    await tick(); await tick()
+    expect(member.querySelector('[data-testid="replan"]')).toBeNull()
+    expect(calls.filter((c) => c.url.startsWith('/api/week-plan/replan')).length).toBe(before)
+  })
+
+  it('a member (403) sees no Re-plan button', async () => {
+    stubFetch({ used: 0, cap: 3 }, undefined, { get: () => new Response('{}', { status: 403 }) })
+    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    await tick(); await tick()
+    expect(host.querySelector('[data-testid="replan"]')).toBeNull()
+  })
+
+  it('currentWeekPlan carries earlier started or done picks of the same week, read-only, tagged', async () => {
+    const SPEC2 = { ...SPEC, candidates: [...SPEC.candidates, { task_id: 'task_d', title: 'Old done', why: '', evidence: [], options: [opt('d1', true), opt('d2')] }] }
+    const older = row({
+      id: 'p_old', question_spec_json: JSON.stringify(SPEC2),
+      question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', picks: [
+        { task_id: 'task_a', option_key: 'a1', text: null, start: true }, // started: carried
+        { task_id: 'task_c', option_key: 'c1', text: null, start: false }, // saved, not done: re-offered, not carried
+        { task_id: 'task_d', option_key: 'd1', text: null, start: false }, // saved but done: carried
+        { task_id: 'task_b', option_key: 'b1', text: null, start: true }, // the newer plan picks it: not carried
+      ] }),
+    })
+    const otherWeek = row({
+      id: 'p_prev', question_spec_json: JSON.stringify({ ...SPEC, week_start: '2026-10-19' }),
+      question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-20T14:00:00Z', picks: [{ task_id: 'task_c', option_key: 'c2', text: null, start: true }] }),
+    })
+    const newer = answered([{ task_id: 'task_b', option_key: 'b2', text: null, start: false }], '2026-10-28T15:00:00Z', 'p_new')
+    const all = [older, otherWeek, newer, task('task_a'), task('task_b'), task('task_c'), task('task_d', { status: 'done', completed: 1 })]
+    const plan = currentWeekPlan(all, '2026-10-28')!
+    expect(plan.task.id).toBe('p_new')
+    expect(plan.earlier.map((e) => [e.pick.task_id, e.task.id])).toEqual([['task_a', 'p_old'], ['task_d', 'p_old']])
+
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(<ThisWeekSection plan={plan} allTasks={all} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const rows = [...host.querySelectorAll('[data-testid="this-week-earlier"]')]
+    expect(rows).toHaveLength(2)
+    expect(rows.every((r) => r.querySelector('[data-testid="earlier-tag"]')?.textContent === 'earlier plan')).toBe(true)
+    expect(rows.every((r) => r.querySelector('[data-testid="pick-start"]') === null)).toBe(true)
+    expect(rows[0].textContent).toContain('Direction a1') // its own plan's direction
+    expect(rows[1].textContent).toContain('Done')
+    // The newer plan's saved pick still has Start, against the NEWER plan.
+    expect(host.querySelectorAll('[data-testid="pick-start"]')).toHaveLength(1)
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('3')
+  })
+
+  it('newestWaitingWeekPlan: only the newest offer counts, and only while it waits', () => {
+    const w1 = row({ id: 'w1', created_at: '2026-10-25T21:00:00Z' })
+    const w2 = row({ id: 'w2', created_at: '2026-10-28T15:00:00Z' })
+    expect(newestWaitingWeekPlan([w1, w2])?.id).toBe('w2')
+    // The older still waits but a newer one is answered: nothing asks.
+    const a2 = { ...answered([{ task_id: 'task_a', option_key: 'a1', text: null, start: false }]), id: 'w2', created_at: '2026-10-28T15:00:00Z' }
+    expect(newestWaitingWeekPlan([w1, a2])).toBeNull()
+    expect(cardQuestionCount([w1, a2])).toBe(0)
+    // Same created_at: the id breaks the tie, as PB's offer_order does.
+    const t1 = row({ id: 'task_x1', created_at: '2026-10-28T15:00:00Z' })
+    const t2 = row({ id: 'task_x2', created_at: '2026-10-28T15:00:00Z' })
+    expect(newestWaitingWeekPlan([t2, t1])?.id).toBe('task_x2')
+    // A deleted offer never counts.
+    expect(newestWaitingWeekPlan([w1, { ...w2, status: 'deleted' }])?.id).toBe('w1')
+  })
+
+  it('newestWaitingWeekPlan is per week: an older week\'s later offer neither hides nor joins the newest week\'s', () => {
+    const wk = (id: string, week: string, created_at: string) =>
+      row({ id, created_at, question_spec_json: JSON.stringify({ ...SPEC, week_start: week }) })
+    const next = wk('n1', '2026-11-02', '2026-11-01T22:03:11Z')
+    // A Saturday press claimed late mints an offer for the ending week AFTER
+    // next week's Sunday offer: it must not hide next week's.
+    const late = wk('o9', '2026-10-26', '2026-11-01T23:00:00Z')
+    expect(newestWaitingWeekPlan([next, late])?.id).toBe('n1')
+    expect(cardQuestionCount([next, late])).toBe(1)
+    // Next week's offer answered: the ending week's still waits, and shows.
+    const nextDone = { ...next, question_answer_json: JSON.stringify({ v: 1, choice: 'save', via: 'hub', at: '2026-11-01T23:10:00Z', picks: [] }) }
+    expect(newestWaitingWeekPlan([nextDone, late])?.id).toBe('o9')
+  })
+
+  it('an expired offer never asks: an ignored offer for last week does not come back once this week is answered', () => {
+    // Second refuter (2026-11-01). Sunday 11-01 mints B (week 11-02), Nick
+    // ignores it; Sunday 11-08 mints C (week 11-09); Nick answers C.
+    const wk = (id: string, week: string, expires_at: string, created_at: string) =>
+      row({ id, created_at, question_spec_json: JSON.stringify({ ...SPEC, week_start: week, expires_at }) })
+    const B = wk('task_B', '2026-11-02', '2026-11-09T06:00:00Z', '2026-11-01T22:03:11Z')
+    const C = wk('task_C', '2026-11-09', '2026-11-16T06:00:00Z', '2026-11-08T22:03:11Z')
+    // Tuesday of C's week: B's week ended Monday 00:00 Central.
+    const now = '2026-11-10T15:00:00Z'
+    expect(newestWaitingWeekPlan([B, C], now)?.id).toBe('task_C')
+    const Cans = { ...C, question_answer_json: JSON.stringify({ v: 1, choice: 'save', via: 'hub', at: '2026-11-08T23:00:00Z', picks: [] }) }
+    expect(newestWaitingWeekPlan([B, Cans], now)).toBeNull()
+    expect(cardQuestionCount([B, Cans], now)).toBe(0)
+    // Before its expiry B still asks (the instant the Worker judges by).
+    expect(newestWaitingWeekPlan([B, Cans], '2026-11-09T05:59:59Z')?.id).toBe('task_B')
+    // Through the default clock too: QuestionsCard and ReplanControl pass none.
+    vi.setSystemTime(new Date(now))
+    expect(newestWaitingWeekPlan([B, Cans])).toBeNull()
+    expect(cardQuestionCount([B, Cans])).toBe(0)
   })
 })

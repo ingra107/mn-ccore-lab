@@ -94,6 +94,13 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
       setErr(`Today's ${r.cap} are already used or queued (${r.used}). Save without starting, or start fewer.`)
       return
     }
+    if (r.error.includes('week_plan_superseded')) {
+      // A Re-plan offered a newer plan while this one was open: the Worker
+      // refuses a first answer to an older offer (api/lib/week-plan-start.ts).
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setErr('A newer plan was offered. Answer that one in Needs you.')
+      return
+    }
     setErr(`Not saved: ${r.error}`)
   }
 

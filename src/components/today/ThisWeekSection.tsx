@@ -24,9 +24,11 @@
 // It keeps the `slot:strip` droppable PlannedTodaySection registered, so a
 // drag onto it still plans a task for today.
 //
-// Re-plan: there is no on-demand trigger yet (the offer job runs Sunday 16:00
-// on home), so the button is shown disabled and says so. Wire it to the
-// trigger when PB exposes one.
+// Re-plan (2026-11-01, PB Scratch/plans/2026-11-01-replan-RECONCILED.md): asks
+// PB for a new offer covering today through Sunday (a Sunday press plans next
+// week). The new offer lands in Needs you; its state shows on the button
+// (ReplanControl.tsx, shared with Planned today). Earlier plans' started or finished
+// picks stay here, read-only, tagged "earlier plan" (plan.earlier).
 
 import { useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
@@ -38,6 +40,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { pickTag, postWeekPlanAnswer, startFlipAnswer, type AcceptedWeekPlan } from '../../lib/weekPlan'
+import { useReplanControl } from './ReplanControl'
 import { pickDirection, weekPlanEnd } from '../../../shared/weekPlan'
 
 interface ThisWeekSectionProps {
@@ -67,8 +70,10 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
   const [err, setErr] = useState<string | null>(null)
   const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
 
+  const replan = useReplanControl(allTasks)
+
   const byId = new Map(allTasks.map((t) => [t.id, t]))
-  const pickIds = new Set(plan.picks.map((p) => p.task_id))
+  const pickIds = new Set([...plan.picks.map((p) => p.task_id), ...plan.earlier.map((e) => e.pick.task_id)])
   const extra = stripTasks.filter((t) => !pickIds.has(t.id))
 
   const start = async (taskId: string) => {
@@ -94,24 +99,16 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>This week</h3>
-          <span className="tk-cnt">{plan.picks.length}</span>
+          <span className="tk-cnt">{plan.picks.length + plan.earlier.length}</span>
         </div>
         <span className="tk-hintx">{weekLabel(plan.spec.week_start)}</span>
-        <button
-          type="button"
-          className="tk-btn tk-sm tk-off"
-          disabled
-          title="Re-plan is not wired yet. A new plan is offered every Sunday evening."
-          onClick={(e) => e.stopPropagation()}
-          style={{ marginLeft: 'auto' }}
-        >
-          Re-plan
-        </button>
+        {replan.buttonEl}
       </div>
 
       {open && (
         <>
           {err && <p className="tk-plan-err" role="alert" style={{ margin: '0 2px 6px' }}>{err}</p>}
+          {replan.noteEl}
           <div className="tk-week-list">
             {plan.picks.map((p) => {
               const task = byId.get(p.task_id)
@@ -155,6 +152,41 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                   </span>
                   <span className="tk-plan-why">{direction}</span>
                   {startBtn && <span>{startBtn}</span>}
+                </div>
+              )
+            })}
+            {plan.earlier.map(({ pick, spec }) => {
+              // Read-only: started or done on an earlier plan of this week.
+              // No Start button (nothing left to start) and its direction
+              // reads from its own plan's spec.
+              const task = byId.get(pick.task_id)
+              const cand = spec.candidates.find((c) => c.task_id === pick.task_id)
+              const tag = pickTag(task, pick.start)
+              const tags = <>{tag && <span className={`tk-tag ${tag.cls}`}>{tag.label}</span>}<span className="tk-tag tk-n" data-testid="earlier-tag">earlier plan</span></>
+              if (task && state.planned[pick.task_id]) {
+                // Planned today too: keep the finish and unplan controls.
+                return (
+                  <div key={`earlier:${pick.task_id}`} className="tk-week-row tk-week-planned tk-week-earlier" data-testid="this-week-earlier">
+                    <PlannedTaskRow
+                      task={task}
+                      project={task.project_id ? projectsByPid.get(task.project_id) ?? null : null}
+                      state={state}
+                      onExpand={onExpand}
+                      expandedId={expandedId}
+                      projectsByPid={projectsByPid}
+                      badges={<><span className="tk-tag" data-testid="pick-today">Today</span>{tags}</>}
+                      note={pickDirection(pick, spec)}
+                    />
+                  </div>
+                )
+              }
+              return (
+                <div key={`earlier:${pick.task_id}`} className="tk-week-row tk-week-earlier" data-testid="this-week-earlier">
+                  <span className="tk-plan-t">
+                    {task?.short_title || task?.title || cand?.title || pick.task_id}
+                    {tags}
+                  </span>
+                  <span className="tk-plan-why">{pickDirection(pick, spec)}</span>
                 </div>
               )
             })}
