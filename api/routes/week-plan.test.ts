@@ -404,22 +404,35 @@ describe('a packet_prepare request routes as private, only to a capable runner, 
 // ── the cap holds inside the write, the follow-up Start, expiry, the mint ───
 
 describe('week plan: atomic cap, start flips, expiry and the mint', () => {
-  it('two Starts on two live offers cannot land 6: the second, racing on a stale read, does not land', async () => {
-    seedPlan('task_plan_week_44b', SPEC, 'Plan your week (second offer)')
-    const three = [
+  it('two Starts on two plans cannot pass the cap: the second, racing on a stale read, does not land', async () => {
+    // Since the Re-plan (2026-11-01) only the NEWEST offer takes a first
+    // answer (week_plan_superseded), so two first answers on two offers can
+    // no longer race. The race that remains is a first-answer Start on the
+    // newest offer against a Start flip on an OLDER answered plan: 1 used +
+    // 2 + 1 = 4 > 3, each alone fits.
+    insertRow(db, 'tasks', {
+      id: 'task_plan_week_44_old', title: 'Plan your week (earlier offer)', kind: 'question', status: 'todo', priority: 'medium',
+      assignee: 'nick-ingraham', source: 'week_plan', project_id: null, created_at: '2026-10-25 21:00:00',
+      question_spec_json: JSON.stringify(SPEC),
+      question_answer_json: JSON.stringify(answer([{ task_id: 'task_c', option_key: 'c1', text: null, start: false }], { choice: 'save' })),
+    })
+    pendingRequest('req_used_1', 'task_b')
+    const two = [
       { task_id: 'task_a', option_key: 'a1', text: null, start: true },
       { task_id: 'task_b', option_key: 'b1', text: null, start: true },
-      { task_id: 'task_c', option_key: 'c1', text: null, start: true },
     ]
-    // Fire both before either commits: each pre-check reads 0 used.
-    const [r1, r2] = await Promise.all([answerPlan(three), answerPlan(three, { as: NICK }, 'task_plan_week_44b')])
+    const flip = answer([{ task_id: 'task_c', option_key: 'c1', text: null, start: true }])
+    // Fire both before either commits: each pre-check reads 1 used.
+    const [r1, r2] = await Promise.all([
+      answerPlan(two),
+      call('POST', '/api/tasks/task_plan_week_44_old', { as: NICK }, { question_answer_json: flip }),
+    ])
     const ok = [r1, r2].filter((r) => r.status === 200)
     expect(ok).toHaveLength(1)
     const capped = [r1, r2].find((r) => r.status !== 200)!
     expect(capped.status).toBe(409)
     expect(capped.body.code).toBe('daily_cap')
-    expect(requests()).toHaveLength(3)
-    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBe(3)
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBeLessThanOrEqual(3)
   })
 
   it('the cap term on the row write refuses even when the pre-check is bypassed', async () => {

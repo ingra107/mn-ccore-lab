@@ -7,7 +7,7 @@
 // getGroupForTask, move options, view types, mentee slugs, localStorage
 // helpers) remain in each surface's own constants.ts.
 
-import { WEEK_PLAN_SOURCE } from '../../shared/weekPlan'
+import { WEEK_PLAN_SOURCE, weekPlanOfferNewer } from '../../shared/weekPlan'
 import type { TaskRow } from './api'
 import { isMilestone, isQuestion } from '../../shared/taskKinds'
 import { parseDbUtc } from './time'
@@ -321,28 +321,53 @@ export function isQuestionWaiting(t: {
   return questionCardState(t) === 'waiting'
 }
 
+type WeekPlanOfferRow = {
+  id?: string | null
+  created_at?: string | null
+  deleted_at?: string | null
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+  source?: string | null
+}
+
+/**
+ * The week_plan offer Nick is asked to answer, or null (Re-plan, 2026-11-01).
+ * The ONE display rule, shared by the Needs you card (QuestionsCard) and its
+ * count (cardQuestionCount): only the NEWEST live week_plan question by
+ * (created_at, id) counts (shared/weekPlan.ts weekPlanOfferNewer, the same
+ * order PB's supersede and the Worker's week_plan_superseded refusal use), and
+ * it is shown only while it waits. An older offer that is still waiting
+ * (two PB runs overlapped; PB deletes it next) is never shown, and once the
+ * newest is answered nothing asks again.
+ */
+export function newestWaitingWeekPlan<T extends WeekPlanOfferRow>(tasks: readonly T[]): T | null {
+  let newest: T | null = null
+  for (const t of tasks) {
+    if (t.source !== WEEK_PLAN_SOURCE || t.kind !== 'question') continue
+    if (t.deleted_at || t.status === 'deleted') continue
+    if (!newest || weekPlanOfferNewer(t, newest)) newest = t
+  }
+  return newest && questionCardState(newest) === 'waiting' ? newest : null
+}
+
 /**
  * How many rows the Needs you card shows as asking for him: waiting plus
  * answered-not-acted-on. Project-join asks are left out (they are answered on
  * JoinRequestsCard). The Today "N needs you" stat reads this so it can never
  * disagree with the card it stands in for (2026-10-26).
  */
-export function cardQuestionCount(tasks: Array<{
-  kind?: string | null
-  question_answer_json?: string | null
-  question_consumed_json?: string | null
-  status?: string | null
-  source?: string | null
-}>): number {
-  // A week plan asks once (the gold "Plan your week" row shows the newest
-  // waiting one only), so at most one counts; once answered, This week is its
-  // surface, not Needs you, so it stops counting.
+export function cardQuestionCount(tasks: Array<WeekPlanOfferRow>): number {
+  // A week plan asks once (the gold "Plan your week" row shows
+  // newestWaitingWeekPlan only), so at most one counts; once answered, This
+  // week is its surface, not Needs you, so it stops counting.
   const others = tasks.filter((t) => {
     if (t.source === 'project_join' || t.source === WEEK_PLAN_SOURCE) return false
     const s = questionCardState(t)
     return s === 'waiting' || s === 'answered'
   }).length
-  const plan = tasks.some((t) => t.source === WEEK_PLAN_SOURCE && questionCardState(t) === 'waiting') ? 1 : 0
+  const plan = newestWaitingWeekPlan(tasks) ? 1 : 0
   return others + plan
 }
 

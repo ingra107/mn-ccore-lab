@@ -102,6 +102,54 @@ export async function handleDailyPacketCount(url: URL, db: D1Database, owner: bo
 
 type Guard = { sql: string; vals: unknown[] };
 
+/**
+ * The newest-offer rule at the arbiter (Re-plan, 2026-11-01). Two week_plan
+ * offers can be waiting at once for a moment (two PB runs overlapping: a
+ * Re-plan press, the Sunday job, either laptop; PB's supersede then deletes
+ * the older). Only the NEWEST non-deleted offer by (created_at, id),
+ * shared/weekPlan.ts weekPlanOfferNewer, may take a FIRST answer; an answer to
+ * any other is refused, so an older offer answered in that window cannot
+ * become a second plan for the week. A start flip on an already answered plan
+ * is not judged here: that plan stays the week's plan.
+ *
+ * Bind-free, correlated to the row the answer UPDATE writes (`tasks.*` is the
+ * target row), so it sits in that write's WHERE and is evaluated inside its
+ * transaction: a newer offer minted between the read below and the write makes
+ * the write miss, and the CAS retry reads again and refuses.
+ */
+const NEWER_OFFER_EXISTS_SQL = `EXISTS (SELECT 1 FROM tasks n
+    WHERE n.source = '${WEEK_PLAN_SOURCE}' AND n.kind = 'question' AND n.deleted_at IS NULL
+      AND COALESCE(n.status, '') != 'deleted' AND n.id != tasks.id
+      AND (COALESCE(n.created_at, '') > COALESCE(tasks.created_at, '')
+           OR (COALESCE(n.created_at, '') = COALESCE(tasks.created_at, '') AND n.id > tasks.id)))`;
+
+/** The refusal text (code question_rule, task-question.ts QUESTION_ERROR_CODES). */
+export const WEEK_PLAN_SUPERSEDED =
+  'week_plan_superseded: a newer week plan was offered; answer that one';
+
+/**
+ * A FIRST answer to a week_plan question: null when this write is not one;
+ * a refusal when a newer offer already exists; else the term the answer's
+ * row write carries (`extraWhere`).
+ */
+export async function weekPlanSupersededCheck(
+  env: Env,
+  mut: { table: string; record_id: string; patch?: Record<string, unknown> },
+  current: Record<string, unknown>,
+): Promise<null | { refusal: string } | { where: string }> {
+  if (mut.table !== 'tasks' || !mut.patch) return null;
+  if (current.source !== WEEK_PLAN_SOURCE || (current.kind ?? 'task') !== 'question') return null;
+  if (current.question_answer_json !== null && current.question_answer_json !== undefined) return null;
+  const patch = normalizeQuestionJsonFields(mut.patch);
+  if (!Object.prototype.hasOwnProperty.call(patch, 'question_answer_json')) return null;
+  if (patch.question_answer_json === null || patch.question_answer_json === undefined) return null;
+  const newer = await env.DB.prepare(
+    `SELECT 1 AS one FROM tasks WHERE id = ? AND ${NEWER_OFFER_EXISTS_SQL}`,
+  ).bind(mut.record_id).first();
+  if (newer) return { refusal: WEEK_PLAN_SUPERSEDED };
+  return { where: ` AND NOT ${NEWER_OFFER_EXISTS_SQL}` };
+}
+
 /** What a week plan's answer write does beyond the row: nothing, a refusal,
  *  or the request INSERTs that ride its batch plus the cap term its row write
  *  carries. */
