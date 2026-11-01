@@ -816,7 +816,8 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
             )}
           </div>
           {/* S-03: snippet (matched body text, with highlights). Falls back to subtitle when no snippet. */}
-          {item.snippet ? (
+          {/* A title match would just repeat the title above; show the subtitle instead. */}
+          {item.snippet && item.matchedField !== 'title' ? (
             <p
               className="text-[11px] mt-0.5"
               style={{

@@ -640,7 +640,7 @@ export default function MeetingDetail() {
                   <button
                     type="button"
                     onClick={() => { setNotesDraft(''); setEditingNotes(true) }}
-                    style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, padding: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                    style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, padding: '8px 12px', width: '100%', background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'left' }}
                   >
                     No notes yet. Click to add.
                   </button>

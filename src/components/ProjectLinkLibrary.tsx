@@ -95,27 +95,37 @@ function LinkRow({
   const label = archived ? 'Restore link' : 'Archive link'
   const name = link.short_title || link.canonical_url
   const chip = <StoredLinkChip link={{ ...link, short_title: link.short_title ? stripLinkKindSuffix(link.short_title) : link.short_title }} />
+  const meta = (
+    <>
+      {kinds && onSetKind && canEditKind(link) && (
+        <KindPicker link={link} kinds={kinds} onSetKind={onSetKind} />
+      )}
+      {date && (
+        // --muted, not a dimmed --slate: the opacity policy floors secondary
+        // text at 0.85 and reserves 0.55-0.70 for decoration.
+        <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+          {date}
+        </span>
+      )}
+    </>
+  )
   return (
     <div className="group flex items-center justify-between gap-2">
       {source ? (
-        <span className="flex flex-col" style={{ minWidth: 0, alignItems: 'flex-start' }}>
+        <span className="flex flex-col" style={{ minWidth: 0, flex: 1, alignItems: 'flex-start' }}>
           {chip}
-          <span style={{ fontSize: '10px', color: 'var(--muted)', marginTop: 2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            from {source}
+          {/* Own line: source on the left, kind + date on the right, so the
+              kind picker never sits on the chip's bottom edge (P14). */}
+          <span className="flex items-center justify-between gap-2" style={{ width: '100%', marginTop: 2, minWidth: 0 }}>
+            <span style={{ fontSize: '10px', color: 'var(--muted)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              from {source}
+            </span>
+            <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>{meta}</span>
           </span>
         </span>
       ) : chip}
       <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
-        {kinds && onSetKind && canEditKind(link) && (
-          <KindPicker link={link} kinds={kinds} onSetKind={onSetKind} />
-        )}
-        {date && (
-          // --muted, not a dimmed --slate: the opacity policy floors secondary
-          // text at 0.85 and reserves 0.55-0.70 for decoration.
-          <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-            {date}
-          </span>
-        )}
+        {!source && meta}
         {onPromote && !archived && (
           <Button
             variant="ghost"

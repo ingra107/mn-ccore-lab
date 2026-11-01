@@ -106,14 +106,14 @@ export default function MenteeDashboard({ slug, name }: Props) {
               Publications
             </span>
           </div>
+          {/* The Published count is the member page's hero number; this card
+              carries the pipeline, so the same figure is not shown twice. */}
           <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
-            {pubCounts.published}
+            {inProgress}
           </div>
-          {inProgress > 0 && (
-            <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 'var(--sp-xs) 0 0' }}>
-              plus {inProgress} in progress
-            </p>
-          )}
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: 'var(--sp-xs) 0 0' }}>
+            in review or preparation
+          </p>
           {/* The member's own papers are listed on this page (#publications).
               /publications was the public site's whole-lab list, outside the
               portal chrome (overnight audit 2026-10-14, G9-7). */}
@@ -134,10 +134,6 @@ export default function MenteeDashboard({ slug, name }: Props) {
             </span>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Publications</span>
-              <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{pubCounts.published}</span>
-            </div>
             <div className="flex items-center justify-between">
               <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>Actions pending</span>
               <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: myPending.length > 0 ? 'var(--sk-t2)' : 'var(--sk-t2)' }}>{myPending.length}</span>

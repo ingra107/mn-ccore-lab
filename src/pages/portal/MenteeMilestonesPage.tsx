@@ -503,7 +503,6 @@ function MenteeGroup({
 }) {
   const [expanded, setExpanded] = useState(true)
   const person = getPersonInfo(menteeSlug)
-  const overdueCount = items.filter((i) => i._isOverdue).length
   const isSilent = silenceDays !== null && silenceDays > SILENCE_RED_DAYS
   const isQuiet  = silenceDays !== null && silenceDays > SILENCE_AMBER_DAYS && !isSilent
 
@@ -542,19 +541,6 @@ function MenteeGroup({
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           {items.length}
         </span>
-        {overdueCount > 0 && (
-          <span
-            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              color: 'var(--job-overdue)',
-              background: 'color-mix(in srgb, var(--job-overdue) 12%, transparent)',
-            }}
-          >
-            {overdueCount} overdue
-          </span>
-        )}
         {(isSilent || isQuiet) && (
           <span
             style={{
@@ -617,6 +603,10 @@ function MilestoneRow({
   // server's overview count, which calls the same rows overdue (G8-12,
   // 2026-10-14). _isOverdue is false for a completed row.
   const shownStatus = item._isOverdue ? 'overdue' : item.status
+  // The row's "Nd overdue" pill already says it; the status control does not say it again.
+  const overdueStatusDisplay = item._isOverdue
+    ? <span style={{ fontSize: '11px', color: 'var(--slate)' }}>Set status</span>
+    : undefined
 
   return (
     <div
@@ -713,6 +703,7 @@ function MilestoneRow({
             options={STATUS_OPTIONS}
             onChange={(val) => onStatusChange(item.id, val, item.status)}
             size="sm"
+            display={overdueStatusDisplay}
           />
         </div>
       </div>
@@ -759,6 +750,7 @@ function MilestoneRow({
               options={STATUS_OPTIONS}
               onChange={(val) => onStatusChange(item.id, val, item.status)}
               size="sm"
+              display={overdueStatusDisplay}
             />
           </div>
         </div>

@@ -52,7 +52,7 @@ export default function NarrativesPage() {
     <PageContainer>
       <PageHeader
         title="Research Narratives"
-        subtitle={`${filteredNarratives.length}${searchTerm ? ` of ${narratives.length}` : ''} research arcs`}
+        subtitle={searchTerm ? `of ${narratives.length} research arcs` : 'research arcs'}
         count={filteredNarratives.length}
       >
         <div style={{ position: 'relative', width: 200 }}>

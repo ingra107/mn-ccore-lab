@@ -357,7 +357,7 @@ export default function MemberPage() {
           ? [{ id: 'commitments', label: `Commitments (${openCommitments.length})` }]
           : []),
         ...(memberPubs.length > 0
-          ? [{ id: 'publications', label: `Papers (${memberPubs.length})` }]
+          ? [{ id: 'publications', label: `All papers (${memberPubs.length})` }]
           : []),
       ]}
     >
@@ -663,7 +663,8 @@ export default function MemberPage() {
                 </span>
               ))}
             </div>
-            {publishedCount > 0 && (
+            {/* The published count is the hero number above; here only the span. */}
+            {yearRange && (
               <p
                 className="text-sm"
                 style={{
@@ -671,8 +672,7 @@ export default function MemberPage() {
                   color: 'var(--slate)',
                 }}
               >
-                {publishedCount} published paper{publishedCount !== 1 ? 's' : ''}
-                {yearRange && ` (${yearRange})`}
+                Papers {yearRange}
               </p>
             )}
           </section>

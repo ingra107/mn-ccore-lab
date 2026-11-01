@@ -14,7 +14,7 @@ import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useAp
 import { useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue, isDoneStatus } from '../../lib/dateUtils'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
 import { useSelection } from '../MyTasks/hooks/useSelection'
@@ -254,39 +254,7 @@ export default function DeadlinesPage() {
           (moved here from the retired My Hub page, 2026-10-09). */}
       <RegulatoryExpiringList />
 
-      {/* Urgent deadline banner — CLS fix R7: reserve 72px slot */}
-      <div style={{ minHeight: '72px', marginTop: 'var(--sp-md)', contain: 'layout' }}>
-      {(() => {
-        const nextUrgent = [...overdue, ...thisWeek].filter(d => d.status !== 'done' && d.status !== 'completed')[0]
-        if (!nextUrgent) return null
-        const isOver = nextUrgent.isOverdue
-        // Same wording as the rows below, so the banner and the list never disagree.
-        const daysText = dueLabelText(nextUrgent.due_date, isOver)
-        return (
-          <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg"
-            style={{
-              background: isOver ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-              boxShadow: `inset 0 0 0 1px ${isOver ? 'color-mix(in srgb, var(--job-overdue) 20%, transparent)' : 'var(--sk-line2)'}`,
-            }}
-          >
-            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--job-overdue)' : 'var(--sk-t3)', flexShrink: 0 }} />
-            <div className="min-w-0 flex-1 truncate text-sm" style={{ color: 'var(--ink)' }}>
-              {nextUrgent.title}
-            </div>
-            <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-              style={{
-                backgroundColor: isOver ? 'color-mix(in srgb, var(--job-overdue) 10%, transparent)' : 'var(--sk-line)',
-                color: isOver ? 'var(--job-overdue)' : 'var(--sk-t2)',
-              }}
-            >
-              {daysText}
-            </span>
-          </div>
-        )
-      })()}
-      </div>
+      {/* The old red banner copied the first Overdue row; the header subtitle and the Overdue group carry the count. */}
 
       {/* Content — CLS fix (C8 R6): reserve viewport height and render skeleton rows at
           the list's row height, so the data swaps in without layout thrash. */}
