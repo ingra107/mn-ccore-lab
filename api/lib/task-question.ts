@@ -69,6 +69,7 @@ export const QUESTION_ERROR_CODES = {
   question_answer_frozen: 'question_rule',
   question_expired: 'question_rule',
   week_plan_answered: 'question_rule',
+  week_plan_superseded: 'question_rule',
   question_kind_immutable: 'question_rule',
   question_spec_missing: 'question_shape',
   question_spec_invalid: 'question_shape',

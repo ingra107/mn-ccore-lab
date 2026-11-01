@@ -3,7 +3,7 @@ import { json, error, generateId, projectRefToCanonical, resolveSlug, isPiReques
 import { prepareActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
-import { PACKET_PREPARE_SOURCE_TYPE } from '../../shared/weekPlan';
+import { LANE_SOURCE_TYPES, isLaneSourceType } from '../../shared/weekPlan';
 import { packetOwnerEmailSql } from '../lib/packet-owner';
 
 // GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
@@ -79,8 +79,8 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
     params.push(sourceType);
   }
 
-  // Claim capability: packet_prepare rows only for a caller that handles them.
-  if (!acceptsPacketPrepare(request)) query += ` AND ${NOT_PACKET_PREPARE}`;
+  // Claim capability: lane rows only for a caller that names their source.
+  query += laneFilterSql(acceptedLanes(request));
 
   if (sourceId) {
     query += ' AND source_id = ?';
@@ -172,15 +172,16 @@ export function aiRequestInsert(
 
 /**
  * Where a request's answer lands, as the listener reads it (#119): the
- * triggering activity entry's visibility, or NULL. A packet_prepare request
- * (a week plan's started pick) answers into task_packets, which only Nick and
- * the PB key can read (table-scope.ts nickOnly), so it lands private by
- * construction: 'author'. Without this its source_id (a task id) is no entry,
- * the subquery reads NULL, and the listener would give Nick's own pick the
- * member tier. PB's answer_lands_private must list packet_prepare too.
+ * triggering activity entry's visibility, or NULL. A lane request (a week
+ * plan's started pick answers into task_packets, which only Nick and the PB
+ * key can read, table-scope.ts nickOnly; a Re-plan press answers with a new
+ * week_plan question for Nick) lands private by construction: 'author', when
+ * Nick made it. Without this its source_id is no entry, the subquery reads
+ * NULL, and the listener would give Nick's own press the member tier. PB's
+ * answer_lands_private lists every lane (hub_ai_listener LANE_SOURCES).
  */
 // activity-hidden-exempt: Hermes routing — a dismissed thread still receives its answer, so its visibility still governs it.
-const LANDING_VISIBILITY_SQL = `CASE WHEN ai_requests.source_type = '${PACKET_PREPARE_SOURCE_TYPE}'
+const LANDING_VISIBILITY_SQL = `CASE WHEN ai_requests.source_type IN (${laneListSql(LANE_SOURCE_TYPES)})
       THEN CASE WHEN ${packetOwnerEmailSql('ai_requests.requested_by')} THEN 'author' ELSE NULL END
     ELSE (SELECT ae.visibility FROM activity_entries ae WHERE ae.id = ai_requests.source_id) END`;
 
@@ -201,11 +202,13 @@ export async function handleCreateAIRequest(
   if (!body.source_type || !body.source_id || !body.prompt?.trim()) {
     return error('source_type, source_id, and prompt are required', 400);
   }
-  // Only a week plan's Start makes a packet_prepare request (api/lib/
-  // week-plan-start.ts, in the answer's own batch, under the cap). One posted
-  // here would skip the cap and the owner check.
-  if (body.source_type === PACKET_PREPARE_SOURCE_TYPE) {
-    return error('packet_prepare requests are made by starting a week plan, not posted', 400);
+  // A lane request is made only by its own route: a week plan's Start makes
+  // packet_prepare (api/lib/week-plan-start.ts, in the answer's own batch,
+  // under the cap), the Re-plan button makes week_replan (api/lib/
+  // week-plan-replan.ts, one pending at a time). One posted here would skip
+  // the cap, the pending guard and the owner check.
+  if (isLaneSourceType(body.source_type)) {
+    return error(`${body.source_type} requests are made by their own route, not posted`, 400);
   }
 
   // Z3.2: canonicalize project_slug before insert so stored refs are stable
@@ -304,26 +307,36 @@ interface AIRequestRow {
 }
 
 /**
- * Claim capability (2026-10-31). A packet_prepare request (a week plan's
- * Start, api/lib/week-plan-start.ts) must reach only a listener that has the
- * packet_prepare branch: an older listener would answer it as a public Hermes
- * reply. So the pending list, the queue and /claim hand such rows only to a
- * caller that says `accepts=packet_prepare`, as a query parameter (all three)
- * or as a body field on the POSTs (a string, comma list, or array). Without
- * it, packet_prepare rows are not listed and a claim refuses 409
+ * Claim capability (2026-10-31; one lane table 2026-11-01). A lane request
+ * (shared/weekPlan.ts LANE_SOURCE_TYPES: a week plan's Start, a Re-plan
+ * press) must reach only a listener that has that lane's branch: an older
+ * listener would answer it as a public Hermes reply. So the pending list, the
+ * queue and /claim hand a lane row only to a caller that names its source in
+ * `accepts`, as a query parameter (all three) or as a body field on the POSTs
+ * (a string, comma list, or array). Per lane: a listener that names only
+ * packet_prepare never sees a week_replan row. A refused claim is 409
  * {code:'capability_required'}.
  */
-export function acceptsPacketPrepare(request: Request, body?: unknown): boolean {
+export function acceptedLanes(request: Request, body?: unknown): Set<string> {
   const parts: string[] = [];
   parts.push(new URL(request.url).searchParams.get('accepts') ?? '');
   const b = typeof body === 'object' && body !== null ? (body as { accepts?: unknown }).accepts : undefined;
   if (typeof b === 'string') parts.push(b);
   if (Array.isArray(b)) parts.push(...b.filter((x): x is string => typeof x === 'string'));
-  return parts.join(',').split(',').map((x) => x.trim()).includes(PACKET_PREPARE_SOURCE_TYPE);
+  const named = new Set(parts.join(',').split(',').map((x) => x.trim()));
+  return new Set(LANE_SOURCE_TYPES.filter((t) => named.has(t)));
 }
 
-/** SQL: rows a caller without the packet_prepare capability may see. */
-const NOT_PACKET_PREPARE = `source_type != '${PACKET_PREPARE_SOURCE_TYPE}'`;
+/** `'a', 'b'` for an IN list of lane sources. Every member is a code constant. */
+function laneListSql(lanes: readonly string[]): string {
+  return lanes.map((t) => `'${t}'`).join(', ');
+}
+
+/** SQL (with a leading AND, or empty): hide every lane row the caller did not name. */
+function laneFilterSql(accepted: Set<string>): string {
+  const hidden = LANE_SOURCE_TYPES.filter((t) => !accepted.has(t));
+  return hidden.length ? ` AND source_type NOT IN (${laneListSql(hidden)})` : '';
+}
 
 async function readRequest(env: Env, id: string): Promise<AIRequestRow | null> {
   return env.DB.prepare('SELECT * FROM ai_requests WHERE id = ?').bind(id).first<AIRequestRow>();
@@ -347,7 +360,7 @@ export async function handleAIRequestQueue(request: Request, env: Env): Promise<
     // Total fallback on the next line: a bodyless poll is the usual one.
     body = null;
   }
-  const capable = acceptsPacketPrepare(request, body);
+  const laneFilter = laneFilterSql(acceptedLanes(request, body));
   const [, swept, claimable] = await env.DB.batch([
     env.DB.prepare(
       `UPDATE ai_requests SET status = 'failed', response = ?, responded_at = datetime('now'), exhaustion_alert = 'owed'
@@ -357,7 +370,7 @@ export async function handleAIRequestQueue(request: Request, env: Env): Promise<
       `SELECT id, source_type, source_id, requested_by, claimed_by, claim_attempts, claim_releases
          FROM ai_requests WHERE exhaustion_alert = 'owed' ORDER BY responded_at ASC, id ASC`
     ),
-    env.DB.prepare(`SELECT ${QUEUE_COLS} FROM ai_requests WHERE ${CLAIMABLE}${capable ? '' : ` AND ${NOT_PACKET_PREPARE}`} ORDER BY created_at ASC, id ASC`),
+    env.DB.prepare(`SELECT ${QUEUE_COLS} FROM ai_requests WHERE ${CLAIMABLE}${laneFilter} ORDER BY created_at ASC, id ASC`),
   ]);
   return json({ data: claimable.results ?? [], swept: swept.results ?? [] });
 }
@@ -396,10 +409,11 @@ export async function handleClaimAIRequest(id: string, request: Request, env: En
     // claimed_by is diagnostic only.
     machine = null;
   }
-  if (!acceptsPacketPrepare(request, body)) {
+  const accepted = acceptedLanes(request, body);
+  if (accepted.size < LANE_SOURCE_TYPES.length) {
     const kind = await env.DB.prepare('SELECT source_type FROM ai_requests WHERE id = ?').bind(id).first<{ source_type: string }>();
-    if (kind?.source_type === PACKET_PREPARE_SOURCE_TYPE) {
-      return json({ error: 'This request needs a runner that handles packet_prepare (send accepts=packet_prepare)', code: 'capability_required' }, 409);
+    if (isLaneSourceType(kind?.source_type) && !accepted.has(kind.source_type)) {
+      return json({ error: `This request needs a runner that handles ${kind.source_type} (send accepts=${kind.source_type})`, code: 'capability_required' }, 409);
     }
   }
   const token = crypto.randomUUID();
@@ -555,10 +569,11 @@ export async function handleUpdateAIResponse(
            OR (? IS NULL AND claim_token IS NULL AND ${NEVER_CLAIMED}))`
     ).bind(responseText, status, inTok, outTok, commitId, id, token, token, token),
   ];
-  // A packet_prepare answer is a status line for the PB runner; its work lands
-  // as a packet on the task (the Ready tag), so it posts no comment and sends
-  // no "Hermes replied" notification.
-  if (status === 'completed' && current.source_type !== PACKET_PREPARE_SOURCE_TYPE) {
+  // A lane answer is a status line for the PB runner; its work lands
+  // elsewhere (a packet on the task, the Ready tag; a new week_plan question in
+  // Needs you), so it posts no comment and sends no "Hermes replied"
+  // notification.
+  if (status === 'completed' && !isLaneSourceType(current.source_type)) {
     stmts.push(...await _hermesPublication(env, current, responseText, guard));
     stmts.push(...await _submitterNotification(env, current, responseText, guard));
   }
