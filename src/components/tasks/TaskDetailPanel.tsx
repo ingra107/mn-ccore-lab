@@ -1,6 +1,7 @@
 import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { lazyRoute } from '../../lib/lazyRoute'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import BodyText from '../BodyText'
+import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
 import {
   X, Clock, User, Scale, Upload, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Loader2,
@@ -10,7 +11,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
-const RichTextEditor = lazyRoute(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
@@ -23,7 +23,7 @@ import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
-import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
+import { appendCharToInput, stripMeetingMarker, withMeetingMarker } from '../../lib/textUtils'
 import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from './MeetingOriginTag'
 import { PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
@@ -197,7 +197,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
   // checked only `activeElement === first/last`, which leaks when async-mounted
-  // regions (KeyLinksEditor, RichTextEditor, comments) inject autofocusing
+  // regions (KeyLinksEditor, comments) inject autofocusing
   // elements that pull focus outside the panel. New rule: if focus drifts
   // outside panelRef on any Tab, snap it back to the first focusable.
   useEffect(() => {
@@ -208,12 +208,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         // contract as Modal.tsx.
         if (e.defaultPrevented) return
         const target = e.target as HTMLElement
-        if (target.closest('input, textarea, [contenteditable="true"], .ProseMirror')) return
+        if (target.closest('input, textarea, [contenteditable="true"]')) return
         onClose()
         return
       }
-      if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
-      if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
+      // Alt/Option+Arrow inside a text field moves the caret (macOS), so it
+      // never swaps the task from there.
+      const inField = !!(e.target as HTMLElement | null)?.closest?.('input, textarea, [contenteditable="true"]')
+      if (!inField && e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
+      if (!inField && e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
 
       if (e.key !== 'Tab' || !panelRef.current) return
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
@@ -728,13 +731,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               }}
             />
 
-            {/* Description (rich text, ghost empty → editing border).
-                Empty state: one ghost line at --ink-hint, no box.
-                Click → editor opens with toolbar + focus border (autosave on blur). */}
+            {/* Description: the ONE plain-markdown body (Nick 2026-11-01).
+                Ghost line when empty; click → textarea, autosave on blur. */}
             <DescriptionField
-              descriptionJson={task.description_json || null}
-              descriptionText={task.description ? stripMeetingMarker(task.description) : null}
-              onUpdate={(json) => handleFieldUpdate('description_json', json)}
+              key={task.id}
+              taskId={task.id}
+              description={task.description ?? null}
+              descriptionJson={task.description_json ?? null}
+              onSave={(id, next) => updateTask.mutate({ id, fields: { description: next } })}
             />
 
             {/* Workflow. The task_subtasks checklist that sat beside it was
@@ -933,40 +937,160 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 }
 
 // ── Description Field ─────────────────────────────────────
-// Ghost empty state (one "Add description…" line, no box).
-// Click → editor opens with toolbar + focus border. Autosave on blur.
-// Content state: plain prose, no resting border; editor border appears
-// only when isEditing (i.e. the ProseMirror is focused).
+// The task body is ONE plain-markdown `description` (Nick 2026-11-01). The
+// read view renders it through BodyText, the same as every other task view,
+// straight from the prop, so a PB/Claude write that lands while the panel is
+// open shows at once. Click → a textarea over the same text; autosave on
+// blur or Ctrl/Cmd+Enter, Escape cancels. Ghost empty state: one line.
+//
+// An edit is a SESSION bound at its start to one task: the task id and the
+// stored description it began from. A save can only ever write that task,
+// carrying that task's meeting marker. Leaving mid-edit (task swap, panel
+// close) saves the draft to the task it was typed on. If the stored
+// description changed while the user typed, the save does not overwrite it:
+// the newer text shows with "Keep mine" / "Use the new one".
+// The panel also keys this field on the task id, so no state crosses tasks.
 
-function DescriptionField({
+interface EditSession { taskId: string; base: string | null; start: string }
+
+export function DescriptionField({
+  taskId,
+  description,
   descriptionJson,
-  descriptionText,
-  onUpdate,
+  onSave,
 }: {
+  taskId: string
+  description: string | null
+  /** DEPRECATED, read-only fallback; REMOVE WITH THE description_json COLUMN DROP. */
   descriptionJson: string | null
-  descriptionText: string | null
-  onUpdate: (json: string) => void
+  onSave: (taskId: string, next: string | null) => void
 }) {
-  const [isEditing, setIsEditing] = useState(false)
-  const isEmpty = !descriptionJson && !descriptionText
+  const shown = description ? stripMeetingMarker(description) : ''
+  // An older panel edit wrote only description_json. Until the fold clears
+  // it, any words it holds that description lacks show in a labelled block
+  // below; the stored description is never hidden or replaced on screen.
+  const fold = descriptionJsonFold(description, descriptionJson)
+  const earlier = fold.kind === 'none' ? null : fold.md
+  const { showInfo } = useToast()
 
-  // Click the ghost line OR the read-only prose to enter editing mode.
-  const handleClick = () => {
-    if (!isEditing) setIsEditing(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [conflict, setConflict] = useState<string | null>(null)
+  const session = useRef<EditSession | null>(null)
+  const draftRef = useRef('')
+  // The newest props, read by the save and by the unmount flush.
+  const latest = useRef({ description, onSave, showInfo })
+  useLayoutEffect(() => { latest.current = { description, onSave, showInfo } })
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => { if (isEditing) ref.current?.focus() }, [isEditing])
+
+  // Leaving mid-edit (unmount, or a task swap if the key were ever dropped):
+  // the draft goes to the task it was typed on, never to whatever is shown
+  // next. A layout cleanup runs before the next render's refs update, so
+  // `latest` still holds this task's props here.
+  useLayoutEffect(() => () => {
+    const s = session.current
+    session.current = null
+    if (!s || draftRef.current === s.start) return
+    const { description: now, onSave: save, showInfo: info } = latest.current
+    if ((now ?? '') !== (s.base ?? '')) {
+      info('Description not saved: it changed while you were editing.')
+      return
+    }
+    const next = withMeetingMarker(draftRef.current, s.base)
+    save(s.taskId, next.trim() ? next : null)
+  }, [taskId])
+
+  const setText = (v: string) => { draftRef.current = v; setDraft(v) }
+  const start = () => {
+    if (isEditing) return
+    session.current = { taskId, base: description, start: shown }
+    setText(shown)
+    setConflict(null)
+    setIsEditing(true)
+  }
+  const close = () => { session.current = null; setConflict(null); setIsEditing(false) }
+  /** `force`: the user chose "Keep mine" over a newer stored text. */
+  const commit = (force = false) => {
+    const s = session.current
+    if (!s) return
+    if (draftRef.current === s.start) { close(); return }
+    const now = latest.current.description
+    if (!force && (now ?? '') !== (s.base ?? '')) { setConflict(now ?? ''); return }
+    // Over a newer text, the marker to keep is the newer one.
+    const next = withMeetingMarker(draftRef.current, force ? now : s.base)
+    latest.current.onSave(s.taskId, next.trim() ? next : null)
+    close()
+  }
+  const keepOpen = (e: React.MouseEvent) => e.preventDefault() // the textarea keeps focus
+
+  if (isEditing) {
+    return (
+      <div>
+        <SectionHead as="h3" title="Description" />
+        <textarea
+          ref={ref}
+          data-testid="task-description-editor"
+          aria-label="Description"
+          value={draft}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit() }
+            if (e.key === 'Escape') { e.preventDefault(); close() }
+          }}
+          rows={Math.min(Math.max(draft.split('\n').length + 1, 4), 16)}
+          placeholder="Add a description... (links: https://... or [text](https://...))"
+          className="w-full outline-none resize-y"
+          style={{
+            fontSize: 'var(--value-size)',
+            lineHeight: 1.6,
+            color: 'var(--ink)',
+            background: 'none',
+            border: '1px solid var(--job-accent)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '8px 12px',
+          }}
+        />
+        {conflict !== null && (
+          <div role="status" data-testid="task-description-conflict" style={{ marginTop: 'var(--sp-xs, 6px)', fontSize: 'var(--text-small)', color: 'var(--slate)' }}>
+            <div style={{ fontStyle: 'italic', marginBottom: 2 }}>This description changed while you were editing. The newer text:</div>
+            <BodyText text={stripMeetingMarker(conflict) || '(empty)'} style={{ display: 'block', color: 'var(--ink)' }} />
+            <div style={{ display: 'flex', gap: 'var(--sp-sm, 8px)', marginTop: 4 }}>
+              <button type="button" data-testid="description-keep-mine" className="link-affordance" onMouseDown={keepOpen} onClick={() => commit(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: 0 }}>Keep mine</button>
+              <button type="button" data-testid="description-use-new" className="link-affordance" onMouseDown={keepOpen} onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: 0 }}>Use the new one</button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
     <div>
       <SectionHead as="h3" title="Description" />
-
-      {/* Ghost empty line — shown only when empty AND not editing */}
-      {isEmpty && !isEditing && (
+      {shown ? (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Edit description"
+          data-testid="task-description"
+          // A click on a link opens the link; anywhere else edits.
+          onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) start() }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start() } }}
+          className="cursor-text rounded"
+          style={{ fontSize: 'var(--value-size)', lineHeight: 1.6, color: 'var(--ink)', padding: '4px 2px', border: '1px solid transparent' }}
+        >
+          <BodyText text={shown} />
+        </div>
+      ) : (
         <div
           role="button"
           tabIndex={0}
           aria-label="Add description"
-          onClick={handleClick}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+          data-testid="task-description-empty"
+          onClick={start}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start() } }}
           className="cursor-text rounded transition-colors hov-opacity"
           style={{
             fontSize: 'var(--value-size)',
@@ -980,37 +1104,12 @@ function DescriptionField({
           Add description…
         </div>
       )}
-
-      {/* Rich text editor — border + toolbar appear only while editing.
-          We pass noBorder so the editor's own border doesn't double-render.
-          The wrapper div carries the border controlled by isEditing state.
-          Always rendered (not conditional) so Tiptap keeps its internal
-          state; we use display:none on the wrapper when empty + not editing. */}
-      <div
-        onClick={handleClick}
-        style={
-          isEmpty && !isEditing
-            ? { display: 'none' }
-            : {
-                border: isEditing ? '1px solid var(--job-accent)' : '1px solid transparent',
-                borderRadius: 'var(--radius-lg)',
-                transition: 'border-color 0.15s',
-                cursor: isEmpty ? 'text' : undefined,
-              }
-        }
-      >
-        <Suspense fallback={<div style={{ height: 80, padding: 'var(--sp-md)', opacity: 0.85, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
-          <RichTextEditor
-            content={descriptionJson}
-            plainTextFallback={descriptionText}
-            onUpdate={onUpdate}
-            onFocus={() => setIsEditing(true)}
-            onBlur={() => setIsEditing(false)}
-            noBorder
-            placeholder="Add a description..."
-          />
-        </Suspense>
-      </div>
+      {earlier && (
+        <div data-testid="task-description-earlier" style={{ marginTop: 'var(--sp-xs, 6px)', fontSize: 'var(--text-small)', color: 'var(--slate)' }}>
+          <div style={{ fontStyle: 'italic', marginBottom: 2 }}>Earlier text from the old editor, not in the description:</div>
+          <BodyText text={earlier} />
+        </div>
+      )}
     </div>
   )
 }
