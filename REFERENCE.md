@@ -247,7 +247,6 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `src/components/tasks/detail/TaskUpdateFeed.tsx` | Append-only task notes with type badges |
 | `src/components/tasks/detail/TaskActivityFeed.tsx` | Merged temporal timeline (notes+comments+system) |
 | `src/components/FileUpload.tsx` | R2 file upload with drag-drop |
-| `src/components/RichTextEditor.tsx` | Tiptap rich text editor for task descriptions |
 | `src/hooks/useRealtimeSync.ts` | WebSocket (DO) + polling + BroadcastChannel sync |
 | `src/hooks/useMutations.ts` | Optimistic mutations for tasks/projects/manuscripts |
 | `api/routes/uploads.ts` | R2 file upload API |

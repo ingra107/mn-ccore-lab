@@ -195,6 +195,10 @@ export interface TaskRow {
   instructions: string | null
   recurrence: string | null
   recurrence_parent_id: string | null
+  /** @deprecated The task body is the plain-markdown `description` (Nick,
+   *  2026-11-01). The retired Tiptap editor's store: no frontend code writes
+   *  it; read only by the panel's fold fallback (lib/tiptapToMarkdown.ts).
+   *  Remove with the column drop. */
   description_json: string | null
   key_link_1: string | null
   key_link_1_desc: string | null
