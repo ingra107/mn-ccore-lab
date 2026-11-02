@@ -142,6 +142,21 @@ export function stripMeetingMarker(text: string): string {
   return text.replace(/\s*\[meeting:[^\]]+\]\s*\.?\s*$/i, '').trimEnd()
 }
 
+/**
+ * The stored description after an edit of its DISPLAYED text: the editor shows
+ * stripMeetingMarker(stored), so the machine token it hid is carried back on.
+ * Without this, a panel edit would erase the meeting dedup key.
+ */
+export function withMeetingMarker(edited: string, stored: string | null | undefined): string {
+  const base = stored ?? ''
+  const suffix = base.slice(stripMeetingMarker(base).length)
+  const body = edited.trimEnd()
+  if (!suffix.trim()) return body
+  if (!body) return suffix.trim()
+  // A marker-only stored value has no separator of its own: give it one.
+  return body + (/^\s/.test(suffix) ? suffix : ` ${suffix}`)
+}
+
 /** A status word in sentence case: "In Review" / "in_review" -> "In review".
  *  Status badges are plain words, never UPPERCASE or Title Case (rules-ui-design 2). */
 export function statusLabel(status: string | null | undefined): string {

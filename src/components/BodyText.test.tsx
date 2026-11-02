@@ -7,7 +7,6 @@ import { describe, it, expect, afterEach } from 'vitest'
 import type { ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import BodyText from './BodyText'
-import { plainTextNodes } from '../lib/plainTextNodes'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
 
@@ -77,16 +76,3 @@ describe('BodyText', () => {
   })
 })
 
-describe('plainTextNodes (task editor plain-text fallback)', () => {
-  it('marks a bare URL as a link and leaves trailing punctuation as text', () => {
-    expect(plainTextNodes('see https://clif-icu.com/portal/project-runs.')).toEqual([
-      { type: 'text', text: 'see ' },
-      { type: 'text', text: 'https://clif-icu.com/portal/project-runs', marks: [{ type: 'link', attrs: { href: 'https://clif-icu.com/portal/project-runs' } }] },
-      { type: 'text', text: '.' },
-    ])
-  })
-
-  it('returns one text node when there is no URL', () => {
-    expect(plainTextNodes('no links')).toEqual([{ type: 'text', text: 'no links' }])
-  })
-})

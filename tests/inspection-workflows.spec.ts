@@ -717,25 +717,25 @@ test.describe('FEATURE — Saved views', () => {
   })
 })
 
-test.describe('FEATURE — Rich text editor', () => {
-  test('FEATURE: Task description uses Tiptap rich text editor', async ({ page }) => {
+test.describe('FEATURE — Task description', () => {
+  test('FEATURE: Task description edits the plain-markdown body', async ({ page }) => {
     await loadPage(page, P.myTasks)
     await page.keyboard.press('j')
     await page.waitForTimeout(200)
     await page.keyboard.press('Enter')
     await page.waitForTimeout(500)
 
-    // Look for Tiptap/rich text toolbar (B, I, H2, list, link)
-    const editor = page.locator('[class*="tiptap"], [class*="ProseMirror"], [contenteditable="true"]').first()
-    const editorVisible = await editor.isVisible({ timeout: 3000 }).catch(() => false)
-    console.log(`Rich text editor visible: ${editorVisible}`)
+    // The body is one plain-markdown description: read view or the ghost line.
+    const field = page.locator('[data-testid="task-description"], [aria-label="Add description"]').first()
+    const fieldVisible = await field.isVisible({ timeout: 3000 }).catch(() => false)
+    console.log(`Description field visible: ${fieldVisible}`)
 
-    if (editorVisible) {
-      // Check for formatting buttons
-      const toolbar = page.locator('[class*="toolbar"], [class*="menu-bar"]').first()
-      const toolbarVisible = await toolbar.isVisible().catch(() => false)
-      console.log(`Editor toolbar visible: ${toolbarVisible}`)
-      await page.screenshot({ path: 'review/feature-rich-text-editor.png' })
+    if (fieldVisible) {
+      await field.click()
+      const editorVisible = await page.locator('[data-testid="task-description-editor"]').isVisible().catch(() => false)
+      console.log(`Description textarea visible: ${editorVisible}`)
+      await page.screenshot({ path: 'review/feature-task-description.png' })
+      await page.keyboard.press('Escape')
     }
     await page.keyboard.press('Escape')
   })

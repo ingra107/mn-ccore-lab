@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolve
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
-import { applyMutation } from './mutations';
+import { applyMutation, hashTouched } from './mutations';
 import { eventDateRefusal } from './products';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
 // can import it without creating a circular dependency.
@@ -322,6 +322,9 @@ const VALID_PLAN_SLOT_RE = /^(right_now|strip|between-\d+)$/;
 // on update (a null/'' clear is a 400, not a reset to the default) so a
 // milestone can never silently become a task through an empty patch.
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee', 'kind']);
+/** 409 for a guarded description write the stored text has moved past. */
+const descriptionChanged = (description: string | null): Response =>
+  json({ error: 'The description changed since this edit started', code: 'description_changed', description }, 409);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   // The task must be one the caller may read (guardTaskProject).
@@ -452,6 +455,29 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     patchRecord[col] = params[paramIdx++];
   }
 
+  // Optional `expected_description` (2026-11-01): the description the editor
+  // started from. When it no longer matches the stored one, nothing is written
+  // and the 409 carries the current text. The same read becomes the
+  // compare-and-swap applyMutation already offers a screen that read the row
+  // (base_seq + base_row_hash, as products.ts does), so a write landing between
+  // this read and the commit answers `conflict` too. Omitted = today's write.
+  let cas: { base_seq: number; base_row_hash: string } | undefined;
+  const guardsDescription = 'expected_description' in body;
+  if (guardsDescription) {
+    const expected = body.expected_description;
+    if (expected !== null && typeof expected !== 'string') {
+      return error('expected_description must be a string or null', 400);
+    }
+    // The touched columns are TASK_ALLOWED_FIELDS names (or the status-derived
+    // trio), never request text, so they are safe to name in the SQL.
+    const cols = [...new Set(['seq', 'description', ...Object.keys(patchRecord)])].join(', ');
+    const row = await env.DB.prepare(`SELECT ${cols} FROM tasks WHERE id = ?`).bind(id).first<Record<string, unknown>>();
+    if (!row) return error('Task not found', 404);
+    const stored = typeof row.description === 'string' ? row.description : null;
+    if ((stored ?? '') !== (expected ?? '')) return descriptionChanged(stored);
+    cas = { base_seq: Number(row.seq ?? 0), base_row_hash: await hashTouched(row, Object.keys(patchRecord)) };
+  }
+
   const updateMutResult = await applyMutation(env, {
     table: 'tasks',
     record_id: id,
@@ -459,7 +485,12 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     patch: patchRecord,
     route: 'handleUpdateTask',
     user,
+    ...cas,
   });
+  if (guardsDescription && updateMutResult.status === 'conflict') {
+    const now = updateMutResult.current_payload?.description;
+    return descriptionChanged(typeof now === 'string' ? now : null);
+  }
   // A week plan's Start that would pass the day's packet cap: a typed 409 the
   // planning panel reads ({code:'daily_cap', used, cap}); nothing was stored.
   if (updateMutResult.code === 'daily_cap' && updateMutResult.daily_cap) {

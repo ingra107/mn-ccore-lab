@@ -631,46 +631,6 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   border-color: var(--job-accent);
 }
 
-/* ── Tiptap rich text editor styles ── */
-.rich-text-editor .tiptap {
-  outline: none;
-}
-.rich-text-editor .tiptap p {
-  margin: 0 0 0.5em;
-}
-.rich-text-editor .tiptap h2 {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0.8em 0 0.4em;
-}
-.rich-text-editor .tiptap h3 {
-  font-size: 13px;
-  font-weight: 500;
-  margin: 0.6em 0 0.3em;
-}
-.rich-text-editor .tiptap ul,
-.rich-text-editor .tiptap ol {
-  padding-left: 1.2em;
-  margin: 0 0 0.5em;
-}
-.rich-text-editor .tiptap li {
-  margin-bottom: 0.15em;
-}
-.rich-text-editor .tiptap p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  color: var(--muted);
-  pointer-events: none;
-  height: 0;
-  float: left;
-}
-.rich-text-editor .tiptap .mention {
-  color: var(--job-accent);
-  font-weight: 500;
-  background: color-mix(in srgb, var(--sk-t1) 8%, transparent);
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-
 /* Softer task grid row separators — barely-there luminance shifts (Linear pattern) */
 .task-grid-row {
   border-bottom-color: var(--row-separator) !important;

@@ -101,9 +101,12 @@ export function useUpdateTask() {
         statusDerived.completed = isDone ? 1 : 0
         statusDerived.completed_at = isDone ? nowInstant() : null
       }
+      // expected_description is a write guard for the route, not a column.
+      const row = { ...fields }
+      delete row.expected_description
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
-        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...fields, ...statusDerived } : t),
+        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...row, ...statusDerived } : t),
       )
       return { snapshots }
     },
