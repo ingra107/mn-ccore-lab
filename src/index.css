@@ -2902,6 +2902,15 @@ button.tk-mact-hd:hover{color:var(--sk-t1)}
 .tk-sl-ul li{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12.5px;color:var(--sk-t1)}
 .tk-sl-ul li.tk-sl-d .tk-sl-t{color:var(--sk-t3);text-decoration:line-through}
 .tk-sl-t{flex:1;min-width:0}
+.tk-sl-open{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.tk-sl-open:hover,.tk-sl-open:focus-visible{color:var(--sk-t1);text-decoration:underline;text-underline-offset:2px}
+.tk-sl-un{flex-shrink:0;display:grid;place-items:center;width:20px;height:20px;background:none;border:0;border-radius:4px;color:var(--sk-t3);cursor:pointer;opacity:0}
+.tk-sl-ul li:hover .tk-sl-un,.tk-sl-un:focus-visible{opacity:1}
+.tk-sl-un:hover{color:var(--sk-t1)}
+@media (hover:none){.tk-sl-un{opacity:1}}
+.tk-sl-addbtn{background:none;border:0;padding:5px 0 0;font:inherit;font-size:12px;font-style:italic;color:var(--sk-t3);cursor:pointer}
+.tk-sl-addbtn:hover{color:var(--sk-t1)}
+.tk-sl-add{width:100%;margin-top:6px;padding:5px 8px;font:inherit;font-size:12.5px;color:var(--sk-t1);background:transparent;border:1px solid var(--border-subtle);border-radius:6px}
 .tk-sl-ul .tk-ck.tk-nxck{width:14px;height:14px;margin-top:0;border-radius:4px;flex-shrink:0;box-shadow:inset 0 0 0 1.5px var(--sk-t3);display:grid;place-items:center;color:var(--sk-ac-fg)}
 .tk-sl-ul .tk-ck.tk-nxck.tk-on{background:var(--job-accent);box-shadow:none}
 .tk-sl-ul .tk-next-d{flex-shrink:0;font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}

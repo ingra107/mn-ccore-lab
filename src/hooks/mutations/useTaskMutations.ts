@@ -27,10 +27,13 @@ export function useCreateTask() {
       due_date?: string
       priority?: string
       kind?: TaskKind
+      parent_id?: string
     }) => createTask(input),
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // A new step lists in its parent's drawer.
+      queryClient.invalidateQueries({ queryKey: ['task-detail'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -123,6 +126,8 @@ export function useUpdateTask() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // A step edited or released from its parent's drawer (title, due, parent_id).
+      queryClient.invalidateQueries({ queryKey: ['task-detail'] })
       // ['meeting'] (2026-07-21): a meeting's action items ARE task rows, but
       // they live in the ['meeting', id] cache, not ['tasks'] — so an edit made
       // through TaskDetailPanel while standing on MeetingDetail never reached

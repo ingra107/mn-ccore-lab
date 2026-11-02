@@ -202,4 +202,27 @@ describe('steps list in the drawer', () => {
     ;(h.querySelector('[data-step-id="s1"] button') as HTMLButtonElement).click()
     expect(calls).toEqual(['s2', 'un:s1'])
   })
+
+  it('the title opens the step and the unlink control releases it (parent_id null)', async () => {
+    const sent: { url: string; body: string }[] = []
+    const realFetch = window.fetch
+    window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      sent.push({ url: String(input), body: String(init?.body ?? '') })
+      return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }) as typeof window.fetch
+    try {
+      const { StepsList } = await import('./StepsList')
+      const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={stateWith([])} parent={row('p', { assignee: 'nick', project_id: 'proj' })} /></div>)
+      const li = h.querySelector('[data-step-id="s2"]')!
+      expect(li.querySelector('button.tk-sl-open')!.textContent).toBe('Shelter stable-vs-stable')
+      ;(li.querySelector('button.tk-sl-un') as HTMLButtonElement).click()
+      await waitFor(() => sent.find((c) => c.url.endsWith('/api/tasks/s2')) ?? null, 'release request')
+      const call = sent.find((c) => c.url.endsWith('/api/tasks/s2'))!
+      expect(JSON.parse(call.body)).toEqual({ parent_id: null })
+      ;(h.querySelector('.tk-sl-addbtn') as HTMLButtonElement).click()
+      await waitFor(() => h.querySelector('input.tk-sl-add'), 'add-step input')
+    } finally {
+      window.fetch = realFetch
+    }
+  })
 })

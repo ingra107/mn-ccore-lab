@@ -593,6 +593,8 @@ export function createTask(input: {
   priority?: string
   source?: string
   kind?: TaskKind
+  /** Create the task as a step of this parent (schema-v152). */
+  parent_id?: string
 }) {
   return fetchApi<TaskRow>('/api/tasks', {
     method: 'POST',

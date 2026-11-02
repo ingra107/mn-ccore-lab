@@ -235,7 +235,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           detail loads only if the parent has steps. */}
       {(task.step_total ?? 0) > 0 && (detail?.steps?.length ?? 0) > 0 && (
         <div style={{ marginTop: 12 }}>
-          <StepsList steps={detail!.steps!} state={state} />
+          <StepsList steps={detail!.steps!} state={state} parent={task} />
         </div>
       )}
 
