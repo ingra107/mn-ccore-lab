@@ -44,6 +44,9 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
                                `lnch_<alnum>` passes; no decode.
   mnccore://desk/<slug>/<desk> working-desk session -> resolve_launch.py desk mode.
                                Identifier only, no decode; a resolver refusal is loud.
+  mnccore://run/<task id>      skill-backed task (the teal Run button) -> resolve_launch.py
+                               run mode. `task_<ULID>` only, no decode; the skill comes
+                               from the local task row, never the URI. Refusal is loud.
   mnccore://resume[/latest|/<session id>] move a phone session to a terminal -> PB resume_phone_session.py.
   mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd (no
                                dialog, Nick 2026-10-12).
@@ -101,6 +104,9 @@ LAUNCH_TOKEN_RE = re.compile(r"lnch_[0-9A-Za-z]+", re.ASCII)
 # Same pattern as PB resolve_launch.DESK_REF_RE (the strict one); the .bat's
 # findstr gate was coarser and relied on the resolver for this.
 DESK_REF_RE = re.compile(r"([a-z0-9][a-z0-9-]{0,99})/([A-Za-z0-9_-]{1,120})", re.ASCII)
+# A task PK: 'task_' + a 26-character Crockford Base32 ULID (PB scripts/db/ids.py;
+# no I, L, O, U). Same pattern as PB run_skill_task.TASK_ID_RE.
+TASK_ID_RE = re.compile(r"task_[0-9A-HJKMNP-TV-Z]{26}", re.ASCII)
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 FILE_EXTS = (".docx", ".pdf", ".xlsx")
 START_CLAUDE = "Start Claude.bat"
@@ -432,6 +438,32 @@ def verb_desk(arg: str) -> int:
     return _act("desk", {"argv": argv}, run)
 
 
+def verb_run(arg: str) -> int:
+    """mnccore://run/<task id>: the teal Run button on a skill-backed task (2026-11-02).
+
+    The URI carries the task id and nothing else. The skill is NOT in the URI: PB's
+    resolver reads it from the task row in the local brain.db and checks it names a
+    committed skill under .claude/skills, so a web page can at most start the skill
+    a task already names, never one it picks. Only `task_` + a 26-character
+    Crockford ULID passes here; no decode. A resolver refusal is loud, like desk."""
+    if not TASK_ID_RE.fullmatch(arg):
+        raise Refused(f"run: refused, not a task id: {arg}")
+    resolver = _resolver()
+    if not _exists(resolver):
+        raise Refused(f"run: resolver not found at {resolver}")
+    argv = [_python_exe(), "-X", "utf8", resolver, "run", arg]
+
+    def run() -> int:
+        r = subprocess.run(argv, close_fds=True, creationflags=CREATE_NO_WINDOW,
+                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
+        if r.returncode != 0:
+            log = os.path.join(_temp(), "pb-resolve-launch.log")
+            raise Refused(f"run: could not start the skill session, see {log}")
+        return 0
+    return _act("run", {"argv": argv}, run)
+
+
 RESUME_REF_RE = re.compile(
     r"latest|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r"|(?:session|cse)_[A-Za-z0-9]{10,64}", re.ASCII)
@@ -591,7 +623,7 @@ def verb_obsidian(arg: str) -> int:
 
 PATH_VERBS = (("open/", verb_open), ("launch/", verb_launch), ("desk/", verb_desk),
               ("file/", verb_file), ("workon/", verb_workon), ("obsidian/", verb_obsidian),
-              ("resume/", verb_resume))
+              ("resume/", verb_resume), ("run/", verb_run))
 BARE_VERBS = {"process": verb_process, "bugsquash": verb_bugsquash,
               "backlogwave": verb_backlogwave, "quickchat": verb_quickchat,
               "resume": lambda: verb_resume("latest")}

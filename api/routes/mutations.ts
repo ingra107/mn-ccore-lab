@@ -33,6 +33,8 @@ import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../li
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
 import { weekPlanStart, weekPlanSupersededCheck, weekPlanNotes } from '../lib/week-plan-start';
+import { runSkillError } from '../lib/task-run-skill';
+import { originOf } from '../lib/receipts';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
 import { classifyTriggerFailure } from '../lib/trigger-rule-codes';
@@ -759,6 +761,9 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     const payload = mut.payload as Record<string, unknown>;
     const consumedErr = questionConsumedError({}, payload, payload, mut.origin_machine);
     if (consumedErr) return mutErr(mut.mutation_id, questionRefusalCode(consumedErr), consumedErr);
+    // schema-v155: run_skill is PB-producer-only (api/lib/task-run-skill.ts).
+    const rsErr = runSkillError({}, payload, payload, mut.origin_machine, originOf(env) !== null);
+    if (rsErr) return mutErr(mut.mutation_id, 'value_invalid', rsErr);
   }
 
   // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
@@ -2052,6 +2057,12 @@ async function applyPatch(
       current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine,
     );
     if (consumedErr) throw new RefusalError(questionRefusalCode(consumedErr), consumedErr);
+    // schema-v155: run_skill is PB-producer-only; a hub_ui: route or a browser
+    // session that changes it is refused (api/lib/task-run-skill.ts).
+    const rsErr = runSkillError(
+      current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine, originOf(env) !== null,
+    );
+    if (rsErr) throw new RefusalError('value_invalid', rsErr);
   }
 
   const patchKeys = Object.keys(effectivePatch || {});

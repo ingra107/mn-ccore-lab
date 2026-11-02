@@ -294,6 +294,10 @@ export interface TaskRow {
    *  never writes it (not in TASK_ALLOWED_FIELDS; applyPatch refuses it from
    *  a hub_ui: origin). */
   question_consumed_json?: string | null
+  /** The PB skill this task's teal Run button starts (schema v155). NULL = no
+   *  button. Written only by a PB producer with the PB API key
+   *  (api/lib/task-run-skill.ts); the Hub UI only reads it. */
+  run_skill?: string | null
 }
 
 // #811 (2026-07-29): runtime mirror of `keyof TaskRow`, compile-bound both
@@ -312,7 +316,7 @@ export const TASK_ROW_KEYS = [
   'meeting_date', 'meeting_ref', 'approval_status', 'kind', 'parent_id', 'step_total', 'step_done', 'packet_state',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
-  'source_thread_id', 'waiting_since',
+  'source_thread_id', 'waiting_since', 'run_skill',
   'question_spec_json', 'question_answer_json', 'question_telegram_json',
   'question_consumed_json',
 ] as const satisfies readonly (keyof TaskRow)[]
