@@ -3551,3 +3551,5 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .tk .tk-plan-note{margin:6px 0 0;font-size:12px;color:var(--sk-t3)}
 .tk .tk-plan-err{margin:6px 0 0;font-size:12px;color:var(--job-danger)}
 .tk .tk-week-row.tk-week-planned{padding:2px 0}
+/* A pick's actions (Prep, Prep & start): one line, left-aligned under the direction. */
+.tk .tk-week-acts{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}

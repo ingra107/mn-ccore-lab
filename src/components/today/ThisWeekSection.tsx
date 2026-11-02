@@ -12,9 +12,16 @@
 //     would have been on Planned today (check to finish, x to unplan), with
 //     the tag and the direction on it, so planning it loses no control.
 //     A pick not planned today is a plain row.
-//   - a Saved pick carries a Start button: the one follow-up write a stored
+//   - a Saved pick carries a Prep button: the one follow-up write a stored
 //     plan takes (the stored answer with that pick flipped to start:true,
-//     under the same daily cap as Start in the panel).
+//     under the same daily cap as Prep in the panel). It runs in the
+//     background and leaves a prepared step (Ready).
+//   - every open pick carries Prep & start (PrepStartAction, 2026-11-02): an
+//     interactive Claude session on Nick's laptop for that one task, which
+//     re-reads its threads, prepares the step WITH him and opens what he needs.
+//     On a Ready pick it reads "Open session" and starts from the prepared step.
+//     Nick: "I guess i would assume that if i click start i am getting an
+//     interactive session" (PB Context/Decisions/2026-11-02-prep-and-start.md).
 //   - then every task planned for today with no time (the old strip) that is
 //     not a pick, as the same PlannedTaskRow it was, so nothing planned
 //     disappears.
@@ -34,6 +41,8 @@ import { useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { PlannedTaskRow } from './PlannedTaskRow'
+import PrepStartAction, { usePrepStartAllowed } from '../PrepStartAction'
+import { buildPrepStartUri } from '../../lib/urlClassify'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
@@ -49,8 +58,8 @@ const TAG_HELP: Record<string, string> = {
   Ready: 'A first step is prepared: open the task to see it',
   Changed: 'The task changed since its first step was prepared: open the task to check it',
   'Check it': 'A first step is prepared but could not be verified: open the task to check it',
-  Preparing: 'Started: the first step is being prepared. It shows here when ready',
-  Saved: 'Saved, not started: press Start to have the first step prepared',
+  Preparing: 'The first step is being prepared in the background. It shows here when ready',
+  Saved: 'Saved, not prepped: press Prep to have the first step prepared in the background, or Prep & start to do it with Claude now',
 }
 const OPENS_DRAWER = new Set(['Ready', 'Changed', 'Check it'])
 
@@ -82,6 +91,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
   const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
 
   const replan = useReplanControl(allTasks)
+  const prepStartAllowed = usePrepStartAllowed()
 
   const byId = new Map(allTasks.map((t) => [t.id, t]))
   const pickIds = new Set([...plan.picks.map((p) => p.task_id), ...plan.earlier.map((e) => e.pick.task_id)])
@@ -114,7 +124,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
     qc.invalidateQueries({ queryKey: ['packets', 'daily-count'] })
     if (r.ok) { qc.invalidateQueries({ queryKey: ['tasks'] }); return }
     if (r.code === 'daily_cap' && 'used' in r) setErr(`Today's ${r.cap} prepared first steps are already used or queued. Try tomorrow.`)
-    else setErr(`Not started: ${r.error}`)
+    else setErr(`Not prepped: ${r.error}`)
   }
 
   return (
@@ -149,12 +159,16 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                   className="tk-btn tk-sm"
                   data-testid="pick-start"
                   disabled={starting !== null}
-                  title={`Prepare this first step now (counts toward today's ${PACKET_DAILY_CAP})`}
+                  title={`Prepare this first step in the background now (counts toward today's ${PACKET_DAILY_CAP})`}
                   onClick={(e) => { e.stopPropagation(); void start(p.task_id) }}
                 >
-                  {starting === p.task_id ? 'Starting...' : 'Start'}
+                  {starting === p.task_id ? 'Prepping...' : 'Prep'}
                 </button>
               )
+              const sessionBtn = prepStartAllowed && task && !isTaskDone(task) && buildPrepStartUri(p.task_id) !== null && (
+                <PrepStartAction taskId={p.task_id} ready={!!tag && OPENS_DRAWER.has(tag.label)} variant="primary" />
+              )
+              const acts = (startBtn || sessionBtn) && <span className="tk-week-acts">{startBtn}{sessionBtn}</span>
               const tagEl = tag && packetTag(tag, task && !isTaskDone(task) ? p.task_id : null)
               if (task && state.planned[p.task_id]) {
                 return (
@@ -167,7 +181,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                       expandedId={expandedId}
                       projectsByPid={projectsByPid}
                       badges={<><span className="tk-tag" data-testid="pick-today">Today</span>{tagEl}</>}
-                      note={<>{direction}{startBtn && <> {startBtn}</>}</>}
+                      note={<>{direction}{acts && <> {acts}</>}</>}
                     />
                   </div>
                 )
@@ -179,7 +193,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                     {tagEl}
                   </span>
                   <span className="tk-plan-why">{direction}</span>
-                  {startBtn && <span>{startBtn}</span>}
+                  {acts}
                   {drawerEl(task)}
                 </div>
               )

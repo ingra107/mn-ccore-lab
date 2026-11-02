@@ -190,13 +190,13 @@ describe('PlanConversation', () => {
     const sets = [...p.querySelectorAll('fieldset')]
     const otherB = sets[1].querySelectorAll('input[type="radio"]')
     await click(otherB[otherB.length - 1])
-    expect(buttonNamed(p, /^Start/)!.disabled).toBe(true) // empty own-step text blocks
+    expect(buttonNamed(p, /^Prep/)!.disabled).toBe(true) // empty own-step text blocks
     const boxes = [...p.querySelectorAll('textarea')] as HTMLTextAreaElement[]
     await setValue(boxes[1], 'Ask Casey which cut he used')
     await setValue(boxes[0], 'sat too long, keep it short')
 
     await until(() => /10 left today/.test(p.querySelector('[data-testid="plan-cap"]')?.textContent ?? ''), 'the cap line')
-    const start = buttonNamed(p, /^Start these 2/)!
+    const start = buttonNamed(p, /^Prep these 2/)!
     expect(start.disabled).toBe(false)
     await click(start)
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the answer POST')
@@ -217,8 +217,8 @@ describe('PlanConversation', () => {
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
     const p = await openAndPick(['Answer Jane', 'Review abstract', 'K23 report'])
     await until(() => /2 left today/.test(p.textContent ?? ''), 'the cap line')
-    expect(p.textContent).toContain('Start begins the first 2 in the list; the other 1 are saved for later')
-    const start = buttonNamed(p, /^Start these 2/)!
+    expect(p.textContent).toContain('Prep begins the first 2 in the list; the other 1 are saved for later')
+    const start = buttonNamed(p, /^Prep these 2/)!
     expect(start.disabled).toBe(false)
     await click(start)
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the POST')
@@ -243,7 +243,7 @@ describe('PlanConversation', () => {
     const calls = stubFetch({ used: 0, cap: 10 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
     const p = await openAndPick(['Answer Jane'])
-    await click(buttonNamed(p, /Save without starting/))
+    await click(buttonNamed(p, /Save without prepping/))
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the save POST')
     expect(answerOf(calls).choice).toBe('save')
   })
@@ -255,8 +255,8 @@ describe('PlanConversation', () => {
       : new Response('{}', { status: 200 })))
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
     const p = await openAndPick(['Answer Jane', 'Review abstract'])
-    await until(() => !!buttonNamed(p, /^Start these 2/), 'Start')
-    await click(buttonNamed(p, /^Start these 2/))
+    await until(() => !!buttonNamed(p, /^Prep these 2/), 'Start')
+    await click(buttonNamed(p, /^Prep these 2/))
     await until(() => calls.filter((c) => c.url === '/api/tasks/task_plan').length === 2, 'the retry')
     const second = calls.filter((c) => c.url === '/api/tasks/task_plan')[1].body as { question_answer_json: { picks: { start: boolean }[] } }
     expect(second.question_answer_json.picks.map((x) => x.start)).toEqual([true, false])
@@ -268,7 +268,7 @@ describe('PlanConversation', () => {
     }), { status: 409 }))
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
     const p = await openAndPick(['Answer Jane'])
-    await click(buttonNamed(p, /Save without starting/))
+    await click(buttonNamed(p, /Save without prepping/))
     await until(() => !!p.querySelector('[role="alert"]'), 'the refusal')
     expect(p.querySelector('[role="alert"]')!.textContent).toBe('A newer plan was offered. Answer that one in Needs you.')
   })
@@ -288,7 +288,7 @@ describe('PlanConversation', () => {
       stubFetch({ used: 0, cap: 3 }, reply)
       await mount(<QuestionsCard tasks={[row()]} band={false} />)
       const p = await openAndPick(['Answer Jane'])
-      await click(buttonNamed(p, /Save without starting/))
+      await click(buttonNamed(p, /Save without prepping/))
       await until(() => !!p.querySelector('[role="alert"]'), 'the refusal')
       expect(p.querySelector('[role="alert"]')!.textContent).toBe(words)
     })
