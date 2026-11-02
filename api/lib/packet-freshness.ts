@@ -55,6 +55,8 @@ export const TASK_PACKET_WORK_COLS = [
   'source', 'source_thread_id', 'related_message_ids', 'email_link', 'inbox_event_id', 'next_artifact',
   'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc',
   'question_spec_json', 'question_answer_json', 'question_consumed_json',
+  // schema v155: the skill the Run button starts is how the task gets done.
+  'run_skill',
 ] as const
 
 /** JSON with object keys sorted at every depth, so equal values hash equal. */

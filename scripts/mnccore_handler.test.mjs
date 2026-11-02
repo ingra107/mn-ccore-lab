@@ -338,6 +338,60 @@ describe('mnccore_handler.py through the registered command line (DRYRUN)', { sk
     })
   })
 
+  describe('run/<task id> (the teal Run button, 2026-11-02)', () => {
+    const TASK = 'task_01M6CZS7KZGSA0663NBB3H4HMG'
+    it('routes a task id to the resolver run mode, and nothing else rides along', () => {
+      const r = fire(`mnccore://run/${TASK}`)
+      assert.equal(r.code, 0, r.out)
+      const p = plan(r.out, 'run')
+      assert.ok(p, r.out)
+      assert.match(p.argv[0], /python\.exe$/i)
+      assert.deepEqual(p.argv.slice(1), ['-X', 'utf8', resolver, 'run', TASK])
+    })
+
+    it('strips one trailing slash like every other verb', () => {
+      const r = fire(`mnccore://run/${TASK}/`)
+      assert.equal(r.code, 0, r.out)
+      assert.equal(plan(r.out, 'run').argv.at(-1), TASK)
+    })
+
+    const refused = [
+      'mnccore://run/',
+      'mnccore://run/weekly-review',
+      `mnccore://run/weekly-review/${TASK}`,
+      `mnccore://run/${TASK}/weekly-review`,
+      'mnccore://run/task_01M6CZS7KZGSA0663NBB3H4HM',     // 25 chars
+      'mnccore://run/task_01M6CZS7KZGSA0663NBB3H4HMGG',   // 27 chars
+      'mnccore://run/task_01M6CZS7KZGSA0663NBB3H4HMI',    // I is not Crockford
+      'mnccore://run/task_01m6czs7kzgsa0663nbb3h4hmg',    // lower case
+      'mnccore://run/TASK_01M6CZS7KZGSA0663NBB3H4HMG',
+      'mnccore://run/proj_01M6CZS7KZGSA0663NBB3H4HMG',
+      `mnccore://run/${TASK}&echo PWNED>${MARK}`,
+      `mnccore://run/${TASK}%26echo`,
+      `mnccore://run/${TASK} x`,
+      `mnccore://run/${TASK}|echo PWNED>${MARK}`,
+      'mnccore://run/..%5c..%5cx',
+    ]
+    for (const url of refused) {
+      it(`refuses ${url}`, () => {
+        const r = fire(url)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(!r.out.includes('DRYRUN'), r.out)
+      })
+    }
+
+    it('a missing resolver is refused', () => {
+      rmSync(resolver)
+      try {
+        const r = fire(`mnccore://run/${TASK}`)
+        assert.equal(r.code, 1, r.out)
+        assert.ok(r.out.includes('run: resolver not found at'), r.out)
+      } finally {
+        writeFileSync(resolver, '# stub\n')
+      }
+    })
+  })
+
   describe('launch/<lnch_token>', () => {
     it('routes an opaque token to the resolver', () => {
       const r = fire('mnccore://launch/lnch_abc123')

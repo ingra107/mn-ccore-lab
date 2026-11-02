@@ -271,6 +271,23 @@ export const MNCCORE_PROCESS_URI = 'mnccore://process'
  */
 export const MNCCORE_QUICKCHAT_URI = 'mnccore://quickchat'
 
+/** A task PK: `task_` + a 26-character Crockford ULID (PB scripts/db/ids.py). Same
+ *  pattern as mnccore_handler.py TASK_ID_RE and PB run_skill_task.TASK_ID_RE. */
+export const TASK_ID_RE = /^task_[0-9A-HJKMNP-TV-Z]{26}$/
+/** A skill directory name (PB run_skill_task.SKILL_RE): display only on the Hub. */
+export const SKILL_NAME_RE = /^[a-z0-9][a-z0-9-]{0,63}$/
+
+/**
+ * `mnccore://run/<task id>` — the teal Run button on a skill-backed task
+ * (2026-11-02). The URI carries the task id and nothing else: PB reads the skill
+ * from its own copy of the task row, so the Hub cannot pick which skill runs.
+ * Returns null for anything that is not a task id, so no caller can build a URI
+ * the handler would refuse.
+ */
+export function buildRunSkillUri(taskId: string): string | null {
+  return TASK_ID_RE.test(taskId) ? `mnccore://run/${taskId}` : null
+}
+
 /**
  * Domain-aware short label for a URL. Used in chip text when the link has
  * no user-provided description.

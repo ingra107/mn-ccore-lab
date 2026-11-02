@@ -119,6 +119,7 @@ const TASK_UPDATE_EXCLUDED = new Set<string>([
   'source',          // provenance, fixed at create
   'waiting_since',   // W1 operational timestamp, server/trigger-managed (waiting_on IS allow-listed; the timestamp is not)
   'question_consumed_json', // #8842 R4 consumer receipt: the PB consumer writes it via /api/mutations, never the Hub UI
+  'run_skill',       // schema-v155: the Run button's skill, PB producers only via /api/mutations (runSkillError)
 ])
 
 describe('B) task update allow-list (TASK_ALLOWED_FIELDS) vs TABLE_FIELDS.tasks', () => {
@@ -253,6 +254,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   question_answer_json: 'route_excluded',   // written by the answer surfaces (Hub card / Telegram) via UPDATE only
   question_telegram_json: 'route_excluded', // written by the HOME reconciler via UPDATE only
   question_consumed_json: 'route_excluded', // #8842 R4: the PB consumer's receipt, /api/mutations only, never the Hub UI
+  run_skill: 'route_excluded',              // schema-v155: PB producers only, /api/mutations with the PB key (runSkillError)
 }
 
 // handleCreateProject payload (projects.ts:168-178).

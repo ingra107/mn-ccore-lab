@@ -26,6 +26,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 import { Who } from './skin'
 import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
+import RunSkillAction from '../RunSkillAction'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import type { ReactNode } from 'react'
@@ -98,9 +99,16 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
   // Slot WorkOnActions (📂 + ▶, 24px boxes) — shown when the task's project has a
   // primary_folder. stopPropagation prevents the icon clicks from bubbling to
   // the row body expand handler (row-click hazard rule).
-  const workOnMeta = project?.primary_folder ? (
-    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}>
-      <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="slot" />
+  // The teal Run button (schema v155) sits beside Work on in the same slot when
+  // PB set tasks.run_skill; RunSkillAction renders nothing for a member, a
+  // closed task, or a browser without the launcher.
+  const runSkill = typeof task.run_skill === 'string' && task.run_skill.length > 0 ? task.run_skill : null
+  const workOnMeta = project?.primary_folder || runSkill ? (
+    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()} style={{ display: 'inline-flex', gap: 4 }}>
+      {runSkill && <RunSkillAction taskId={task.id} skill={runSkill} done={isDone} variant="slot" />}
+      {project?.primary_folder && (
+        <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="slot" />
+      )}
     </div>
   ) : null
 

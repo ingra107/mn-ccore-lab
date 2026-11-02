@@ -20,6 +20,7 @@ import GhostSelect from '../ui/GhostSelect'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { parseTagsString } from '../../lib/tagUtils'
 import WorkOnActions from '../WorkOnActions'
+import RunSkillAction from '../RunSkillAction'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -792,6 +793,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 </div>
               )}
             </div>
+
+            {/* The teal Run button (schema v155): PB set tasks.run_skill, so this
+                task is done by running that skill in a Claude session on Nick's
+                laptop. RunSkillAction hides itself for members, closed tasks and
+                browsers without the launcher. */}
+            {task.run_skill && (
+              <RunSkillAction taskId={task.id} skill={task.run_skill} done={!!task.completed} variant="rail" />
+            )}
 
             {/* Key Links — promoted to Overview so users actually see them (prior:
                 buried on Details tab with non-underlined ink-colored text, missed).
