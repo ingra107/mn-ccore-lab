@@ -1515,12 +1515,12 @@
       "covered": true
     },
     {
-      "id": "click-rich-text-editor",
-      "component": "src/components/RichTextEditor.tsx",
+      "id": "click-task-description-markdown",
+      "component": "src/components/tasks/TaskDetailPanel.tsx",
       "type": "click",
-      "description": "Task description uses Tiptap rich text editor",
+      "description": "Task description edits the one plain-markdown body",
       "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "FEATURE: Task description uses Tiptap rich text editor",
+      "test_name": "FEATURE: Task description edits the plain-markdown body",
       "covered": true
     },
     {

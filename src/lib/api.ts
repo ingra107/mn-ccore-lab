@@ -195,6 +195,10 @@ export interface TaskRow {
   instructions: string | null
   recurrence: string | null
   recurrence_parent_id: string | null
+  /** @deprecated The task body is the plain-markdown `description` (Nick,
+   *  2026-11-01). The retired Tiptap editor's store: no frontend code writes
+   *  it; read only by the panel's fold fallback (lib/tiptapToMarkdown.ts).
+   *  Remove with the column drop. */
   description_json: string | null
   key_link_1: string | null
   key_link_1_desc: string | null
@@ -350,12 +354,16 @@ interface ApiResponse<T> {
   count?: number
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  /** The refusal's JSON body, for a route that answers with more than words
+   *  (the description 409 carries the current text). */
+  body: Record<string, unknown>
+  constructor(status: number, message: string, body: Record<string, unknown> = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.body = body
   }
 }
 
@@ -384,7 +392,7 @@ export async function fetchApi<T>(path: string, init?: RequestInit): Promise<Api
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw new ApiError(res.status, body.error || res.statusText)
+    throw new ApiError(res.status, body.error || res.statusText, body)
   }
 
   return res.json()
