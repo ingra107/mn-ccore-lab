@@ -175,7 +175,7 @@ function RunRow({ run, undoneIds, onUndone }: { run: OvernightRun; undoneIds: Se
 }
 
 export function OvernightCard({ isNick, now }: { isNick: boolean; now?: Date }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [lane, setLane] = useState<string>(ALL)
   const [undoneIds, setUndoneIds] = useState<Set<string>>(() => new Set())
   // Read once at mount: tapping Seen must not move the window under his hand.

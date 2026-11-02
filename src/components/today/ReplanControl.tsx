@@ -14,7 +14,8 @@ import { useState } from 'react'
 import type { TaskRow } from '../../lib/api'
 import { newestWaitingWeekPlan } from '../../lib/taskGrouping'
 import { useWeekPlanNow } from '../../hooks/useWeekPlanNow'
-import { replanButtonState, useReplan } from '../../lib/weekPlan'
+import { PLAN_WAITING_NOTE, replanButtonState, useReplan } from '../../lib/weekPlan'
+import { requestShowPlanRow } from '../../lib/showPlanRow'
 
 export function useReplanControl(allTasks: readonly TaskRow[], active = true) {
   // active=false: no request, no button (a member's Planned today).
@@ -59,9 +60,19 @@ export function useReplanControl(allTasks: readonly TaskRow[], active = true) {
   )
   const text = blocked ? refused?.text ?? null : button.note
   const bad = blocked || (button.kind === 'ready' && button.failed) || (button.kind === 'queued' && button.stuck)
+  const toPlan = !blocked && button.kind === 'ready' && text === PLAN_WAITING_NOTE
   const noteEl = text ? (
     <p className={bad ? 'tk-plan-err' : 'tk-plan-why'} role={blocked ? 'alert' : undefined} data-testid="replan-note" style={{ margin: '0 2px 6px' }}>
-      {text}
+      {toPlan ? (
+        <button
+          type="button"
+          data-testid="replan-note-go"
+          onClick={(e) => { e.stopPropagation(); requestShowPlanRow() }}
+          style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          {text}
+        </button>
+      ) : text}
     </p>
   ) : null
   return { buttonEl, noteEl }
