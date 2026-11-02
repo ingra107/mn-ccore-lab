@@ -2908,13 +2908,24 @@ button.tk-mact-hd:hover{color:var(--sk-t1)}
 .tk-sl-ul li:hover .tk-sl-un,.tk-sl-un:focus-visible{opacity:1}
 .tk-sl-un:hover{color:var(--sk-t1)}
 @media (hover:none){.tk-sl-un{opacity:1}}
-.tk-sl-addbtn{background:none;border:0;padding:5px 0 0;font:inherit;font-size:12px;font-style:italic;color:var(--sk-t3);cursor:pointer}
+.tk-sl-addbtn{background:none;border:0;padding:5px 0 0;font:inherit;font-size:12px;color:var(--sk-t2);cursor:pointer}
 .tk-sl-addbtn:hover{color:var(--sk-t1)}
 .tk-sl-add{width:100%;margin-top:6px;padding:5px 8px;font:inherit;font-size:12.5px;color:var(--sk-t1);background:transparent;border:1px solid var(--border-subtle);border-radius:6px}
 .tk-sl-ul .tk-ck.tk-nxck{width:14px;height:14px;margin-top:0;border-radius:4px;flex-shrink:0;box-shadow:inset 0 0 0 1.5px var(--sk-t3);display:grid;place-items:center;color:var(--sk-ac-fg)}
 .tk-sl-ul .tk-ck.tk-nxck.tk-on{background:var(--job-accent);box-shadow:none}
 .tk-sl-ul .tk-next-d{flex-shrink:0;font-size:12px;color:var(--sk-t3);font-variant-numeric:tabular-nums}
 .tk-sl-ul .tk-next-d.tk-late{color:var(--job-overdue)}
+.tk-sl-ul li{cursor:pointer;border-radius:6px}
+.tk-sl-ul li:hover{background:var(--sr-hov,rgba(255,255,255,.03))}
+.tk-sl-ul li:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
+.tk-sl-due{flex-shrink:0;display:inline-flex}
+.tk-sl-due .sr-trig{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:3px;min-height:22px;padding:0 6px;border-radius:6px;cursor:pointer}
+.tk-sl-due .sr-trig:hover,.tk-sl-due .sr-trig[aria-expanded="true"]{box-shadow:inset 0 0 0 1px var(--sk-line)}
+.tk-sl-due .sr-trig:focus-visible{outline:2px solid var(--job-accent);outline-offset:1px}
+.tk-sl-due .sr-car{display:none}
+.tk-sl-nodate{font-size:12px;color:var(--sk-t3);opacity:0}
+.tk-sl-ul li:hover .tk-sl-nodate,.tk-sl-due .sr-trig:focus-visible .tk-sl-nodate,.tk-sl-due .sr-trig[aria-expanded="true"] .tk-sl-nodate{opacity:1}
+@media (hover:none){.tk-sl-nodate{opacity:1}}
 /* Prepared first step atop the task drawer (Nick 2026-10-30, B1 + B4). Teal is
    the action, orange is changed, grey is unverified. Tokens only. */
 .tk .tk-pk{margin:0 0 12px;padding:10px 12px;border-radius:var(--r-ctl,8px);background:color-mix(in srgb,var(--sk-t1) 3%,transparent);box-shadow:inset 0 0 0 1px var(--sk-line)}

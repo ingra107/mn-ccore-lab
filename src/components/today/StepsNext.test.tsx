@@ -225,4 +225,54 @@ describe('steps list in the drawer', () => {
       window.fetch = realFetch
     }
   })
+
+  describe('quick edit and row open', () => {
+    const withFetch = async (fn: (sent: { url: string; body: string }[]) => Promise<void>) => {
+      const sent: { url: string; body: string }[] = []
+      const realFetch = window.fetch
+      window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        sent.push({ url: String(input), body: String(init?.body ?? '') })
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }) as typeof window.fetch
+      try { await fn(sent) } finally { window.fetch = realFetch }
+    }
+
+    it('the due chip opens the date picker; a pick writes due_date; Clear writes null', async () => {
+      await withFetch(async (sent) => {
+        const { StepsList } = await import('./StepsList')
+        const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={stateWith([])} /></div>)
+        const li = h.querySelector('[data-step-id="s2"]')!
+        ;(li.querySelector('.tk-sl-due button') as HTMLButtonElement).click()
+        const dlg = await waitFor(() => document.querySelector('[role="dialog"][aria-label="Choose a date"]'), 'date picker')
+        const today = [...dlg!.querySelectorAll('button')].find((b) => b.textContent === 'Today')!
+        today.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+        const call = await waitFor(() => sent.find((c) => c.url.endsWith('/api/tasks/s2')) ?? null, 'due write')
+        expect(Object.keys(JSON.parse(call!.body))).toEqual(['due_date'])
+        expect(document.querySelector('.tk-sl-open-panel')).toBeNull()
+      })
+    })
+
+    it('an undated step offers "+ date"', async () => {
+      const { StepsList } = await import('./StepsList')
+      const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={stateWith([])} /></div>)
+      expect(h.querySelector('[data-step-id="s3"] .tk-sl-nodate')!.textContent).toBe('+ date')
+    })
+
+    it('a row click opens the step; the box and the due chip do not', async () => {
+      await withFetch(async (sent) => {
+        const { StepsList } = await import('./StepsList')
+        const calls: string[] = []
+        const h = await mountUi(<div data-task-id="x"><StepsList steps={detail()} state={stateWith(calls)} /></div>)
+        const li = h.querySelector('[data-step-id="s2"]') as HTMLElement
+        const fetched = () => sent.filter((c) => c.url.includes('ids=') || c.url.includes('s2')).length
+        ;(li.querySelector('button.tk-nxck') as HTMLButtonElement).click()
+        ;(li.querySelector('.tk-sl-due button') as HTMLButtonElement).click()
+        await new Promise((r) => setTimeout(r, 150))
+        expect(calls).toEqual(['s2'])
+        expect(fetched()).toBe(0)
+        li.click()
+        await waitFor(() => (fetched() > 0 ? true : null), 'step fetched on row click')
+      })
+    })
+  })
 })

@@ -20,6 +20,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import TaskDetailPanel from '../tasks/LazyTaskDetailPanel'
 import { Button } from '../ui/Button'
+import InlineDatePicker from '../InlineDatePicker'
 
 // The detail payload carries only a few columns of a step; the panel wants the
 // whole row, so fetch it by id when the step is opened.
@@ -60,7 +61,14 @@ export function StepsList({ steps, state, parent }: { steps: TaskDetailStep[]; s
           const title = taskShortLabel(s) || 'Untitled step'
           const late = !done && !!s.due_date && isOverdue(s.due_date, s.status)
           return (
-            <li key={s.id} data-step-id={s.id} className={done ? 'tk-sl-d' : undefined}>
+            <li
+              key={s.id}
+              data-step-id={s.id}
+              className={done ? 'tk-sl-d' : undefined}
+              tabIndex={0}
+              onClick={() => setOpenId(s.id)}
+              onKeyDown={(e) => { if (e.target === e.currentTarget && e.key === 'Enter') { e.preventDefault(); setOpenId(s.id) } }}
+            >
               <Button size="icon"
                 type="button"
                 className={`done-box tip tk-ck tk-nxck${done ? ' tk-on' : ''}`}
@@ -75,14 +83,23 @@ export function StepsList({ steps, state, parent }: { steps: TaskDetailStep[]; s
                   </svg>
                 )}
               </Button>
-              <button type="button" className="tk-sl-t tk-sl-open" onClick={() => setOpenId(s.id)} title="Open this step to edit it" aria-label={`Open step: ${title}`}>{title}</button>
-              {!done && s.due_date && (
-                <span className={`tk-next-d${late ? ' tk-late' : ''}`}>{late ? `${dueLabelCompact(s.due_date, true)} late` : dueLabelCompact(s.due_date, false)}</span>
+              <button type="button" className="tk-sl-t tk-sl-open" onClick={(e) => { e.stopPropagation(); setOpenId(s.id) }} title="Open this step to edit it" aria-label={`Open step: ${title}`}>{title}</button>
+              {!done && (
+                <span className="tk-sl-due" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <InlineDatePicker
+                    value={s.due_date ?? null}
+                    onChange={(date) => updateTask.mutate({ id: s.id, fields: { due_date: date } })}
+                    label={`Due date for ${title}`}
+                    display={s.due_date
+                      ? <span className={`tk-next-d${late ? ' tk-late' : ''}`}>{late ? `${dueLabelCompact(s.due_date, true)} late` : dueLabelCompact(s.due_date, false)}</span>
+                      : <span className="tk-sl-nodate">+ date</span>}
+                  />
+                </span>
               )}
               <Button size="icon"
                 type="button"
                 className="tk-sl-un"
-                onClick={() => updateTask.mutate({ id: s.id, fields: { parent_id: null } })}
+                onClick={(e) => { e.stopPropagation(); updateTask.mutate({ id: s.id, fields: { parent_id: null } }) }}
                 disabled={updateTask.isPending}
                 title="Remove from steps (it stays a task)"
                 aria-label={`Remove step from this task: ${title}`}
@@ -110,7 +127,7 @@ export function StepsList({ steps, state, parent }: { steps: TaskDetailStep[]; s
           disabled={createTask.isPending}
         />
       ) : (
-        <button type="button" className="tk-sl-addbtn" onClick={() => setAdding(true)}>Add step…</button>
+        <button type="button" className="tk-sl-addbtn" onClick={() => setAdding(true)}>+ Add step</button>
       ))}
       {openId && <StepPanel id={openId} onClose={() => setOpenId(null)} />}
     </div>
