@@ -73,6 +73,15 @@ const click = (el: Element | null | undefined) => (el as HTMLElement).click()
 const btn = (host: HTMLElement, text: string) =>
   Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.trim() === text)
 
+
+// The card mounts collapsed; open it the way he does.
+const expand = (host: HTMLElement) => click(host.querySelector('[aria-label="Expand Overnight"]'))
+const mountOpen = async (node: ReactElement) => {
+  const host = await mount(node, { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+  expand(host)
+  return host
+}
+
 async function openRun(host: HTMLElement, runId: string) {
   click(host.querySelector(`[data-testid="overnight-run-${runId}"] button`))
   await waitFor(() => host.querySelector(`[data-testid="overnight-run-${runId}"] [data-testid^="overnight-line-"]`), 'lines')
@@ -84,7 +93,7 @@ const B = run('r2', 'mail', [line('c', { run_id: 'r2' })], { machine: 'work' })
 describe('OvernightCard', () => {
   it('shows the change count, the lanes, failures, one collapsed row per run, and lines on open', async () => {
     stub(() => overnight([A, B]))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     expect(host.querySelector('[data-testid="overnight-changes"]')?.textContent).toBe('2')
     const head = host.querySelector('[data-testid="overnight-head"]')?.textContent ?? ''
     expect(head).toContain('mail, process')
@@ -100,9 +109,21 @@ describe('OvernightCard', () => {
     expect(host.querySelector('[data-testid="overnight-line-a"] a')?.getAttribute('href')).toContain('?open=t-a')
   })
 
+  it('mounts collapsed with the count showing, and expands on click', async () => {
+    stub(() => overnight([A, B]))
+    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const toggle = host.querySelector('[aria-label="Expand Overnight"]')
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false')
+    expect(host.querySelector('[data-testid="overnight-changes"]')?.textContent).toBe('2')
+    expect(host.querySelectorAll('[data-testid^="overnight-run-"]').length).toBe(0)
+    click(toggle)
+    await waitFor(() => host.querySelectorAll('[data-testid^="overnight-run-"]').length === 2, 'runs')
+    expect(host.querySelector('[aria-label="Collapse Overnight"]')?.getAttribute('aria-expanded')).toBe('true')
+  })
+
   it('filters by lane through the server', async () => {
     const s = stub((url) => (url.includes('lane=mail') ? overnight([B], 'mail', [A, B]) : overnight([A, B])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     click(Array.from(host.querySelectorAll('[role="group"] button')).find((b) => b.textContent?.startsWith('mail')))
     await waitFor(() => host.querySelectorAll('[data-testid^="overnight-run-"]').length === 1, 'filtered run')
     expect(s.calls.some((c) => c.url.includes('lane=mail'))).toBe(true)
@@ -113,7 +134,7 @@ describe('OvernightCard', () => {
 
   it('Undo success marks the line Undone', async () => {
     const s = stub((url, init) => (init?.method === 'POST' ? { status: 200, body: { undo_line_id: 'u1', line_id: 'a' } } : overnight([A])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     await openRun(host, 'r1')
     click(host.querySelector('[data-testid="overnight-line-a"] button'))
     await waitFor(() => host.querySelector('[data-testid="overnight-line-a"]')?.textContent?.includes('Undone'), 'undone')
@@ -125,7 +146,7 @@ describe('OvernightCard', () => {
     ['not_reversible', { code: 'not_reversible', error: 'x' }, 'Pre-image was not kept'],
   ])('Undo 409 %s says why in plain words', async (_n, body, text) => {
     stub((url, init) => (init?.method === 'POST' ? { status: 409, body } : overnight([run('r1', 'process', [line('a', { inverse_reason: 'Pre-image was not kept' })])])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     await openRun(host, 'r1')
     click(host.querySelector('[data-testid="overnight-line-a"] button'))
     await waitFor(() => host.querySelector('[data-testid="overnight-refusal"]'), 'refusal')
@@ -135,7 +156,7 @@ describe('OvernightCard', () => {
 
   it('Undo 409 already_undone shows Undone', async () => {
     stub((url, init) => (init?.method === 'POST' ? { status: 409, body: { code: 'already_undone', error: 'x' } } : overnight([A])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     await openRun(host, 'r1')
     click(host.querySelector('[data-testid="overnight-line-a"] button'))
     await waitFor(() => host.querySelector('[data-testid="overnight-line-a"]')?.textContent?.includes('Undone'), 'undone')
@@ -144,7 +165,7 @@ describe('OvernightCard', () => {
   it('Seen posts the newest line time and is offered only while lines are new', async () => {
     const fresh = run('r1', 'process', [line('a', { seen: false, created_at: '2026-10-31T05:01:00.000Z' }), line('bb', { seen: false, created_at: '2026-10-31T05:09:00.000Z' })])
     const s = stub((url, init) => (init?.method === 'POST' ? { status: 200, body: { updated: 1, until: 'x' } } : overnight([fresh])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => btn(h, 'Seen'), label: 'seen button' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     await openRun(host, 'r1')
     expect(host.querySelectorAll('[data-testid="overnight-unseen-dot"]').length).toBe(2)
     click(btn(host, 'Seen'))
@@ -161,7 +182,7 @@ describe('OvernightCard', () => {
   it('Load more pulls the rest of a long run', async () => {
     const long = run('r1', 'process', [line('a')], { more_lines: true, next_after: 'a' })
     const s = stub((url) => (url.includes('run=r1') ? { status: 200, body: { run_id: 'r1', lines: [line('bb')], next_after: null } } : overnight([long])))
-    const host = await mount(wrap(<OvernightCard isNick />), { ready: (h) => h.querySelector('[data-testid="overnight-changes"]'), label: 'card' })
+    const host = await mountOpen(wrap(<OvernightCard isNick />))
     await openRun(host, 'r1')
     click(btn(host, 'Load more'))
     await waitFor(() => host.querySelector('[data-testid="overnight-line-bb"]'), 'second page')

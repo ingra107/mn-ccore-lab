@@ -204,6 +204,8 @@ export type ReplanButton =
   | { kind: 'queued'; enabled: true; label: 'Try again'; note: string; stuck: true }
   | { kind: 'preparing'; enabled: false; label: 'Preparing...'; note: string }
 
+export const PLAN_WAITING_NOTE = 'A new plan is waiting in Needs you.'
+
 export function replanButtonState(latest: ReplanState | null | undefined, offerWaiting: boolean, readFailed = false): ReplanButton {
   if (latest === undefined) {
     return { kind: 'unknown', enabled: false, label: 'Re-plan', note: readFailed ? 'Could not read the re-plan state. Reload to try again.' : 'Checking whether a re-plan is already queued' }
@@ -224,7 +226,7 @@ export function replanButtonState(latest: ReplanState | null | undefined, offerW
     }
     return { kind: 'queued', enabled: false, label: 'Queued', stuck: false, note: 'Waiting for a PB laptop to pick this up' }
   }
-  if (offerWaiting) return { kind: 'ready', enabled: true, label: 'Re-plan', note: 'A new plan is waiting in Needs you.', failed: false }
+  if (offerWaiting) return { kind: 'ready', enabled: true, label: 'Re-plan', note: PLAN_WAITING_NOTE, failed: false }
   const recent = latest && latest.age_s <= REPLAN_RESULT_SHOWN_S ? latest : null
   if (recent?.status === 'failed') {
     // PB's own refusals already read "Not re-planned: ..." (replan_adapter.py).
