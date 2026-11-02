@@ -28,7 +28,7 @@ import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { questionRowError } from '../lib/task-question'
 import { ctDayBounds, dailyPacketCount } from '../lib/week-plan-start'
-import { weekPlanSpecError, weekPlanPicksError } from '../../shared/weekPlan'
+import { weekPlanSpecError, weekPlanPicksError, pickDirection, parseWeekPlanSpec, PACKET_DAILY_CAP as CAP } from '../../shared/weekPlan'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -118,6 +118,10 @@ function packet(id: string, key: string, task: string, created_at = '2026-10-28T
     manifest_hash: 'a'.repeat(64), created_at,
   })
 }
+/** n open requests from Nick: n of today's slots used. */
+function fill(n: number, prefix = 'req_fill') {
+  for (let i = 1; i <= n; i++) pendingRequest(`${prefix}_${i}`)
+}
 function pendingRequest(id: string, task = 'task_c') {
   insertRow(db, 'ai_requests', { id, source_type: 'packet_prepare', source_id: task, prompt: 'p', status: 'pending', requested_by: NICK })
 }
@@ -153,8 +157,8 @@ describe('the week_plan question contract (task-question.ts)', () => {
     expect(questionRowError(row(SPEC, answer([])))).toMatch(/^question_answer_invalid:/)
     expect(questionRowError(row(SPEC, answer([{ task_id: 'task_z', option_key: 'a1', text: null, start: true }])))).toMatch(/not one of the offer's candidates/)
     expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'b1', text: null, start: true }])))).toMatch(/not one of task_a's options/)
-    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'a1', text: 'and', start: true }])))).toMatch(/exactly one of option_key or text/)
-    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: null, text: null, start: true }])))).toMatch(/exactly one of option_key or text/)
+    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'a1', text: 'and', start: true }])))).toBeNull() // both is allowed
+    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: null, text: null, start: true }])))).toMatch(/needs option_key or text/)
     expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'a1', text: null }])))).toMatch(/start must be a boolean/)
     expect(questionRowError(row(SPEC, answer([
       { task_id: 'task_a', option_key: 'a1', text: null, start: true },
@@ -264,20 +268,79 @@ describe('POST /api/tasks/:id with a week_plan answer (Start)', () => {
     expect(requests()).toHaveLength(1)
   })
 
-  it('a Start that would pass the cap is refused whole: 409 {code:daily_cap, used, cap:3}', async () => {
+  it('a Start that would pass the cap is refused whole: 409 {code:daily_cap, used, cap}', async () => {
     packet('pkt_1', 'prepare:task_x:1', 'task_a')
-    pendingRequest('req_open')
+    fill(CAP - 2)
     const r = await answerPlan([
       { task_id: 'task_a', option_key: 'a1', text: null, start: true },
       { task_id: 'task_b', option_key: 'b2', text: null, start: true },
     ])
     expect(r.status).toBe(409)
-    expect(r.body).toMatchObject({ code: 'daily_cap', used: 2, cap: 3 })
+    expect(r.body).toMatchObject({ code: 'daily_cap', used: CAP - 1, cap: CAP })
     expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).toBeNull()
-    expect(requests().map((x) => x.id)).toEqual(['req_open'])
+    expect(requests()).toHaveLength(CAP - 2)
     // One start still fits.
     expect((await answerPlan([{ task_id: 'task_a', option_key: 'a1', text: null, start: true }])).status).toBe(200)
-    expect(requests()).toHaveLength(2)
+    expect(requests()).toHaveLength(CAP - 1)
+  })
+})
+
+// ── typed notes land on their tasks ─────────────────────────────────────────
+
+describe('week plan: typed pick notes become task comments', () => {
+  const notes = () => all("SELECT entity_id, kind, body, source_table, source_id, actor_slug FROM activity_entries WHERE source_table = 'week_plan_note' ORDER BY entity_id")
+
+  it('Save writes each pick text onto its task, once, as a comment', async () => {
+    const r = await call('POST', `/api/tasks/${PLAN}`, { as: NICK }, {
+      question_answer_json: answer([
+        { task_id: 'task_a', option_key: 'a1', text: null, start: false },
+        { task_id: 'task_b', option_key: null, text: 'Ask Casey which cut he used', start: false },
+      ], { choice: 'save' }),
+    })
+    expect(r.status).toBe(200)
+    expect(notes()).toEqual([
+      { entity_id: 'task_b', kind: 'comment', body: 'Week plan note: Ask Casey which cut he used', source_table: 'week_plan_note', source_id: `${PLAN}:task_b`, actor_slug: 'nick-ingraham' },
+    ])
+  })
+
+  it('Start writes the note in the same answer as the request', async () => {
+    const r = await answerPlan([{ task_id: 'task_b', option_key: null, text: 'Use the 2025 cut', start: true }])
+    expect(r.status).toBe(200)
+    expect(requests().map((x) => x.source_id)).toEqual(['task_b'])
+    expect(notes().map((n) => n.entity_id)).toEqual(['task_b'])
+  })
+
+  it('a refused answer (cap) writes no note', async () => {
+    fill(CAP)
+    const r = await answerPlan([{ task_id: 'task_b', option_key: null, text: 'Use the 2025 cut', start: true }])
+    expect(r.status).toBe(409)
+    expect(notes()).toHaveLength(0)
+  })
+
+  it('an option plus a note: validator accepts, direction composes, comment is the bare note, option_key kept', async () => {
+    const pick = { task_id: 'task_a', option_key: 'a2', text: 'keep it short', start: true }
+    expect(weekPlanPicksError([pick], null)).toBeNull()
+    expect(pickDirection(pick, parseWeekPlanSpec(SPEC)!)).toBe("Direction a2\n\nNick's note: keep it short")
+    expect(pickDirection({ ...pick, text: null }, parseWeekPlanSpec(SPEC)!)).toBe('Direction a2')
+    expect(pickDirection({ ...pick, option_key: null }, parseWeekPlanSpec(SPEC)!)).toBe('keep it short')
+    expect((await answerPlan([pick])).status).toBe(200)
+    expect(notes().map((n) => n.body)).toEqual(['Week plan note: keep it short'])
+    const ctx = JSON.parse(String(requests()[0].context))
+    expect(ctx.option_key).toBe('a2')
+    expect(ctx.direction).toBe("Direction a2\n\nNick's note: keep it short")
+  })
+
+  it('a later start flip adds no second note; replaying the first answer cannot duplicate it', async () => {
+    const saved = [{ task_id: 'task_b', option_key: null, text: 'Ask Casey first', start: false }]
+    expect((await answerPlan(saved)).status).toBe(200)
+    const stored = JSON.parse(String(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a))
+    const flip = { ...stored, choice: 'start', picks: stored.picks.map((p: object) => ({ ...p, start: true })) }
+    expect((await call('POST', `/api/tasks/${PLAN}`, { as: NICK }, { question_answer_json: flip })).status).toBe(200)
+    expect(notes()).toHaveLength(1)
+    // The source key makes a repeat insert a no-op at the table.
+    const before = notes().length
+    db.prepare("INSERT OR IGNORE INTO activity_entries (id, entity_type, entity_id, kind, visibility, actor_slug, body, source_table, source_id) VALUES ('dup', 'task', 'task_b', 'comment', 'team', 'nick-ingraham', 'x', 'week_plan_note', ?)").run(`${PLAN}:task_b`)
+    expect(notes()).toHaveLength(before)
   })
 })
 
@@ -297,13 +360,13 @@ describe('GET /api/packets/daily-count', () => {
     insertRow(db, 'ai_requests', { id: 'req_failed', source_type: 'packet_prepare', source_id: 'task_c', prompt: 'p', status: 'failed', requested_by: NICK })
     const r = await call('GET', '/api/packets/daily-count?date=2026-10-28', { pb: true })
     expect(r.status).toBe(200)
-    expect(r.body).toEqual({ date: '2026-10-28', used: 3, cap: 3 })
+    expect(r.body).toEqual({ date: '2026-10-28', used: 3, cap: CAP })
     const y = await call('GET', '/api/packets/daily-count?date=2026-10-27', { as: NICK })
-    expect(y.body).toEqual({ date: '2026-10-27', used: 2, cap: 3 }) // pkt_yday + req_open
+    expect(y.body).toEqual({ date: '2026-10-27', used: 2, cap: CAP }) // pkt_yday + req_open
   })
 
   it('defaults to today, refuses a bad date, and is Nick or the PB key only', async () => {
-    expect((await call('GET', '/api/packets/daily-count', { as: NICK })).body).toEqual({ date: '2026-10-28', used: 0, cap: 3 })
+    expect((await call('GET', '/api/packets/daily-count', { as: NICK })).body).toEqual({ date: '2026-10-28', used: 0, cap: CAP })
     expect((await call('GET', '/api/packets/daily-count?date=2026-13-01', { pb: true })).status).toBe(400)
     expect((await call('GET', '/api/packets/daily-count?date=2026-10-28', { as: CASEY })).status).toBe(403)
   })
@@ -408,21 +471,21 @@ describe('week plan: atomic cap, start flips, expiry and the mint', () => {
     // Since the Re-plan (2026-11-01) only the NEWEST offer takes a first
     // answer (week_plan_superseded), so two first answers on two offers can
     // no longer race. The race that remains is a first-answer Start on the
-    // newest offer against a Start flip on an OLDER answered plan: 1 used +
-    // 2 + 1 = 4 > 3, each alone fits.
+    // newest offer against a Start flip on an OLDER answered plan: (CAP-2)
+    // used + 2 + 1 > CAP, each alone fits.
     insertRow(db, 'tasks', {
       id: 'task_plan_week_44_old', title: 'Plan your week (earlier offer)', kind: 'question', status: 'todo', priority: 'medium',
       assignee: 'nick-ingraham', source: 'week_plan', project_id: null, created_at: '2026-10-25 21:00:00',
       question_spec_json: JSON.stringify(SPEC),
       question_answer_json: JSON.stringify(answer([{ task_id: 'task_c', option_key: 'c1', text: null, start: false }], { choice: 'save' })),
     })
-    pendingRequest('req_used_1', 'task_b')
+    fill(CAP - 2, 'req_used')
     const two = [
       { task_id: 'task_a', option_key: 'a1', text: null, start: true },
       { task_id: 'task_b', option_key: 'b1', text: null, start: true },
     ]
     const flip = answer([{ task_id: 'task_c', option_key: 'c1', text: null, start: true }])
-    // Fire both before either commits: each pre-check reads 1 used.
+    // Fire both before either commits: each pre-check reads CAP-2 used.
     const [r1, r2] = await Promise.all([
       answerPlan(two),
       call('POST', '/api/tasks/task_plan_week_44_old', { as: NICK }, { question_answer_json: flip }),
@@ -432,7 +495,7 @@ describe('week plan: atomic cap, start flips, expiry and the mint', () => {
     const capped = [r1, r2].find((r) => r.status !== 200)!
     expect(capped.status).toBe(409)
     expect(capped.body.code).toBe('daily_cap')
-    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBeLessThanOrEqual(3)
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBeLessThanOrEqual(CAP)
   })
 
   it('the cap term on the row write refuses even when the pre-check is bypassed', async () => {
@@ -443,14 +506,14 @@ describe('week plan: atomic cap, start flips, expiry and the mint', () => {
     const current = one('SELECT * FROM tasks WHERE id = ?', PLAN)!
     const plan = await weekPlanStart(env, mut, current, { email: NICK } as never)
     expect(plan && 'capWhere' in plan).toBe(true)
-    for (const i of [1, 2, 3]) pendingRequest(`req_late_${i}`)
+    fill(CAP, 'req_late')
     const capWhere = (plan as { capWhere: string }).capWhere
     const res = db.prepare(`UPDATE tasks SET title = title WHERE id = ?${capWhere}`).run(PLAN)
     expect(res.changes).toBe(0)
   })
 
   it('a daily_cap refusal is not recorded, so the same mutation is retryable', async () => {
-    for (const i of [1, 2, 3]) pendingRequest(`req_full_${i}`)
+    fill(CAP, 'req_full')
     const r = await call('POST', '/api/mutations', { pb: true }, {
       mutations: [{
         mutation_id: 'mut_wp_retry', origin_machine: 'home', table: 'tasks', op: 'update', record_id: PLAN,
@@ -464,7 +527,7 @@ describe('week plan: atomic cap, start flips, expiry and the mint', () => {
   })
 
   it('a bad answer reports its own code even when the cap is full', async () => {
-    for (const i of [1, 2, 3]) pendingRequest(`req_full_${i}`)
+    fill(CAP, 'req_full')
     const r = await answerPlan([{ task_id: 'task_z', option_key: 'a1', text: null, start: true }])
     expect(r.status).toBe(409)
     expect(String(r.body.error)).toMatch(/question_answer_invalid/)

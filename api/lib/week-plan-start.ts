@@ -22,15 +22,16 @@
 // user, one job at 05:15: accepted, not prevented.
 
 import type { Env, AuthUser } from '../helpers';
-import { generateId } from '../helpers';
+import { generateId, resolveActor } from '../helpers';
 import { SITE_ADMIN_SLUG } from './viewer-db';
 import { packetOwnerEmailSql } from './packet-owner';
 import { ctDateString, ctToday } from './ct-date';
 import { normalizeQuestionJsonFields } from './task-question';
+import { prepareActivityEntry } from './activity-entry';
 import { aiRequestInsert, type AIRequestInsertRow } from '../routes/ai-requests';
 import {
   PACKET_DAILY_CAP, PACKET_PREPARE_SOURCE_TYPE, WEEK_PLAN_SOURCE,
-  parseWeekPlanSpec, pickDirection, isCivilDate, civilPlusDays, weekPlanNewlyStarted,
+  parseWeekPlanSpec, parseWeekPlanPicks, pickDirection, isCivilDate, civilPlusDays, weekPlanNewlyStarted,
   type PacketPreparePayload,
 } from '../../shared/weekPlan';
 
@@ -272,4 +273,61 @@ export async function weekPlanStart(
     capWhere: ` AND ${dailyCountSql(today)} + ${rows.length} <= ${PACKET_DAILY_CAP}`,
     dependents: (landed) => rows.map((r) => aiRequestInsert(env.DB, r, landed)),
   };
+}
+
+/** activity_entries.source_table of a note typed on a week plan pick. With
+ *  source_id `<plan question id>:<task id>` the table's partial UNIQUE
+ *  (source_table, source_id) index makes a second write of the same note a
+ *  no-op (INSERT OR IGNORE). */
+export const WEEK_PLAN_NOTE_SOURCE_TABLE = 'week_plan_note';
+
+/**
+ * The notes a week plan answer carries, as task comments (2026-11-02: Nick's
+ * typed notes on Save went nowhere). On the FIRST answer to a week_plan
+ * question, every pick with text becomes one comment on its task, through the
+ * same activity_entries row every task comment is (prepareActivityEntry, the
+ * decision half of postActivityEntry), inside the answer's own batch and gated
+ * on the answer row having landed. A start flip never changes text
+ * (weekPlanFlipError), so only the first answer writes notes. Returns null when
+ * there is nothing to write.
+ */
+export async function weekPlanNotes(
+  env: Env,
+  mut: { table: string; record_id: string; patch?: Record<string, unknown> },
+  current: Record<string, unknown>,
+  user: AuthUser,
+): Promise<null | ((landed: Guard) => D1PreparedStatement[])> {
+  if (mut.table !== 'tasks' || !mut.patch) return null;
+  if (current.source !== WEEK_PLAN_SOURCE || (current.kind ?? 'task') !== 'question') return null;
+  if (current.question_answer_json !== null && current.question_answer_json !== undefined) return null;
+  const patch = normalizeQuestionJsonFields(mut.patch);
+  if (!Object.prototype.hasOwnProperty.call(patch, 'question_answer_json')) return null;
+  const answer = patch.question_answer_json;
+  if (answer === null || answer === undefined) return null;
+  const spec = parseWeekPlanSpec(current.question_spec_json);
+  if (!spec) return null;
+  const picks = parseWeekPlanPicks(answer, spec);
+  const noted = (picks ?? []).filter((p) => p.text !== null && p.text.trim() !== '');
+  if (noted.length === 0) return null;
+  const actor = await resolveActor(env, user, undefined, { allowImpersonation: false });
+  if ('error' in actor) return null;
+
+  const prepared: Extract<Awaited<ReturnType<typeof prepareActivityEntry>>, { ok: true }>[] = [];
+  for (const pick of noted) {
+    const prep = await prepareActivityEntry({
+      env, user, entityType: 'task', entityId: pick.task_id, kind: 'comment',
+      body: `Week plan note: ${pick.text!.trim()}`, actorSlug: actor.slug,
+      fireSideEffects: false,
+      sourceTable: WEEK_PLAN_NOTE_SOURCE_TABLE, sourceId: `${mut.record_id}:${pick.task_id}`,
+    });
+    // A task that is gone cannot take a note; the answer still lands.
+    if (prep.ok) prepared.push(prep);
+  }
+  if (prepared.length === 0) return null;
+  return (landed) => prepared.map((prep) => {
+    const marks = prep.binds.map(() => '?').join(', ');
+    return env.DB.prepare(
+      `INSERT OR IGNORE INTO activity_entries ${prep.cols} SELECT ${marks}, datetime('now') WHERE ${landed.sql}`,
+    ).bind(...prep.binds, ...landed.vals);
+  });
 }

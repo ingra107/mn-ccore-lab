@@ -129,7 +129,8 @@ async function click(el: Element | null | undefined) {
   await tick()
 }
 
-async function walkToConfirm(picks: string[]) {
+/** Open the panel and tick the named candidates (one page, no steps). */
+async function openAndPick(picks: string[]) {
   await click(document.querySelector('[data-testid="q-week-plan"] button'))
   await until(() => !!panel(), 'the panel')
   const p = panel()!
@@ -137,9 +138,17 @@ async function walkToConfirm(picks: string[]) {
     const label = [...p.querySelectorAll('label')].find((l) => l.textContent?.includes(t))
     await click(label?.querySelector('input'))
   }
-  await click(buttonNamed(p, /^Next/))
   return p
 }
+const setValue = async (box: HTMLTextAreaElement, v: string) => {
+  const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!
+  set.call(box, v)
+  box.dispatchEvent(new Event('input', { bubbles: true }))
+  await tick()
+}
+type SentPick = { task_id: string; option_key: string | null; text: string | null; start: boolean }
+const answerOf = (calls: Call[]) =>
+  (calls.find((c) => c.url === '/api/tasks/task_plan')!.body as { question_answer_json: { choice: string; picks: SentPick[] } }).question_answer_json
 
 describe('Needs you: the Plan your week row', () => {
   it('a waiting week plan is one gold row; an answered one leaves the card and the count', async () => {
@@ -158,71 +167,99 @@ describe('Needs you: the Plan your week row', () => {
 })
 
 describe('PlanConversation', () => {
-  it('pick, choose (recommended preselected, one typed), Start: posts the typed answer, nothing else', async () => {
-    const calls = stubFetch({ used: 0, cap: 3 })
+  it('one page: every candidate shows its recommended step before anything is picked', async () => {
+    stubFetch({ used: 0, cap: 10 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
-    const p = await walkToConfirm(['Answer Jane', 'Review abstract'])
+    await click(document.querySelector('[data-testid="q-week-plan"] button'))
+    await until(() => !!panel(), 'the panel')
+    const recs = [...panel()!.querySelectorAll('[data-testid="plan-rec"]')].map((n) => n.textContent)
+    expect(recs).toEqual(['Next step: Option a1', 'Next step: Option b2', 'Next step: Option c1'])
+    expect(panel()!.querySelectorAll('input[type="radio"]')).toHaveLength(0) // closed until picked or opened
+    expect(buttonNamed(panel()!, /^Next/)).toBeUndefined() // no steps
+  })
 
-    // Step 2: recommended options are chosen; switch task_b to its own text.
+  it('pick opens the row in place; Start posts the typed answer, a note beside an option rides text with option_key kept', async () => {
+    const calls = stubFetch({ used: 0, cap: 10 })
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    const p = await openAndPick(['Answer Jane', 'Review abstract'])
+
     const radios = [...p.querySelectorAll('input[type="radio"]')] as HTMLInputElement[]
-    expect(radios.filter((r) => r.checked)).toHaveLength(2)
+    expect(radios.filter((r) => r.checked)).toHaveLength(2) // recommended preselected
     expect(p.textContent).toContain('Recommended')
-    const other = [...p.querySelectorAll('fieldset')][1].querySelectorAll('input[type="radio"]')
-    await click(other[other.length - 1])
-    expect(buttonNamed(p, /^Next/)!.disabled).toBe(true) // empty text blocks Next
-    const box = p.querySelector('textarea') as HTMLTextAreaElement
-    {
-      const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!
-      set.call(box, 'Ask Casey which cut he used')
-      box.dispatchEvent(new Event('input', { bubbles: true }))
-    }
-    await tick()
-    await click(buttonNamed(p, /^Next/))
+    // task_b: its own step; task_a: recommended option plus a note.
+    const sets = [...p.querySelectorAll('fieldset')]
+    const otherB = sets[1].querySelectorAll('input[type="radio"]')
+    await click(otherB[otherB.length - 1])
+    expect(buttonNamed(p, /^Start/)!.disabled).toBe(true) // empty own-step text blocks
+    const boxes = [...p.querySelectorAll('textarea')] as HTMLTextAreaElement[]
+    await setValue(boxes[1], 'Ask Casey which cut he used')
+    await setValue(boxes[0], 'sat too long, keep it short')
 
-    await until(() => /3 left today/.test(p.querySelector('[data-testid="plan-cap"]')?.textContent ?? ''), 'the cap line')
+    await until(() => /10 left today/.test(p.querySelector('[data-testid="plan-cap"]')?.textContent ?? ''), 'the cap line')
     const start = buttonNamed(p, /^Start these 2/)!
     expect(start.disabled).toBe(false)
     await click(start)
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the answer POST')
     const post = calls.find((c) => c.url === '/api/tasks/task_plan')!
     expect(post.method).toBe('POST')
-    const body = post.body as { question_answer_json: Record<string, unknown> }
-    expect(Object.keys(body)).toEqual(['question_answer_json'])
-    expect(body.question_answer_json).toMatchObject({
-      v: 1, choice: 'start', via: 'hub',
-      picks: [
-        { task_id: 'task_a', option_key: 'a1', text: null, start: true },
-        { task_id: 'task_b', option_key: null, text: 'Ask Casey which cut he used', start: true },
-      ],
-    })
+    expect(Object.keys(post.body as object)).toEqual(['question_answer_json'])
+    const a = answerOf(calls)
+    expect(a.choice).toBe('start')
+    expect(a.picks).toEqual([
+      { task_id: 'task_a', option_key: 'a1', text: 'sat too long, keep it short', start: true },
+      { task_id: 'task_b', option_key: null, text: 'Ask Casey which cut he used', start: true },
+    ])
     await until(() => !panel(), 'the panel to close')
   })
 
-  it('Start is off when the picks pass what is left; Save still posts start:false', async () => {
-    const calls = stubFetch({ used: 2, cap: 3 })
+  it('Start is never off for the cap: the first `left` start in order, the rest are saved', async () => {
+    const calls = stubFetch({ used: 8, cap: 10 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
-    const p = await walkToConfirm(['Answer Jane', 'K23 report'])
-    await click(buttonNamed(p, /^Next/))
-    await until(() => /1 left today/.test(p.textContent ?? ''), 'the cap line')
-    expect(p.textContent).toContain('pick fewer')
-    expect(buttonNamed(p, /^Start these 2/)!.disabled).toBe(true)
-    await click(buttonNamed(p, /Save without starting/))
-    await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the save POST')
-    const a = (calls.find((c) => c.url === '/api/tasks/task_plan')!.body as { question_answer_json: { choice: string; picks: { start: boolean }[] } }).question_answer_json
+    const p = await openAndPick(['Answer Jane', 'Review abstract', 'K23 report'])
+    await until(() => /2 left today/.test(p.textContent ?? ''), 'the cap line')
+    expect(p.textContent).toContain('Start begins the first 2 in the list; the other 1 are saved for later')
+    const start = buttonNamed(p, /^Start these 2/)!
+    expect(start.disabled).toBe(false)
+    await click(start)
+    await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the POST')
+    const a = answerOf(calls)
+    expect(a.choice).toBe('start')
+    expect(a.picks.map((x) => [x.task_id, x.start])).toEqual([['task_a', true], ['task_b', true], ['task_c', false]])
+  })
+
+  it('with nothing left, the button saves everything for later (start:false)', async () => {
+    const calls = stubFetch({ used: 10, cap: 10 })
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    const p = await openAndPick(['Answer Jane', 'K23 report'])
+    await until(() => /0 left today/.test(p.textContent ?? ''), 'the cap line')
+    await click(buttonNamed(p, /^Save for later/))
+    await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the POST')
+    const a = answerOf(calls)
     expect(a.choice).toBe('save')
     expect(a.picks.every((x) => x.start === false)).toBe(true)
   })
 
-  it('a daily_cap 409 is shown, and the panel stays open with the draft', async () => {
-    stubFetch({ used: 0, cap: 3 }, () => new Response(JSON.stringify({ error: 'cap', code: 'daily_cap', used: 3, cap: 3 }), { status: 409 }))
+  it('Save without starting posts start:false', async () => {
+    const calls = stubFetch({ used: 0, cap: 10 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
-    const p = await walkToConfirm(['Answer Jane'])
-    await click(buttonNamed(p, /^Next/))
-    await until(() => !buttonNamed(p, /^Start this one/)!.disabled, 'Start enabled')
-    await click(buttonNamed(p, /^Start this one/))
-    await until(() => !!p.querySelector('[role="alert"]'), 'the cap message')
-    expect(p.querySelector('[role="alert"]')!.textContent).toMatch(/Today's 3 are already used or queued \(3\)/)
-    expect(panel()).not.toBeNull()
+    const p = await openAndPick(['Answer Jane'])
+    await click(buttonNamed(p, /Save without starting/))
+    await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the save POST')
+    expect(answerOf(calls).choice).toBe('save')
+  })
+
+  it('a daily_cap 409 retries once with what is left, saving the rest', async () => {
+    let n = 0
+    const calls = stubFetch({ used: 0, cap: 10 }, () => (++n === 1
+      ? new Response(JSON.stringify({ error: 'cap', code: 'daily_cap', used: 9, cap: 10 }), { status: 409 })
+      : new Response('{}', { status: 200 })))
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    const p = await openAndPick(['Answer Jane', 'Review abstract'])
+    await until(() => !!buttonNamed(p, /^Start these 2/), 'Start')
+    await click(buttonNamed(p, /^Start these 2/))
+    await until(() => calls.filter((c) => c.url === '/api/tasks/task_plan').length === 2, 'the retry')
+    const second = calls.filter((c) => c.url === '/api/tasks/task_plan')[1].body as { question_answer_json: { picks: { start: boolean }[] } }
+    expect(second.question_answer_json.picks.map((x) => x.start)).toEqual([true, false])
   })
 
   it('a week_plan_superseded refusal says a newer plan was offered', async () => {
@@ -230,8 +267,7 @@ describe('PlanConversation', () => {
       error: 'week_plan_superseded: a newer week plan was offered; answer that one', code: 'question_rule',
     }), { status: 409 }))
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
-    const p = await walkToConfirm(['Answer Jane'])
-    await click(buttonNamed(p, /^Next/))
+    const p = await openAndPick(['Answer Jane'])
     await click(buttonNamed(p, /Save without starting/))
     await until(() => !!p.querySelector('[role="alert"]'), 'the refusal')
     expect(p.querySelector('[role="alert"]')!.textContent).toBe('A newer plan was offered. Answer that one in Needs you.')
@@ -251,8 +287,7 @@ describe('PlanConversation', () => {
     it(`${what} is refused in plain words`, async () => {
       stubFetch({ used: 0, cap: 3 }, reply)
       await mount(<QuestionsCard tasks={[row()]} band={false} />)
-      const p = await walkToConfirm(['Answer Jane'])
-      await click(buttonNamed(p, /^Next/))
+      const p = await openAndPick(['Answer Jane'])
       await click(buttonNamed(p, /Save without starting/))
       await until(() => !!p.querySelector('[role="alert"]'), 'the refusal')
       expect(p.querySelector('[role="alert"]')!.textContent).toBe(words)
@@ -262,7 +297,7 @@ describe('PlanConversation', () => {
   it('closing writes nothing', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
     await mount(<QuestionsCard tasks={[row()]} band={false} />)
-    await walkToConfirm(['Answer Jane'])
+    await openAndPick(['Answer Jane'])
     await click(document.querySelector('[data-testid="plan-backdrop"]'))
     expect(panel()).toBeNull()
     expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0)
