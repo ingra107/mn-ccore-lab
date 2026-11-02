@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createTask, updateTaskStatus, updateTask, acknowledgeTask, restoreTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 import type { TaskKind } from '../../../shared/taskKinds'
-import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
+import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots, optimisticRowUpdate, rollbackRowChanges } from './utils'
 import { nowInstant } from '../../lib/time'
 import { bumpParentStepDone } from '../../lib/taskSteps'
 import { beginCompletion, settleCompletion, settleBatchCompletion } from '../../lib/completionMoment'
@@ -46,7 +46,7 @@ export function useUpdateTaskStatus() {
     onMutate: async ({ id, status }) => {
       beginCompletion(completes(status, [id]))
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
-      const { snapshots } = optimisticListUpdate<TaskRow>(
+      const rows = optimisticRowUpdate<TaskRow>(
         queryClient, ['tasks'],
         // A step's parent counts it now ("1 of 4"), not after the refetch.
         (tasks) => bumpParentStepDone(tasks, id, status === TASK_STATUS.DONE).map((t) => t.id === id
@@ -54,7 +54,7 @@ export function useUpdateTaskStatus() {
           : t
         ),
       )
-      return { snapshots }
+      return { rows }
     },
 
     onSuccess: (_data, { id, status }) => {
@@ -63,7 +63,7 @@ export function useUpdateTaskStatus() {
 
     onError: (_err, { id, status }, context) => {
       settleCompletion(completes(status, [id]), false)
-      rollbackSnapshots(queryClient, context?.snapshots)
+      rollbackRowChanges(queryClient, context?.rows)
     },
 
     onSettled: () => {
@@ -101,11 +101,15 @@ export function useUpdateTask() {
         statusDerived.completed = isDone ? 1 : 0
         statusDerived.completed_at = isDone ? nowInstant() : null
       }
-      const { snapshots } = optimisticListUpdate<TaskRow>(
+      // expected_description is a write guard for the route, not a column.
+      const row = { ...fields }
+      delete row.expected_description
+      // Per-field record: a late failure puts back only what THIS save wrote.
+      const rows = optimisticRowUpdate<TaskRow>(
         queryClient, ['tasks'],
-        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...fields, ...statusDerived } : t),
+        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...row, ...statusDerived } : t),
       )
-      return { snapshots }
+      return { rows }
     },
 
     onSuccess: (_data, { id, fields }) => {
@@ -114,7 +118,7 @@ export function useUpdateTask() {
 
     onError: (_err, { id, fields }, context) => {
       settleCompletion(completes(fields.status, [id]), false)
-      rollbackSnapshots(queryClient, context?.snapshots)
+      rollbackRowChanges(queryClient, context?.rows)
     },
 
     onSettled: () => {

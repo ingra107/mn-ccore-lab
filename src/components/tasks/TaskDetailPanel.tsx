@@ -1,16 +1,16 @@
 import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { lazyRoute } from '../../lib/lazyRoute'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import BodyText from '../BodyText'
+import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
 import {
   X, Clock, User, Scale, Upload, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Loader2,
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useMutationState, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
-const RichTextEditor = lazyRoute(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
@@ -23,7 +23,7 @@ import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
-import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
+import { appendCharToInput, stripMeetingMarker, withMeetingMarker } from '../../lib/textUtils'
 import { isFromMeeting } from '../../lib/meetingOrigin'
 import { MeetingOriginTag } from './MeetingOriginTag'
 import { PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
@@ -44,7 +44,7 @@ import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../h
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useBackToClose } from '../../hooks/useBackToClose'
 import { motion, useMotionValue, useTransform, useDragControls } from 'framer-motion'
-import type { TaskRow } from '../../lib/api'
+import { ApiError, type TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
@@ -127,6 +127,80 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return unsub
   }, [qc, baseTask?.id])
   const task = liveTask ?? baseTask
+
+  // A parent that holds the task as a snapshot with no ['tasks'] cache row
+  // (MeetingActionList on a cold MeetingDetail link) never sees a save through
+  // the cache, so the panel kept showing, and the next edit started from, the
+  // text before it (refuter 2, 2026-11-01). Every panel write therefore
+  // patches the panel's own copy at once, takes the server's echo of the
+  // fields it saved, and on a failure puts back each field that still shows
+  // this write's value. Never rejects: the result says what happened.
+  const saveFields = (
+    id: string,
+    fields: Record<string, unknown>,
+    run: () => Promise<{ data?: unknown } | undefined> = () => updateTask.mutateAsync({ id, fields }),
+  ): Promise<SaveResult> => {
+    const patch: Record<string, unknown> = { ...fields }
+    delete patch.expected_description // a guard for the route, not a column
+    const keys = Object.keys(patch)
+    const pick = (src: Record<string, unknown>) => Object.fromEntries(keys.filter((k) => k in src).map((k) => [k, src[k]]))
+    const before = task && task.id === id ? pick(task as unknown as Record<string, unknown>) : null
+    const merge = (f: (t: Record<string, unknown>) => Record<string, unknown>) =>
+      setLiveTask((t) => (t && t.id === id ? (f(t as unknown as Record<string, unknown>) as unknown as TaskRow) : t))
+    merge((t) => ({ ...t, ...patch }))
+    // Both the echo and the revert touch only a field that still shows this
+    // write's value: a later save of the same field has moved it on.
+    const ours = (t: Record<string, unknown>, apply: Record<string, unknown>) => {
+      const r = { ...t }
+      for (const k of keys) if (k in apply && r[k] === patch[k]) r[k] = apply[k]
+      return r
+    }
+    return run().then(
+      (res) => {
+        const echo = res?.data
+        if (echo && typeof echo === 'object') merge((t) => ours(t, pick(echo as Record<string, unknown>)))
+        return { ok: true as const, data: echo }
+      },
+      (error: unknown) => {
+        if (before) merge((t) => ours(t, before))
+        return { ok: false as const, error }
+      },
+    )
+  }
+  // A description save goes at once. While it is in flight the field shows
+  // its text with "Saving..." and does not open, so no edit can start from
+  // text the server does not hold yet (refuter 3, S2d; the queue that first
+  // answered it was deleted after refuter 4: a queued save's text vanished
+  // under the cache subscription, and a hung save blocked every later one).
+  // "In flight" is read from the mutation cache (inFlightDescription below),
+  // so it holds across a remount and a second panel on the same task, ends
+  // with the QueryClient, and a hung save is a visible "Saving...".
+  const saveDescription = (id: string, next: string | null, expected: string | null): Promise<DescriptionSave> =>
+    saveFields(id, { description: next, expected_description: expected }).then((r): DescriptionSave => {
+      if (r.ok) {
+        const echoed = r.data && typeof r.data === 'object' ? (r.data as { description?: unknown }).description : undefined
+        return { ok: true, description: typeof echoed === 'string' || echoed === null ? echoed : next }
+      }
+      const e = r.error
+      if (e instanceof ApiError && e.status === 409 && e.body.code === 'description_changed') {
+        const now = typeof e.body.description === 'string' ? e.body.description : null
+        setLiveTask((t) => (t && t.id === id ? { ...t, description: now ?? '' } : t))
+        return { ok: false, changed: true, description: now }
+      }
+      return { ok: false, changed: false }
+    })
+  // The description text of this task's newest pending description save, if
+  // any (undefined = none in flight).
+  const inFlight = useMutationState({
+    filters: {
+      status: 'pending',
+      predicate: (m) => {
+        const v = m.state.variables as { id?: string; fields?: Record<string, unknown> } | undefined
+        return v?.id === task?.id && !!v?.fields && 'description' in v.fields && 'expected_description' in v.fields
+      },
+    },
+    select: (m) => (m.state.variables as { fields: { description: string | null } }).fields.description,
+  })
   // Resolve the task's project to surface its local working folder (mnccore://
   // open/workon affordances). task.project_id is the slug projection from
   // /api/tasks; match by slug first, fall back to id.
@@ -197,7 +271,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
   // checked only `activeElement === first/last`, which leaks when async-mounted
-  // regions (KeyLinksEditor, RichTextEditor, comments) inject autofocusing
+  // regions (KeyLinksEditor, comments) inject autofocusing
   // elements that pull focus outside the panel. New rule: if focus drifts
   // outside panelRef on any Tab, snap it back to the first focusable.
   useEffect(() => {
@@ -208,12 +282,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         // contract as Modal.tsx.
         if (e.defaultPrevented) return
         const target = e.target as HTMLElement
-        if (target.closest('input, textarea, [contenteditable="true"], .ProseMirror')) return
+        if (target.closest('input, textarea, [contenteditable="true"]')) return
         onClose()
         return
       }
-      if (e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
-      if (e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
+      // Alt/Option+Arrow inside a text field moves the caret (macOS), so it
+      // never swaps the task from there.
+      const inField = !!(e.target as HTMLElement | null)?.closest?.('input, textarea, [contenteditable="true"]')
+      if (!inField && e.altKey && e.key === 'ArrowUp' && onPrev) { e.preventDefault(); onPrev(); return }
+      if (!inField && e.altKey && e.key === 'ArrowDown' && onNext) { e.preventDefault(); onNext(); return }
 
       if (e.key !== 'Tab' || !panelRef.current) return
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
@@ -284,15 +361,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   if (!task) return null
 
   const handleFieldUpdate = (field: string, value: unknown) => {
-    updateTask.mutate({ id: task.id, fields: { [field]: value } })
+    void saveFields(task.id, { [field]: value })
   }
 
   const handleStatusChange = (status: string) => {
     if (status === task.status) return
     const prev = task.status
-    updateStatus.mutate({ id: task.id, status })
+    void saveFields(task.id, { status }, () => updateStatus.mutateAsync({ id: task.id, status }))
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
-    showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id: task.id, status: prev }))
+    showUndo(`Status → ${labels[status] || status}`, () => { void saveFields(task.id, { status: prev }, () => updateStatus.mutateAsync({ id: task.id, status: prev })) })
   }
 
   // Delete with a real 5s undo, as a delayed commit: optimistically drop the
@@ -585,7 +662,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <ProjectInlineGhostSelect
               value={task.project_id || ''}
               productId={task.product_id}
-              onChange={(v, prd) => updateTask.mutate({ id: task.id, fields: { project_id: v || null, ...(prd ? { product_id: prd } : {}) } })}
+              onChange={(v, prd) => void saveFields(task.id, { project_id: v || null, ...(prd ? { product_id: prd } : {}) })}
             />
             {task.kind === 'milestone' ? (
               // Two-date milestone (Nick 2026-09-17): due_date is the
@@ -724,17 +801,20 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onUpdate={(fields) => {
                 // Batch all 6 key_link_* fields in a single mutation so the
                 // server sees one update, not six racing requests.
-                updateTask.mutate({ id: task.id, fields })
+                void saveFields(task.id, fields)
               }}
             />
 
-            {/* Description (rich text, ghost empty → editing border).
-                Empty state: one ghost line at --ink-hint, no box.
-                Click → editor opens with toolbar + focus border (autosave on blur). */}
+            {/* Description: the ONE plain-markdown body (Nick 2026-11-01).
+                Ghost line when empty; click → textarea, autosave on blur. */}
             <DescriptionField
-              descriptionJson={task.description_json || null}
-              descriptionText={task.description ? stripMeetingMarker(task.description) : null}
-              onUpdate={(json) => handleFieldUpdate('description_json', json)}
+              key={task.id}
+              taskId={task.id}
+              description={task.description ?? null}
+              descriptionJson={task.description_json ?? null}
+              onSave={saveDescription}
+              saving={inFlight.length > 0}
+              savingText={inFlight.length > 0 ? inFlight[inFlight.length - 1] : null}
             />
 
             {/* Workflow. The task_subtasks checklist that sat beside it was
@@ -750,7 +830,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                     promise_date: task.promise_date ?? null,
                   } as WorkflowFields}
                   onChange={(patch) => {
-                    updateTask.mutate({ id: task.id, fields: patch as Record<string, unknown> })
+                    void saveFields(task.id, patch as Record<string, unknown>)
                   }}
                 />
               </div>
@@ -933,40 +1013,237 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 }
 
 // ── Description Field ─────────────────────────────────────
-// Ghost empty state (one "Add description…" line, no box).
-// Click → editor opens with toolbar + focus border. Autosave on blur.
-// Content state: plain prose, no resting border; editor border appears
-// only when isEditing (i.e. the ProseMirror is focused).
+// The task body is ONE plain-markdown `description` (Nick 2026-11-01). The
+// read view renders it through BodyText, the same as every other task view,
+// straight from the prop, so a PB/Claude write that lands while the panel is
+// open shows at once. Click → a textarea over the same text; autosave on
+// blur or Ctrl/Cmd+Enter, Escape cancels. Ghost empty state: one line.
+//
+// An edit is a SESSION bound at its start to one task: the task id and the
+// stored description it began from. A save can only ever write that task,
+// carrying that task's meeting marker. Leaving mid-edit (task swap, panel
+// close) saves the draft to the task it was typed on. If the stored
+// description changed while the user typed, the save does not overwrite it:
+// the newer text shows with "Keep mine" / "Use the new one".
+// The panel also keys this field on the task id, so no state crosses tasks.
+//
+// Every save sends the text it started from (`expected`), and the route
+// refuses with the current text when the stored one has moved (a PB write the
+// screen never saw): the editor reopens on the draft with the same notice.
+// A save of the user's own that fails is not an outside change: an edit begun
+// on top of it is rebased onto the text that is still stored.
 
-function DescriptionField({
+interface EditSession { taskId: string; base: string | null; start: string }
+
+/** What a panel write reports back (TaskDetailPanel's saveFields); `data` is the server's echo. */
+type SaveResult = { ok: true; data?: unknown } | { ok: false; error: unknown }
+/** What a description save reports back. `ok`: `description` is the text the
+ *  server echoed. `changed`: the route refused because the stored text moved;
+ *  `description` is that text. */
+export type DescriptionSave =
+  | { ok: true; description?: string | null }
+  | { ok: false; changed: true; description: string | null }
+  | { ok: false; changed: false }
+
+/** What the server is known to hold, while the prop still reads `over`
+ *  (a cache refetch that left before the save committed). */
+interface Confirmed { text: string | null; over: string | null }
+
+export function DescriptionField({
+  taskId,
+  description,
   descriptionJson,
-  descriptionText,
-  onUpdate,
+  onSave,
+  saving: savingElsewhere = false,
+  savingText = null,
 }: {
+  taskId: string
+  description: string | null
+  /** DEPRECATED, read-only fallback; REMOVE WITH THE description_json COLUMN DROP. */
   descriptionJson: string | null
-  descriptionText: string | null
-  onUpdate: (json: string) => void
+  /** `expected`: the stored text this save started from. */
+  onSave: (taskId: string, next: string | null, expected: string | null) => Promise<DescriptionSave> | void
+  /** A description save for this task is in flight (the panel reads it from
+   *  the mutation cache, so it covers a remount and a second panel). */
+  saving?: boolean
+  /** That save's text, shown until it settles. */
+  savingText?: string | null
 }) {
+  const { showInfo } = useToast()
   const [isEditing, setIsEditing] = useState(false)
-  const isEmpty = !descriptionJson && !descriptionText
+  const [draft, setDraft] = useState('')
+  const [conflict, setConflictState] = useState<string | null>(null)
+  // This field's own save in flight: its text, until the answer comes.
+  const [pending, setPending] = useState<{ text: string | null } | null>(null)
+  const [confirmed, setConfirmed] = useState<Confirmed | null>(null)
+  // Once the prop moves off `over` it has caught up (or moved on): drop the
+  // override during render, so a later return of the prop to that old text
+  // is believed.
+  if (confirmed && (description ?? '') !== (confirmed.over ?? '')) setConfirmed(null)
 
-  // Click the ghost line OR the read-only prose to enter editing mode.
-  const handleClick = () => {
-    if (!isEditing) setIsEditing(true)
+  const saving = savingElsewhere || pending !== null
+  // The text the server holds, as far as this screen knows: the prop, unless
+  // a save's answer said otherwise and the prop has not caught up yet.
+  const stored = confirmed && (description ?? '') === (confirmed.over ?? '') ? confirmed.text : description
+  // While saving, the screen shows the text being saved.
+  const display = saving ? (savingElsewhere ? savingText : pending?.text ?? null) : stored
+  const shown = display ? stripMeetingMarker(display) : ''
+  // An older panel edit wrote only description_json. Until the fold clears
+  // it, any words it holds that description lacks show in a labelled block
+  // below; the stored description is never hidden or replaced on screen.
+  const fold = descriptionJsonFold(display, descriptionJson)
+  const earlier = fold.kind === 'none' ? null : fold.md
+
+  const conflictRef = useRef<string | null>(null) // the newer text "Keep mine" writes over
+  const setConflict = (v: string | null) => { conflictRef.current = v; setConflictState(v) }
+  const session = useRef<EditSession | null>(null)
+  const draftRef = useRef('')
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  // The newest values, read by the save and by the unmount flush.
+  const latest = useRef({ description, stored, onSave, showInfo })
+  useLayoutEffect(() => { latest.current = { description, stored, onSave, showInfo } })
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => { if (isEditing) ref.current?.focus() }, [isEditing])
+
+  const notSaved = () => latest.current.showInfo('Description not saved: it changed while you were editing.')
+  const setText = (v: string) => { draftRef.current = v; setDraft(v) }
+
+  /** Write `draft` over `over` (the stored text it is meant to replace) and
+   *  handle the answer. Shared by blur/Ctrl+Enter, "Keep mine" and the flush.
+   *  A save that outlives this field (unmount) still completes; the next
+   *  mount reads the cache, the panel's echo, or "Saving..." until it lands. */
+  const send = (s: EditSession, draft: string, over: string | null) => {
+    const marked = withMeetingMarker(draft, over)
+    const next = marked.trim() ? marked : null
+    const answer = latest.current.onSave(s.taskId, next, over)
+    if (!answer) return
+    if (mounted.current) setPending({ text: next })
+    void answer.then((r) => {
+      if (!mounted.current) {
+        if (!r.ok && r.changed) notSaved()
+        return
+      }
+      setPending(null)
+      // The answer says what the server holds; that is the next edit's base.
+      if (r.ok && r.description !== undefined) setConfirmed({ text: r.description, over: latest.current.description })
+      if (r.ok || !r.changed) return // a failure: the panel put the old text back
+      setConfirmed({ text: r.description, over: latest.current.description })
+      // Reopen on the draft with the notice and the text that is stored now.
+      session.current = { ...s }
+      setText(draft)
+      setConflict(r.description ?? '')
+      setIsEditing(true)
+    })
   }
+
+  // Leaving mid-edit (unmount, or a task swap if the key were ever dropped):
+  // the draft goes to the task it was typed on, never to whatever is shown
+  // next. A layout cleanup runs before the next render's refs update, so
+  // `latest` still holds this task's values here.
+  useLayoutEffect(() => () => {
+    const s = session.current
+    session.current = null
+    if (!s || draftRef.current === s.start) return
+    if ((latest.current.stored ?? '') !== (s.base ?? '')) { notSaved(); return }
+    send(s, draftRef.current, s.base)
+  }, [taskId]) // eslint-disable-line react-hooks/exhaustive-deps -- reads refs only
+
+  const start = () => {
+    // No edit begins on text the server does not hold yet (refuter 3, S2d).
+    if (isEditing || saving) return
+    session.current = { taskId, base: stored, start: shown }
+    setText(shown)
+    setConflict(null)
+    setIsEditing(true)
+  }
+  const close = () => { session.current = null; setConflict(null); setIsEditing(false) }
+  /** `force`: the user chose "Keep mine" over a newer stored text. */
+  const commit = (force = false) => {
+    const s = session.current
+    if (!s) return
+    if (draftRef.current === s.start) { close(); return }
+    const now = latest.current.stored
+    if (!force && (now ?? '') !== (s.base ?? '')) { setConflict(now ?? ''); return }
+    // Over a newer text, the save replaces (and keeps the marker of) that text.
+    send(s, draftRef.current, force ? conflictRef.current : s.base)
+    close()
+  }
+  const keepOpen = (e: React.MouseEvent) => e.preventDefault() // the textarea keeps focus
+
+  if (isEditing) {
+    return (
+      <div>
+        <SectionHead as="h3" title="Description" />
+        <textarea
+          ref={ref}
+          data-testid="task-description-editor"
+          aria-label="Description"
+          value={draft}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={() => commit()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit() }
+            if (e.key === 'Escape') { e.preventDefault(); close() }
+          }}
+          rows={Math.min(Math.max(draft.split('\n').length + 1, 4), 16)}
+          placeholder="Add a description... (links: https://... or [text](https://...))"
+          className="w-full outline-none resize-y"
+          style={{
+            fontSize: 'var(--value-size)',
+            lineHeight: 1.6,
+            color: 'var(--ink)',
+            background: 'none',
+            border: '1px solid var(--job-accent)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '8px 12px',
+          }}
+        />
+        {conflict !== null && (
+          <div role="status" data-testid="task-description-conflict" style={{ marginTop: 'var(--sp-xs, 6px)', fontSize: 'var(--text-small)', color: 'var(--slate)' }}>
+            <div style={{ fontStyle: 'italic', marginBottom: 2 }}>This description changed while you were editing. The newer text:</div>
+            <BodyText text={stripMeetingMarker(conflict) || '(empty)'} style={{ display: 'block', color: 'var(--ink)' }} />
+            <div style={{ display: 'flex', gap: 'var(--sp-sm, 8px)', marginTop: 4 }}>
+              <button type="button" data-testid="description-keep-mine" className="link-affordance" onMouseDown={keepOpen} onClick={() => commit(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: 0 }}>Keep mine</button>
+              <button type="button" data-testid="description-use-new" className="link-affordance" onMouseDown={keepOpen} onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', padding: 0 }}>Use the new one</button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const savingMark = saving ? (
+    <span data-testid="task-description-saving" role="status" style={{ marginLeft: 6, fontSize: 'var(--text-small)', color: 'var(--slate)', fontStyle: 'italic' }}>Saving…</span>
+  ) : null
 
   return (
     <div>
       <SectionHead as="h3" title="Description" />
-
-      {/* Ghost empty line — shown only when empty AND not editing */}
-      {isEmpty && !isEditing && (
+      {shown ? (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Edit description"
+          aria-disabled={saving || undefined}
+          data-testid="task-description"
+          // A click on a link opens the link; anywhere else edits.
+          onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) start() }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start() } }}
+          className={saving ? 'rounded' : 'cursor-text rounded'}
+          style={{ fontSize: 'var(--value-size)', lineHeight: 1.6, color: 'var(--ink)', padding: '4px 2px', border: '1px solid transparent' }}
+        >
+          <BodyText text={shown} />
+        </div>
+      ) : (
         <div
           role="button"
           tabIndex={0}
           aria-label="Add description"
-          onClick={handleClick}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+          aria-disabled={saving || undefined}
+          data-testid="task-description-empty"
+          onClick={start}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start() } }}
           className="cursor-text rounded transition-colors hov-opacity"
           style={{
             fontSize: 'var(--value-size)',
@@ -980,37 +1257,13 @@ function DescriptionField({
           Add description…
         </div>
       )}
-
-      {/* Rich text editor — border + toolbar appear only while editing.
-          We pass noBorder so the editor's own border doesn't double-render.
-          The wrapper div carries the border controlled by isEditing state.
-          Always rendered (not conditional) so Tiptap keeps its internal
-          state; we use display:none on the wrapper when empty + not editing. */}
-      <div
-        onClick={handleClick}
-        style={
-          isEmpty && !isEditing
-            ? { display: 'none' }
-            : {
-                border: isEditing ? '1px solid var(--job-accent)' : '1px solid transparent',
-                borderRadius: 'var(--radius-lg)',
-                transition: 'border-color 0.15s',
-                cursor: isEmpty ? 'text' : undefined,
-              }
-        }
-      >
-        <Suspense fallback={<div style={{ height: 80, padding: 'var(--sp-md)', opacity: 0.85, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
-          <RichTextEditor
-            content={descriptionJson}
-            plainTextFallback={descriptionText}
-            onUpdate={onUpdate}
-            onFocus={() => setIsEditing(true)}
-            onBlur={() => setIsEditing(false)}
-            noBorder
-            placeholder="Add a description..."
-          />
-        </Suspense>
-      </div>
+      {savingMark}
+      {earlier && (
+        <div data-testid="task-description-earlier" style={{ marginTop: 'var(--sp-xs, 6px)', fontSize: 'var(--text-small)', color: 'var(--slate)' }}>
+          <div style={{ fontStyle: 'italic', marginBottom: 2 }}>Earlier text from the old editor, not in the description:</div>
+          <BodyText text={earlier} />
+        </div>
+      )}
     </div>
   )
 }

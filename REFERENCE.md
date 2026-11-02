@@ -125,6 +125,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync; `completed_since=YYYY-MM-DD` = every open task plus those completed on or after the date; `ids=a,b` = those tasks only, max 50)
 - GET /api/tasks/:id/blocking — the tasks that list `:id` in their `blocked_by`
 - POST /api/tasks (accepts `key_link_1/_desc/2/3` + `status`), POST /api/tasks/:id, POST /api/tasks/:id/status
+- POST /api/tasks/:id optional `expected_description` (text or null): the description an edit started from. If the stored one differs, nothing is written and the answer is 409 `{code:'description_changed', description:<current>}`; the same read is the write's compare-and-swap. Omitted = unguarded write. The task panel always sends it.
 - POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments — **projection over activity_entries since v77** (shape byte-preserved; writes via postActivityEntry)
 - **GET /api/task-comments/recent?since=&since_id=&limit=** — projection; compound (created_at,id) cursor since 2026-06-10 (PB collector adopted)
@@ -247,7 +248,6 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | `src/components/tasks/detail/TaskUpdateFeed.tsx` | Append-only task notes with type badges |
 | `src/components/tasks/detail/TaskActivityFeed.tsx` | Merged temporal timeline (notes+comments+system) |
 | `src/components/FileUpload.tsx` | R2 file upload with drag-drop |
-| `src/components/RichTextEditor.tsx` | Tiptap rich text editor for task descriptions |
 | `src/hooks/useRealtimeSync.ts` | WebSocket (DO) + polling + BroadcastChannel sync |
 | `src/hooks/useMutations.ts` | Optimistic mutations for tasks/projects/manuscripts |
 | `api/routes/uploads.ts` | R2 file upload API |
