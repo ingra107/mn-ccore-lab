@@ -1,4 +1,9 @@
-// week-plan-start.ts -- "Start these N" on a week plan, and the daily packet cap.
+// week-plan-start.ts -- "Prep these N" on a week plan (labelled "Start these N"
+// until 2026-11-02), and the daily packet cap. The wire names stay `start`
+// (picks[].start, choice 'start'): only the button copy changed, when Prep & start
+// (an interactive session, mnccore://prep/<task id>) arrived beside it; that
+// session creates no ai_request and is not counted here
+// (PB Context/Decisions/2026-11-02-prep-and-start.md).
 //
 // Nick, 2026-10-29: "... and then you could get started on those things".
 // Decision (fixed v1 contract): PB Context/Decisions/2026-10-30-planning-conversation.md.

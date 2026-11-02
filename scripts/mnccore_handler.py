@@ -47,6 +47,10 @@ Verbs (parity with mnccore-handler.bat, which stays one release as rollback):
   mnccore://run/<task id>      skill-backed task (the teal Run button) -> resolve_launch.py
                                run mode. `task_<ULID>` only, no decode; the skill comes
                                from the local task row, never the URI. Refusal is loud.
+  mnccore://prep/<task id>     Prep & start: an interactive session for one task -> PB
+                               prep_start_task.py request. `task_<ULID>` only, no decode;
+                               the session reads the task from PB, never the URI.
+                               Refusal is loud.
   mnccore://resume[/latest|/<session id>] move a phone session to a terminal -> PB resume_phone_session.py.
   mnccore://workon/<folder>    run .\\Start Claude.bat with <folder> as cwd (no
                                dialog, Nick 2026-10-12).
@@ -464,6 +468,33 @@ def verb_run(arg: str) -> int:
     return _act("run", {"argv": argv}, run)
 
 
+def verb_prep(arg: str) -> int:
+    """mnccore://prep/<task id>: Prep & start on a task (2026-11-02, PB
+    Context/Decisions/2026-11-02-prep-and-start.md).
+
+    Same shape as verb_run: the URI carries the task id and nothing else, only
+    `task_` + a 26-character Crockford ULID passes, nothing is decoded. PB's
+    prep_start_task.py checks the task is an open task in the local brain.db and
+    opens a session whose seed is the validated id plus fixed text; everything the
+    session learns about the task it reads from PB as data. A refusal is loud."""
+    if not TASK_ID_RE.fullmatch(arg):
+        raise Refused(f"prep: refused, not a task id: {arg}")
+    script = os.path.join(_home(), "Peripheral-Brain", "scripts", "utils", "prep_start_task.py")
+    if not _exists(script):
+        raise Refused(f"prep: launcher not found at {script}")
+    argv = [_python_exe(), "-X", "utf8", script, "request", arg]
+
+    def run() -> int:
+        r = subprocess.run(argv, close_fds=True, creationflags=CREATE_NO_WINDOW,
+                           stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL)
+        if r.returncode != 0:
+            log = os.path.join(_temp(), "pb-resolve-launch.log")
+            raise Refused(f"prep: could not start the session, see {log}")
+        return 0
+    return _act("prep", {"argv": argv}, run)
+
+
 RESUME_REF_RE = re.compile(
     r"latest|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r"|(?:session|cse)_[A-Za-z0-9]{10,64}", re.ASCII)
@@ -623,7 +654,7 @@ def verb_obsidian(arg: str) -> int:
 
 PATH_VERBS = (("open/", verb_open), ("launch/", verb_launch), ("desk/", verb_desk),
               ("file/", verb_file), ("workon/", verb_workon), ("obsidian/", verb_obsidian),
-              ("resume/", verb_resume), ("run/", verb_run))
+              ("resume/", verb_resume), ("run/", verb_run), ("prep/", verb_prep))
 BARE_VERBS = {"process": verb_process, "bugsquash": verb_bugsquash,
               "backlogwave": verb_backlogwave, "quickchat": verb_quickchat,
               "resume": lambda: verb_resume("latest")}

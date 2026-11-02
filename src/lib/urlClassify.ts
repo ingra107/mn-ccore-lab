@@ -289,6 +289,17 @@ export function buildRunSkillUri(taskId: string): string | null {
 }
 
 /**
+ * `mnccore://prep/<task id>` — Prep & start (2026-11-02, PB
+ * Context/Decisions/2026-11-02-prep-and-start.md): an interactive Claude session on
+ * Nick's laptop that refreshes the task's threads, prepares the first step with
+ * him and opens what he needs. The URI carries the task id only; PB reads the
+ * task from its own copy. Null for anything that is not a task id.
+ */
+export function buildPrepStartUri(taskId: string): string | null {
+  return TASK_ID_RE.test(taskId) ? `mnccore://prep/${taskId}` : null
+}
+
+/**
  * Domain-aware short label for a URL. Used in chip text when the link has
  * no user-provided description.
  *   https://github.com/ingra107/mn-ccore-lab/pull/42 -> github.com

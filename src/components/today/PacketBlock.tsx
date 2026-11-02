@@ -11,9 +11,11 @@
 // the existing Gmail draft in a new tab and records the action.
 
 import { Fragment, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { kindCopy, segmentBody } from '../../lib/packetBody'
 import type { DeliverableKind } from '../../../shared/packets'
+import PrepStartAction from '../PrepStartAction'
+import { packetQueryKey, useTaskPacket } from '../../hooks/useTaskPacket'
 
 export type PacketFreshnessState = 'ready' | 'changed' | 'unverified'
 
@@ -38,14 +40,6 @@ export interface PacketPayload {
   freshness?: { state: PacketFreshnessState; reasons: unknown[] }
 }
 
-const packetQueryKey = (taskId: string) => ['task-packet', taskId] as const
-
-async function fetchPacket(taskId: string): Promise<PacketPayload> {
-  const res = await fetch(`/api/tasks/${taskId}/packet`)
-  if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
-  return res.json() as Promise<PacketPayload>
-}
-
 class UseRefused extends Error {
   reasons: string[]
   constructor(reasons: string[]) { super('packet changed'); this.reasons = reasons }
@@ -66,7 +60,7 @@ const asText = (r: unknown): string => {
 export function PacketBlock({ taskId }: { taskId: string }) {
   const qc = useQueryClient()
   const key = packetQueryKey(taskId)
-  const query = useQuery({ queryKey: key, queryFn: () => fetchPacket(taskId), staleTime: 30 * 1000, retry: false })
+  const query = useTaskPacket(taskId)
   const [refused, setRefused] = useState<string[] | null>(null)
   const [copyFailed, setCopyFailed] = useState(false)
   const [done, setDone] = useState<'used' | 'dismissed' | null>(null)
@@ -221,6 +215,9 @@ export function PacketBlock({ taskId }: { taskId: string }) {
         ) : (
           <button type="button" className="tk-ask-go" onClick={() => use.mutate()} disabled={use.isPending}>{copy.button}</button>
         )}
+        {/* Prep & start on a prepared task (2026-11-02): the same interactive session,
+            starting from this step. Hidden for members and without the launcher. */}
+        {!packet.closed_at && <PrepStartAction taskId={taskId} ready />}
         <button type="button" className="tk-pk-dis" onClick={() => dismiss.mutate()} disabled={dismiss.isPending}>Dismiss</button>
       </div>
     </section>

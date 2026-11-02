@@ -11,9 +11,18 @@
 // ONE page. Every candidate shows its recommended first step at once. A
 // picked row opens in place (an unpicked one opens with "Options and note"):
 // the offer's 2-4 options (recommended preselected), "Something else...", and
-// one free-text box for a note. Then Start or Save, on the same page.
+// one free-text box for a note. Then Prep or Save, on the same page.
 //
-// The cap never blocks Start (Nick: "i could do 10 a day soemtimes"): picks
+// Prep vs Prep & start (2026-11-02, PB Context/Decisions/2026-11-02-prep-and-start.md).
+// Nick: "i dont' know what i am interacting with and what is occurring when i click
+// start because there isn't an interactive session". The footer button is the batch
+// PREP: each picked task gets its first step prepared in the background (the
+// packet_prepare lane; it shows Ready). Each card also carries Prep & start, one
+// task at a time: an interactive Claude session on his laptop that re-reads the
+// threads, does the prep with him and opens what he needs. It writes nothing here
+// and does not use a daily slot; the session reads this offer from PB itself.
+//
+// The cap never blocks Prep (Nick: "i could do 10 a day soemtimes"): picks
 // past what is left today are saved, not started; the first `left`, in the
 // order shown, start. The Worker's 409 daily_cap stays the backstop.
 //
@@ -25,11 +34,12 @@
 // chrome of its own (PlanPanel is the side panel it sits in today).
 //
 // Nothing acts on close or silence. The draft is component-local state ON
-// PURPOSE. The only write is the one answer, on a click of Start or Save,
+// PURPOSE. The only write is the one answer, on a click of Prep or Save,
 // through the question-answer route (POST /api/tasks/:id).
 
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import PrepStartAction from '../PrepStartAction'
 import type { TaskRow } from '../../lib/api'
 import { nowInstant } from '../../lib/time'
 import { postWeekPlanAnswer, useDailyPacketCount } from '../../lib/weekPlan'
@@ -156,14 +166,17 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
                   {rec && <span className="tk-plan-why" data-testid="plan-rec">Next step: {rec.label}</span>}
                 </span>
               </label>
-              <button
-                type="button"
-                className="tk-btn tk-sm"
-                aria-expanded={isOpen}
-                onClick={() => setOpen((m) => ({ ...m, [c.task_id]: !isOpen }))}
-              >
-                {isOpen ? 'Hide options' : 'Options and note'}
-              </button>
+              <span className="tk-week-acts">
+                <button
+                  type="button"
+                  className="tk-btn tk-sm"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen((m) => ({ ...m, [c.task_id]: !isOpen }))}
+                >
+                  {isOpen ? 'Hide options' : 'Options and note'}
+                </button>
+                <PrepStartAction taskId={c.task_id} />
+              </span>
               {isOpen && (
                 <fieldset className="tk-plan-set">
                   <legend className="tk-plan-why">First step for {c.title}</legend>
@@ -209,21 +222,21 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
 
         <p className="tk-plan-note" data-testid="plan-cap">
           {left === null
-            ? (count.isError ? "Couldn't read today's count; Start will try and the Worker decides." : "Checking today's count...")
+            ? (count.isError ? "Couldn't read today's count; Prep will try and the Worker decides." : "Checking today's count...")
             : `${cap} prepared first steps a day: ${left} left today.`}
           {chosen.length > 0 && overflow > 0 && left !== null && (
             startN === 0
               ? " Today's are used, so these will be saved for later."
-              : ` Start begins the first ${startN} in the list; the other ${overflow} are saved for later.`
+              : ` Prep begins the first ${startN} in the list; the other ${overflow} are saved for later.`
           )}
         </p>
         {err && <p className="tk-plan-err" role="alert">{err}</p>}
         <div className="tk-plan-acts">
           <button type="button" className="tk-btn tk-sm" onClick={() => submit(0)} disabled={busy || !ready}>
-            Save without starting
+            Save without prepping
           </button>
           <button type="button" className="tk-btn tk-sm tk-pri" onClick={() => submit(startN)} disabled={busy || !ready}>
-            {chosen.length === 0 ? 'Start' : startN === 0 ? 'Save for later' : `Start ${startN === 1 ? 'this one' : `these ${startN}`}`}
+            {chosen.length === 0 ? 'Prep' : startN === 0 ? 'Save for later' : `Prep ${startN === 1 ? 'this one' : `these ${startN}`}`}
           </button>
         </div>
       </section>

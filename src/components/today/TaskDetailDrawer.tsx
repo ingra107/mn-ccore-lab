@@ -23,6 +23,8 @@ import { TaskInlineFieldRow, DueInlineSelect } from '../tasks/detail/FieldContro
 import { ActivityPeek } from './ActivityPeek'
 import { StepsList } from './StepsList'
 import { PacketBlock } from './PacketBlock'
+import { useTaskPacket } from '../../hooks/useTaskPacket'
+import PrepStartAction from '../PrepStartAction'
 import TaskDetailPanel from '../tasks/LazyTaskDetailPanel'
 import { LinkCards } from './LinkCards'
 import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
@@ -69,6 +71,10 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const blocks = detail?.blocks ?? []
 
   const isDone = isTaskDone(task)
+  // Same query PacketBlock reads (one fetch). Unknown while loading, so the button
+  // waits rather than flashing on a task that has a packet.
+  const packetView = useTaskPacket(task.id)
+  const hasPacket = !packetView.isFetched || (!!packetView.data?.packet && !packetView.data.packet.closed_at)
   const dueOverdue = !isDone && isOverdue(task.due_date, task.status)
 
   // Move → popover wiring (parity with UnifiedMyTasks).
@@ -128,6 +134,13 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       {/* Prepared first step (packet): instruction first, draft never collapsed.
           Renders nothing when the task has no packet. */}
       <PacketBlock taskId={task.id} />
+      {/* Prep & start (2026-11-02): no prepared step yet, so the session does the prep
+          with Nick. With a packet, PacketBlock carries "Open session" instead. */}
+      {!hasPacket && !isDone && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--sp-sm)' }}>
+          <PrepStartAction taskId={task.id} variant="primary" />
+        </div>
+      )}
       {/* Action row — ONE quiet segmented control (Today round 2, 2026-10-09):
           Plan / Set section / Due / Full editor share a hairline-outlined
           capsule with hairline dividers, t2 text, t3 icons. Overdue keeps red
