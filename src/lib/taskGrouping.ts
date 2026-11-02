@@ -404,10 +404,15 @@ export function nextWeekPlanExpiry(tasks: readonly WeekPlanOfferRow[], nowIso: s
 }
 
 /**
- * How many rows the Needs you card shows as asking for him: waiting plus
- * answered-not-acted-on. Project-join asks are left out (they are answered on
+ * How many rows the Needs you card shows as asking for him: the waiting ones
+ * only. Project-join asks are left out (they are answered on
  * JoinRequestsCard). The Today "N needs you" stat reads this so it can never
  * disagree with the card it stands in for (2026-10-26).
+ *
+ * Answered-not-acted-on rows stopped counting on 2026-11-02 (Nick: "i
+ * technically answered these things... so what happens now. it still says
+ * these things need me"). They are Claude's turn, not his: the card shows them
+ * as one muted line (QuestionsCard, lib/answerEta.ts), never in the number.
  */
 export function cardQuestionCount(tasks: Array<WeekPlanOfferRow>, nowIso: string = nowInstant()): number {
   // A week plan asks once (the gold "Plan your week" row shows
@@ -415,8 +420,7 @@ export function cardQuestionCount(tasks: Array<WeekPlanOfferRow>, nowIso: string
   // week is its surface, not Needs you, so it stops counting.
   const others = tasks.filter((t) => {
     if (t.source === 'project_join' || t.source === WEEK_PLAN_SOURCE) return false
-    const s = questionCardState(t)
-    return s === 'waiting' || s === 'answered'
+    return questionCardState(t) === 'waiting'
   }).length
   const plan = newestWaitingWeekPlan(tasks, nowIso) ? 1 : 0
   return others + plan

@@ -155,9 +155,13 @@ describe('QuestionsCard', () => {
       makeQuestionTask({ id: 'q-wait' }),
       makeQuestionTask({ id: 'q-ans', question_answer_json: JSON.stringify({ v: 1, choice: 'c1', via: 'hub', at }) }),
     ])
+    // One muted line first (2026-11-02); the list opens from it.
+    await until(() => host.querySelector('[data-testid="q-answered-line"]') != null, 'answered line')
+    expect(host.querySelector('[data-testid="q-answered-q-ans"]')).toBeNull()
+    expect(host.querySelector('[data-testid="q-answered-line"]')!.textContent).toMatch(/^1 answer: Claude is late, was due /)
+    ;(host.querySelector('[data-testid="q-answered-line"]') as HTMLButtonElement).click()
     await until(() => host.querySelector('[data-testid="q-answered-q-ans"]') != null, 'answered row')
     const row = host.querySelector('[data-testid="q-answered-q-ans"]')!
-    expect(host.textContent).toContain('Answered, not acted on yet')
     expect(row.textContent).toContain('You answered “Pulmonary HSR Group Meeting”')
     expect(row.querySelector('[data-testid="q-answered-age"]')!.textContent).toBe('10 days ago')
     // Clearing an answer a consumer may already be acting on reopens the
@@ -166,6 +170,34 @@ describe('QuestionsCard', () => {
     expect([...row.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['For today', '3 days', 'Next week'])
     // The count is the waiting rows only: the answered one is not his turn.
     expect(host.querySelector('.tk-cnt')!.textContent).toBe('1')
+  })
+
+  it('answered rows alone are a quiet line, never the gold card (Nick 2026-11-02)', async () => {
+    const at = nowInstant()
+    const { host } = mountCard([
+      makeQuestionTask({ id: 'q-a1', question_answer_json: JSON.stringify({ v: 1, choice: 'c1', via: 'hub', at }) }),
+      makeQuestionTask({ id: 'q-a2', question_answer_json: JSON.stringify({ v: 1, choice: 'c1', via: 'hub', at }) }),
+    ])
+    await until(() => host.querySelector('[data-testid="q-quiet"]') != null, 'quiet line')
+    expect(host.querySelector('[aria-label="Needs you"]')).toBeNull()
+    expect(host.querySelector('.tk-attn')).toBeNull()
+    expect(host.querySelector('.tk-cnt')).toBeNull()
+    const line = host.querySelector('[data-testid="q-answered-line"]') as HTMLButtonElement
+    // meeting_match: the 30-minute worker, so a time, not "is acting".
+    expect(line.textContent).toMatch(/^2 answers: Claude acts by /)
+    expect(line.getAttribute('aria-expanded')).toBe('false')
+    line.click()
+    await until(() => host.querySelectorAll('[data-testid^="q-answered-q-"]').length === 2, 'both rows')
+    expect(line.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('an answer with no known consumer schedule reads "Claude is acting on"', async () => {
+    const { host } = mountCard([makeQuestionTask({
+      source: 'response_required',
+      question_answer_json: JSON.stringify({ v: 1, choice: 'c1', via: 'hub', at: nowInstant() }),
+    })])
+    await until(() => host.querySelector('[data-testid="q-answered-line"]') != null, 'line')
+    expect(host.querySelector('[data-testid="q-answered-line"]')!.textContent).toBe('Claude is acting on 1 answer')
   })
 
   it('lists a row acted on today as one dim line beside a live question', async () => {

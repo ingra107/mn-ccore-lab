@@ -52,6 +52,7 @@ import type { TaskRow } from '../../lib/api'
 import { isWeekPlan } from '../../lib/weekPlan'
 import { useWeekPlanNow } from '../../hooks/useWeekPlanNow'
 import { PlanPanel } from '../today/PlanPanel'
+import { answeredLine } from '../../lib/answerEta'
 
 interface QuestionsCardProps {
   tasks: TaskRow[]
@@ -84,8 +85,9 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   const plan = newestWaitingWeekPlan(all, planNow)
   const [planOpen, setPlanOpen] = useState(false)
   // Three states, each read off the row (questionCardState). Waiting rows are
-  // his turn; answered rows stay on the card until the PB lane acts, so an
-  // answer nothing picked up cannot drop off every surface; acted-on rows are
+  // his turn; answered rows stay visible until the PB lane acts, so an answer
+  // nothing picked up cannot drop off every surface, but as one muted line that
+  // never counts and never makes the card gold (2026-11-02); acted-on rows are
   // one dim line each, today only, so he sees the loop close.
   const waiting = tasks.filter((t) => questionCardState(t) === 'waiting')
   const answered = tasks
@@ -97,9 +99,43 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   // the card keeps the desk mounted for them and does not list them again.
   const [held, setHeld] = useState<string[]>([])
   const shownAnswered = renderWaiting ? answered.filter((t) => !held.includes(t.id)) : answered
-  // Acted-on rows alone are not a reason to show the gold card: nothing on it
-  // would want him.
-  if (!plan && waiting.length === 0 && shownAnswered.length === 0 && held.length === 0) return null
+  const [showAnswered, setShowAnswered] = useState(false)
+  // Gold = his turn: a waiting question, the week plan, or the desk's folded
+  // outcomes this visit. Answered rows are Claude's turn (2026-11-02, Nick: "i
+  // technically answered these things... so what happens now. it still says
+  // these things need me"), so alone they get the quiet line below, never the
+  // gold card; acted-on rows alone get nothing.
+  const gold = !!plan || waiting.length > 0 || held.length > 0
+  if (!gold && shownAnswered.length === 0) return null
+
+  // One muted line for every answered row, opening to the list (the rows keep
+  // their answer, age and snooze links). Gone once the consumer closes them.
+  const answeredBlock = shownAnswered.length > 0 && (
+    <AnsweredSummary rows={shownAnswered} open={showAnswered} onToggle={() => setShowAnswered((v) => !v)} />
+  )
+  const actedBlock = acted.length > 0 && (
+    <div className="tk-qrow" data-testid="q-acted" style={{ fontSize: 11.5, color: 'var(--sk-t3)' }}>
+      {acted.map((task) => (
+        <div key={task.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          Acted on today · {parseQuestionSpec(task)?.prompt ?? task.title}
+        </div>
+      ))}
+    </div>
+  )
+
+  if (!gold) {
+    // Nothing wants him: no gold wash, no title, no count, no fold control.
+    // Just the line, in the page's own muted tier, where the card would sit.
+    const quiet = (
+      <div className="tk">
+        <section aria-label="Answered, Claude acting" data-testid="q-quiet" style={{ margin: '10px 0 8px' }}>
+          {answeredBlock}
+          {actedBlock}
+        </section>
+      </div>
+    )
+    return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{quiet}</div> : quiet
+  }
 
   const card = (
     <div className="tk">
@@ -139,25 +175,8 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
         {renderWaiting
           ? (waiting.length > 0 || held.length > 0) && renderWaiting(waiting, setHeld)
           : waiting.map((task) => <QuestionRow key={task.id} task={task} />)}
-        {shownAnswered.length > 0 && (
-          <div className="tk-qrow" data-testid="q-answered">
-            <div style={{ fontSize: 11.5, color: 'var(--sk-t3)', marginBottom: 4 }}>
-              Answered, not acted on yet
-            </div>
-            {shownAnswered.map((task) => (
-              <AnsweredRow key={task.id} task={task} />
-            ))}
-          </div>
-        )}
-        {acted.length > 0 && (
-          <div className="tk-qrow" data-testid="q-acted" style={{ fontSize: 11.5, color: 'var(--sk-t3)' }}>
-            {acted.map((task) => (
-              <div key={task.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                Acted on today · {parseQuestionSpec(task)?.prompt ?? task.title}
-              </div>
-            ))}
-          </div>
-        )}
+        {answeredBlock}
+        {actedBlock}
         {snoozed.length > 0 && (
           <div className="tk-qrow">
             <button
@@ -184,6 +203,40 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
     </div>
   )
   return band ? <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>{card}</div> : card
+}
+
+/** The answered rows as ONE muted line ("3 answers: Claude acts by 5:25 AM",
+ *  lib/answerEta.ts), a real toggle that opens the list in place. */
+function AnsweredSummary({ rows, open, onToggle }: { rows: TaskRow[]; open: boolean; onToggle: () => void }) {
+  const line = answeredLine(rows)
+  return (
+    <div className="tk-qrow" data-testid="q-answered">
+      <button
+        type="button"
+        data-testid="q-answered-line"
+        aria-expanded={open}
+        onClick={(e) => { e.stopPropagation(); onToggle() }}
+        style={{
+          fontSize: 11.5,
+          color: line.late ? 'var(--job-stale)' : 'var(--sk-t3)',
+          textDecoration: 'underline',
+          textUnderlineOffset: 2,
+          padding: '4px 0',
+          touchAction: 'manipulation',
+          textAlign: 'left',
+        }}
+      >
+        {line.text}
+      </button>
+      {open && (
+        <div data-testid="q-answered-list" style={{ marginTop: 4 }}>
+          {rows.map((task) => (
+            <AnsweredRow key={task.id} task={task} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /** "4 to choose from" off the offer's spec; the title when it does not parse. */

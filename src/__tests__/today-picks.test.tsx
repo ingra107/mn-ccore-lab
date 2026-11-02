@@ -230,7 +230,10 @@ describe('DecisionDesk', () => {
     for (const p of ['R01 budget: keep the data manager', 'Send the CLIF abstract', 'Soften the site claim']) {
       expect(host.textContent!.split(p).length - 1).toBe(1)
     }
-    expect(host.querySelector('[data-testid="q-answered"]')!.textContent).toContain('Move the CLIF call')
+    // The answered row is one muted line inside the same card (2026-11-02); opened, it lists the row.
+    expect(host.querySelector('.tk-attn [data-testid="q-answered-line"]')!.textContent).toMatch(/^1 answer/)
+    host.querySelector<HTMLButtonElement>('[data-testid="q-answered-line"]')!.click()
+    await expect.poll(() => host.querySelector('[data-testid="q-answered"]')!.textContent).toContain('Move the CLIF call')
   })
 
   it('opens the oldest ask with its suggested answer and context; the rest are one line', async () => {
@@ -308,9 +311,12 @@ describe('DecisionDesk', () => {
     // The cache refresh moves them to "answered": they stay folded on the desk only.
     const at = nowInstant()
     setRows([...qs.map((q) => ({ ...q, question_answer_json: JSON.stringify({ v: 1, choice: 'yes', via: 'hub', at }) })), answered])
-    await waitFor(() => host.querySelector('[data-testid="q-answered-q-old"]') === null && host.querySelector('[data-testid="desk-done-q-old"]'), 'held')
+    await waitFor(() => host.querySelector('[data-testid="desk-done-q-old"]'), 'held')
+    // Open the answered line: only the row the desk is NOT holding is listed.
+    host.querySelector<HTMLButtonElement>('[data-testid="q-answered-line"]')!.click()
+    await waitFor(() => host.querySelector('[data-testid="q-answered-q-ans"]'), 'answered list')
+    expect(host.querySelector('[data-testid="q-answered-q-old"]')).toBeNull()
     expect(host.textContent!.split('Soften the site claim').length - 1).toBe(1)
-    expect(host.querySelector('[data-testid="q-answered-q-ans"]')).not.toBeNull()
   })
 
   it('renders after one answer, the second question open (laptop and phone)', async () => {
