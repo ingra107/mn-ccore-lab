@@ -40,7 +40,7 @@ export function isLaneSourceType(v: unknown): v is LaneSourceType {
   return (LANE_SOURCE_TYPES as readonly unknown[]).includes(v)
 }
 /** Packets a day may start, across the 05:15 job and Start, counted on the Hub. */
-export const PACKET_DAILY_CAP = 3
+export const PACKET_DAILY_CAP = 10
 /** Options a candidate offers. */
 export const WEEK_PLAN_MIN_OPTIONS = 2
 export const WEEK_PLAN_MAX_OPTIONS = 4
@@ -77,7 +77,8 @@ export interface WeekPlanSpec {
   candidates: WeekPlanCandidate[]
 }
 
-/** One pick on the answer. Exactly one of option_key / text is set. */
+/** One pick on the answer. At least one of option_key / text is set: an
+ *  option, Nick's own text, or both (the text is then a note on the option). */
 export interface WeekPlanPick {
   task_id: string
   option_key: string | null
@@ -257,8 +258,8 @@ export function parseWeekPlanSpec(raw: unknown): WeekPlanSpec | null {
  * The picks rules (the answer's `picks`):
  *   picks is a non-empty array; each pick is an object with a non-empty
  *   task_id (unique across picks), option_key a non-empty string or null,
- *   text a non-empty string or null, start a boolean; exactly one of
- *   option_key / text is non-null. With a spec: task_id names one of its
+ *   text a non-empty string or null, start a boolean; at least one of
+ *   option_key / text is non-null (both is an option plus Nick's note). With a spec: task_id names one of its
  *   candidates, and option_key one of that candidate's option keys.
  * `spec` null = judge the shape only.
  */
@@ -272,7 +273,7 @@ export function weekPlanPicksError(picks: unknown, spec: WeekPlanSpec | null): s
     seen.add(p.task_id)
     if (p.option_key !== null && !nonEmpty(p.option_key)) return `picks[${i}].option_key must be a non-empty string or null`
     if (p.text !== null && !nonEmpty(p.text)) return `picks[${i}].text must be a non-empty string or null`
-    if ((p.option_key === null) === (p.text === null)) return `picks[${i}] needs exactly one of option_key or text`
+    if (p.option_key === null && p.text === null) return `picks[${i}] needs option_key or text (or both)`
     if (typeof p.start !== 'boolean') return `picks[${i}].start must be a boolean`
     if (spec) {
       const c = spec.candidates.find((x) => x.task_id === p.task_id)
@@ -285,11 +286,14 @@ export function weekPlanPicksError(picks: unknown, spec: WeekPlanSpec | null): s
   return null
 }
 
-/** The direction a pick asks for: the option's direction, or the typed text. */
+/** The direction a pick asks for: the option's direction, the typed text, or
+ *  both (the direction, then Nick's note). */
 export function pickDirection(pick: WeekPlanPick, spec: WeekPlanSpec): string {
-  if (pick.text !== null) return pick.text.trim()
   const c = spec.candidates.find((x) => x.task_id === pick.task_id)
-  return c?.options.find((o) => o.key === pick.option_key)?.direction ?? ''
+  const dir = pick.option_key === null ? '' : (c?.options.find((o) => o.key === pick.option_key)?.direction ?? '')
+  if (pick.text === null) return dir
+  const note = pick.text.trim()
+  return dir === '' ? note : `${dir}\n\nNick's note: ${note}`
 }
 
 /** The answer's picks, or null when they break weekPlanPicksError's rules. */

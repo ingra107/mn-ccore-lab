@@ -32,7 +32,7 @@ import { TASK_TITLE_DEDUP_SELECT, taskOwnerKey } from '../lib/task-dedup-sql';
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
-import { weekPlanStart, weekPlanSupersededCheck } from '../lib/week-plan-start';
+import { weekPlanStart, weekPlanSupersededCheck, weekPlanNotes } from '../lib/week-plan-start';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
 import { classifyTriggerFailure } from '../lib/trigger-rule-codes';
@@ -1309,6 +1309,9 @@ async function decideAndCommitUpdate(
     return capped;
   }
   if (planStart) dependents.push(planStart.dependents);
+  // Typed per-pick notes land as task comments in the same batch (start or save).
+  const planNotes = await weekPlanNotes(env, mut, current, user);
+  if (planNotes) dependents.push(planNotes);
   const extraWhere = `${planStart ? planStart.capWhere : ''}${superseded ? superseded.where : ''}`;
   // Advance a PROJECT's own last_meaningful_movement on its own content
   // edits, inside this batch (no-op for task mutations).
