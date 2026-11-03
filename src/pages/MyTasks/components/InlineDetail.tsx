@@ -23,10 +23,10 @@ import LinkifiedText from '../../../components/LinkifiedText'
 import { CollapsibleBody } from '../../../components/activity/CollapsibleBody'
 import {
   JOB_ACCENT,
-  INK, INK_DIM, PANEL_BG,
-  MOVE_OPTIONS,
+  INK, INK_DIM,
   isTaskDone,
 } from '../constants'
+import { SortMenu } from '../../../components/tasks/SortPicker'
 import { useTodayPlan } from '../../../lib/todayPlan'
 import { stripMeetingMarker } from '../../../lib/textUtils'
 import { todayKey } from '../../../lib/taskGrouping'
@@ -90,16 +90,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
     return () => document.removeEventListener('mousedown', close)
   }, [moveOpen])
 
-  const moveToGroup = useCallback((opt: typeof MOVE_OPTIONS[number]) => {
-    updateTask.mutate({ id: task.id, fields: { group_override: opt.key } }, {
-      onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
-    })
-  }, [task.id, updateTask, undoToast])
-  const resetGroup = useCallback(() => {
-    updateTask.mutate({ id: task.id, fields: { group_override: null } }, {
-      onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
-    })
-  }, [task.id, updateTask, undoToast])
+  const closeMove = useCallback(() => setMoveOpen(false), [])
 
   const planToday = useCallback(() => {
     plan.planTask(task.id, 'strip')
@@ -205,29 +196,8 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Pin {...ICON_PROPS} size={12} /> Plan today</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? JOB_ACCENT : 'transparent'}`, background: moveOpen ? withAlpha(JOB_ACCENT, 13) : 'transparent', color: moveOpen ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
-          {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
-              {MOVE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => moveToGroup(opt)}
-                  disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(JOB_ACCENT, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
-              ))}
-              {task.group_override && (
-                <>
-                  <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
-                  <button
-                    onClick={resetGroup}
-                    disabled={updateTask.isPending}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
-                  >↺ Reset to auto-classify</button>
-                </>
-              )}
-            </div>
-          )}
+          <button onClick={() => setMoveOpen((o) => !o)} aria-haspopup="menu" aria-expanded={moveOpen} title="Set which section this task lives in (Review / Writing / Analysis & Build / Replies & admin)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? JOB_ACCENT : 'transparent'}`, background: moveOpen ? withAlpha(JOB_ACCENT, 13) : 'transparent', color: moveOpen ? JOB_ACCENT : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Set section →</button>
+          {moveOpen && <SortMenu task={task} onDone={closeMove} />}
         </div>
         {/* #114: Open full editor — promoted from TaskInlineFieldRow bottom to
             action bar next to Move → so it's immediately visible without

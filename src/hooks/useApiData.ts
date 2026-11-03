@@ -703,6 +703,8 @@ export function useTasks(filters?: {
   completed_since?: string
   /** Only the Today and My Tasks pages (the "Needs you" card) pass true; see fetchTasks. */
   includeQuestions?: boolean
+  /** Today "With others": open tasks of others in this person's projects or assigned by them. */
+  others_of?: string
 }, options?: { enabled?: boolean; retry?: boolean | number }) {
   return useQuery({
     queryKey: ['tasks', filters],

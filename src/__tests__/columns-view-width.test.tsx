@@ -1,7 +1,8 @@
 // Guards My Tasks Columns width (Nick 2026-10-10: "Columns may go full width").
 //
-// At the width Columns gets on a 1440 viewport (about 1,034px) all five columns
-// must fit with no scroll control. Narrower, the grid scrolls, and the scroll
+// At the width Columns gets on a 1440 viewport (about 1,034px) five columns
+// must fit with no scroll control (an empty section hides, so five populated
+// sections is the common full page; all seven would scroll by design). Narrower, the grid scrolls, and the scroll
 // control must not sit on a column header or the Overdue banner (the overlay
 // "›" button and right-edge fade did, 2026-10-10 evaluation section 1).
 //
@@ -12,14 +13,17 @@ import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ColumnsView } from '../pages/MyTasks/views/ColumnsView'
 import type { TaskRow } from '../lib/api'
-import type { GroupKey } from '../pages/MyTasks/constants'
+import type { SectionKey } from '../lib/taskSections'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
 afterEach(() => { vi.unstubAllGlobals() })
 
 const overdue = { id: 't1', title: 'Late task', status: 'todo', due_date: '2020-01-01' } as unknown as TaskRow
-const byGroup: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
+const card = (id: string) => ({ ...overdue, id }) as TaskRow
+const byGroup: Record<SectionKey, TaskRow[]> = {
+  sort: [], review: [card('a')], writing: [card('b')], analysis: [card('c')], admin: [card('d')], etl: [card('e')], others: [],
+}
 
 async function render(width: number): Promise<HTMLElement> {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
@@ -29,7 +33,7 @@ async function render(width: number): Promise<HTMLElement> {
       <MemoryRouter>
         <div style={{ height: 600, display: 'flex', flexDirection: 'column' }}>
           <ColumnsView
-            filtered={[overdue]} isEmpty={false} byGroup={byGroup}
+            filtered={Object.values(byGroup).flat()} isEmpty={false} byGroup={byGroup}
             onOpenEditor={() => {}} projectsByPid={new Map()}
           />
         </div>

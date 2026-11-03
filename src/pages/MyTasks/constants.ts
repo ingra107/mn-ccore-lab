@@ -3,19 +3,17 @@
 // by 2+ files in src/pages/MyTasks/ lives here.
 
 import type { TaskRow } from '../../lib/api'
-import { isCheckin, isMilestone } from '../../../shared/taskKinds'
 import { researchTeam } from '../../data/team'
 
 // Shared primitives re-exported from taskGrouping (also used by Today landing).
-// Import directly from there if you only need these.
+// Import directly from there if you only need these. Which section a task sits
+// in is lib/taskSections.ts (shared with Today).
 export {
-  type GroupKey,
-  GROUP_ORDER,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'
 
-import type { GroupKey } from '../../lib/taskGrouping'
+import type { SectionKey } from '../../lib/taskSections'
 
 // Color jobs (rules-ui-design principle 21). The MyTasks surface speaks
 // only these plus the ink ramp: accent = selection / primary action / in
@@ -40,9 +38,7 @@ export function parseViewMode(raw: string | null | undefined): ViewMode {
 }
 export type QuickViewKey = 'all' | 'new' | 'today' | 'planned' | 'done-today' | 'overdue' | 'waiting' | 'stale' | 'declined'
 
-export interface GroupMeta { icon: string; label: string; color: string; desc: string }
-
-export interface FilterState { priority: string | null; project: string | null; mentee: string | null; group: GroupKey | null; hideCompleted: boolean }
+export interface FilterState { priority: string | null; project: string | null; mentee: string | null; group: SectionKey | null; hideCompleted: boolean }
 
 export interface FilterOption { v: string | null; l: string }
 
@@ -50,18 +46,9 @@ export interface FilterOption { v: string | null; l: string }
 // Constants
 // ──────────────────────────────────────────────────────────────────────────
 
-// GROUP_META + STATUS_COLOR + PRIORITY_COLOR reference CSS-var tokens so
-// the chips / dots / borders flip with theme (Phase 7, 2026-05-27). Groups
-// are not a color job, so every lane is the same muted ink (principle 21);
-// only urgent keeps a color (the orange stale edge) and in-progress the accent.
-export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { icon: '🎯', label: 'Deep work',        color: 'var(--task-ink-muted)',   desc: 'Scheduled focus blocks' },
-  priorities: { icon: '✅', label: 'Priorities',       color: 'var(--task-ink-muted)',   desc: 'P1 ops & commitments' },
-  quick:      { icon: '⚡', label: 'Quick',            color: 'var(--task-ink-muted)',  desc: 'Sub-15-min lifts' },
-  pb:         { icon: '🧠', label: 'Peripheral Brain', color: 'var(--task-ink-muted)',     desc: 'Reflection & low-urgency' },
-  etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: 'var(--task-ink-muted)',   desc: 'Data pipeline ops' },
-}
-
+// STATUS_COLOR + PRIORITY_COLOR reference CSS-var tokens so the chips / dots /
+// borders flip with theme (Phase 7, 2026-05-27). Only urgent keeps a color (the
+// orange stale edge) and in-progress the accent (principle 21).
 export const STATUS_LABEL: Record<string, string> = { todo: 'Todo', in_progress: 'Active', waiting_external: 'Waiting', blocked: 'Blocked', done: 'Done' }
 export const STATUS_COLOR: Record<string, string> = {
   todo:             'var(--task-ink-muted)',
@@ -81,43 +68,9 @@ export const PRIORITY_COLOR: Record<string, string> = {
 // Trainees/coordinators/students/analysts treated as mentees for the filter.
 export const MENTEE_SLUGS = new Set(researchTeam.map((m) => m.slug))
 
-// Move → popover: writes tasks.group_override (schema v50). All 5 groups
-// available because the override is independent of priority/source/project.
-export const MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
-  { key: 'deep',       label: '🎯 Deep work' },
-  { key: 'priorities', label: '✅ Priorities' },
-  { key: 'quick',      label: '⚡ Quick' },
-  { key: 'pb',         label: '🧠 Peripheral Brain' },
-  { key: 'etl',        label: '🔧 CQODE · CLIF ETL' },
-]
-
 // ──────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────
-
-export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): GroupKey {
-  // Hub-explicit override wins (schema v50). User clicked Move → on the
-  // /portal/my-tasks page; their choice trumps auto-derivation.
-  if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
-    return t.group_override
-  }
-  // A milestone is the deadline spine, not work: it always sits in Deep Work
-  // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
-  // whatever its priority says. Only an explicit Move (above) outranks this.
-  if (isMilestone(t)) return 'deep'
-  // A check-in is a one-tap follow-up, never Deep Work (Nick 2026-10-30:
-  // "outside the Deep Work cap"). Same line in components/today/constants.ts.
-  if (isCheckin(t)) return 'quick'
-  if (t.source === 'pb' || /^pb:/i.test(t.title)) return 'pb'
-  const proj = t.project_id ? projectsByPid.get(t.project_id) : null
-  const projSlug = proj?.slug || ''
-  const projCat = proj?.category || ''
-  if (/cqode|clif-etl|etl/i.test(projSlug) || /CQODE|ETL/.test(t.title)) return 'etl'
-  if (projCat === 'clif' && /etl|ingest|backbone/i.test(t.title)) return 'etl'
-  if (t.priority === 'urgent' || t.priority === 'high') return 'priorities'
-  if (t.priority === 'low') return 'quick'
-  return 'deep'
-}
 
 // dueLabel: thin wrapper around dueLabelCompact(), the <= 6-char row form
 // (Nick 2026-09-17; was dueLabelText, DH-4

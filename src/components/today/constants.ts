@@ -9,17 +9,12 @@ import type { MeetingRow } from '../../hooks/useApiData'
 // Shared primitives re-exported from taskGrouping (also used by MyTasks page).
 // Import directly from there if you only need these.
 export {
-  type GroupKey,
-  GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'
 
 import { todayKey } from '../../lib/taskGrouping'
-import type { GroupKey } from '../../lib/taskGrouping'
-import type { TaskRow } from '../../lib/api'
-import { isCheckin, isMilestone } from '../../../shared/taskKinds'
 import { grantedProjectList } from '../../lib/projectMeetings'
 import { projectShortLabel } from '../../lib/displayNames'
 
@@ -28,12 +23,6 @@ import { projectShortLabel } from '../../lib/displayNames'
 // ──────────────────────────────────────────────────────────────────────────
 
 export type PlannedSlot = 'strip' | `between-${number}`
-
-export interface GroupMeta {
-  label: string
-  icon: string
-  color: string
-}
 
 export interface TodayEvent {
   id: string
@@ -122,63 +111,11 @@ export interface DailyCounts {
 // Constants
 // ──────────────────────────────────────────────────────────────────────────
 
-// GROUP_META colors reference CSS-var tokens so the lane / chip / dot
-// accents flip with theme (Phase 7, 2026-05-27). The pb-bucket grey uses
-// --task-ink-muted (the same token used for secondary text on the
-// surface) — gives 4.6:1+ on both light and dark task-page-bg.
-export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { label: 'Deep work',        icon: '🎯', color: 'var(--sk-t2)' },
-  priorities: { label: 'Priorities',       icon: '✅', color: 'var(--sk-t2)' },
-  quick:      { label: 'Quick',            icon: '⚡', color: 'var(--sk-t2)' },
-  pb:         { label: 'Peripheral Brain', icon: '🧠', color: 'var(--task-ink-muted)' },
-  etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: 'var(--sk-t2)' },
-}
-
-// Move → popover options — same set as UnifiedMyTasks. Writes group_override
-// directly (schema v50). All 5 options actionable because override is
-// independent of priority/source/project derivation.
-export const TODAY_MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
-  { key: 'deep',       label: '🎯 Deep work' },
-  { key: 'priorities', label: '✅ Priorities' },
-  { key: 'quick',      label: '⚡ Quick' },
-  { key: 'pb',         label: '🧠 Peripheral Brain' },
-  { key: 'etl',        label: '🔧 CQODE · CLIF ETL' },
-]
-
 // ──────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────
 
-// Map a task to one of the 5 groups. Order matters (first match wins).
-// Today landing uses broader pb detection (project slug / category) than
-// MyTasks page — do NOT consolidate without reviewing both rule sets.
-export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { category?: string | null; slug: string }>): GroupKey {
-  // Hub-explicit override wins (schema v50). Same rule as UnifiedMyTasks.
-  if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
-    return t.group_override
-  }
-  // A milestone is the deadline spine, not work: it always sits in Deep Work
-  // as a dated rule (Nick 2026-09-17: "they should always be in deep work"),
-  // whatever its priority says. Only an explicit Move (above) outranks this.
-  if (isMilestone(t)) return 'deep'
-  // A check-in is a one-tap follow-up, never Deep Work (Nick 2026-10-30:
-  // "outside the Deep Work cap"). Same line in MyTasks/constants.ts.
-  if (isCheckin(t)) return 'quick'
-  // PB bucket — broadened: source flag, title prefix, project slug pattern,
-  // or project category. Catches "Peripheral Brain" variations that the
-  // narrow source='pb' check missed in the eval (review/pre-merge-2026-04-25/EVAL.md Issue 4).
-  if (t.source === 'pb') return 'pb'
-  if (/^(pb|peripheral.?brain)\s*[:\-—]/i.test(t.title)) return 'pb'
-  const proj = t.project_id ? projectsBySlug.get(t.project_id) : null
-  const projSlug = proj?.slug || ''
-  const projCat = proj?.category || ''
-  if (projCat === 'pb' || /(^|\W)(pb|peripheral.?brain)(\W|$)/i.test(projSlug)) return 'pb'
-  if (/cqode|clif-etl|etl/i.test(projSlug) || /CQODE|ETL/.test(t.title)) return 'etl'
-  if (projCat === 'clif' && /etl|ingest|backbone/i.test(t.title)) return 'etl'
-  if (t.priority === 'urgent' || t.priority === 'high') return 'priorities'
-  if (t.priority === 'low') return 'quick'
-  return 'deep'
-}
+// Which section a task sits in: lib/taskSections.ts (one resolver, shared with My Tasks).
 
 export function formatTodayDate(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })

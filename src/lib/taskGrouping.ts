@@ -3,8 +3,7 @@
 //
 // Extracted from both constants.ts files (Task 5.4, naming-convention refactor
 // 2026-05-14). Only items that are byte-identical between the two surfaces
-// live here. Surface-specific items (GROUP_META, GroupMeta interface,
-// getGroupForTask, move options, view types, mentee slugs, localStorage
+// live here. Surface-specific items (view types, mentee slugs, localStorage
 // helpers) remain in each surface's own constants.ts.
 
 import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanOfferNewer, weekPlanSpecWeek } from '../../shared/weekPlan'
@@ -12,17 +11,8 @@ import type { TaskRow } from './api'
 import { isMilestone, isQuestion } from '../../shared/taskKinds'
 import { nowInstant, parseDbUtc } from './time'
 
-// ──────────────────────────────────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────────────────────────────────
-
-export type GroupKey = 'deep' | 'priorities' | 'quick' | 'pb' | 'etl'
-
-// ──────────────────────────────────────────────────────────────────────────
-// Constants — group ordering
-// ──────────────────────────────────────────────────────────────────────────
-
-export const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
+// GroupKey and GROUP_ORDER were deleted 2026-11-03: the section a task sits in
+// is lib/taskSections.ts, shared by Today and My Tasks.
 
 // ──────────────────────────────────────────────────────────────────────────
 // Constants — theme palette (CSS-var SSOT, Phase 7 2026-05-27)

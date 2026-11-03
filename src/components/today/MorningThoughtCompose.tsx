@@ -7,8 +7,8 @@
 //   `@hermes <text>`    → POST /api/days/:date/activity (private day thread; Hermes answers in-thread — Phase 3/5)
 //   `@backlog[: ]<txt>` → POST /api/ai-requests with source_type='backlog_idea'
 //   `note: <text>`      → POST /api/inbox-events (durable) + LS echo for instant UX
-//   default             → useCreateTask({assignee, group_override}) — creates
-//                         a task in the user's default bucket (priorities)
+//   default             → useCreateTask({assignee}) — creates a task with no
+//                         kind of work yet (it sits in Today's Sort strip)
 //
 // Time-aware (after 5pm CT — local hour >= 17):
 //   - placeholder swaps to "Plan tomorrow's first move…"
@@ -35,8 +35,6 @@ import { useLaunchCommands } from '../../hooks/useLaunchCommands'
 import { LAUNCH_AUTH_UNRESOLVED_MSG } from '../../lib/launchCommands'
 import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix } from '../../lib/hermesRouting'
 import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../../lib/askHermes'
-
-const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
 function tomorrowISO(): string {
   const d = new Date()
@@ -184,13 +182,8 @@ export function MorningThoughtCompose() {
         description: content,
         assignee: userSlug,
         ...(due_date ? { due_date } : {}),
-        // useCreateTask's input type doesn't yet enumerate group_override —
-        // pass it via spread so the backend (which accepts it via VALID_GROUP_OVERRIDES)
-        // captures it. If the type guard rejects, falls through harmless.
-        // (Hub-side createTask wraps fetchApi; group_override is a top-level
-        // body field on POST /api/tasks per CLAUDE.md Rule 63.)
-        // @ts-expect-error — group_override not in TS input but accepted by API
-        group_override: DEFAULT_GROUP_OVERRIDE,
+        // No section is stamped: a new task has no kind yet, so it lands in
+        // Today's Sort strip until it is placed.
       }, {
         onSuccess: () => {
           appendDailyThought(content, 'task')

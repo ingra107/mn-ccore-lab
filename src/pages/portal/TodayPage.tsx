@@ -11,7 +11,7 @@
 // 📂▶ Work = open project folder / launch Claude Code.
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useRecentTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats, useTodayMentees } from '../../hooks/useApiData'
+import { useRecentTasks, useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats, useTodayMentees } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useMarkSeen } from '../../hooks/useEntitySeen'
@@ -28,14 +28,14 @@ import { useTodayState } from '../../hooks/useTodayState'
 import { civilDaysOverdue, civilDaysUntil } from '../../lib/dateUtils'
 import { daysSince } from '../../lib/taskGrouping'
 import {
-  GROUP_ORDER,
   INK, INK_MUTED, PAGE_BG,
   todayKey, formatTodayDate,
   projectCalendarEventToDay, isToday,
   mergeCalendarWithMeetings,
-  getGroupForTask, isTaskDone,
-  type GroupKey, type TodayEvent, type DailyCounts,
+  isTaskDone,
+  type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
+import { SECTION_ORDER, bucketBySection } from '../../lib/taskSections'
 import { useCompletionMoments } from '../../lib/completionMoment'
 import { StatLine } from '../../components/today/StatLine'
 import { ProfileSetupPrompt } from '../../components/today/ProfileSetupPrompt'
@@ -71,11 +71,9 @@ import type { TaskRow } from '../../lib/api'
 import { hideStepsOfPresentParents, openStepsByParent } from '../../lib/taskSteps'
 import { isApprovalPending, isApprovalTriaged, isQuestionTask, isQuestionOnCard, isQuestionSnoozed, civilDatePlusDays } from '../../lib/taskGrouping'
 import { isStalledProject, projectMovedAt } from '../../lib/taskConstants'
-import { useTodayDueWindow, DUE_WINDOW_OPTIONS, dueWindowDays } from '../../hooks/useTodayDueWindow'
 import { isMilestone } from '../../../shared/taskKinds'
 import { Brain, Diamond, MessageSquare, Settings } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import PageHeartbeat from '../../components/moments/PageHeartbeat'
 import LabPulseLine from '../../components/labpulse/LabPulseLine'
@@ -117,6 +115,10 @@ export default function TodayPage() {
   // fired an UNSCOPED /api/tasks read (every member's tasks) until the slug
   // arrived; `enabled` makes that request impossible to build.
   const tasksQuery = useRecentTasks({ assignee: userSlug, includeQuestions: true }, { retry: false, enabled: !!userSlug })
+  // With others (2026-11-03, Nick: "Tasks you assigned or that sit in your
+  // projects"): open work that sits with someone else but is this person's
+  // business. A second, narrower read; the viewer's own tasks stay on the query above.
+  const othersQuery = useTasks({ others_of: userSlug, completed: 'false' }, { retry: false, enabled: !!userSlug })
   const menteesQuery = useTodayMentees()
   const projectsQuery = useProjects()
   const meetingsQuery = useMeetingsApi()
@@ -258,22 +260,15 @@ export default function TodayPage() {
   const isPhone = useIsMobile(640)
 
 
-  // #105: how far ahead the TASK POOL reaches. A view preference, not task state.
-  const { dueWindow, setDueWindow } = useTodayDueWindow()
-
-  // The task pool shown under the heading below.
+  // The task pool shown under the heading below is EVERYTHING open (Nick
+  // 2026-11-03, scope B: "the biggest reason is because I really worry about
+  // missing something"). Nothing is filtered out by date; the section fold
+  // (lib/taskSections isAlwaysVisible) decides which rows start folded.
   //
-  // ⚠️ This is deliberately a SEPARATE array from `tasks`, and only the grouped
-  // list consumes it. `useTodayState`, Timeline, Agenda, PlannedTodaySection and
-  // the overdue rail must keep receiving the FULL open set — the day plan is
-  // synced task state derived from those rows (Rule 63b), so filtering the base
-  // array would make a planned task whose due date falls outside the window
-  // vanish from its own saved slot.
-  //
-  // A task is in the pool when it is planned for today (an explicit choice always
-  // outranks a date filter), or its due date is on/before the window edge.
-  // Overdue tasks pass because their date is before the edge; undated tasks
-  // appear only under "All".
+  // ⚠️ `listedTasks` is deliberately a SEPARATE array from `tasks`, and only the
+  // sections consume it. `useTodayState`, Timeline, Agenda, PlannedTodaySection
+  // and the overdue rail keep receiving the FULL own open set (Rule 63b: the day
+  // plan is synced task state derived from those rows).
   // Milestones on/off (Nick 2026-09-17: "we need a filter to turn off
   // milestones"). Per-viewer convenience, so localStorage; default on.
   const [showMilestones, setShowMilestones] = useState<boolean>(() => {
@@ -295,28 +290,25 @@ export default function TodayPage() {
     const open = new Set(tasks.map((t) => t.id))
     return (tasksQuery.data ?? []).filter((t) => open.has(t.id))
   }, [tasks, tasksQuery.data])
+  // Others' open tasks in this person's projects, or that they assigned. The
+  // same exclusions as `tasks`: triage artifacts and questions are not work.
+  const otherTasks: TaskRow[] = useMemo(() => {
+    const own = new Set(tasks.map((t) => t.id))
+    return (othersQuery.data ?? []).filter(
+      (t) => !own.has(t.id) && t.completed === 0 && t.status !== 'done'
+        && !isApprovalPending(t) && !isApprovalTriaged(t) && !isQuestionTask(t),
+    )
+  }, [tasks, othersQuery.data])
   const visibleTasks = useMemo(() => {
-    const days = dueWindowDays(dueWindow)
-    const edge = days === null ? null : civilDatePlusDays(todayKey(), days)
-    return listedTasks.filter((t) => {
-      // A milestone is the horizon itself (Nick 2026-09-16: always show) —
-      // a grant date six weeks out must not vanish behind a 7d window — unless
-      // the milestones toggle is off.
-      if (isMilestone(t)) return showMilestones
-      if (edge === null) return true
-      if (state.planned[t.id]) return true
-      const due = t.due_date?.slice(0, 10)
-      return !!due && due <= edge
-    })
-  }, [listedTasks, dueWindow, state.planned, showMilestones])
+    // A milestone shows unless the milestones toggle is off.
+    return [...listedTasks, ...otherTasks].filter((t) => !isMilestone(t) || showMilestones)
+  }, [listedTasks, otherTasks, showMilestones])
   // A settling task shows in its group AND in Completed today for the beat.
   // The ring plays once, on the group row; the Completed-today copy stays quiet.
   const ringsInGroup = useMemo(
     () => new Set(visibleTasks.filter((t) => settling.has(t.id)).map((t) => t.id)),
     [visibleTasks, settling],
   )
-
-  const hiddenByWindow = tasks.length - visibleTasks.length
 
   // A meeting card that shows its action rows tells us which tasks it holds
   // (MeetingActionsCard). Each task shows once on Today, so the groups below
@@ -336,21 +328,16 @@ export default function TodayPage() {
   }, [])
   const cardRowIds = useMemo(() => new Set(Object.values(cardRows).flat()), [cardRows])
 
-  // Group bucketing.
+  // Section bucketing: the ONE resolver shared with My Tasks (lib/taskSections).
   const grouped = useMemo(() => {
-    const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
     // A step shows on its parent's card (Nick 2026-10-30), not as a row of its
     // own -- but only when that parent is in these lists. A step whose parent
     // is filtered out or not Today's keeps its row.
     const listed = visibleTasks.filter((t) => !cardRowIds.has(t.id))
-    for (const t of hideStepsOfPresentParents(listed)) {
-      const key = getGroupForTask(t, projectsByPid)
-      g[key].push(t)
-    }
-    return g
-  }, [visibleTasks, projectsByPid, cardRowIds])
+    return bucketBySection(hideStepsOfPresentParents(listed), { viewerSlug: userSlug, projectsBySlug: projectsByPid })
+  }, [visibleTasks, projectsByPid, cardRowIds, userSlug])
   // The open steps of each parent, for the "Next:" row on its card. From the
-  // full open set, so a step outside the due window is still the parent's next.
+  // full open set, so any step is the parent's next, folded or not.
   const stepsByParent = useMemo(() => openStepsByParent(tasks), [tasks])
 
   // Derived counts.
@@ -845,21 +832,11 @@ export default function TodayPage() {
           </section>
         )}
 
-        {/* #105: heading no longer claims "All" — the pool is now what the due
-            window admits, and the window picker sits next to the claim it makes. */}
+        {/* Everything open, by kind of work. The due-window picker is gone: each
+            section folds its far-out rows itself (Show N more). */}
         <div className="tk-ph" style={{ marginTop: 6 }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--sk-t1)', margin: 0, whiteSpace: 'nowrap' }}>Tasks</h2>
           <i className="sk-fade" aria-hidden="true" />
-          {/* The ONE locked toggle anatomy — never re-mint the inline pill group
-              (docs/design-system.md; ui/SegmentedToggle.tsx). It is
-              the Today tray. The labels are self-evident, so per the tooltip
-              doctrine they carry none. */}
-          <SegmentedToggle
-            options={DUE_WINDOW_OPTIONS}
-            value={dueWindow}
-            onChange={setDueWindow}
-            ariaLabel="Show tasks due within"
-          />
           <button
             type="button"
             onClick={() => setShowMilestones((v) => !v)}
@@ -872,30 +849,21 @@ export default function TodayPage() {
             <Diamond {...ICON_PROPS} size={11} />
             Milestones
           </button>
-          {hiddenByWindow > 0 && (
-            <button
-              type="button"
-              onClick={() => setDueWindow('all')}
-              data-tip="Show every open task again"
-              className="tk-further"
-            >
-              {hiddenByWindow} further out →
-            </button>
-          )}
           <span className="tk-hintx today-section-hint">click to expand · pin or drag the grip to plan</span>
         </div>
 
         {isLoading ? (
           <TableSkeleton />
         ) : (
-          GROUP_ORDER.map((gkey) => (
+          SECTION_ORDER.map((skey) => (
             <TaskGroup
-              key={gkey}
-              gkey={gkey}
-              tasks={grouped[gkey]}
+              key={skey}
+              skey={skey}
+              tasks={grouped[skey]}
               projectsByPid={projectsByPid}
               state={state}
               stepsByParent={stepsByParent}
+              viewerSlug={userSlug}
             />
           ))
         )}

@@ -56,7 +56,7 @@ async function mountUi(ui: ReactElement): Promise<HTMLElement> {
 }
 
 const group = (p: TaskRow, all: TaskRow[], calls: string[] = []) =>
-  <TaskGroup gkey="etl" tasks={[p]} projectsByPid={new Map()} state={stateWith(calls)} stepsByParent={openStepsByParent(all)} />
+  <TaskGroup skey="etl" viewerSlug="" tasks={[p]} projectsByPid={new Map()} state={stateWith(calls)} stepsByParent={openStepsByParent(all)} />
 
 describe('step ordering', () => {
   it('picks earliest due date first, undated last, then oldest', () => {
@@ -135,7 +135,7 @@ describe('parent card', () => {
 
   it('every step done: the gold prompt completes the parent', async () => {
     const calls: string[] = []
-    const p = parent({ step_done: 4 })
+    const p = parent({ step_done: 4, priority: 'high' }) // high: stays out of the fold
     const h = await mountUi(group(p, [p], calls))
     const ask = h.querySelector('[data-testid="steps-all-done"]')!
     expect(ask.querySelector('.tk-ask-t')!.textContent).toBe('All 4 steps done -- complete CLIF 3.0 upgrade')
@@ -147,7 +147,7 @@ describe('parent card', () => {
   })
 
   it('a task with no steps renders as before', async () => {
-    const h = await mountUi(group(row('solo', { title: 'Solo task' }), [row('solo')]))
+    const h = await mountUi(group(row('solo', { title: 'Solo task', priority: 'high' }), [row('solo')]))
     expect(h.querySelector('[data-testid="steps-next"]')).toBeNull()
     expect(h.querySelector('.tk-lock')).toBeNull()
   })

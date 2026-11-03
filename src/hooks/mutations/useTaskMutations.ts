@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createTask, updateTaskStatus, updateTask, acknowledgeTask, restoreTask, fetchApi } from '../../lib/api'
+import { createTask, updateTaskStatus, updateTask, acknowledgeTask, restoreTask, sortTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
+import { sortTarget, type SortCommand } from '../../lib/taskSections'
 import type { TaskKind } from '../../../shared/taskKinds'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots, optimisticRowUpdate, rollbackRowChanges } from './utils'
 import { nowInstant } from '../../lib/time'
@@ -135,6 +136,39 @@ export function useUpdateTask() {
       // for exactly this reason; useUpdateTask was the asymmetric half.
       queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+/**
+ * useSortTask: a hand sort, unsort or Reset of a task's kind of work
+ * (POST /api/tasks/:id/sort, which logs every call). Optimistic: the row jumps
+ * to its new section at once; a refusal puts back only what this write changed.
+ */
+export function useSortTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, cmd }: { id: string; cmd: SortCommand }) =>
+      sortTask(id, cmd),
+
+    onMutate: async ({ id, cmd }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const to = sortTarget(cmd)
+      const rows = optimisticRowUpdate<TaskRow>(
+        queryClient, ['tasks'],
+        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...to } : t),
+      )
+      return { rows }
+    },
+
+    onError: (_err, _vars, context) => {
+      rollbackRowChanges(queryClient, context?.rows)
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['task-detail'] })
     },
   })
 }

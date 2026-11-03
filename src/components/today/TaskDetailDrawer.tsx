@@ -4,8 +4,8 @@
 // full-width activity feed under composer; chips + blocks/workflow
 // below the feed.
 //
-// Extracted from src/pages/portal/TodayPage.tsx (B2_TaskDetail). Same Move→
-// popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
+// Extracted from src/pages/portal/TodayPage.tsx (B2_TaskDetail). "Set section"
+// is the shared SortPicker menu, the same one UnifiedMyTasks InlineDetail uses.
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { isFromMeeting } from '../../lib/meetingOrigin'
@@ -31,10 +31,8 @@ import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isOverdue } from '../../lib/dateUtils'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
-import {
-  INK, INK_MUTED, INK_DIM, PANEL_BG,
-  TODAY_MOVE_OPTIONS, withAlpha,
-} from './constants'
+import { INK, INK_MUTED, INK_DIM } from './constants'
+import { SortMenu } from '../tasks/SortPicker'
 import { fmtDuration } from './utils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
@@ -90,16 +88,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [moveOpen])
-  const moveToGroup = useCallback((opt: typeof TODAY_MOVE_OPTIONS[number]) => {
-    updateTask.mutate({ id: task.id, fields: { group_override: opt.key } }, {
-      onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
-    })
-  }, [task.id, updateTask, undoToast])
-  const resetGroup = useCallback(() => {
-    updateTask.mutate({ id: task.id, fields: { group_override: null } }, {
-      onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
-    })
-  }, [task.id, updateTask, undoToast])
+  const closeMove = useCallback(() => setMoveOpen(false), [])
 
   // Duration stepper — local display value initialised from task.estimated_minutes.
   // Default 30 is READ-TIME only: we only write to Hub when the user actually
@@ -160,43 +149,20 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           </button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          {/* #93: "Move →" renamed "Set section" — it re-buckets the task into a
-              Today section (Deep work / Priorities / Quick / …) via group_override,
-              NOT moving it between projects. */}
+          {/* "Set section" places the task in a kind-of-work section (Review /
+              Writing / Analysis & Build / Replies & admin), by hand; it does not
+              move it between projects. SortPicker owns the menu. */}
           <button
             type="button"
             className={`tk-si${moveOpen ? ' tk-open' : ''}`}
             onClick={() => setMoveOpen((o) => !o)}
             aria-haspopup="menu"
             aria-expanded={moveOpen}
-            title="Set which Today section this task lives in (Deep work / Priorities / Quick / …)"
+            title="Set which Today section this task lives in (Review / Writing / Analysis & Build / Replies & admin)"
           >
             <Rows3 {...ICON_PROPS} size={13} />Set section<ChevronDown {...ICON_PROPS} size={11} />
           </button>
-          {moveOpen && (
-            <div role="menu" aria-label="Set section" style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
-              {TODAY_MOVE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  role="menuitem"
-                  onClick={() => moveToGroup(opt)}
-                  disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha('var(--job-accent)', 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? 'var(--job-accent)' : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
-              ))}
-              {task.group_override && (
-                <>
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
-                  <button
-                    role="menuitem"
-                    onClick={resetGroup}
-                    disabled={updateTask.isPending}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
-                  >↺ Reset to auto-classify</button>
-                </>
-              )}
-            </div>
-          )}
+          {moveOpen && <SortMenu task={task} onDone={closeMove} />}
         </div>
         {/* #143 (Nick 2026-10-08): Due date sits right after "Set section", before
             "Full editor" - the field he changes most. Removed from the Status

@@ -39,8 +39,12 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { useFitViewportHeight } from '../../hooks/useFitViewportHeight'
 import {
   readPlannedToday, isTaskDone, parseViewMode,
-  type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
+  type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
+import { isSectionKey, type SectionKey } from '../../lib/taskSections'
+
+// `?group=` is a section. A stale link carrying a retired group (deep, quick, ...) reads as no filter.
+const parseGroupParam = (raw: string | null): SectionKey | null => (isSectionKey(raw) ? raw : null)
 import { formatShortDate } from '../../lib/dateUtils'
 import { projectFullTitleHint, projectShortLabel } from '../../lib/displayNames'
 import { useTodayPlan } from '../../lib/todayPlan'
@@ -95,7 +99,7 @@ export default function UnifiedMyTasks() {
     // MT-15 — restore mentee from URL like every other filter so saved
     // views with a mentee param survive a reload. Was hardcoded to null.
     mentee: searchParams.get('mentee'),
-    group: (searchParams.get('group') as GroupKey | null) ?? null,
+    group: parseGroupParam(searchParams.get('group')),
     hideCompleted: searchParams.get('hideCompleted') !== '0',
   })
   const [quickView, setQuickView] = useState<QuickViewKey>(
@@ -154,7 +158,7 @@ export default function UnifiedMyTasks() {
       priority: p.get('priority'),
       project: p.get('project'),
       mentee: p.get('mentee'),
-      group: (p.get('group') as GroupKey | null) ?? null,
+      group: parseGroupParam(p.get('group')),
       hideCompleted: p.get('hideCompleted') !== '0',
     })
     setAssigneeParam(p.get('assignee'))
@@ -216,7 +220,7 @@ export default function UnifiedMyTasks() {
   )
 
   const { filtered, byGroup } = useTaskFilter({
-    allTasks: nonPendingTasks, filter, search, quickView, plannedSet, projectsByPid,
+    allTasks: nonPendingTasks, filter, search, quickView, plannedSet, projectsByPid, ownerSlug: scopeSlug,
   })
   // Genuinely-empty vs filtered-to-empty. The views pick AllCaughtUp or
   // NoTasksMatch on this; before it was plumbed, an empty plate always read
@@ -421,7 +425,7 @@ export default function UnifiedMyTasks() {
           ) : effectiveView === 'columns' ? (
             <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} onOpenEditor={setDrawer} projectsByPid={projectsByPid} filterGroup={filter.group} />
           ) : effectiveView === 'lanes' ? (
-            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} viewerSlug={scopeSlug} />
           ) : effectiveView === 'table' ? (
             <TableView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           ) : effectiveView === 'board' ? (

@@ -213,7 +213,7 @@ describe('completion moment, bulk path', () => {
 
 describe('completion moment on Today groups', () => {
   const task = (i: number): TaskRowData => ({
-    id: `g${i}`, name: `Task ${i}`, status: 'todo', completed: 0, priority: 'medium',
+    id: `g${i}`, name: `Task ${i}`, status: 'todo', completed: 0, priority: 'high',
   } as unknown as TaskRowData)
 
   // Nick 2026-10-12: a ticked task leaves its slot at once and sinks to the
@@ -227,10 +227,10 @@ describe('completion moment on Today groups', () => {
       planned: {}, done: { g0: true },
       plannedIds: () => [], markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {},
     } as unknown as TodayStateApi
-    const h = await mountUi(<TaskGroup gkey="deep" tasks={tasks} projectsByPid={new Map()} state={state} previewLimit={5} />)
+    const h = await mountUi(<TaskGroup skey="review" tasks={tasks} projectsByPid={new Map()} state={state} viewerSlug="" />)
     const ids = () => [...h.querySelectorAll('[data-task-id]')].map((e) => e.getAttribute('data-task-id'))
     expect(ids()[0]).not.toBe('g0')
-    expect(ids()).not.toContain('g0') // sunk past the 5-row preview cut
+    expect(ids().at(-1)).toBe('g0') // sunk to the bottom of its section
 
     settleCompletion(['g0'], true)
     await expect.poll(() => ids()[0]).toBe('g1')

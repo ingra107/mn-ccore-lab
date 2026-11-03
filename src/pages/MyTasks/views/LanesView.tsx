@@ -1,5 +1,6 @@
-// LanesView — stacked-section renderer. Focus one group, peek at others
-// (a lane shows its first 4 rows; "Show N more" reveals all). Each lane is a
+// LanesView — stacked-section renderer. Focus one section, peek at others
+// (a lane folds the rows that need no attention yet, the same rule as Today:
+// lib/taskSections isAlwaysVisible; "Show N more" reveals all). Each lane is a
 // quiet heading over one soft panel of sleek rows (components/table/SleekRows,
 // the same row as the Table, without column heads; Nick's 2026-10-10 mock).
 // Square = complete, title = full editor, shift-click / ctrl-click /
@@ -19,7 +20,8 @@ import WorkOnActions from '../../../components/WorkOnActions'
 import { useSelectMode } from '../../../hooks/useSelectMode'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { LaneEmpty } from './MyTasksEmpty'
-import { GROUP_META, GROUP_ORDER, daysSince, isTaskDone, type GroupKey } from '../constants'
+import { daysSince, isTaskDone } from '../constants'
+import { SECTION_ORDER, SECTION_LABEL, isAlwaysVisible, type SectionKey } from '../../../lib/taskSections'
 import { isOverdue } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 import { isMilestone } from '../../../../shared/taskKinds'
@@ -27,30 +29,31 @@ import { isMilestone } from '../../../../shared/taskKinds'
 type Project = { name: string; slug: string; fullTitle?: string; primary_folder?: string | null }
 
 // MT-17 — persist lane collapsed/peek state to localStorage so reload
-// remembers what was open. Stored as two arrays keyed by GroupKey.
+// remembers what was open. Stored as two arrays keyed by SectionKey (a key from
+// the retired groups, deep / priorities / ..., is simply never looked up).
 const LS_COLLAPSED = 'mt_lane_collapsed'
 const LS_PEEK = 'mt_lane_peek'
-function readSet(key: string): Set<GroupKey> {
+function readSet(key: string): Set<SectionKey> {
   try {
     const raw = window.localStorage.getItem(key)
     if (!raw) return new Set()
-    const arr = JSON.parse(raw) as GroupKey[]
+    const arr = JSON.parse(raw) as SectionKey[]
     return new Set(Array.isArray(arr) ? arr : [])
   } catch { return new Set() }
 }
-function writeSet(key: string, s: Set<GroupKey>) {
+function writeSet(key: string, s: Set<SectionKey>) {
   try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
 }
 
-export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, Project>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
-  // MT-16 — when a Group filter is active, only render the matching lane.
-  const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
-  const [collapsed, setCollapsed] = useState<Set<GroupKey>>(() => readSet(LS_COLLAPSED))
-  const [peek, setPeek] = useState<Set<GroupKey>>(() => readSet(LS_PEEK))
+export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup, viewerSlug = '' }: { byGroup: Record<SectionKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, Project>; plannedSet: Set<string>; filterGroup?: SectionKey | null; /** Whose list: the New test reads it. */ viewerSlug?: string }) {
+  // MT-16 — when a section filter is active, only render the matching lane.
+  const visibleGroups = filterGroup ? SECTION_ORDER.filter(g => g === filterGroup) : SECTION_ORDER
+  const [collapsed, setCollapsed] = useState<Set<SectionKey>>(() => readSet(LS_COLLAPSED))
+  const [peek, setPeek] = useState<Set<SectionKey>>(() => readSet(LS_PEEK))
   useEffect(() => { writeSet(LS_COLLAPSED, collapsed) }, [collapsed])
   useEffect(() => { writeSet(LS_PEEK, peek) }, [peek])
-  const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
-  const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const toggleC = (k: SectionKey) => setCollapsed((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const toggleP = (k: SectionKey) => setPeek((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
 
   // Phase G: Ctrl/Meta held → select-mode affordance on rows.
   const selectModeActive = useSelectMode(true)
@@ -102,11 +105,12 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
       <SleekOverdueLine count={overdueOf(allTasks)} />
       {visibleGroups.map((gkey) => {
-        const meta = GROUP_META[gkey]
+        const label = SECTION_LABEL[gkey]
         const tasks = byGroup[gkey]
         const isCollapsed = collapsed.has(gkey)
         const isPeek = peek.has(gkey)
-        const visible = isCollapsed ? [] : isPeek ? tasks : tasks.slice(0, 4)
+        const kept = tasks.filter((t) => isAlwaysVisible(t, { viewerSlug, isPlanned: (r) => plannedSet.has(r.id), keepDone: true }))
+        const visible = isCollapsed ? [] : isPeek ? tasks : kept
         const hidden = tasks.length - visible.length
         const overdueInLane = overdueOf(tasks)
         const plannedInLane = tasks.filter((t) => plannedSet.has(t.id) && !isTaskDone(t)).length
@@ -115,7 +119,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
           <section key={gkey}>
             <button type="button" className="sr-grp-h" aria-expanded={!isCollapsed} onClick={() => toggleC(gkey)}>
               <span className="sr-chev" aria-hidden="true" style={{ transform: isCollapsed ? 'rotate(-90deg)' : undefined }}>▾</span>
-              <h3>{meta.label}</h3>
+              <h3>{label}</h3>
               <span className="sr-n">{tasks.length}</span>
               <span className="sr-sp" />
               {overdueInLane > 0 && <span className="sr-od">{overdueInLane} overdue</span>}
@@ -152,7 +156,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
                     ))}
                   </SleekRow>
                 ))}
-                {(hidden > 0 || (isPeek && tasks.length > 4)) && (
+                {(hidden > 0 || (isPeek && tasks.length > kept.length)) && (
                   <button type="button" className="sr-more" onClick={() => toggleP(gkey)}>
                     {isPeek ? 'Show less' : `Show ${hidden} more`}
                   </button>

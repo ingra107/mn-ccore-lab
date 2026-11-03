@@ -2,7 +2,7 @@
   "contract_version": 1,
   "_comment": "Milestone placement golden cases, maintained here by hand. PB generated this file until its TODAY.md render retired on 2026-10-11; the generator and PB's copy are archived under PB Archive/2026-10-11-today-md-render-retirement/, so this is the only live copy. Edit cases here. `tasks` is in input order; `expected` is per Hub group.",
   "producers": {
-    "typescript": "mn-ccore-lab/src/lib/taskGrouping.ts::interleaveMilestones (grouped by src/components/today/constants.ts::getGroupForTask)"
+    "typescript": "mn-ccore-lab/src/lib/taskGrouping.ts::interleaveMilestones (grouped per section by src/lib/taskSections.ts::sectionForTask; these vectors group by their own label)"
   },
   "cases": [
     {

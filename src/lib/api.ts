@@ -210,9 +210,9 @@ export interface TaskRow {
    *  since Slice B B-5). System-populated — read-only in the UI; rendered as a
    *  "Gmail thread" chip next to the key links (2026-06-10). */
   email_link?: string | null
-  /** User-set group override for /portal/my-tasks bucketing (Hub feature, schema v50).
-   *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
-   *  via getGroupForTask. */
+  /** RETIRED for placement (2026-11-03): no surface reads it any more; the
+   *  section is work_kind / work_kind_set (lib/taskSections.ts). The column and
+   *  this type stay until phase 2 drops group_override. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
   /** Kind of work (schema-v157): review | writing | analysis | admin; null =
    *  unsorted (Sort strip). Codes live in the work_kinds lookup table. */
@@ -569,8 +569,15 @@ export async function fetchTasks(params?: {
    * (Today, My Tasks) opt in.
    */
   includeQuestions?: boolean
+  /**
+   * Open work that sits with SOMEONE ELSE but is this person's business: in a
+   * project they belong to, or assigned by them (the Today "With others"
+   * section). Pair with completed=false.
+   */
+  others_of?: string
 }) {
   const qs = new URLSearchParams()
+  if (params?.others_of) qs.set('others_of', params.others_of)
   if (params?.includeQuestions) qs.set('include_questions', '1')
   if (params?.completed_since) qs.set('completed_since', params.completed_since)
   if (params?.ids) qs.set('ids', params.ids.join(','))
@@ -625,6 +632,23 @@ export function updateTask(id: string, fields: Record<string, unknown>) {
   return fetchApi<TaskRow>(`/api/tasks/${id}`, {
     method: 'POST',
     body: JSON.stringify(fields),
+  })
+}
+
+/**
+ * A hand sort, unsort or Reset of a task's kind of work (schema-v157). The
+ * ONLY door to work_kind_set='hand'; the Worker logs every call. Answers the
+ * task row. `from_section` is the section the row sat in when the user acted.
+ */
+export function sortTask(id: string, cmd: {
+  op: 'sort' | 'unsort' | 'reset'
+  work_kind?: string
+  from_section?: string
+  missing_category_note?: string
+}) {
+  return fetchApi<TaskRow>(`/api/tasks/${id}/sort`, {
+    method: 'POST',
+    body: JSON.stringify(cmd),
   })
 }
 

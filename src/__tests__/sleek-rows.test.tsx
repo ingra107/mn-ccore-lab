@@ -15,7 +15,7 @@ import { nextSleekSort, type SleekSort } from '../components/table/sleekSort'
 import { TableView } from '../pages/MyTasks/views/TableView'
 import { LanesView } from '../pages/MyTasks/views/LanesView'
 import type { TaskRow } from '../lib/api'
-import type { GroupKey } from '../pages/MyTasks/constants'
+import type { SectionKey } from '../lib/taskSections'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -265,14 +265,15 @@ describe('My Tasks Table on sleek rows', () => {
 })
 
 describe('My Tasks Lanes on sleek rows', () => {
-  const lane = [task('l1', 'Lane one'), task('l2', 'Lane two')]
-  const byGroup: Record<GroupKey, TaskRow[]> = { deep: lane, priorities: [], quick: [], pb: [], etl: [] }
+  // due 2020: overdue rows stay out of the Lanes fold (isAlwaysVisible)
+  const lane = [task('l1', 'Lane one', { due_date: '2020-01-01' }), task('l2', 'Lane two', { due_date: '2020-01-01' })]
+  const byGroup: Record<SectionKey, TaskRow[]> = { sort: lane, review: [], writing: [], analysis: [], admin: [], etl: [], others: [] }
 
   async function renderLanes(selected = new Set<string>()) {
     const fns = { toggleSelect: vi.fn(), selectRange: vi.fn(), setExpanded: vi.fn(), onOpenEditor: vi.fn(), onToggleComplete: vi.fn() }
     const host = await mount(wrap(
       <LanesView
-        byGroup={byGroup} selected={selected} anchorId="l1" expanded={null} filterGroup="deep"
+        byGroup={byGroup} selected={selected} anchorId="l1" expanded={null} filterGroup="sort"
         toggleSelect={fns.toggleSelect} selectRange={fns.selectRange} setExpanded={fns.setExpanded}
         onOpenEditor={fns.onOpenEditor} onToggleComplete={fns.onToggleComplete}
         projectsByPid={new Map()} plannedSet={new Set()}
@@ -319,10 +320,10 @@ describe('My Tasks Lanes on sleek rows', () => {
 describe('My Tasks Lanes milestones', () => {
   it('a milestone shows no complete box and both of its dates', async () => {
     const ms = task('lm', 'Hand to Amy', { kind: 'milestone', due_date: '2099-04-01', deadline: '2099-04-20' } as Partial<TaskRow>)
-    const byGroup: Record<GroupKey, TaskRow[]> = { deep: [ms], priorities: [], quick: [], pb: [], etl: [] }
+    const byGroup: Record<SectionKey, TaskRow[]> = { sort: [ms], review: [], writing: [], analysis: [], admin: [], etl: [], others: [] }
     const host = await mount(wrap(
       <LanesView
-        byGroup={byGroup} selected={new Set()} anchorId={null} expanded={null} filterGroup="deep"
+        byGroup={byGroup} selected={new Set()} anchorId={null} expanded={null} filterGroup="sort"
         toggleSelect={vi.fn()} selectRange={vi.fn()} setExpanded={vi.fn()}
         onOpenEditor={vi.fn()} onToggleComplete={vi.fn()}
         projectsByPid={new Map()} plannedSet={new Set()}

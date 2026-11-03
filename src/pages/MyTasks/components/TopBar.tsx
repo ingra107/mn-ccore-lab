@@ -13,11 +13,11 @@ import { FilterChip } from './FilterChip'
 import FilterLinks from '../../../components/ui/FilterLinks'
 import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
-  GROUP_META, GROUP_ORDER,
   JOB_ACCENT,
   INK,
-  type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
+  type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
+import { SECTION_ORDER, SECTION_LABEL, type SectionKey } from '../../../lib/taskSections'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import PageHeartbeat from '../../../components/moments/PageHeartbeat'
 
@@ -134,10 +134,10 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         )}
         {showFilterChips && <>
         <FilterChip
-          label="Group"
+          label="Section"
           value={filter.group}
-          options={[{ v: null, l: 'All' }, ...GROUP_ORDER.map((k) => ({ v: k, l: GROUP_META[k].label }))]}
-          onChange={(v) => setFilter((f) => ({ ...f, group: v as GroupKey | null }))}
+          options={[{ v: null, l: 'All' }, ...SECTION_ORDER.map((k) => ({ v: k, l: SECTION_LABEL[k] }))]}
+          onChange={(v) => setFilter((f) => ({ ...f, group: v as SectionKey | null }))}
         />
         <FilterChip
           label="Priority"

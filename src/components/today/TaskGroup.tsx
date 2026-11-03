@@ -1,5 +1,10 @@
-// TaskGroup — header (icon + label + n/total + extending rule) + sorted rows.
-// Group sort: planned → active → done (CLAUDE.md Rule 62).
+// TaskGroup: one Today section (Sort, Review, Writing, Analysis & Build,
+// Replies & admin, CLIF ETL, With others). Header (label + count + extending
+// rule) over its rows. Which tasks land here is lib/taskSections.ts; the order
+// inside is orderSection (planned, urgent, high, due date, done last); the fold
+// is isAlwaysVisible (planned, overdue, due or deadline within 7 days, urgent or
+// high, New, a parent with such a step stay; the rest folds behind "Show N
+// more"). Replaces the fixed 5-row preview slice (2026-11-03).
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Group).
 
@@ -7,81 +12,86 @@ import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
-import { GROUP_META, isTaskDone, type GroupKey } from './constants'
-import { interleaveMilestones, type MilestoneEntry } from '../../lib/taskGrouping'
-import { isMilestone } from '../../../shared/taskKinds'
+import { isTaskDone } from './constants'
+import { SortKindButtons } from '../tasks/SortPicker'
+import { isAlwaysVisible, orderSection, othersSummary, SECTION_LABEL, type SectionKey } from '../../lib/taskSections'
+import type { MilestoneEntry } from '../../lib/taskGrouping'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-// expandedId/onExpand no longer come from TodayPage — TaskGroup owns its own
+// expandedId/onExpand no longer come from TodayPage: TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlannedTodaySection (Item 2 fix, 2026-06-22).
-export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5, stepsByParent }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; state: TodayStateApi; previewLimit?: number; stepsByParent?: Map<string, TaskRowData[]> }) {
-  const meta = GROUP_META[gkey]
-  const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
+export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug }: {
+  skey: SectionKey
+  tasks: TaskRowData[]
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
+  state: TodayStateApi
+  stepsByParent?: Map<string, TaskRowData[]>
+  /** Whose Today this is: the New test (assigned to you, never opened) reads it. */
+  viewerSlug: string
+}) {
+  const label = SECTION_LABEL[skey]
+  const isDoneRow = useCallback((t: TaskRowData) => !!state.done[t.id] || isTaskDone(t), [state.done])
+  const doneCount = tasks.filter(isDoneRow).length
   // Return type is MilestoneEntry[] (a TaskRow + optional milestoneRole/
-  // milestoneDate) — interleaveMilestones stamps those fields on the rows it
-  // emits (Nick 2026-09-17 two-date rendering); plain TaskRowData is still
-  // structurally assignable (the fields are optional).
-  const sorted = useMemo((): MilestoneEntry[] => {
-    // A milestone never enters `planned` (GH #131/#132) even if
-    // state.planned somehow carries a stale entry for it — treat it as
-    // active always.
-    // Done = the local tick OR the cache. A task still SETTLING after its
-    // completion (TodayPage keeps it for the completion moment) holds its slot
-    // instead of sinking: sunk past the preview cut it would sit behind
-    // "Show N more" and the ring would play on a row nobody can see. Once the
-    // moment ends it leaves the group for Completed today.
-    // Nick 2026-10-12: a ticked row sinks at once; no settling hold.
-    const isDoneRow = (t: TaskRowData) => !!state.done[t.id] || isTaskDone(t)
-    const planned = tasks.filter((t) => state.planned[t.id] && !isDoneRow(t) && !isMilestone(t))
-    const activeRaw = tasks.filter((t) => (!state.planned[t.id] || isMilestone(t)) && !isDoneRow(t))
-    const active = interleaveMilestones(activeRaw)
-    const done = tasks.filter(isDoneRow)
-    return [...planned, ...active, ...done]
-  }, [tasks, state.planned, state.done])
+  // milestoneDate): orderSection stamps those on the milestone rules it emits
+  // (Nick 2026-09-17 two-date rendering).
+  // Nick 2026-10-12: a ticked row sinks at once; no settling hold.
+  const sorted = useMemo(
+    (): MilestoneEntry[] => orderSection(tasks, { isPlanned: (t) => !!state.planned[t.id], isDone: isDoneRow }),
+    [tasks, state.planned, isDoneRow],
+  )
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
-  // Session-only collapse, per-instance — one TaskGroup per gkey, so each
-  // group's open state is naturally independent. Starts expanded (Nick's
-  // ask, no localStorage persistence).
-  const [open, setOpen] = useState(true)
+  // Session-only collapse, per-instance, no localStorage. Every section starts
+  // open except With others: it is other people's work, so its header carries
+  // the counts and the rows wait behind a click.
+  const [open, setOpen] = useState(skey !== 'others')
 
-  // #106: roll up to previewLimit rows by default. Nick: "only show up to 3-5
-  // rows or something and then you can expand but the default should be that
-  // its rolled up somehow."
-  //
-  // This is a SEPARATE affordance from the collapse chevron above: the chevron
-  // hides the whole group, this bounds how much of an OPEN group you see. The
-  // rail cards' "+N more →" is a third thing again — it navigates to another
-  // page, whereas these rows are work you do here, so reveal is inline.
-  //
-  // Slices `sorted`, never `tasks`: planned → active → done is settled ordering
-  // (Rule 62), and slicing the raw array would bury planned work under whatever
-  // order the API happened to return.
+  // The fold. A SEPARATE affordance from the collapse chevron: the chevron hides
+  // the whole section, this bounds how much of an open one you see. Reveal is
+  // inline (these rows are work you do here).
   const [showAll, setShowAll] = useState(false)
-  // One memoized slice, shared by the render and the collapse handler — they
-  // need the same set, and recomputing it in two places invites them to drift.
-  const preview = useMemo(() => sorted.slice(0, previewLimit), [sorted, previewLimit])
-  const visible = showAll ? sorted : preview
-  const hiddenCount = sorted.length - visible.length
+  // Slices `sorted`, never `tasks`: the order is settled (orderSection), and
+  // folding the raw array would bury planned work under the API's order.
+  const kept = useMemo(
+    () => sorted.filter((t) => isAlwaysVisible(t, {
+      viewerSlug,
+      isPlanned: (r) => !!state.planned[r.id],
+      stepsOf: (r) => stepsByParent?.get(r.id),
+    })),
+    [sorted, viewerSlug, state.planned, stepsByParent],
+  )
+  const visible = showAll ? sorted : kept
+  const hiddenCount = sorted.length - kept.length
 
   // Collapsing must not strand the expanded drawer on a row that just left the
-  // list — the drawer would keep rendering with no visible parent row.
+  // list: the drawer would keep rendering with no visible parent row.
   const collapseRows = useCallback(() => {
     setShowAll(false)
-    setExpandedId((id) => (id && !preview.some((t) => t.id === id) ? null : id))
-  }, [preview])
+    setExpandedId((id) => (id && !kept.some((t) => t.id === id) ? null : id))
+  }, [kept])
+
+  const others = useMemo(() => (skey === 'others' ? othersSummary(tasks) : null), [skey, tasks])
 
   if (tasks.length === 0) return null
   return (
-    <section className="tk-panel tk-blk" data-group={gkey}>
-      <div {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)} className="tk-ph tk-clk">
+    <section className="tk-panel tk-blk" data-group={skey}>
+      <div {...collapseToggleProps(open, () => setOpen((o) => !o), label)} className="tk-ph tk-clk">
         <div className="tk-ctog">
           <CollapseChevron open={open} />
-          <h3>{meta.label}</h3>
-          <span className="tk-cnt" title={`${doneCount} of ${tasks.length} done`}>{doneCount} of {tasks.length}</span>
+          <h3>{label}</h3>
+          {others ? (
+            <span className="tk-cnt" data-others-summary>
+              {others.total}
+              {others.urgent > 0 && ` · ${others.urgent} urgent`}
+              {others.overdue > 0 && ` · ${others.overdue} overdue`}
+            </span>
+          ) : (
+            <span className="tk-cnt" title={`${doneCount} of ${tasks.length} done`}>{doneCount} of {tasks.length}</span>
+          )}
         </div>
       </div>
       {open && (
@@ -90,20 +100,25 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, previewLimit = 5,
             {visible.map((t) => (
               // Key includes milestoneRole (not just t.id): a slipped
               // milestone renders as TWO rows sharing one id (Nick 2026-09-17)
-              // — React needs distinct keys for both. Expand state stays keyed
+              // and React needs distinct keys for both. Expand state stays keyed
               // by task id (both rows open the same drawer; acceptable).
-              <TaskRow
-                key={`${t.id}:${t.milestoneRole ?? 'row'}`}
-                task={t}
-                project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                state={state}
-                expandedId={expandedId}
-                onExpand={onExpand}
-                projectsByPid={projectsByPid}
-                milestoneRole={t.milestoneRole}
-                done={isTaskDone(t)}
-                openSteps={stepsByParent?.get(t.id)}
-              />
+              <div key={`${t.id}:${t.milestoneRole ?? 'row'}`}>
+                <TaskRow
+                  task={t}
+                  project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                  state={state}
+                  expandedId={expandedId}
+                  onExpand={onExpand}
+                  projectsByPid={projectsByPid}
+                  milestoneRole={t.milestoneRole}
+                  done={isTaskDone(t)}
+                  // Someone else's task (With others) is not yours to plan.
+                  noDrag={!!t.assignee && !!viewerSlug && t.assignee !== viewerSlug}
+                  openSteps={stepsByParent?.get(t.id)}
+                />
+                {/* Sort: one tap places the task. It is the first thing Nick does. */}
+                {skey === 'sort' && !isDoneRow(t) && <SortKindButtons task={t} />}
+              </div>
             ))}
           </div>
           {(hiddenCount > 0 || showAll) && (

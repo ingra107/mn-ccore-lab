@@ -153,8 +153,8 @@ export function useTaskAttention(task: { id: string; assignee?: string | null; a
   return { isNewToViewer, activityRow }
 }
 
-/** The title-line tags: New, "n new" activity, and the moved-manually pin. */
-export function CardTags({ task, isNew, activityCount = 0, showMoved = false }: { task: { group_override?: string | null; packet_state?: string | null }; isNew: boolean; activityCount?: number; showMoved?: boolean }) {
+/** The title-line tags: New, "n new" activity, and the sorted-by-hand pin. */
+export function CardTags({ task, isNew, activityCount = 0, showSortedByHand = false }: { task: { work_kind_set?: string | null; packet_state?: string | null }; isNew: boolean; activityCount?: number; showSortedByHand?: boolean }) {
   return (
     <>
       {task.packet_state === 'ready' && <span className="tk-tag tk-ac" title="A first step is prepared. Open the task to see it.">Ready</span>}
@@ -165,9 +165,9 @@ export function CardTags({ task, isNew, activityCount = 0, showMoved = false }: 
           {activityCount} new
         </span>
       )}
-      {showMoved && task.group_override && (
-        <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
-          <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
+      {showSortedByHand && task.work_kind_set === 'hand' && (
+        <span className="tk-tag tk-n tip" data-tip="Sorted by hand: automatic rules do not move it" aria-label="Sorted by hand">
+          <MapPin {...ICON_PROPS} size={10} aria-hidden /> Sorted by hand
         </span>
       )}
     </>
@@ -178,7 +178,7 @@ export function CardRow(props: CardTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
     onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
-    isPlanned = false, plannedLabel, showGroupOverridePin = false,
+    isPlanned = false, plannedLabel, showSortedByHand = false,
     leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, children,
   } = props
 
@@ -299,7 +299,7 @@ export function CardRow(props: CardTaskRowProps) {
             {urgent && <span className="sr-only">Urgent: </span>}
             {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
             {titleNode}
-            <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showGroupOverridePin} />
+            <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} />
             {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
             {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
           </div>

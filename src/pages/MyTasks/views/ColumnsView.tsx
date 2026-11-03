@@ -1,6 +1,8 @@
-// ColumnsView — Kanban renderer. All 5 task groups side-by-side. Runs full
-// width (the one Tasks view past --page-width), so all five fit at 1440+; below
-// that the grid scrolls sideways with a thin scrollbar and an in-flow pager row.
+// ColumnsView — Kanban renderer. The sections side-by-side (Sort, Review,
+// Writing, Analysis & Build, Replies & admin, CLIF ETL, With others; an empty
+// one hides unless it is the filtered section). Runs full
+// width (the one Tasks view past --page-width); the grid scrolls sideways with a
+// thin scrollbar and an in-flow pager row when the columns are wider than the page.
 //
 // Cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same one
 // List and Board render. A narrow column has no room for the inline drawer, so a
@@ -15,23 +17,23 @@ import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
-  GROUP_META, GROUP_ORDER,
   INK_DIM, INK_MUTED, PAGE_BG,
   isTaskDone, daysSince,
-  type GroupKey,
 } from '../constants'
+import { SECTION_ORDER, SECTION_LABEL, type SectionKey } from '../../../lib/taskSections'
 import type { TaskRow } from '../../../lib/api'
 
 // Column floor and gap (px). See minWidth below for why 190.
 const COL_MIN = 190
 const COL_GAP = 14
 
-export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projectsByPid, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<GroupKey, TaskRow[]>; onOpenEditor: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; filterGroup?: GroupKey | null }) {
-  // MT-16 — when a Group filter is active, only render the matching column
+export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projectsByPid, filterGroup }: { filtered: TaskRow[]; isEmpty: boolean; byGroup: Record<SectionKey, TaskRow[]>; onOpenEditor: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>; filterGroup?: SectionKey | null }) {
+  // MT-16 — when a section filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
-  // space and obscure the filter result).
-  const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
-  const colCount = visibleGroups.length
+  // space and obscure the filter result). With no filter, an empty section
+  // hides, as on Today: seven fixed columns would never fit beside the sidebar.
+  const visibleGroups = filterGroup ? SECTION_ORDER.filter(g => g === filterGroup) : SECTION_ORDER.filter(g => byGroup[g].length > 0)
+  const colCount = Math.max(visibleGroups.length, 1)
 
   const state = useTodayState(filtered)
   const { prefs } = useLabPrefs()
@@ -110,13 +112,12 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
       </div>
       <div className="tk" style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(${COL_MIN}px, 1fr))`, gap: COL_GAP, minWidth }}>
         {visibleGroups.map((gkey) => {
-          const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]
           const incomplete = tasks.filter((t) => !isTaskDone(t)).length
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '8px 4px', marginBottom: 4, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--sk-t1)', margin: 0 }}>{meta.label}</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--sk-t1)', margin: 0 }}>{SECTION_LABEL[gkey]}</h3>
                 <span style={{ fontSize: 12, color: INK_DIM, marginLeft: 'auto' }}>
                   {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
                 </span>

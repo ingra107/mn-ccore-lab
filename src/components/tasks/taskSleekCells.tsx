@@ -19,11 +19,11 @@ const PRIORITY_WORD: Record<string, string> = { urgent: 'Urgent', high: 'High', 
 
 const modified = (e: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => e.shiftKey || e.ctrlKey || e.metaKey
 
-/** Title, then its tags: New / n new / moved / Planned / Waiting / Nd stale
+/** Title, then its tags: New / n new / Sorted by hand / Planned / Waiting / Nd stale
  *  (orange: going stale is orange's one job, principle 21).
  *  A plain click on the title opens the editor; a modified click (shift,
  *  ctrl, cmd) or any click while `selecting` bubbles to the row to select. */
-export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned = false, staleDays = 0, showWaiting = false, showMoved = true, hint }: {
+export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned = false, staleDays = 0, showWaiting = false, showSortedByHand = true, hint }: {
   task: TaskRow
   isDone: boolean
   onOpen?: () => void
@@ -35,7 +35,7 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
   staleDays?: number
   /** Views with no Status column say "Waiting" here. */
   showWaiting?: boolean
-  showMoved?: boolean
+  showSortedByHand?: boolean
 }) {
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
   // A milestone draws its diamond here, so it shows the bare subject; every
@@ -55,7 +55,7 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
       {isMilestone(task) && <span className="sr-dia" aria-hidden="true">◆</span>}
       <span {...open} title={hint}>{title}</span>
       {!isDone && task.priority === 'urgent' && <span className="sr-only">Urgent</span>}
-      <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showMoved={showMoved} />
+      <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} />
       {planned && !isDone && <span className="tk-tag tk-n">Planned</span>}
       {showWaiting && !isDone && task.status === 'waiting_external' && <span className="tk-tag tk-n">Waiting</span>}
       {staleDays > 0 && <span className="tk-tag tk-stale" title="In progress with no movement">{staleDays}d stale</span>}

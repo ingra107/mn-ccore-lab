@@ -271,8 +271,8 @@ export interface SharedTaskRowProps {
   // ── state cues ──
   isPlanned?: boolean
   plannedLabel?: string
-  // group_override pin (📍) — task was manually bucketed.
-  showGroupOverridePin?: boolean
+  // Sorted-by-hand pin (📍): the task was placed in its section by hand (work_kind_set = 'hand').
+  showSortedByHand?: boolean
 
   // ── layout ──
   dense?: boolean
@@ -506,7 +506,7 @@ function StandardRow(props: SharedTaskRowProps) {
     onOpenEditor,
     isSelected = false, selectionActive = false, onToggleSelect,
     draggable = false, onDragStart, onTogglePlan,
-    isPlanned = false, plannedLabel, showGroupOverridePin = false,
+    isPlanned = false, plannedLabel, showSortedByHand = false,
     dense = false, stack: stackProp,
     leadingTag, extraMeta, belowTitle, children, rowActions, hideDue = false, selectBox = false,
   } = props
@@ -761,8 +761,8 @@ function StandardRow(props: SharedTaskRowProps) {
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                   {titleNode}
                 {newChip}
-                {showGroupOverridePin && task.group_override && (
-                  <span className="tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--sk-t3)', padding: '1px 5px', background: withAlpha('var(--job-accent)', 9), border: `1px solid ${withAlpha('var(--job-accent)', 28)}`, borderRadius: 999, marginLeft: 6 }}>
+                {showSortedByHand && task.work_kind_set === 'hand' && (
+                  <span className="tip" data-tip="Sorted by hand: automatic rules do not move it" aria-label="Sorted by hand" style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--sk-t3)', padding: '1px 5px', background: withAlpha('var(--job-accent)', 9), border: `1px solid ${withAlpha('var(--job-accent)', 28)}`, borderRadius: 999, marginLeft: 6 }}>
                     <MapPin {...ICON_PROPS} size={11} />
                   </span>
                 )}

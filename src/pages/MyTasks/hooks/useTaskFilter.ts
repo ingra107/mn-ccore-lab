@@ -7,12 +7,12 @@
 
 import { useMemo } from 'react'
 import {
-  GROUP_ORDER,
   MENTEE_SLUGS,
   todayKey, daysSince,
-  getGroupForTask, tagForTask, isTaskDone,
-  type GroupKey, type FilterState, type QuickViewKey,
+  tagForTask, isTaskDone,
+  type FilterState, type QuickViewKey,
 } from '../constants'
+import { SECTION_ORDER, bucketBySection, orderSection, sectionForTask, type SectionKey } from '../../../lib/taskSections'
 import { isOverdue } from '../../../lib/dateUtils'
 import { isToday } from '../../../components/today/constants'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
@@ -26,9 +26,11 @@ export interface UseTaskFilterArgs {
   quickView: QuickViewKey
   plannedSet: Set<string>
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
+  /** Whose list this is (the member being viewed). Defaults to the signed-in person. */
+  ownerSlug?: string
 }
 
-export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet, projectsByPid }: UseTaskFilterArgs) {
+export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet, projectsByPid, ownerSlug }: UseTaskFilterArgs) {
   const today = todayKey()
   // P2-9: ONE staleness threshold (days-since-meaningful-movement), shared
   // with every stale chip/filter and surfaced in Settings → Lab Preferences.
@@ -38,6 +40,11 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
   // opened yet (acknowledged_at IS NULL; auto-ack fires on open, draining it).
   const { user } = useAuth()
   const viewerSlug = user?.slug ?? ''
+  // The list's owner: the member being viewed (?assignee=), else the viewer. The
+  // section rules ask "is this with someone else" against THIS person, so a
+  // member's own tasks never read as With others on their list.
+  const listOwner = ownerSlug || viewerSlug
+  const sectionCtx = useMemo(() => ({ viewerSlug: listOwner, projectsBySlug: projectsByPid }), [listOwner, projectsByPid])
 
   // Apply quick-view + filters + search.
   const filtered = useMemo(() => {
@@ -63,49 +70,23 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
         } else if (t.assignee !== filter.mentee) return false
       }
       if (filter.group) {
-        if (getGroupForTask(t, projectsByPid) !== filter.group) return false
+        if (sectionForTask(t, sectionCtx) !== filter.group) return false
       }
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
-    }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string | null })
-  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays, viewerSlug])
+    }).map((t) => ({ ...t, _section: sectionForTask(t, sectionCtx), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _section: SectionKey; _tag: string | null })
+  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays, viewerSlug, sectionCtx])
 
-  // Bucket by group, then sort each bucket: planned → active → done.
-  // CLAUDE.md Rule 62: planned tasks float to top, done sinks to bottom with strikethrough.
-  // P1-12 (decision #2): WITHIN the active tier, overdue floats to the top,
-  // oldest-late first — so "where do I focus" is answered by the page's shape.
-  // This rides INSIDE the planned→active→done ordering (Rule 62), it does not
-  // fight the group model: planned still floats above overdue, done still sinks.
+  // Bucket by section (the ONE resolver, lib/taskSections), then order each
+  // bucket the way Today does: planned, urgent, high, due date (overdue leads),
+  // done last. A milestone is an ordinary row here (milestoneRules: false).
   const byGroup = useMemo(() => {
-    const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
-    for (const t of filtered) {
-      const k = (t as TaskRow & { _group: GroupKey })._group
-      g[k].push(t)
-    }
-    const rank = (t: TaskRow): number => {
-      if (isTaskDone(t)) return 2           // done sinks
-      if (plannedSet.has(t.id)) return 0   // planned floats
-      return 1                              // active middle
-    }
-    // Overdue tasks sort first inside the active tier, oldest-late first.
-    const overdueRank = (t: TaskRow): number =>
-      (!isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)) ? 0 : 1
-    for (const k of GROUP_ORDER) {
-      g[k].sort((a, b) => {
-        const r = rank(a) - rank(b)
-        if (r !== 0) return r
-        const o = overdueRank(a) - overdueRank(b)
-        if (o !== 0) return o
-        // both overdue → oldest-late first (earliest due_date wins)
-        if (overdueRank(a) === 0 && a.due_date && b.due_date) {
-          return a.due_date.slice(0, 10) < b.due_date.slice(0, 10) ? -1
-            : a.due_date.slice(0, 10) > b.due_date.slice(0, 10) ? 1 : 0
-        }
-        return 0
-      })
+    const g = bucketBySection(filtered, sectionCtx)
+    for (const k of SECTION_ORDER) {
+      g[k] = orderSection(g[k], { isPlanned: (t) => plannedSet.has(t.id), isDone: isTaskDone, milestoneRules: false })
     }
     return g
-  }, [filtered, plannedSet])
+  }, [filtered, plannedSet, sectionCtx])
 
   // P1-12: live count of overdue (not-done) tasks across the filtered set, for
   // the coral group header. One source of truth so every view agrees.

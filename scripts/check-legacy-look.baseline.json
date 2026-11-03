@@ -44,9 +44,6 @@
   "src/components/tasks/detail/HandoffSection.tsx": {
     "edge": 1
   },
-  "src/components/today/TaskDetailDrawer.tsx": {
-    "box": 1
-  },
   "src/components/today/TimelineGrid.tsx": {
     "edge": 1
   },

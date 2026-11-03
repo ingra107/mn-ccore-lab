@@ -1,28 +1,13 @@
-// Check-ins (kind='checkin', schema-v152) group as Quick on both task lists:
-// a check-in is a short "is this project moving?" prompt, not deep work.
-// Both getGroupForTask copies are pinned so they cannot drift apart.
+// Check-ins (kind='checkin', schema-v152): the kind vocabulary and its labels.
+// Where a check-in SITS (Replies & admin, on both task lists) is pinned in
+// taskSections.test.ts, against the one shared resolver.
 //
 // Run: npx vitest run --config vitest.config.lib.ts src/lib/__tests__/checkinGrouping.test.ts
 import { describe, it, expect } from 'vitest'
-import { getGroupForTask as todayGroup } from '../../components/today/constants'
-import { getGroupForTask as myTasksGroup } from '../../pages/MyTasks/constants'
 import { TASK_KINDS, TASK_KIND_LABELS, TASK_KIND_OPTIONS, isCheckin, taskKindLabel, withKindLabel } from '../../../shared/taskKinds'
 import { taskFullTitleHint, taskShortLabel, taskSubjectLabel } from '../displayNames'
-import type { TaskRow } from '../api'
 
-const row = (extra: Record<string, unknown>) =>
-  ({ id: 't', title: 'CQODE', kind: 'checkin', due_date: null, deadline: null, group_override: null, ...extra }) as unknown as TaskRow
-
-describe('check-in grouping', () => {
-  for (const [name, fn] of [['Today', todayGroup], ['MyTasks', myTasksGroup]] as const) {
-    it(`${name}: a check-in is Quick`, () => {
-      expect(fn(row({}), new Map())).toBe('quick')
-    })
-    it(`${name}: an explicit group_override still wins`, () => {
-      expect(fn(row({ group_override: 'deep' }), new Map())).toBe('deep')
-    })
-  }
-
+describe('check-in kind', () => {
   it('the vocabulary carries checkin', () => {
     expect(TASK_KINDS).toContain('checkin')
     expect(isCheckin({ kind: 'checkin' })).toBe(true)

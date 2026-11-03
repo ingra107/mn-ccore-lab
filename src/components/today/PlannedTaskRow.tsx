@@ -59,9 +59,9 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           <div className="tk-ct" style={isDone ? { textDecoration: 'line-through', color: 'var(--sk-t3)', fontWeight: 500 } : undefined}>
             <span title={taskFullTitleHint(task)}>{taskShortLabel(task)}</span>
             {badges}
-            {task.group_override && (
-              <span className="tk-tag tk-n tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`}>
-                <MapPin {...ICON_PROPS} size={10} aria-hidden /> moved
+            {task.work_kind_set === 'hand' && (
+              <span className="tk-tag tk-n tip" data-tip="Sorted by hand: automatic rules do not move it" aria-label="Sorted by hand">
+                <MapPin {...ICON_PROPS} size={10} aria-hidden /> Sorted by hand
               </span>
             )}
             {/* Drag handle — only the grip icon activates the drag; the row

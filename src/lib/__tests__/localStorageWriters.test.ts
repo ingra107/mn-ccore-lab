@@ -53,7 +53,7 @@ const DEVICE_LOCAL: Record<string, string> = {
 /** Rewired to useUserPref by #911: they must not reach localStorage at all. */
 const SERVER_BACKED = [
   'hooks/useLabPrefs.ts', 'hooks/useSavedViews.ts', 'hooks/useTodayView.ts',
-  'hooks/useTodayDueWindow.ts', 'hooks/useTableConfig.ts', 'lib/dashboardLayout.ts',
+  'hooks/useTableConfig.ts', 'lib/dashboardLayout.ts',
 ]
 
 /** The old per-browser keys: only useUserPref.ts (which seeds them) may name them. */

@@ -200,7 +200,7 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
       {
         key: 'title', label: 'Title', width: 'minmax(0,1fr)', sortable: true, phone: 'title',
         render: (d) => (d.task ? (
-          <TaskTitleCell task={d.task} isDone={done(d)} onOpen={() => onOpenTask(d.task!)} showMoved={false} hint={d.fullTitle} />
+          <TaskTitleCell task={d.task} isDone={done(d)} onOpen={() => onOpenTask(d.task!)} showSortedByHand={false} hint={d.fullTitle} />
         ) : (
           <div className="sr-tt">
             <span className="sr-dia" aria-hidden="true">◆</span>

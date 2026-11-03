@@ -4,7 +4,7 @@
 // priority dot). This adapter wires Today's specifics into it WITHOUT dropping
 // any behavior: drag-to-plan (⋮⋮), Right Now highlight, planned/scheduled
 // badge, the v55 workflow badges (waiting_on / promised_to / next_checkin),
-// the group_override pin, and the inline TaskDetailDrawer.
+// the sorted-by-hand pin, the Peripheral Brain badge, and the inline TaskDetailDrawer.
 //
 // Per handoff §1 ("promote/replace the existing today/TaskRow.tsx into a
 // shared, generic one") — the generic row lives in components/tasks/; this
@@ -20,6 +20,7 @@ import { isMilestone } from '../../../shared/taskKinds'
 import { LinkRow, taskKeyLinks } from './primitives'
 import { StepsNext } from './StepsNext'
 import { isParent } from '../../lib/taskSteps'
+import { isPbTask } from '../../lib/taskSections'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Users, Hourglass, Handshake, Repeat } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -31,7 +32,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import type { ReactNode } from 'react'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps }: {
+export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps }: {
   task: TaskRowData
   project: { name: string; slug: string; primary_folder?: string | null } | null
   state: TodayStateApi
@@ -147,6 +148,10 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
     </>
   ) : null
 
+  // Peripheral Brain is a small badge, not a section (Nick 2026-11-03).
+  const pbBadge = !isDone && isPbTask(task, projectsByPid) ? <span className="tk-pill" title="Peripheral Brain">PB</span> : null
+  const belowTitle = pbBadge || extraPills ? <>{pbBadge}{extraPills}</> : undefined
+
   return (
     // dnd-kit wrapper: setNodeRef + listeners activate the PointerSensor when the
     // user grabs the row (specifically the grip icon inside SharedTaskRow).
@@ -204,7 +209,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       onToggleExpand={() => { if (onOpen) onOpen(); else if (!isDone) onExpand(task.id) }}
       isPlanned={!!planned}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
-      showGroupOverridePin
+      showSortedByHand
       // draggable gates ONLY SharedTaskRow's DragHandle render (the visual ⋮⋮
       // grip icon) — it is never applied as a native HTML draggable= attribute
       // anywhere in SharedTaskRow (today/TaskRow.tsx is its sole caller passing
@@ -220,7 +225,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card
       footPills={workflowPills}
-      belowTitle={extraPills}
+      belowTitle={belowTitle}
       linksSlot={linkMeta}
       meetingSlot={meetingMeta}
       workSlot={workOnMeta}
