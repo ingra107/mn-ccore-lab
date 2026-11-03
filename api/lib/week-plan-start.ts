@@ -226,21 +226,16 @@ export async function weekPlanStart(
     return { forbidden: 'week_plan_owner_only: only Nick can start work from a week plan' };
   }
 
-  const today = ctToday();
-  const used = await dailyPacketCount(env.DB, today);
-  if (used + started.length > PACKET_DAILY_CAP) {
-    return {
-      refusal: {
-        used, cap: PACKET_DAILY_CAP,
-        reason: `daily_cap: starting ${started.length} would pass today's cap of ${PACKET_DAILY_CAP} (${used} used)`,
-      },
-    };
-  }
-
   const ids = started.map((p) => p.task_id);
   const marks = ids.map(() => '?').join(', ');
+  // Live tasks only (2026-11-03, request e2ec243b): a plan is built before
+  // Start, and a pick deleted in between got a request PB could never run --
+  // it was retried for three hours, then alerted. A deleted pick starts nothing.
   const [tasksRes, packetsRes] = await env.DB.batch([
-    env.DB.prepare(`SELECT id, project_id, title FROM tasks WHERE id IN (${marks})`).bind(...ids),
+    env.DB.prepare(
+      `SELECT id, project_id, title FROM tasks WHERE id IN (${marks})
+         AND deleted_at IS NULL AND COALESCE(status, '') != 'deleted'`,
+    ).bind(...ids),
     env.DB.prepare(
       `SELECT tp.id, tp.task_id, tp.current_version FROM task_packets tp
         WHERE tp.task_id IN (${marks}) AND tp.closed_at IS NULL
@@ -249,10 +244,23 @@ export async function weekPlanStart(
   ]);
   const taskOf = new Map((tasksRes.results as { id: string; project_id: string | null; title: string }[]).map((t) => [t.id, t]));
   const packetOf = new Map((packetsRes.results as { id: string; task_id: string; current_version: number }[]).map((p) => [p.task_id, p]));
+  const live = started.filter((pick) => taskOf.has(pick.task_id));
+  if (live.length === 0) return null;
 
-  const rows: AIRequestInsertRow[] = started.map((pick) => {
+  const today = ctToday();
+  const used = await dailyPacketCount(env.DB, today);
+  if (used + live.length > PACKET_DAILY_CAP) {
+    return {
+      refusal: {
+        used, cap: PACKET_DAILY_CAP,
+        reason: `daily_cap: starting ${live.length} would pass today's cap of ${PACKET_DAILY_CAP} (${used} used)`,
+      },
+    };
+  }
+
+  const rows: AIRequestInsertRow[] = live.map((pick) => {
     const direction = pickDirection(pick, spec);
-    const live = packetOf.get(pick.task_id);
+    const livePacket = packetOf.get(pick.task_id);
     const candidate = spec.candidates.find((c) => c.task_id === pick.task_id);
     const payload: PacketPreparePayload = {
       v: 1,
@@ -260,7 +268,7 @@ export async function weekPlanStart(
       direction,
       option_key: pick.option_key,
       plan_question_id: mut.record_id,
-      expected_packet: live ? { id: live.id, version: live.current_version } : null,
+      expected_packet: livePacket ? { id: livePacket.id, version: livePacket.current_version } : null,
     };
     const title = taskOf.get(pick.task_id)?.title ?? candidate?.title ?? pick.task_id;
     return {

@@ -241,6 +241,25 @@ describe('POST /api/tasks/:id with a week_plan answer (Start)', () => {
     expect(JSON.parse(String(requests()[0].context)).expected_packet).toBeNull()
   })
 
+  it('a pick deleted after the plan was built starts nothing; the live picks still start', async () => {
+    // 2026-11-03 (request e2ec243b): a deleted pick got a request PB could never run.
+    db.prepare("UPDATE tasks SET status = 'deleted', deleted_at = '2026-10-27T12:50:00Z' WHERE id = 'task_b'").run()
+    const r = await answerPlan([
+      { task_id: 'task_a', option_key: 'a1', text: null, start: true },
+      { task_id: 'task_b', option_key: 'b1', text: null, start: true },
+    ])
+    expect(r.status).toBe(200)
+    expect(requests().map((q) => q.source_id)).toEqual(['task_a'])
+  })
+
+  it('a Start whose only pick was deleted stores the answer and starts nothing', async () => {
+    db.prepare("UPDATE tasks SET status = 'deleted', deleted_at = '2026-10-27T12:50:00Z' WHERE id = 'task_b'").run()
+    const r = await answerPlan([{ task_id: 'task_b', option_key: 'b1', text: null, start: true }])
+    expect(r.status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).not.toBeNull()
+  })
+
   it('Save without starting stores the picks and starts nothing', async () => {
     const r = await call('POST', `/api/tasks/${PLAN}`, { as: NICK }, {
       question_answer_json: answer([{ task_id: 'task_a', option_key: 'a1', text: null, start: false }], { choice: 'save' }),
