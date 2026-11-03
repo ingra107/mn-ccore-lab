@@ -6,13 +6,17 @@ import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
 import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
-import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
+import { NOT_QUESTION_SQL, withKindLabel } from '../../shared/taskKinds';
 
 // ── Types ─────────────────────────────────────────────────────
 
 interface DigestTask {
   id: string;
   title: string;
+  /** tasks.kind: an email is a text surface, so a check-in or milestone is
+   *  named in words ("Check-in: X", shared/taskKinds.ts withKindLabel;
+   *  schema-v156 stopped storing the prefix in the title). */
+  kind: string | null;
   due_date: string | null;
   priority: string | null;
   status: string;
@@ -60,7 +64,7 @@ async function generateDigest(memberSlug: string, env: Env): Promise<DigestData>
   const [overdueResult, dueTodayResult, upcomingResult, meetingsResult, activityResult] = await Promise.all([
     // Overdue tasks assigned to this member
     env.DB.prepare(
-      `SELECT id, title, due_date, priority, status, project_id FROM tasks
+      `SELECT id, title, kind, due_date, priority, status, project_id FROM tasks
        WHERE assignee = ? AND due_date < ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY priority DESC, due_date ASC
        LIMIT 10`
@@ -68,14 +72,14 @@ async function generateDigest(memberSlug: string, env: Env): Promise<DigestData>
 
     // Tasks due today
     env.DB.prepare(
-      `SELECT id, title, due_date, priority, status, project_id FROM tasks
+      `SELECT id, title, kind, due_date, priority, status, project_id FROM tasks
        WHERE assignee = ? AND due_date = ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY priority DESC`
     ).bind(memberSlug, today).all(),
 
     // Tasks due in the next 7 days (excluding today)
     env.DB.prepare(
-      `SELECT id, title, due_date, priority, status, project_id FROM tasks
+      `SELECT id, title, kind, due_date, priority, status, project_id FROM tasks
        WHERE assignee = ? AND due_date > ? AND due_date <= ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}
        ORDER BY due_date ASC, priority DESC
        LIMIT 10`
@@ -143,7 +147,7 @@ function taskRow(task: DigestTask): string {
   const href = `${HUB_URL}/portal/my-tasks?open=${encodeURIComponent(task.id)}`;
   return `<tr>
     <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
-      <a href="${href}" style="color:#0f1923;text-decoration:none;">${escapeHtml(task.title)}</a>${priorityLabel(task.priority)}${due}
+      <a href="${href}" style="color:#0f1923;text-decoration:none;">${escapeHtml(withKindLabel(task.kind, task.title))}</a>${priorityLabel(task.priority)}${due}
     </td>
   </tr>`;
 }

@@ -14,7 +14,7 @@ import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
-import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, type TaskKind } from '../../shared/taskKinds';
+import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
 import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
 import { TASK_PACKET_ID_COL, attachPacketStates, livePacketView } from './packets';
 
@@ -813,7 +813,8 @@ export async function handleCreateTask(
           const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
           const member = await env.DB.prepare('SELECT name, email FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string; email: string | null }>();
           if (member) {
-            const email = taskAssignmentEmail(user.name || user.email, title, resultId);
+            // An email is a text surface: name a check-in or milestone in words (schema-v156).
+            const email = taskAssignmentEmail(user.name || user.email, withKindLabel(kind, title), resultId);
             email.to = member.email || `${assignee}@umn.edu`;
             await sendEmail(env, email);
           }
@@ -1763,9 +1764,11 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
     // onto someone else's row. A task on a project is still keyed on the
     // project alone. lower(trim()) normalization is KEPT — genuine tolerance for
     // typed mobile input that the central rule's exact `title = ?` doesn't
-    // provide. NULL project_id matches NULL via IS.
+    // provide. NULL project_id matches NULL via IS. A mobile row is always a
+    // plain task, so it maps only onto a plain task: since schema-v156 a
+    // check-in's title carries no "Check in: " and could otherwise match.
     const existing = await env.DB.prepare(
-      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND ((project_id IS NULL AND ? IS NULL AND assignee = ?) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
+      "SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND ((project_id IS NULL AND ? IS NULL AND assignee = ?) OR project_id = ?) AND COALESCE(kind, 'task') = 'task' AND completed = 0 AND deleted_at IS NULL LIMIT 1"
     ).bind(title, resolvedProjectId, assignee, resolvedProjectId).first<{ id: string }>();
 
     if (existing) {

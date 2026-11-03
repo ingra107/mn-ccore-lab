@@ -24,11 +24,11 @@ const later = localDateKey(new Date(Date.now() + 3 * 864e5))
 const past = localDateKey(new Date(Date.now() - 3 * 864e5))
 
 const events: CalendarEvent[] = [
-  { id: 'm1', date: today, title: 'Lab meeting', type: 'meeting', category: 'biweekly' },
-  { id: 't1', date: today, title: 'Submit the long-named data core synthesis', short_title: 'Data core synthesis', type: 'task', category: 'urgent', meta: { assignee: 'nick-ingraham', status: 'in_progress' } },
-  { id: 't2', date: later, title: 'Plain task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
-  { id: 'ms1', date: later, title: 'Data freeze', type: 'milestone', category: 'grant', meta: { grant_title: 'R01 LPV' } },
-  { id: 'old', date: past, title: 'Gone by', type: 'task', category: 'low', meta: {} },
+  { id: 'm1', date: today, title: 'Lab meeting', kind: null, type: 'meeting', category: 'biweekly' },
+  { id: 't1', date: today, title: 'Submit the long-named data core synthesis', short_title: 'Data core synthesis', kind: 'task', type: 'task', category: 'urgent', meta: { assignee: 'nick-ingraham', status: 'in_progress' } },
+  { id: 't2', date: later, title: 'Plain task', kind: 'task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
+  { id: 'ms1', date: later, title: 'Data freeze', kind: null, type: 'milestone', category: 'grant', meta: { grant_title: 'R01 LPV' } },
+  { id: 'old', date: past, title: 'Gone by', kind: 'task', type: 'task', category: 'low', meta: {} },
 ]
 
 // Counts navigations (each one mints a new location key), so a doubled
@@ -110,9 +110,9 @@ describe('Calendar Agenda: sleek rows', () => {
 
   it('a day of tasks only has no empty glyph track; a day with a meeting keeps it', async () => {
     const tasksOnly: CalendarEvent[] = [
-      { id: 'a1', date: today, title: 'Only a task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
-      { id: 'b1', date: later, title: 'A meeting', type: 'meeting', category: 'biweekly' },
-      { id: 'b2', date: later, title: 'Beside a meeting', type: 'task', category: 'medium', meta: {} },
+      { id: 'a1', date: today, title: 'Only a task', kind: 'task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
+      { id: 'b1', date: later, title: 'A meeting', kind: null, type: 'meeting', category: 'biweekly' },
+      { id: 'b2', date: later, title: 'Beside a meeting', kind: 'task', type: 'task', category: 'medium', meta: {} },
     ]
     const host = await mountAgenda(1000, tasksOnly)
     const a1 = host.querySelector('[data-event-id="a1"]') as HTMLElement
@@ -121,6 +121,23 @@ describe('Calendar Agenda: sleek rows', () => {
     const cols = (a1.closest('.sr') as HTMLElement).style.getPropertyValue('--sr-cols')
     expect(cols.startsWith('minmax(0,1fr)')).toBe(true)
     expect(host.querySelector('[data-event-id="b2"] [data-col="kind"]')).not.toBeNull()
+  })
+
+  // schema-v156 (Nick 2026-11-03): a check-in's title is the bare subject; the
+  // calendar is a text surface, so it names the row from kind. A plain task
+  // reads bare. (The server half, calendar.ts returning kind, is pinned in
+  // api/routes/kind-label-surfaces.test.ts.)
+  it('names a check-in and a milestone task from kind; a plain task reads bare', async () => {
+    const evs: CalendarEvent[] = [
+      { id: 'c1', date: today, title: 'Ask Casey', kind: 'checkin', type: 'task', category: 'medium', meta: {} },
+      { id: 'k1', date: today, title: 'LOI due', kind: 'milestone', type: 'task', category: 'medium', meta: {} },
+      { id: 'p1', date: today, title: 'Draft methods', kind: 'task', type: 'task', category: 'medium', meta: {} },
+    ]
+    const host = await mountAgenda(1000, evs)
+    const text = (id: string) => host.querySelector(`[data-event-id="${id}"] a`)?.textContent
+    expect(text('c1')).toBe('Check-in: Ask Casey')
+    expect(text('k1')).toBe('Milestone: LOI due')
+    expect(text('p1')).toBe('Draft methods')
   })
 
   it('moves to the phone layout below 640px with the glyph, title, context line and face slots', async () => {

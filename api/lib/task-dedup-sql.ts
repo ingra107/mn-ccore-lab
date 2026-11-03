@@ -29,14 +29,34 @@ export const TASK_TITLE_KEY_SQL = 'lower(trim(title))';
 export const TASK_TITLE_KEY_BIND_SQL = 'lower(trim(?))';
 
 /**
- * The partial UNIQUE index that backs the key (api/schema-v138-*.sql). The chain:
+ * The partial UNIQUE index that backs the key (api/schema-v156-*.sql). The chain:
  * v107 idx_tasks_title_norm_project_active, v113 the recurring exemption
  * (idx_tasks_title_norm_nonrecurring_active), v138 the per-assignee scope of a
- * project-less task. Each NAME is load-bearing for the same reason v107's
- * `_norm` was (`CREATE UNIQUE INDEX IF NOT EXISTS` matches on the name, so
- * re-declaring an old name with a new key is a silent no-op).
+ * project-less task (idx_tasks_title_norm_owner_active), v156 the kind
+ * (idx_tasks_title_norm_owner_kind_active). Each NAME is load-bearing for the
+ * same reason v107's `_norm` was (`CREATE UNIQUE INDEX IF NOT EXISTS` matches
+ * on the name, so re-declaring an old name with a new key is a silent no-op).
  */
-export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_owner_active';
+export const TASK_TITLE_NORM_INDEX = 'idx_tasks_title_norm_owner_kind_active';
+
+// ── Which kind of row is it? (schema-v156, 2026-11-03) ──────────────────────
+//
+// A check-in's title used to start "Check in: " (schema-v152), which kept it
+// out of every task's name identity by accident. v156 stopped storing the
+// prefix (the label is rendered from kind), so the kind is now a key part:
+// a check-in "Beret's draft" and a task "Beret's draft" on one project are two
+// rows, and the dedup can never fold one kind onto another. Column form and
+// bound value are the same rule; NULL reads as 'task' (the column is NOT NULL
+// DEFAULT 'task', schema-v109, but a COALESCE costs nothing and matches the
+// index expression byte for byte).
+
+/** The kind half of the key, as SQLite evaluates it over the stored column. */
+export const TASK_KIND_KEY_SQL = "COALESCE(kind, 'task')";
+
+/** The same rule as a bound value: the payload's kind, 'task' when absent. */
+export function taskKindKey(kind: string | null | undefined): string {
+  return kind || 'task';
+}
 
 // ── Whose task is it? (#145 follow-up, schema-v138, 2026-10-13) ─────────────
 //
@@ -102,24 +122,25 @@ const TASK_DEDUP_SCOPE_SQL =
  * project matches NULL; the index gets the same behaviour from
  * COALESCE(project_id, ''), because SQLite treats NULLs as DISTINCT in a UNIQUE
  * index and would otherwise leave the race window open for exactly those rows.
- * Binds: (title, projectId, taskOwnerKey(projectId, assignee)).
+ * Binds: (title, projectId, taskOwnerKey(projectId, assignee), taskKindKey(kind)).
  */
 export const TASK_TITLE_DEDUP_SELECT =
   `SELECT id FROM tasks WHERE ${TASK_TITLE_KEY_SQL} = ${TASK_TITLE_KEY_BIND_SQL} ` +
-  `AND project_id IS ? AND ${TASK_OWNER_KEY_SQL} = ? ${TASK_DEDUP_SCOPE_SQL}`;
+  `AND project_id IS ? AND ${TASK_OWNER_KEY_SQL} = ? AND ${TASK_KIND_KEY_SQL} = ? ${TASK_DEDUP_SCOPE_SQL}`;
 
-export type TaskTitleTakenCheck = (title: string, projectId: string | null, assignee: string | null) => Promise<boolean>;
+export type TaskTitleTakenCheck = (title: string, projectId: string | null, assignee: string | null, kind: string) => Promise<boolean>;
 
 /**
- * The oracle: true when an open task anywhere holds this title key (for a
- * project-less title, this assignee's), so the I18 dedup would adopt it. `raw` must be the UNSCOPED handle: adoption looks
+ * The oracle: true when an open row of this kind anywhere holds this title key
+ * (for a project-less title, this assignee's), so the I18 dedup would adopt it. `raw` must be the UNSCOPED handle: adoption looks
  * across every viewer, so a check through a viewer handle misses the tasks the
  * caller cannot see. Hands back one yes/no, never a row or the handle (same
  * shape as project-slug.ts::slugClaimCheck).
  */
 export function taskTitleTakenCheck(raw: D1Database): TaskTitleTakenCheck {
-  return async (title, projectId, assignee) =>
-    !!(await raw.prepare(TASK_TITLE_DEDUP_SELECT).bind(title, projectId, taskOwnerKey(projectId, assignee)).first<{ id: string }>());
+  return async (title, projectId, assignee, kind) =>
+    !!(await raw.prepare(TASK_TITLE_DEDUP_SELECT)
+      .bind(title, projectId, taskOwnerKey(projectId, assignee), taskKindKey(kind)).first<{ id: string }>());
 }
 
 // ── Test-support: classify a `SELECT id FROM tasks` the D1 stubs must answer ──

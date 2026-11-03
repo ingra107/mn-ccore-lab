@@ -6,11 +6,12 @@
 import { describe, it, expect } from 'vitest'
 import { getGroupForTask as todayGroup } from '../../components/today/constants'
 import { getGroupForTask as myTasksGroup } from '../../pages/MyTasks/constants'
-import { CHECKIN_TITLE_PREFIX, TASK_KINDS, TASK_KIND_LABELS, TASK_KIND_OPTIONS, isCheckin, kindChangeFields, taskKindLabel } from '../../../shared/taskKinds'
+import { TASK_KINDS, TASK_KIND_LABELS, TASK_KIND_OPTIONS, isCheckin, taskKindLabel, withKindLabel } from '../../../shared/taskKinds'
+import { taskFullTitleHint, taskShortLabel, taskSubjectLabel } from '../displayNames'
 import type { TaskRow } from '../api'
 
 const row = (extra: Record<string, unknown>) =>
-  ({ id: 't', title: 'Check in: CQODE', kind: 'checkin', due_date: null, deadline: null, group_override: null, ...extra }) as unknown as TaskRow
+  ({ id: 't', title: 'CQODE', kind: 'checkin', due_date: null, deadline: null, group_override: null, ...extra }) as unknown as TaskRow
 
 describe('check-in grouping', () => {
   for (const [name, fn] of [['Today', todayGroup], ['MyTasks', myTasksGroup]] as const) {
@@ -22,9 +23,8 @@ describe('check-in grouping', () => {
     })
   }
 
-  it('the vocabulary carries checkin and its title prefix', () => {
+  it('the vocabulary carries checkin', () => {
     expect(TASK_KINDS).toContain('checkin')
-    expect(CHECKIN_TITLE_PREFIX).toBe('Check in: ')
     expect(isCheckin({ kind: 'checkin' })).toBe(true)
     expect(isCheckin({ kind: 'task' })).toBe(false)
   })
@@ -36,9 +36,26 @@ describe('check-in grouping', () => {
     expect(TASK_KIND_OPTIONS.find((o) => o.value === 'checkin')?.label).toBe('Check-in')
   })
 
-  it('switching to check-in prefixes the title once; other kinds leave it alone', () => {
-    expect(kindChangeFields('checkin', 'Ask Casey')).toEqual({ kind: 'checkin', title: 'Check in: Ask Casey' })
-    expect(kindChangeFields('checkin', 'Check in: Ask Casey')).toEqual({ kind: 'checkin' })
-    expect(kindChangeFields('milestone', 'Ask Casey')).toEqual({ kind: 'milestone' })
+  // schema-v156 (Nick 2026-11-03): the label comes from kind, never the title.
+  // Text surfaces name check-ins and milestones; tasks and questions read bare.
+  it('withKindLabel names a check-in and a milestone, and nothing else', () => {
+    expect(withKindLabel('checkin', 'Ask Casey')).toBe('Check-in: Ask Casey')
+    expect(withKindLabel('milestone', 'LOI due')).toBe('Milestone: LOI due')
+    expect(withKindLabel('task', 'Ask Casey')).toBe('Ask Casey')
+    expect(withKindLabel('question', 'Pick one')).toBe('Pick one')
+    expect(withKindLabel(null, 'Ask Casey')).toBe('Ask Casey')
+    expect(withKindLabel(undefined, 'Ask Casey')).toBe('Ask Casey')
+    expect(withKindLabel('nonsense', 'Ask Casey')).toBe('Ask Casey')
+    // An empty subject stays empty, so a caller's own fallback still fires.
+    expect(withKindLabel('checkin', '')).toBe('')
+  })
+
+  it('taskShortLabel labels by kind; taskSubjectLabel stays bare; the hover hint compares the subject', () => {
+    expect(taskShortLabel({ kind: 'checkin', short_title: 'Casey abstract', title: 'Casey on the abstract' })).toBe('Check-in: Casey abstract')
+    expect(taskShortLabel({ kind: 'milestone', title: 'LOI due' })).toBe('Milestone: LOI due')
+    expect(taskShortLabel({ kind: 'task', title: 'Draft methods' })).toBe('Draft methods')
+    expect(taskSubjectLabel({ short_title: 'Casey abstract', title: 'Casey on the abstract' })).toBe('Casey abstract')
+    expect(taskFullTitleHint({ short_title: null, title: 'Casey on the abstract' })).toBeUndefined()
+    expect(taskFullTitleHint({ short_title: 'Casey abstract', title: 'Casey on the abstract' })).toBe('Casey on the abstract')
   })
 })

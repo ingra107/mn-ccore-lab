@@ -46,7 +46,6 @@ export const TRIGGER_RULE_CODES: Readonly<Record<string, TriggerRuleCode>> = {
   question_kind_immutable: 'question_rule',
   // ── integrity or not-reachable: loud ──
   task_parent_not_live: 'constraint',
-  checkin_title: 'constraint',
   task_product_project_mismatch: 'constraint',
   product_project_immutable: 'constraint',
   link_product_project_mismatch: 'constraint',

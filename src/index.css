@@ -2657,8 +2657,8 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ms.tk-int .tk-dia{color:var(--sk-t3)} .tk .tk-ms.tk-int .tk-lead{background:var(--sk-line)}
 .tk .tk-ms.tk-slip{opacity:.55}
 /* check-in rule (kind='checkin'): the milestone's one-line anatomy with a
-   one-tap check where the diamond sits and no gold; the "Check in:" prefix is
-   a small dim label ahead of the title. */
+   one-tap check where the diamond sits and no gold; a small dim "Check-in"
+   label (from kind, schema-v156) sits ahead of the title. */
 .tk .tk-ms.tk-chk{cursor:pointer}
 .tk .tk-ms.tk-chk .tk-ck{margin-top:0}
 .tk .tk-ms.tk-chk .tk-ci-l{font-size:11px;color:var(--sk-t3);white-space:nowrap;flex-shrink:0}

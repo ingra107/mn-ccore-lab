@@ -6,6 +6,10 @@
 
 import { describe, it, expect } from 'vitest'
 import { prodSchemaDb, insertRow } from '../test-support/prod-schema-db'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const API_DIR = join(__dirname, '..')
 
 type Db = ReturnType<typeof prodSchemaDb>
 
@@ -216,24 +220,99 @@ describe('v152 a done parent never holds an open step', () => {
   })
 })
 
-describe('v152 check-in titles', () => {
-  it('a check-in titled "Check in: ..." is accepted', () => {
+describe('v156 a check-in title is free text (the label comes from kind)', () => {
+  it('the v152 title triggers are gone from the migrated schema', () => {
     const db = prodSchemaDb()
-    expect(task(db, 'C', { kind: 'checkin', title: 'Check in: CQODE -- what is next?' }).kind).toBe('checkin')
+    expect(db.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_tasks_checkin%'").all()).toEqual([])
   })
 
-  it('refuses a check-in with any other title, on insert and on update', () => {
+  it('a check-in with any title is accepted, on insert, rename and kind flip', () => {
     const db = prodSchemaDb()
-    refuses(() => task(db, 'C1', { kind: 'checkin', title: 'CQODE follow-up' }), /checkin_title/)
-    refuses(() => task(db, 'C2', { kind: 'checkin', title: 'check in: lower case' }), /checkin_title/)
-    task(db, 'C3', { kind: 'checkin', title: 'Check in: X' })
-    refuses(() => db.prepare("UPDATE tasks SET title = 'Renamed' WHERE id = 'C3'").run(), /checkin_title/)
+    expect(task(db, 'C1', { kind: 'checkin', title: 'CQODE follow-up' }).kind).toBe('checkin')
+    expect(() => db.prepare("UPDATE tasks SET title = 'Renamed' WHERE id = 'C1'").run()).not.toThrow()
     task(db, 'T', { title: 'Plain task' })
-    refuses(() => db.prepare("UPDATE tasks SET kind = 'checkin' WHERE id = 'T'").run(), /checkin_title/)
+    expect(() => db.prepare("UPDATE tasks SET kind = 'checkin' WHERE id = 'T'").run()).not.toThrow()
+    expect(() => db.prepare("UPDATE tasks SET kind = 'task' WHERE id = 'T'").run()).not.toThrow()
+  })
+})
+
+describe('v156 the name identity carries the kind', () => {
+  // The stored prefix used to keep "Check in: X" apart from a task "X" by
+  // accident. Without it the kind is the key part that does: one open row per
+  // (title, project/owner, kind), so a check-in never folds onto a task.
+  const seed = (db: Db) => insertRow(db, 'projects', { id: 'proj_1', slug: 'p1', title: 'P1' })
+
+  it('a check-in, a milestone and a task of the same title in one project all insert', () => {
+    const db = prodSchemaDb()
+    seed(db)
+    task(db, 'T1', { title: "Beret's draft", project_id: 'proj_1' })
+    expect(() => task(db, 'C1', { title: "Beret's draft", project_id: 'proj_1', kind: 'checkin' })).not.toThrow()
+    expect(() => task(db, 'M1', { title: "Beret's draft", project_id: 'proj_1', kind: 'milestone' })).not.toThrow()
   })
 
-  it('leaves other kinds alone', () => {
+  it('two open rows of the same kind and title in one project still collide, folded for case and edge spaces', () => {
     const db = prodSchemaDb()
-    expect(() => task(db, 'M', { kind: 'milestone', title: 'LOI due' })).not.toThrow()
+    seed(db)
+    task(db, 'C1', { title: "Beret's draft", project_id: 'proj_1', kind: 'checkin' })
+    refuses(() => task(db, 'C2', { title: "  beret's DRAFT ", project_id: 'proj_1', kind: 'checkin' }), /UNIQUE constraint failed/)
+    task(db, 'T1', { title: 'Plain', project_id: 'proj_1' })
+    refuses(() => task(db, 'T2', { title: 'plain', project_id: 'proj_1' }), /UNIQUE constraint failed/)
+  })
+
+  it('a kind flip onto a taken (title, owner, kind) is refused, like a rename onto a taken title', () => {
+    const db = prodSchemaDb()
+    seed(db)
+    task(db, 'T1', { title: 'Ask Casey', project_id: 'proj_1' })
+    task(db, 'C1', { title: 'Ask Casey', project_id: 'proj_1', kind: 'checkin' })
+    refuses(() => db.prepare("UPDATE tasks SET kind = 'task' WHERE id = 'C1'").run(), /UNIQUE constraint failed/)
+  })
+
+  it('v156 applies over a live v155 database holding v152-shape rows, and its header rollback restores v155', () => {
+    // Build the v155 state from the v156 image by running the header's
+    // ROLLBACK steps 3-5 (and the v152 trigger text, read from its file), so
+    // the rollback SQL is exercised too.
+    const db = prodSchemaDb()
+    seed(db)
+    const v152 = readFileSync(join(API_DIR, 'schema-v152-task-steps-and-checkins.sql'), 'utf8')
+    const trig = v152.slice(v152.indexOf('\nDROP TRIGGER IF EXISTS trg_tasks_checkin_title_ins;'),v152.indexOf('END;', v152.indexOf('CREATE TRIGGER trg_tasks_checkin_title_upd')) + 4)
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_title_norm_owner_active
+        ON tasks(lower(trim(title)), COALESCE(project_id, ''), CASE WHEN project_id IS NULL THEN COALESCE(assignee, '') ELSE '' END)
+        WHERE deleted_at IS NULL AND status != 'done'
+          AND (source IS NULL OR source != 'meeting_approval')
+          AND instr(lower(title), '(recurring)') = 0
+          AND instr(lower(title), '_recurring') = 0
+          AND instr(lower(title), 'recurring:') = 0;
+      DROP INDEX IF EXISTS idx_tasks_title_norm_owner_kind_active;
+      ${trig}
+      DELETE FROM schema_migrations WHERE version = 156;`)
+    // v155 really is back: a bare check-in title is refused again.
+    refuses(() => task(db, 'X', { kind: 'checkin', title: 'bare' }), /checkin_title/)
+    // v152-shape data, as prod holds it today.
+    task(db, 'T1', { title: 'Ask Casey', project_id: 'proj_1' })
+    task(db, 'C1', { title: 'Check in: Ask Casey', project_id: 'proj_1', kind: 'checkin' })
+    task(db, 'M1', { title: 'LOI due', project_id: 'proj_1', kind: 'milestone' })
+    task(db, 'R1', { title: 'Weekly sync (recurring)', project_id: 'proj_1' })
+    task(db, 'R2', { title: 'Weekly sync (recurring)', project_id: 'proj_1' })
+    const before = db.prepare('SELECT id, title, kind FROM tasks ORDER BY id').all()
+
+    db.exec(readFileSync(join(API_DIR, 'schema-v156-checkin-title-from-kind.sql'), 'utf8'))
+
+    expect(db.prepare('SELECT id, title, kind FROM tasks ORDER BY id').all()).toEqual(before)
+    expect(db.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_tasks_checkin%'").all()).toEqual([])
+    expect((db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'idx_tasks_title_norm%'").all() as Array<{ name: string }>).map((r) => r.name))
+      .toEqual(['idx_tasks_title_norm_owner_kind_active'])
+    expect(db.prepare('SELECT version, filename FROM schema_migrations WHERE version = 156').get())
+      .toEqual({ version: 156, filename: 'schema-v156-checkin-title-from-kind.sql' })
+    // The repair can now strip the prefix: "Ask Casey" check-in beside the "Ask Casey" task.
+    expect(() => db.prepare("UPDATE tasks SET title = 'Ask Casey' WHERE id = 'C1'").run()).not.toThrow()
+    // Re-applying is a no-op (every statement is IF [NOT] EXISTS / OR IGNORE).
+    expect(() => db.exec(readFileSync(join(API_DIR, 'schema-v156-checkin-title-from-kind.sql'), 'utf8'))).not.toThrow()
+  })
+
+  it('the v138 index is gone; the kind-keyed one is the only title index', () => {
+    const db = prodSchemaDb()
+    const idx = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'idx_tasks_title_norm%'").all() as Array<{ name: string }>).map((r) => r.name)
+    expect(idx).toEqual(['idx_tasks_title_norm_owner_kind_active'])
   })
 })

@@ -8,7 +8,7 @@ import { StatusGlyph } from './StatusGlyph'
 import { CardCheck, CardDuePill, CardTags, useTaskAttention } from './TaskCardRow'
 import { dueLabelCompact, isOverdue } from '../../lib/dateUtils'
 import { isMilestone } from '../../../shared/taskKinds'
-import { taskShortLabel } from '../../lib/displayNames'
+import { taskShortLabel, taskSubjectLabel } from '../../lib/displayNames'
 import { isTaskDone } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
@@ -38,7 +38,9 @@ export function TaskTitleCell({ task, isDone, onOpen, selecting = false, planned
   showMoved?: boolean
 }) {
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
-  const title = taskShortLabel(task)
+  // A milestone draws its diamond here, so it shows the bare subject; every
+  // other kind is named in words ("Check-in: X", schema-v156).
+  const title = isMilestone(task) ? taskSubjectLabel(task) : taskShortLabel(task)
   const open = onOpen
     ? {
         role: 'button' as const,

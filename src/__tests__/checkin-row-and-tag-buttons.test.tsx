@@ -36,7 +36,7 @@ const wrap = (node: React.ReactNode) => (
 )
 
 const checkin = (extra: Partial<TaskRow> = {}): TaskRow => ({
-  id: 'ci1', title: 'Check in: Casey on the abstract', short_title: null, description: '', kind: 'checkin',
+  id: 'ci1', title: 'Casey on the abstract', short_title: null, description: '', kind: 'checkin',
   assignee: 'nick-ingraham', assigned_by: null, watchers: null, due_date: null, priority: 'medium', status: 'todo',
   completed: 0, completed_at: null, project_id: 'p', group_override: null, acknowledged_at: '2026-01-01', ...extra,
 }) as unknown as TaskRow
@@ -85,8 +85,11 @@ describe('check-in row', () => {
       )
       const row = host.querySelector<HTMLElement>('[data-task-kind="checkin"]')!
       expect(host.querySelector('.tk-card')).toBeNull()
-      expect(row.textContent).toContain('Check in')
-      expect(row.textContent).toContain('Casey on the abstract')
+      // The label comes from kind (schema-v156: the title is the bare
+      // subject), and the row says it once.
+      expect(row.querySelector('.tk-ci-l')?.textContent).toBe('Check-in')
+      expect(row.querySelector('[data-testid="checkin-title"]')?.textContent).toBe('Casey on the abstract')
+      expect(row.textContent!.match(/Check-in/g)).toHaveLength(1)
       expect(row.getBoundingClientRect().height).toBeLessThan(40)
       const check = row.querySelector<HTMLButtonElement>('button[aria-label="Mark done"]')!
       check.click()

@@ -56,8 +56,8 @@ describe('Calendar paging (G4-1)', () => {
 
   it('AgendaView lists only the window it is given', async () => {
     const evs: CalendarEvent[] = [
-      { id: 'a', date: '2099-01-05', title: 'In window', type: 'meeting', category: 'meeting' },
-      { id: 'b', date: '2099-03-05', title: 'After window', type: 'meeting', category: 'meeting' },
+      { id: 'a', date: '2099-01-05', title: 'In window', kind: null, type: 'meeting', category: 'meeting' },
+      { id: 'b', date: '2099-03-05', title: 'After window', kind: null, type: 'meeting', category: 'meeting' },
     ]
     const h = await mount(<MemoryRouter><AgendaView events={evs} from="2099-01-01" to="2099-02-28" /></MemoryRouter>, { ready: (x) => x.querySelectorAll('.sr-row').length === 1, label: 'AgendaView' })
     expect(h.textContent).toContain('In window')
@@ -70,7 +70,7 @@ describe('Calendar paging (G4-1)', () => {
 describe('Calendar month cell on a phone (G4-2)', () => {
   it('the date button covers the whole cell and dots replace chips below md', async () => {
     const date = localDateKey()
-    const evs: CalendarEvent[] = [{ id: 'm1', date, title: 'Lab meeting', type: 'meeting', category: 'meeting' }]
+    const evs: CalendarEvent[] = [{ id: 'm1', date, title: 'Lab meeting', kind: null, type: 'meeting', category: 'meeting' }]
     const h = await mount(<MemoryRouter><div style={{ width: 390 }}><MonthView currentDate={new Date()} events={evs} onOpenDay={() => {}} /></div></MemoryRouter>, { ready: (x) => x.querySelector('[data-today="true"]'), label: 'MonthView' })
     const cell = h.querySelector('[data-today="true"]') as HTMLElement
     const btn = cell.querySelector('button.cal-day-open') as HTMLElement
@@ -87,7 +87,7 @@ describe('Calendar month cell on a phone (G4-2)', () => {
 describe('Calendar week on a phone (G4-3)', () => {
   it('stacks the days as rows below md, with one-line titles', async () => {
     const start = new Date(); start.setDate(start.getDate() - start.getDay())
-    const evs: CalendarEvent[] = [{ id: 't1', date: localDateKey(start), title: 'Pulmonary ambulatory category check', type: 'task', category: 'medium' }]
+    const evs: CalendarEvent[] = [{ id: 't1', date: localDateKey(start), title: 'Pulmonary ambulatory category check', kind: 'task', type: 'task', category: 'medium' }]
     const h = await mount(<MemoryRouter><WeekView weekStart={start} events={evs} /></MemoryRouter>, { ready: (x) => x.querySelector('a[title]'), label: 'WeekView' })
     const chip = h.querySelector('a[title]') as HTMLElement
     expect(window.innerWidth).toBeLessThan(768)

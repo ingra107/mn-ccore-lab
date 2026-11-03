@@ -111,8 +111,8 @@ describe('taskTitleTakenCheck (the digest Make-task oracle) uses the same key', 
   it('another person\'s open project-less task of that title is not "taken"; the caller\'s own is', async () => {
     db.prepare('INSERT INTO tasks (id, title, assignee) VALUES (?, ?, ?)').run('task_n', 'Read the paper', 'nick-ingraham');
     const taken = taskTitleTakenCheck(d1Adapter(db) as any);
-    expect(await taken('Read the paper', null, 'casey-eddington')).toBe(false);
-    expect(await taken('Read the paper', null, 'nick-ingraham')).toBe(true);
-    expect(await taken(' read THE paper', null, 'nick-ingraham')).toBe(true);
+    expect(await taken('Read the paper', null, 'casey-eddington', 'task')).toBe(false);
+    expect(await taken('Read the paper', null, 'nick-ingraham', 'task')).toBe(true);
+    expect(await taken(' read THE paper', null, 'nick-ingraham', 'task')).toBe(true);
   });
 });

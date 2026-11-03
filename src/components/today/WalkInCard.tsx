@@ -29,7 +29,7 @@ import './picks.css'
 /** How far ahead the card appears: the next meeting within this many minutes. */
 export const WALK_IN_LEAD_MIN = 90
 
-interface PrepItem { id: string; short_title?: string | null; title: string | null; assignee: string; completed: number; due_date: string | null }
+interface PrepItem { id: string; short_title?: string | null; title: string | null; kind: string | null; assignee: string; completed: number; due_date: string | null }
 interface PrepData {
   previousMeeting: { id: string; date: string; title: string } | null
   previousActionItems: PrepItem[]

@@ -30,9 +30,9 @@ describe('project labels', () => {
 
 describe('task labels', () => {
   it('prefers the curated short_title, then title, then description', () => {
-    expect(taskShortLabel({ short_title: 'Upgrade CLIFpy 3.0', title: 'Upgrade to CLIFpy 3.0 (CLIF 2.1 -> 3.0 migration)' })).toBe('Upgrade CLIFpy 3.0')
-    expect(taskShortLabel({ short_title: null, title: 'Draft methods' })).toBe('Draft methods')
-    expect(taskShortLabel({ short_title: '', title: '', description: 'from the meeting' })).toBe('from the meeting')
+    expect(taskShortLabel({ kind: 'task', short_title: 'Upgrade CLIFpy 3.0', title: 'Upgrade to CLIFpy 3.0 (CLIF 2.1 -> 3.0 migration)' })).toBe('Upgrade CLIFpy 3.0')
+    expect(taskShortLabel({ kind: 'task', short_title: null, title: 'Draft methods' })).toBe('Draft methods')
+    expect(taskShortLabel({ kind: 'task', short_title: '', title: '', description: 'from the meeting' })).toBe('from the meeting')
   })
 
   it('gives the full title as a hover hint only when it differs', () => {

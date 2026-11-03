@@ -116,7 +116,8 @@ describe('#8496 recurring-marked titles are outside the name-identity class', ()
   it('the migrated index is the exempting one, and the superseded one is gone', () => {
     const names = (db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tasks'").all() as any[])
       .map((r) => r.name);
-    expect(names).toContain('idx_tasks_title_norm_owner_active');
+    expect(names).toContain('idx_tasks_title_norm_owner_kind_active');
+    expect(names).not.toContain('idx_tasks_title_norm_owner_active'); // v156 superseded v138's
     expect(names).not.toContain('idx_tasks_title_norm_nonrecurring_active');
     expect(names).not.toContain('idx_tasks_title_norm_project_active');
   });

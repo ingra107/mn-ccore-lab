@@ -601,6 +601,7 @@ export function useMeetingDetail(id: string) {
         priority: 'medium',
         status: a.completed ? 'done' : 'todo',
         source: 'meeting',
+        kind: 'task',
         completed: a.completed ? 1 : 0,
         completed_at: null,
         completed_by: null,

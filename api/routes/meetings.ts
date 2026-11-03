@@ -532,7 +532,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     // v95: matches either the Hub id or PB's calendar-match source_id.
     prevMeeting
       ? env.DB.prepare(
-          `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.completed, t.due_date
+          `SELECT t.id, t.short_title, t.title, t.description, t.kind, t.assignee, t.completed, t.due_date
            FROM tasks t
            WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
            ORDER BY t.completed ASC, t.assignee`
@@ -548,7 +548,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     ).bind(twoWeeksAgo).all(),
     // Upcoming deadlines (next 14 days)
     env.DB.prepare(
-      `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
+      `SELECT t.id, t.short_title, t.title, t.description, t.kind, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
        WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
        ORDER BY t.due_date`
@@ -559,7 +559,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     ).bind(meetingId).all(),
     // Overdue tasks
     env.DB.prepare(
-      `SELECT t.id, t.short_title, t.title, t.description, t.assignee, t.due_date, t.priority
+      `SELECT t.id, t.short_title, t.title, t.description, t.kind, t.assignee, t.due_date, t.priority
        FROM tasks t
        WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
        ORDER BY t.due_date`

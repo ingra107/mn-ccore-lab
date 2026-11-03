@@ -3,7 +3,7 @@ import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/proj
 import { json, error } from '../helpers';
 import { activityVisibilityGate } from '../lib/activity-entry';
 import { legacyEchoExclude } from '../lib/posted-activity';
-import { NOT_QUESTION_SQL } from '../../shared/taskKinds';
+import { NOT_QUESTION_SQL, withKindLabel } from '../../shared/taskKinds';
 
 // --- Scoring constants ---
 
@@ -174,7 +174,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
 
   const settled = await Promise.allSettled([
     env.DB.prepare(
-      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} LIMIT ?`
+      `SELECT id, title, description, kind, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(description), lower(?)) > 0) AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} LIMIT ?`
     ).bind(like, like, limit).all(),
     env.DB.prepare(
       `SELECT pr.slug, pr.title, pr.category, pr.pi, pr.description, pr.updated_at, ${homeProductCols('pr')}
@@ -273,7 +273,9 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     results.push({
       id: t.id,
       type: 'task',
-      title: t.title || t.description,
+      // A search hit is a text surface: a check-in or milestone is named in
+      // words (schema-v156 stopped storing "Check in: " in the title).
+      title: withKindLabel(t.kind as string | null, (t.title || t.description) as string),
       subtitle: `${t.assignee} · ${t.status} · ${t.priority}`,
       url,
       score,

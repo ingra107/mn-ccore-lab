@@ -21,12 +21,12 @@
 // answer is NULL).
 //
 // A check-in is a task row with kind='checkin' (schema-v152, PB mig 155,
-// 2026-10-30): a one-line, one-tap follow-up titled "Check in: ...". It groups
-// as Quick, never Deep Work, and it is not a project's next step. The title
-// prefix is stored (schema-v152 trg_tasks_checkin_title_*), so a check-in reads
-// as one on every surface that renders `title`. It IS in TASK_KIND_OPTIONS:
-// the picker's change handler sends kindChangeFields(), which prefixes the
-// title in the same write so the trigger accepts the flip.
+// 2026-10-30): a one-line, one-tap follow-up. It groups as Quick, never Deep
+// Work, and it is not a project's next step. Its title is the bare subject
+// (schema-v156 dropped the stored "Check in: " prefix and its triggers, Nick
+// 2026-11-03): kind is the one fact, and a surface that shows the row as text
+// labels it through withKindLabel below. It IS in TASK_KIND_OPTIONS: the
+// picker sends { kind } and nothing else.
 
 export const TASK_KINDS = ['task', 'milestone', 'question', 'checkin'] as const;
 export type TaskKind = (typeof TASK_KINDS)[number];
@@ -48,20 +48,26 @@ export function taskKindLabel(kind: string | null | undefined): string {
 }
 
 /** Picker options for the Kind select (TaskDetailPanel + the drawers' field
- *  row). 'question' is minted, never picked — see the header. Check-in is
- *  pickable: switching to it prefixes the title (kindChangeFields). */
+ *  row). 'question' is minted, never picked — see the header. */
 export const TASK_KIND_OPTIONS: ReadonlyArray<{ value: TaskKind; label: string }> = (
   ['task', 'milestone', 'checkin'] as const
 ).map((value) => ({ value, label: TASK_KIND_LABELS[value] }));
 
-/** Fields to PATCH when the Kind picker changes. A check-in's title must start
- *  "Check in: " (D1 trigger checkin_title), so switching to it sends the
- *  prefixed title in the same write; switching away leaves the title alone. */
-export function kindChangeFields(kind: string, title: string | null | undefined): Record<string, unknown> {
-  if (kind === 'checkin' && !(title ?? '').startsWith(CHECKIN_TITLE_PREFIX)) {
-    return { kind, title: `${CHECKIN_TITLE_PREFIX}${title ?? ''}`.trimEnd() }
-  }
-  return { kind };
+/** The kinds a TEXT surface names in words: "Check-in: X", "Milestone: X"
+ *  (Nick 2026-11-03, schema-v156). A text surface is one that shows the row as
+ *  plain words with no kind-aware shape: digest email, calendar, search,
+ *  Telegram (PB short_title.task_label is the twin), the Hub's compact lists.
+ *  A row that DRAWS its kind (CheckinRow's label, a milestone's diamond) shows
+ *  the bare subject instead, so the kind is never said twice. 'task' is the
+ *  default and 'question' never reaches a work list, so neither is labelled. */
+export const TEXT_LABELED_KINDS: ReadonlySet<TaskKind> = new Set<TaskKind>(['checkin', 'milestone']);
+
+/** The text label for a row of this kind: "Check-in: X" / "Milestone: X", or
+ *  the text unchanged for every other kind. Empty text stays empty, so a
+ *  caller's own fallback ("Untitled") still fires. */
+export function withKindLabel(kind: string | null | undefined, text: string): string {
+  if (!text || !isTaskKind(kind) || !TEXT_LABELED_KINDS.has(kind)) return text;
+  return `${TASK_KIND_LABELS[kind]}: ${text}`;
 }
 
 export function isTaskKind(v: unknown): v is TaskKind {
@@ -75,9 +81,6 @@ export function isMilestone(t: { kind?: string | null } | null | undefined): boo
 export function isQuestion(t: { kind?: string | null } | null | undefined): boolean {
   return t?.kind === 'question';
 }
-
-/** The title every check-in starts with (schema-v152 refuses any other). */
-export const CHECKIN_TITLE_PREFIX = 'Check in: ';
 
 export function isCheckin(t: { kind?: string | null } | null | undefined): boolean {
   return t?.kind === 'checkin';

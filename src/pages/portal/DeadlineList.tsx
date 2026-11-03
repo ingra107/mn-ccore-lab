@@ -34,7 +34,8 @@ import type { TaskRow } from '../../lib/api'
 
 export interface DeadlineItem {
   id: string
-  /** What every row shows: a task's SHORT label (displayNames.taskShortLabel). */
+  /** A task's bare subject (displayNames.taskSubjectLabel), the sort key; a
+   *  task row renders through TaskTitleCell, which adds the kind label. */
   title: string
   /** The full title, for hover and the .ics export; unset when title already is it. */
   fullTitle?: string

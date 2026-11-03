@@ -11,6 +11,8 @@
 // The full title stays reachable for HOVER only, through the *FullTitleHint
 // helpers, which return undefined when the short label already says it all.
 
+import { withKindLabel } from '../../shared/taskKinds'
+
 type ProjectNameFields = {
   short_name?: string | null
   title?: string | null
@@ -18,10 +20,18 @@ type ProjectNameFields = {
   id?: string | null
 }
 
-type TaskNameFields = {
+type TaskSubjectFields = {
   short_title?: string | null
   title?: string | null
   description?: string | null
+}
+
+type TaskNameFields = TaskSubjectFields & {
+  /** REQUIRED key (schema-v156): the text label comes from the kind, never the
+   *  title, so a caller whose row type lacks `kind` fails tsc instead of
+   *  rendering a check-in or milestone unlabelled. `null`/`undefined` read as
+   *  a plain task. */
+  kind: string | null | undefined
 }
 
 /** Short name first, then title, then slug, then id. Never a "#". */
@@ -44,13 +54,22 @@ export function projectShortLabelMap(projects: readonly ProjectNameFields[] | nu
   return map
 }
 
-/** Curated short_title first, then title, then description. */
-export function taskShortLabel(t: TaskNameFields): string {
+/** The bare subject: curated short_title first, then title, then description.
+ *  For a row that DRAWS its kind itself (CheckinRow's "Check-in" label, a
+ *  milestone's diamond) and for sort keys. Every other surface: taskShortLabel. */
+export function taskSubjectLabel(t: TaskSubjectFields): string {
   return t.short_title?.trim() || t.title?.trim() || t.description?.trim() || ''
 }
 
-/** The full task title for a hover tip, or undefined when the label already is it. */
-export function taskFullTitleHint(t: TaskNameFields): string | undefined {
+/** What a text surface shows: the subject, named by its kind when the kind is
+ *  one a reader must be told ("Check-in: X", "Milestone: X";
+ *  shared/taskKinds.ts withKindLabel, schema-v156). */
+export function taskShortLabel(t: TaskNameFields): string {
+  return withKindLabel(t.kind, taskSubjectLabel(t))
+}
+
+/** The full task title for a hover tip, or undefined when the subject already is it. */
+export function taskFullTitleHint(t: TaskSubjectFields): string | undefined {
   const full = t.title?.trim() || t.description?.trim()
-  return full && full !== taskShortLabel(t) ? full : undefined
+  return full && full !== taskSubjectLabel(t) ? full : undefined
 }

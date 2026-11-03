@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useProjectPairs } from '../../../hooks/useProjectPairs'
 import { decodePair } from '../../../lib/projectPairs'
-import { TASK_KIND_OPTIONS, kindChangeFields, statusOptionsFor } from '../../../../shared/taskKinds'
+import { TASK_KIND_OPTIONS, statusOptionsFor } from '../../../../shared/taskKinds'
 import GhostSelect from '../../ui/GhostSelect'
 import Field from '../../ui/Field'
 import InlineDatePicker from '../../InlineDatePicker'
@@ -342,7 +342,6 @@ export function TaskInlineFieldRow({
   status,
   priority,
   kind,
-  title,
   projectId,
   productId,
   dueDate,
@@ -354,8 +353,6 @@ export function TaskInlineFieldRow({
   priority: string | null | undefined
   /** schema-v109 — every caller passes task.kind. */
   kind: string | null | undefined
-  /** The task title: switching Kind to check-in prefixes it ("Check in: "). */
-  title?: string | null
   projectId: string | null | undefined
   /** The task's product: the picker shows "Project ~ Product" for 2+ products. */
   productId?: string | null
@@ -393,7 +390,7 @@ export function TaskInlineFieldRow({
         <GhostSelect
           aria-label="Kind"
           value={kind || 'task'}
-          onChange={(v) => onUpdate(kindChangeFields(v, title))}
+          onChange={(v) => onUpdate({ kind: v })}
           options={[...TASK_KIND_OPTIONS]}
         />
       )}

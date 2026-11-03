@@ -293,7 +293,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             status={task.status}
             priority={task.priority}
             kind={task.kind}
-            title={task.title}
             projectId={task.project_id}
             productId={task.product_id}
             dueDate={task.due_date}

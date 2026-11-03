@@ -22,6 +22,8 @@ import {
   TASK_TITLE_KEY_BIND_SQL,
   TASK_OWNER_KEY_SQL,
   taskOwnerKey,
+  TASK_KIND_KEY_SQL,
+  taskKindKey,
   TASK_TITLE_NORM_INDEX,
   TASK_TITLE_DEDUP_SELECT,
   TASK_TITLE_RECURRING_TOKENS,
@@ -72,6 +74,13 @@ describe('task dedup key — one definition', () => {
     expect(taskOwnerKey('proj_1', 'casey-eddington')).toBe('')
   })
 
+  it('the kind is a key part, NULL and absent reading as task (schema-v156)', () => {
+    expect(TASK_TITLE_DEDUP_SELECT).toContain(`AND ${TASK_KIND_KEY_SQL} = ?`)
+    expect(taskKindKey('checkin')).toBe('checkin')
+    expect(taskKindKey(undefined)).toBe('task')
+    expect(taskKindKey(null)).toBe('task')
+  })
+
   it('BOTH applyInsert arms use the constant -- no raw title literal survives', () => {
     // The cutover is finished: the bridge ran the catch one deploy ahead of the
     // serial arm, and this is what closes it. A reintroduced `title = ?` would
@@ -107,7 +116,8 @@ describe('task dedup key — the migration and the code agree', () => {
     // which exempts them, would find no winner and dead-letter the create.
     //
     // v138 did the same to v113's idx_tasks_title_norm_nonrecurring_active when
-    // a project-less task became keyed on its assignee. Every link of the chain
+    // a project-less task became keyed on its assignee, and v156 to v138's
+    // idx_tasks_title_norm_owner_active when the kind joined the key. Every link of the chain
     // is checked: each index is created by exactly one file and dropped by the
     // file that creates the next one, so no superseded index survives to refuse
     // a pair the code now admits.
@@ -124,7 +134,8 @@ describe('task dedup key — the migration and the code agree', () => {
     }
     const chain: Array<[string, string]> = [
       ['idx_tasks_title_norm_project_active', 'idx_tasks_title_norm_nonrecurring_active'],
-      ['idx_tasks_title_norm_nonrecurring_active', TASK_TITLE_NORM_INDEX],
+      ['idx_tasks_title_norm_nonrecurring_active', 'idx_tasks_title_norm_owner_active'],
+      ['idx_tasks_title_norm_owner_active', TASK_TITLE_NORM_INDEX],
     ]
     for (const [old, next] of chain) {
       const creators = schemaFiles.filter(f => code(f).includes(`CREATE UNIQUE INDEX IF NOT EXISTS ${old}`))
@@ -135,7 +146,7 @@ describe('task dedup key — the migration and the code agree', () => {
       expect(ver(droppers[0])).toBeGreaterThan(ver(creators[0]))
       expect(droppers[0]).toBe(nextCreators[0])
     }
-    expect(declaring[0]).toMatch(/^schema-v138/)
+    expect(declaring[0]).toMatch(/^schema-v156/)
   })
 
   it('exactly one migration creates the normalized index', () => {
@@ -156,6 +167,8 @@ describe('task dedup key — the migration and the code agree', () => {
     expect(keyLine).toContain("COALESCE(project_id, '')")
     // The owner half: the SELECT arm compares this very expression.
     expect(keyLine).toContain(TASK_OWNER_KEY_SQL)
+    // The kind half (schema-v156): same expression as the SELECT arm.
+    expect(keyLine).toContain(TASK_KIND_KEY_SQL)
   })
 
   it('the index predicate matches the SELECT scope', () => {

@@ -83,7 +83,7 @@ describe('NowMarker', () => {
 describe('Calendar agenda now marker', () => {
   it('opens the list with a labelled marker when today has no events', async () => {
     const tomorrow = civilDatePlusDays(localDateKey(), 1)
-    const h = await mount(<AgendaView events={[{ id: 'm1', date: tomorrow, title: 'Lab meeting', type: 'meeting', category: 'meeting' }]} />)
+    const h = await mount(<AgendaView events={[{ id: 'm1', date: tomorrow, title: 'Lab meeting', kind: null, type: 'meeting', category: 'meeting' }]} />)
     const markers = h.querySelectorAll('[data-testid="now-marker"]')
     expect(markers.length).toBe(1)
     expect(markers[0].textContent).toBe('Today')
@@ -92,7 +92,7 @@ describe('Calendar agenda now marker', () => {
   })
 
   it('uses the in-group marker when today has events', async () => {
-    const h = await mount(<AgendaView events={[{ id: 'm1', date: localDateKey(), title: 'Lab meeting', type: 'meeting', category: 'meeting' }]} />)
+    const h = await mount(<AgendaView events={[{ id: 'm1', date: localDateKey(), title: 'Lab meeting', kind: null, type: 'meeting', category: 'meeting' }]} />)
     expect(h.querySelectorAll('[data-testid="now-marker"]').length).toBe(1)
     expect(h.querySelector('section [data-testid="now-marker"]')).not.toBeNull()
   })

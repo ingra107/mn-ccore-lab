@@ -338,7 +338,7 @@ export async function handleMakeTaskFromNote(
   // Guard 1: pick a title none of the caller's open project-less tasks holds.
   const tag = paperTag(note);
   let title = noteTaskTitle(note.content, tag);
-  if (await titleTaken(title, null, user.slug)) title = noteTaskTitle(note.content, noteTag(note.id, tag));
+  if (await titleTaken(title, null, user.slug, 'task')) title = noteTaskTitle(note.content, noteTag(note.id, tag));
 
   const res = await handleCreateTask(
     new Request('https://internal/api/tasks', {

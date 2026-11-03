@@ -133,7 +133,7 @@ describe('only the PB API key may change run_skill', () => {
 describe('kinds and shape', () => {
   it('a check-in cannot carry one', async () => {
     const r = await applyInsert(pbKeyEnv(), mut('insert', {
-      title: 'Check in: Casey', assignee: 'nick-ingraham', status: 'todo', priority: 'medium', kind: 'checkin', run_skill: 'mnccore-agenda',
+      title: 'Casey', assignee: 'nick-ingraham', status: 'todo', priority: 'medium', kind: 'checkin', run_skill: 'mnccore-agenda',
     }, 'task_D'), USER);
     expect(r.status).toBe('error');
     expect(JSON.stringify(r)).toMatch(/run_skill_kind/);

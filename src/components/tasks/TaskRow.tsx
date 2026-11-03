@@ -42,7 +42,7 @@ import { INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry } fr
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
 import { CardRow, MilestoneCardRow, CheckinRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
-import { taskShortLabel } from '../../lib/displayNames'
+import { taskShortLabel, taskSubjectLabel } from '../../lib/displayNames'
 import { LONG_PRESS_MS } from '../../lib/uiTiming'
 import { usePairName } from '../../hooks/useProjectPairs'
 import { Button } from '../ui/Button'
@@ -427,7 +427,7 @@ function MilestoneRow(props: SharedTaskRowProps) {
               textDecoration: isDone ? 'line-through' : 'none',
             }}
           >
-            {taskShortLabel(task)}
+            {taskSubjectLabel(task)}
           </span>
           <span aria-hidden="true" style={{ flex: 1, minWidth: 24, height: 1, background: withAlpha(diamondColor, 28), opacity: emphasisOpacity }} />
           <ProjectTag project={project} task={task} />

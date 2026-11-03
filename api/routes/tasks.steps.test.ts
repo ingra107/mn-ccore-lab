@@ -178,22 +178,24 @@ describe('creating a step and a check-in through the REST routes', () => {
     expect(data.parent_id).toBe('task_P')
   })
 
-  it('kind=checkin is accepted with its title, refused without it', async () => {
+  it('kind=checkin is accepted with a bare title (schema-v156: the label comes from kind)', async () => {
     const ok = await handleCreateTask(apiKey('https://x/api/tasks', {
-      description: 'Check in: CQODE -- what is next?', assignee: 'nick-ingraham', kind: 'checkin',
+      description: 'CQODE -- what is next?', assignee: 'nick-ingraham', kind: 'checkin',
     }), user, env)
     expect(ok.status).toBe(201)
-    const bad = await handleCreateTask(apiKey('https://x/api/tasks', {
-      description: 'CQODE follow-up', assignee: 'nick-ingraham', kind: 'checkin',
-    }), user, env)
-    expect(bad.status).toBe(409)
-    expect(await bad.text()).toMatch(/checkin_title/)
+    const { data } = await ok.json() as { data: { kind: string; title: string } }
+    expect([data.kind, data.title]).toEqual(['checkin', 'CQODE -- what is next?'])
   })
 
-  it('an existing check-in can be patched through the update route', async () => {
-    task('task_C', { kind: 'checkin', title: 'Check in: X' })
+  it('an existing check-in can be patched, renamed and switched to a task through the update route', async () => {
+    task('task_C', { kind: 'checkin', title: 'X' })
     const res = await handleUpdateTask('task_C', apiKey('https://x/api/tasks/task_C', { due_date: '2026-11-02' }), user, env)
     expect(res.status).toBe(200)
+    const renamed = await handleUpdateTask('task_C', apiKey('https://x/api/tasks/task_C', { title: 'Renamed' }), user, env)
+    expect(renamed.status).toBe(200)
+    const flipped = await handleUpdateTask('task_C', apiKey('https://x/api/tasks/task_C', { kind: 'task' }), user, env)
+    expect(flipped.status).toBe(200)
+    expect(db.prepare("SELECT kind, title FROM tasks WHERE id = 'task_C'").get()).toEqual({ kind: 'task', title: 'Renamed' })
   })
 })
 
@@ -208,7 +210,7 @@ describe('GET /api/projects/next-step-gaps', () => {
     task('t3p', { project_id: 'proj_step_only' }); task('t3s', { project_id: 'proj_step_only', parent_id: 't3p' })
     project('proj_parent_only')
     task('t4p', { project_id: 'proj_parent_only' }); task('t4s', { parent_id: 't4p' })
-    project('proj_checkin_only'); task('t5', { project_id: 'proj_checkin_only', kind: 'checkin', title: 'Check in: A' })
+    project('proj_checkin_only'); task('t5', { project_id: 'proj_checkin_only', kind: 'checkin', title: 'A' })
     project('proj_milestone_only'); task('t6', { project_id: 'proj_milestone_only', kind: 'milestone' })
     project('proj_done_only'); task('t7', { project_id: 'proj_done_only', status: 'done', completed: 1, completed_at: '2026-10-01' })
     project('proj_deleted_only'); task('t8', { project_id: 'proj_deleted_only', status: 'deleted', deleted_at: '2026-10-01' })

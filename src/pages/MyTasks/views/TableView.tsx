@@ -32,7 +32,7 @@ import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 import { getPersonInfo } from '../../../data/team'
-import { taskShortLabel } from '../../../lib/displayNames'
+import { taskSubjectLabel } from '../../../lib/displayNames'
 import { useProjectPairs } from '../../../hooks/useProjectPairs'
 import { decodePair } from '../../../lib/projectPairs'
 
@@ -73,7 +73,8 @@ export function TableView({ filtered: unsorted, isEmpty, selected, toggleSelect,
         case 'owner': return t.assignee ? getPersonInfo(t.assignee).name.toLowerCase() : null
         case 'due': return t.due_date ? t.due_date.slice(0, 10) : null
         case 'project': return t.project_id ? (projectsByPid.get(t.project_id)?.name ?? t.project_id).toLowerCase() : null
-        default: return taskShortLabel(t).toLowerCase()
+        // Sort by the subject, so check-ins and milestones do not bunch under C and M.
+        default: return taskSubjectLabel(t).toLowerCase()
       }
     }
     return [...unsorted].sort((a, b) => {

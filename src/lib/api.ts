@@ -214,11 +214,13 @@ export interface TaskRow {
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
    *  via getGroupForTask. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
-  /** schema-v109 (2026-09-16): 'task' | 'milestone'. A milestone is a task row
-   *  rendered as a half-height dated rule (TaskRow variant), never a fork.
-   *  Vocabulary: shared/taskKinds.ts. Optional here only for rows built by
-   *  tests/fixtures; the API always returns it (NOT NULL DEFAULT 'task'). */
-  kind?: TaskKind
+  /** schema-v109 (2026-09-16): the row's kind (shared/taskKinds.ts). A
+   *  milestone is a task row rendered as a half-height dated rule (TaskRow
+   *  variant), never a fork. REQUIRED (schema-v156): the API always returns it
+   *  (NOT NULL DEFAULT 'task'), and every text label is derived from it
+   *  (displayNames.taskShortLabel), so a row built without it would render a
+   *  check-in or milestone unlabelled. */
+  kind: TaskKind
   /** Steps (schema v152): the parent task this row is a step of, or null. A
    *  parent is any task with live steps; its progress is counted on read. */
   parent_id?: string | null
@@ -690,6 +692,10 @@ export interface CalendarEvent {
   title: string
   /** Task rows only: the curated short title (api/routes/calendar.ts). */
   short_title?: string | null
+  /** Task rows: tasks.kind, so the label names a check-in or milestone
+   *  ("Check-in: X", displayNames.taskShortLabel; schema-v156). null for a
+   *  meeting or a legacy milestones row (that one draws its own diamond). */
+  kind: string | null
   type: string // meeting, task, milestone
   category: string
   meta?: Record<string, unknown>

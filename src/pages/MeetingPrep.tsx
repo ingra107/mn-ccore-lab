@@ -32,15 +32,15 @@ const NO_ACTIVITY: never[] = []
 // An action item from the previous meeting of this series. `description` is the
 // ingestion provenance body ("From the X meeting on ... Source: [[...]]"), never
 // a label: every row names the task through taskShortLabel (G5-2, 2026-10-14).
-interface PrepActionItem { id: string; short_title?: string | null; title: string | null; description: string | null; assignee: string; completed: number; due_date: string | null }
+interface PrepActionItem { id: string; short_title?: string | null; title: string | null; description: string | null; kind: string | null; assignee: string; completed: number; due_date: string | null }
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null; facilitator?: string | null }
   previousMeeting: { id: string; date: string; title: string } | null
   previousActionItems: PrepActionItem[]
   recentActivity: { type: string; description: string; actor: string; entity_id: string; entity_type: string; created_at: string }[]
-  upcomingDeadlines: { id: string; short_title?: string | null; title: string; description: string; assignee: string; due_date: string; priority: string; status: string }[]
-  overdueTasks: { id: string; short_title?: string | null; title: string; description: string; assignee: string; due_date: string; priority: string }[]
+  upcomingDeadlines: { id: string; short_title?: string | null; title: string; description: string; kind: string | null; assignee: string; due_date: string; priority: string; status: string }[]
+  overdueTasks: { id: string; short_title?: string | null; title: string; description: string; kind: string | null; assignee: string; due_date: string; priority: string }[]
   agendaItems: { id: string; content: string; added_by: string; type: string; sort_order: number }[]
 }
 

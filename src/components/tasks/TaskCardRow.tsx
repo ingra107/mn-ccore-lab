@@ -26,13 +26,13 @@ import { civilDaysOverdue, dueLabelCompact, dueTone, formatShortDate, isOverdue 
 import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { useContext } from 'react'
-import { CHECKIN_TITLE_PREFIX } from '../../../shared/taskKinds'
+import { TASK_KIND_LABELS } from '../../../shared/taskKinds'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import { HideViewerFaceContext } from '../today/hideViewerFace'
 import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
 import type { CardTaskRowProps } from './TaskRow'
-import { taskShortLabel } from '../../lib/displayNames'
+import { taskShortLabel, taskSubjectLabel } from '../../lib/displayNames'
 import { usePairName } from '../../hooks/useProjectPairs'
 import { Button } from '../ui/Button'
 
@@ -339,15 +339,15 @@ export function CardRow(props: CardTaskRowProps) {
 // Check-in as a one-line rule (kind='checkin', Nick 2026-10-30: "a milestone-
 // style kind, one-line row named 'Check in: ...', one-tap done"). The
 // milestone rule's anatomy with the one-tap CardCheck where the diamond sits:
-// check, dim "Check in" label, title, faint leader, project, due pill, caret.
+// check, dim "Check-in" label, subject, faint leader, project, due pill, caret.
+// The label comes from kind, always (schema-v156: the title is the bare
+// subject); the subject is taskSubjectLabel so the row never says it twice.
 // Dispatched from SharedTaskRow on task.kind, so no surface can render a
 // check-in as a full card. Clicking the line opens the same drawer/editor a
 // card would (onToggleExpand); the check never does (CardCheck stops it).
 export function CheckinRow(props: Pick<CardTaskRowProps, 'task' | 'project' | 'isDone' | 'onToggleDone' | 'isExpanded' | 'onToggleExpand' | 'hideCaret' | 'children'>) {
   const { task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret, children } = props
-  const label = taskShortLabel(task)
-  const hasPrefix = label.startsWith(CHECKIN_TITLE_PREFIX)
-  const rest = hasPrefix ? label.slice(CHECKIN_TITLE_PREFIX.length) : label
+  const subject = taskSubjectLabel(task)
   const overdue = !!task.due_date && !isDone && isOverdue(task.due_date, task.status)
   return (
     <div data-task-id={task.id} data-task-kind="checkin" className={`tk-msw tk-chkw${isDone ? ' tk-done' : ''}`}>
@@ -363,8 +363,8 @@ export function CheckinRow(props: Pick<CardTaskRowProps, 'task' | 'project' | 'i
         }}
       >
         <CardCheck done={isDone} onToggle={onToggleDone} taskId={task.id} />
-        {hasPrefix && <span className="tk-ci-l">Check in</span>}
-        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }} data-testid="checkin-title">{rest}</span>
+        <span className="tk-ci-l">{TASK_KIND_LABELS.checkin}</span>
+        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }} data-testid="checkin-title">{subject}</span>
         <span aria-hidden="true" className="tk-lead" />
         {project && (
           <Link
@@ -412,7 +412,7 @@ export function MilestoneCardRow(props: CardTaskRowProps) {
       >
         <span aria-hidden="true" className="tk-dia">{isInternal ? '◇' : '◆'}</span>
         <span className="sr-only">Milestone</span>
-        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>{taskShortLabel(task)}</span>
+        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }}>{taskSubjectLabel(task)}</span>
         <span aria-hidden="true" className="tk-lead" />
         {project && (
           <Link

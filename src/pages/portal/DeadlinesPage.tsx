@@ -22,7 +22,7 @@ import TaskDetailPanel from '../../components/tasks/LazyTaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
 import RegulatoryExpiringList from '../../components/RegulatoryExpiringList'
-import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
+import { projectFullTitleHint, projectShortLabel, taskFullTitleHint, taskSubjectLabel } from '../../lib/displayNames'
 import { DeadlineList, newestDoneFirst, type DeadlineItem, type DeadlineProject } from './DeadlineList'
 import { NowMarker } from '../../components/moments/NowMarker'
 
@@ -101,7 +101,8 @@ export default function DeadlinesPage() {
       const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({
         id: task.id,
-        title: taskShortLabel(task),
+        // The sort key; the row renders the task through TaskTitleCell.
+        title: taskSubjectLabel(task),
         fullTitle: taskFullTitleHint(task),
         due_date: date,
         type: task.kind === 'milestone' ? 'milestone' : 'task',
