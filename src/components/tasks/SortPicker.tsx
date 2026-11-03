@@ -13,6 +13,7 @@
 
 import type { CSSProperties } from 'react'
 import { useSortActions } from '../../hooks/useSortActions'
+import { useAuth } from '../../hooks/useAuth'
 import { isHandSorted, WORK_KINDS } from '../../lib/taskSections'
 import { withAlpha, INK, INK_DIM, PANEL_BG } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
@@ -46,7 +47,11 @@ export function SortKindButtons({ task }: { task: TaskRow }) {
 /** The "Set section" menu body. The caller owns the trigger and the open state. */
 export function SortMenu({ task, onDone }: { task: TaskRow; onDone: () => void }) {
   const { sortAs, leaveUnsorted, reset, pending } = useSortActions(task, onDone)
+  const { user } = useAuth()
   const hand = isHandSorted(task)
+  // A hand sort is the assignee's own placement; the Worker refuses anyone
+  // else (work_kind_not_assignee), so the menu does not offer it.
+  const notMine = !!task.assignee && !!user?.slug && task.assignee !== user.slug
   const item = (on: boolean): CSSProperties => ({
     display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11,
     background: on ? withAlpha('var(--job-accent)', 15) : 'transparent', border: 'none',
@@ -58,6 +63,11 @@ export function SortMenu({ task, onDone }: { task: TaskRow; onDone: () => void }
       aria-label="Set section"
       style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, boxShadow: 'inset 0 0 0 1px var(--sk-line2), 0 4px 12px rgba(0,0,0,0.4)', borderRadius: 'var(--radius-sm)', zIndex: 30 }}
     >
+      {notMine ? (
+        <div style={{ padding: '8px 10px', fontSize: 11, color: INK_DIM, maxWidth: 240 }}>
+          Only the assignee sorts this task. It shows in your With others.
+        </div>
+      ) : <>
       {WORK_KINDS.map((k) => {
         const on = hand && task.work_kind === k.code
         return (
@@ -83,6 +93,7 @@ export function SortMenu({ task, onDone }: { task: TaskRow; onDone: () => void }
           </button>
         </>
       )}
+      </>}
     </div>
   )
 }

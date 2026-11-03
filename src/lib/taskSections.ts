@@ -119,10 +119,13 @@ export function isNewToViewer(t: Pick<TaskRow, 'assignee' | 'acknowledged_at'>, 
 // ──────────────────────────────────────────────────────────────────────────
 
 export function sectionForTask(t: TaskRow, ctx: SectionCtx): SectionKey {
-  // 1. Hand placement beats everything, including ETL and With others.
-  if (isHandSorted(t)) return isWorkKind(t.work_kind) ? t.work_kind : 'sort'
-  // 2. With others.
   const elsewhere = !!t.assignee && !!ctx.viewerSlug && t.assignee !== ctx.viewerSlug
+  // 1. The viewer's own hand placement beats everything, including ETL and
+  // waiting. work_kind_set is one value per task, so another person's hand
+  // sort is THEIR placement: on this viewer's page their task stays in With
+  // others (code review 2026-11-03).
+  if (isHandSorted(t) && !elsewhere) return isWorkKind(t.work_kind) ? t.work_kind : 'sort'
+  // 2. With others.
   if (elsewhere || t.status === 'waiting_external') return 'others'
   // 3. CLIF ETL.
   if (isEtlTask(t, ctx.projectsBySlug)) return 'etl'

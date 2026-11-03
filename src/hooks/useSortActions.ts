@@ -16,24 +16,24 @@ export function useSortActions(task: TaskRow, onDone?: () => void) {
   const ctx = useSectionCtx()
   const fromSection = sectionForTask(task, ctx)
 
+  const place = useCallback((cmd: Parameters<typeof sort.mutate>[0]['cmd'], message: string) => {
+    sort.mutate({ id: task.id, cmd }, {
+      onSuccess: () => { toast.showSuccess(message); onDone?.() },
+    })
+  }, [task.id, sort, toast, onDone])
+
   const sortAs = useCallback((kind: WorkKind) => {
     const label = WORK_KINDS.find((k) => k.code === kind)?.label ?? kind
-    sort.mutate({ id: task.id, cmd: { op: 'sort', work_kind: kind, from_section: fromSection } }, {
-      onSuccess: () => { toast.showSuccess(`Sorted as ${label}`); onDone?.() },
-    })
-  }, [task.id, fromSection, sort, toast, onDone])
+    place({ op: 'sort', work_kind: kind, from_section: fromSection }, `Sorted as ${label}`)
+  }, [fromSection, place])
 
-  const leaveUnsorted = useCallback(() => {
-    sort.mutate({ id: task.id, cmd: { op: 'unsort', from_section: fromSection } }, {
-      onSuccess: () => { toast.showSuccess('Left in Sort'); onDone?.() },
-    })
-  }, [task.id, fromSection, sort, toast, onDone])
+  const leaveUnsorted = useCallback(
+    () => place({ op: 'unsort', from_section: fromSection }, 'Left in Sort'),
+    [fromSection, place])
 
-  const reset = useCallback(() => {
-    sort.mutate({ id: task.id, cmd: { op: 'reset', from_section: fromSection } }, {
-      onSuccess: () => { toast.showSuccess('Back to automatic'); onDone?.() },
-    })
-  }, [task.id, fromSection, sort, toast, onDone])
+  const reset = useCallback(
+    () => place({ op: 'reset', from_section: fromSection }, 'Back to automatic'),
+    [fromSection, place])
 
   return { sortAs, leaveUnsorted, reset, pending: sort.isPending }
 }

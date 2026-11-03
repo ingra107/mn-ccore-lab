@@ -364,4 +364,4 @@ Full architecture: `C:/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-05
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
 ## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
+<!-- When this session ends, run /session-close: it applies this section (no hook drains it from a Box folder). -->

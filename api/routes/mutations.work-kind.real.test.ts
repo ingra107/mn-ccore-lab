@@ -210,6 +210,14 @@ describe('provenance comes from the auth path', () => {
     expect(row('task_NONE')).toMatchObject({ work_kind: null, work_kind_set: 'auto' });
   });
 
+  it('a Hub-session insert with a kind for SOMEONE ELSE is auto (their placement to make)', async () => {
+    const r = await applyInsert(browserEnv(), mut('insert', {
+      title: 'Fix the cohort join', assignee: 'casey-eddington', status: 'todo', priority: 'medium', work_kind: 'analysis',
+    }, 'task_CASEY'), NICK);
+    expect(r.status).toBe('accepted');
+    expect(row('task_CASEY')).toMatchObject({ work_kind: 'analysis', work_kind_set: 'auto' });
+  });
+
   it('an insert with an unknown kind is refused before anything is written', async () => {
     const r = await applyInsert(pbKeyEnv(), mut('insert', {
       title: 'x', assignee: 'nick-ingraham', status: 'todo', priority: 'medium', work_kind: 'focus',
@@ -267,6 +275,15 @@ describe('the sort route: hand sort, unsort, Reset, each logged in the same batc
     expect(r.status).toBe('error');
     expect(r.reason).toMatch(/work_kind_writer/);
     expect(events()).toEqual([]);
+  });
+
+  it('only the assignee can sort by hand (code review 2026-11-03)', async () => {
+    db.prepare("UPDATE tasks SET assignee = 'casey-eddington' WHERE id = 'task_A'").run();
+    const r = await sort({ op: 'sort', work_kind: 'writing' });
+    expect(r.status).toBe('error');
+    expect(r.reason).toMatch(/work_kind_not_assignee/);
+    expect(events()).toEqual([]);
+    expect(row()).toMatchObject({ work_kind: null, work_kind_set: 'auto' });
   });
 
   it('an unknown kind is refused and leaves no event', async () => {

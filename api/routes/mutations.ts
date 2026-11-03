@@ -779,7 +779,12 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     // caller cannot have sent one.
     const wkErr = await unknownWorkKind(env.DB, payload[WORK_KIND_COL]);
     if (wkErr) return mutErr(mut.mutation_id, 'value_invalid', wkErr);
-    if (payload[WORK_KIND_COL] != null && originOf(env) === null) {
+    // 'hand' only when the creator is the assignee (or none is named): a kind
+    // chosen while creating someone else's task is an automatic placement for
+    // them, which their own sort can replace (code review 2026-11-03).
+    const createAssignee = payload.assignee == null ? null : String(payload.assignee);
+    if (payload[WORK_KIND_COL] != null && originOf(env) === null
+        && (createAssignee === null || createAssignee === user?.slug)) {
       payload[WORK_KIND_SET_COL] = 'hand';
     }
   }
@@ -1668,6 +1673,14 @@ export async function applyWorkKindSort(
   const mutation_id = generateId('mut');
   if (originOf(env) !== null) {
     return mutErr(mutation_id, 'value_invalid', 'work_kind_writer: the PB API key cannot sort by hand; it fills through /api/mutations');
+  }
+  // A hand placement is the ASSIGNEE's: work_kind_set is one value per task,
+  // so anyone else's sort would move the task on its owner's Today (code
+  // review 2026-11-03). An unassigned task may be sorted by anyone.
+  const owner = await env.DB.prepare('SELECT assignee FROM tasks WHERE id = ?')
+    .bind(args.record_id).first<{ assignee: string | null }>();
+  if (owner && owner.assignee && owner.assignee !== args.user.slug) {
+    return mutErr(mutation_id, 'value_invalid', 'work_kind_not_assignee: only the task\'s assignee can sort it by hand');
   }
   const mut: Mutation = {
     mutation_id,

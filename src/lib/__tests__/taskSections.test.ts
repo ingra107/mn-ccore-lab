@@ -129,9 +129,13 @@ describe('sectionForTask: hand placement beats everything', () => {
     expect(hand({ work_kind: 'review', project_id: 'cqode-backbone', title: 'ETL review' })).toBe('review')
     expect(hand({ work_kind: null, project_id: 'cqode-backbone' })).toBe('sort')
   })
-  it('beats With others (another assignee and waiting_external)', () => {
-    expect(hand({ work_kind: 'admin', assignee: 'casey-eddington' })).toBe('admin')
+  it('beats waiting_external on the viewer\'s own task', () => {
     expect(hand({ work_kind: 'admin', status: 'waiting_external' })).toBe('admin')
+  })
+  it('another person\'s hand sort is theirs: their task stays in With others', () => {
+    // code review 2026-11-03: work_kind_set is per task, not per viewer.
+    expect(hand({ work_kind: 'admin', assignee: 'casey-eddington' })).toBe('others')
+    expect(hand({ work_kind: null, assignee: 'casey-eddington' })).toBe('others')
   })
   it('beats the check-in rule', () => {
     expect(hand({ work_kind: 'writing', kind: 'checkin' })).toBe('writing')
