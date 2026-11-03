@@ -42,6 +42,8 @@ export const TASK_PACKET_NOISE_COLS = [
   'acknowledged_at', 'acknowledged_by',
   'planned_for', 'plan_slot', 'plan_rank', 'plan_start_min', 'group_override',
   'question_telegram_json',
+  // schema v157: which Today section the task sits in, not what the task is.
+  'work_kind', 'work_kind_set',
 ] as const
 
 /** Columns of `tasks` whose change means the prepared step may be wrong. */

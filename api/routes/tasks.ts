@@ -3,7 +3,8 @@ import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolve
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
-import { applyMutation, hashTouched } from './mutations';
+import { applyMutation, applyWorkKindSort, hashTouched } from './mutations';
+import { parseSortBody } from '../lib/task-work-kind';
 import { eventDateRefusal } from './products';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
 // can import it without creating a circular dependency.
@@ -91,6 +92,14 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   if (kind !== null && !isTaskKind(kind)) {
     return error(`Invalid kind "${kind}". Must be one of ${TASK_KINDS.join('/')}.`, 400);
   }
+  // ?others_of=<slug> (schema-v157, the Today "With others" section): open
+  // work that sits with SOMEONE ELSE but is this person's business -- the
+  // task is in a project they are a member of, or they assigned it
+  // (assigned_by holds an email from the Hub, a slug from older writers).
+  // ANDed with the viewer's own scope (api/lib/table-scope.ts), so it can
+  // only narrow what the caller already sees. Nick, 2026-11-03: "Tasks you
+  // assigned or that sit in your projects (Recommended)".
+  const othersOf = url.searchParams.get('others_of');
   const updatedSince = url.searchParams.get('updated_since');
   const createdSince = url.searchParams.get('created_since');
   // ?completed_since=YYYY-MM-DD: every OPEN task plus the tasks completed on or
@@ -148,6 +157,12 @@ export async function handleGetTasks(url: URL, env: Env, isPi = false): Promise<
   }
 
   if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
+  if (othersOf) {
+    query += ' AND t.assignee IS NOT NULL AND t.assignee != ?'
+      + ' AND (t.project_id IN (SELECT project_id FROM project_members WHERE member_slug = ?)'
+      + " OR lower(COALESCE(t.assigned_by, '')) IN (lower(?), (SELECT lower(email) FROM team_members WHERE slug = ?)))";
+    params.push(othersOf, othersOf, othersOf, othersOf);
+  }
   if (status) { query += ' AND t.status = ?'; params.push(status); }
   if (priority) { query += ' AND t.priority = ?'; params.push(priority); }
   // Direction 1 (2026-06-05): tasks.project_id STORES the typed proj_* PK, but
@@ -612,6 +627,11 @@ export async function handleCreateTask(
     // (`notes` dropped from the wire 2026-06-10 — pb-schema 0.4.0.)
     effort?: string | null;
     short_title?: string | null;
+    // schema-v157: the kind of work (a work_kinds code, or null = Sort). The
+    // mutation door checks it against work_kinds and stamps who placed it
+    // from the auth path: the Gmail Apps Script's PB key = 'auto', a Hub
+    // session = 'hand' (api/lib/task-work-kind.ts).
+    work_kind?: string | null;
     source_thread_id?: string | null;
     related_message_ids?: string | null;
     // Meeting Accept/Decline (schema-v90, 2026-06-25): PB sets 'pending' on
@@ -749,6 +769,7 @@ export async function handleCreateTask(
       key_link_3_desc: body.key_link_3_desc ?? null,
       effort: body.effort ?? null,
       short_title: body.short_title ?? null,
+      ...(body.work_kind != null ? { work_kind: body.work_kind } : {}),
       source_thread_id: body.source_thread_id ?? null,
       related_message_ids: body.related_message_ids ?? null,
       // Meeting Accept/Decline (schema-v90, 2026-06-25): pass through from
@@ -1522,6 +1543,27 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
     } catch (e) { console.error('Failed to create acknowledge notification:', e); }
   }
 
+  const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
+  return json({ data: updated });
+}
+
+// POST /api/tasks/:id/sort -- a hand sort, unsort or Reset of the task's kind
+// of work (schema-v157). Body: {op: 'sort', work_kind, from_section?,
+// missing_category_note?} | {op: 'unsort', from_section?} | {op: 'reset'}.
+// The ONLY door to work_kind_set='hand'; every call is logged in
+// task_sort_events in the same batch (Nick, 2026-11-03: "we will keep track
+// of how often I'm doing this and if we need a different category"). Refused
+// under the PB key (a machine never places by hand). Answers the task row.
+export async function handleSortTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  let body: unknown;
+  try { body = await request.json(); } catch { return error('body must be JSON', 400); }
+  const cmd = parseSortBody(body, user.slug);
+  if (typeof cmd === 'string') return error(cmd, 400);
+  const res = await applyWorkKindSort(env, { record_id: id, cmd, user });
+  if (res.status === 'error' && res.code === 'record_not_found') return error('Task not found', 404);
+  if (res.status !== 'accepted' && res.status !== 'merged_clean') {
+    return json({ error: res.reason ?? res.status, code: res.code ?? null }, res.code === 'value_invalid' ? 400 : 409);
+  }
   const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   return json({ data: updated });
 }

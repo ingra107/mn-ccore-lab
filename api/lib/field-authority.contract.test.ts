@@ -66,6 +66,7 @@ const TASK_READ_EXTRA = new Set<string>([
   'watchers',        // Hub-readable, not a /api/mutations field (PB does not sync it)
   'reminder_days',   // Hub-readable, not a /api/mutations field
   'instructions',    // Hub-readable, not a /api/mutations field
+  'work_kind_set',   // schema-v157: who placed work_kind, stamped by the Worker from the auth path, never a wire field
 ])
 // EXCLUDED = wire-contract fields deliberately NOT in the raw read projection.
 const TASK_READ_EXCLUDED = new Set<string>([
@@ -120,6 +121,7 @@ const TASK_UPDATE_EXCLUDED = new Set<string>([
   'waiting_since',   // W1 operational timestamp, server/trigger-managed (waiting_on IS allow-listed; the timestamp is not)
   'question_consumed_json', // #8842 R4 consumer receipt: the PB consumer writes it via /api/mutations, never the Hub UI
   'run_skill',       // schema-v155: the Run button's skill, PB producers only via /api/mutations (runSkillError)
+  'work_kind',       // schema-v157: a PB fill via /api/mutations, or a hand sort via POST /api/tasks/:id/sort (logged)
 ])
 
 describe('B) task update allow-list (TASK_ALLOWED_FIELDS) vs TABLE_FIELDS.tasks', () => {
@@ -255,6 +257,7 @@ const TASK_CREATE_BUCKETS: Record<string, CreateBucket> = {
   question_telegram_json: 'route_excluded', // written by the HOME reconciler via UPDATE only
   question_consumed_json: 'route_excluded', // #8842 R4: the PB consumer's receipt, /api/mutations only, never the Hub UI
   run_skill: 'route_excluded',              // schema-v155: PB producers only, /api/mutations with the PB key (runSkillError)
+  work_kind: 'direct',                      // schema-v157: body.work_kind (Apps Script); the door checks it and stamps work_kind_set
 }
 
 // handleCreateProject payload (projects.ts:168-178).

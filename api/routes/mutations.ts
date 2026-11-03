@@ -34,6 +34,10 @@ import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
 import { weekPlanStart, weekPlanSupersededCheck, weekPlanNotes } from '../lib/week-plan-start';
 import { runSkillError } from '../lib/task-run-skill';
+import {
+  WORK_KIND_COL, WORK_KIND_SET_COL, sortTarget, unknownWorkKind, workKindPatchRefusal,
+  sortEventInsert, sortEventCleanup, type SortCommand,
+} from '../lib/task-work-kind';
 import { originOf } from '../lib/receipts';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 import { currentDraftGuard } from '../lib/current-draft';
@@ -412,6 +416,10 @@ async function processOne(
   // Receipts Undo only (applyReceiptUndo): the version check and the undo's
   // own receipt statements, run inside the decide + commit of an update/delete.
   guard?: UndoGuard,
+  // The sort route only (applyWorkKindSort, schema-v157): a hand sort /
+  // unsort / Reset. A parameter, never a Mutation field, so no request body
+  // can claim to be one.
+  sort?: SortCommand,
 ): Promise<MutationResult> {
   // Validate envelope — ALL required fields checked BEFORE any DB access.
   // Fail-fast here prevents partial-batch commits: if a later mutation in the
@@ -608,7 +616,7 @@ async function processOne(
     if (mut.op === 'insert') {
       result = await applyInsert(env, mut, user, flags);
     } else if (mut.op === 'update' || mut.op === 'append') {
-      result = await applyUpdate(env, mut, user, flags, guard);
+      result = await applyUpdate(env, mut, user, flags, guard, sort);
     } else if (mut.op === 'delete') {
       result = await applyDelete(env, mut, user, guard);
     } else {
@@ -764,6 +772,16 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     // schema-v155: run_skill is PB-producer-only (api/lib/task-run-skill.ts).
     const rsErr = runSkillError({}, payload, payload, mut.origin_machine, originOf(env) !== null);
     if (rsErr) return mutErr(mut.mutation_id, 'value_invalid', rsErr);
+    // schema-v157: the kind of work must be an active work_kinds code, and who
+    // placed it comes from the auth path (api/lib/task-work-kind.ts): the PB
+    // key leaves the column default 'auto'; a Hub session that creates a task
+    // with a kind placed it by hand. work_kind_set is not a wire field, so a
+    // caller cannot have sent one.
+    const wkErr = await unknownWorkKind(env.DB, payload[WORK_KIND_COL]);
+    if (wkErr) return mutErr(mut.mutation_id, 'value_invalid', wkErr);
+    if (payload[WORK_KIND_COL] != null && originOf(env) === null) {
+      payload[WORK_KIND_SET_COL] = 'hand';
+    }
   }
 
   // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
@@ -842,11 +860,13 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
 
   // Slack-style seen (2026-06-11): a task created BY its own assignee is born
   // acknowledged — "unseen" (acknowledged_at IS NULL) means someone ELSE put
-  // it in front of you. Applied at this chokepoint so every create lane gets
-  // it (direct route, Apps Script email tasks, PWA, PB sync — the API-key
-  // lanes resolve to the PB service user → 'nick-ingraham'). An explicit
-  // acknowledged_at in the payload wins.
-  if (mut.table === 'tasks') {
+  // it in front of you. An explicit acknowledged_at in the payload wins.
+  // 2026-11-03 (Nick: "Yes, machine-made tasks arrive New (Recommended)"): an
+  // API-key create is NOT born acknowledged. The PB key resolves to the PB
+  // service user 'nick-ingraham', so PB, the Gmail Apps Script and meeting
+  // extraction used to count as Nick creating his own task and never showed
+  // New. originOf(env) is non-null only for the PB key (api/lib/receipts.ts).
+  if (mut.table === 'tasks' && originOf(env) === null) {
     const p = mut.payload as Record<string, unknown>;
     if (p.acknowledged_at == null && typeof p.assignee === 'string' && user?.slug && user.slug === p.assignee) {
       p.acknowledged_at = nowInstant();
@@ -1091,15 +1111,17 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
 // fields if absent, UPDATE if present. Stage 3 Phase 3.6 fix 2026-05-11.
 const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
-export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard): Promise<MutationResult> {
+export async function applyUpdate(
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand,
+): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
   // Each attempt re-reads the row and re-runs every check below, so a retry
   // after a CAS miss decides against the row that is actually there.
-  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags, guard));
+  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags, guard, sort));
 }
 
 async function decideAndCommitUpdate(
-  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard,
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand,
 ): Promise<MutationResult | CasMiss> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
 
@@ -1288,7 +1310,7 @@ async function decideAndCommitUpdate(
       env.DB.prepare(restoreDeclinedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, String(current.last_mutation_id), ...landed.vals),
     ]);
   }
-  const write = await applyPatch(env, mut, current);
+  const write = await applyPatch(env, mut, current, user, sort);
   // Only the newest week_plan offer takes a first answer (Re-plan,
   // 2026-11-01): read here for the refusal code (before Start, so a
   // superseded offer says so rather than naming the cap), and carried in the
@@ -1330,6 +1352,13 @@ async function decideAndCommitUpdate(
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
       receipt: { op: 'update', fields: write.fields, patch: mut.patch as Record<string, unknown> },
       ...(guard ? { undo: guard.statements, undoWhere: guard.where } : {}),
+      // schema-v157: a hand sort's event goes in BEFORE the row write (the
+      // transition trigger looks for it) and is taken back after it if the
+      // write did not land (api/lib/task-work-kind.ts).
+      ...(sort ? {
+        before: [sortEventInsert(env.DB, sort, mut.record_id, mut.mutation_id, current, nowInstant())],
+        after: [sortEventCleanup(env.DB, mut.mutation_id)],
+      } : {}),
     },
   );
   if (committed === CAS_MISS) return CAS_MISS;
@@ -1624,6 +1653,40 @@ export async function applyMutation(
 }
 
 /**
+ * A hand sort, unsort or Reset of a task's kind of work (schema-v157), from
+ * POST /api/tasks/:id/sort. The ONLY door to work_kind_set='hand' and to
+ * Reset. It goes through processOne like every write (idempotency, CAS,
+ * receipt), with the command threaded as a parameter: the row write and its
+ * task_sort_events row land in one batch, and the event is what lets
+ * trg_tasks_work_kind_transition pass the change. Refused under the PB key:
+ * a machine never places by hand (api/lib/task-work-kind.ts).
+ */
+export async function applyWorkKindSort(
+  env: Env,
+  args: { record_id: string; cmd: SortCommand; user: AuthUser },
+): Promise<MutationResult> {
+  const mutation_id = generateId('mut');
+  if (originOf(env) !== null) {
+    return mutErr(mutation_id, 'value_invalid', 'work_kind_writer: the PB API key cannot sort by hand; it fills through /api/mutations');
+  }
+  const mut: Mutation = {
+    mutation_id,
+    origin_machine: 'hub_ui:task_sort',
+    table: 'tasks',
+    record_id: args.record_id,
+    op: 'update',
+    base_seq: null,
+    base_row_hash: null,
+    patch: { [WORK_KIND_COL]: sortTarget(args.cmd).work_kind },
+    depends_on: null,
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
+  };
+  const flags = await getValidationFlags(env);
+  return await processOne(env, mut, new Map(), args.user, flags, undefined, args.cmd);
+}
+
+/**
  * Receipts Undo (schema-v154): what an undo threads through the ordinary
  * update/delete decide + commit. `check` runs against the CAS pre-image on
  * every attempt; commitRowWrite's CAS term then lands the write only on that
@@ -1903,6 +1966,9 @@ type Dependents = (landed: SqlFragment) => D1PreparedStatement[];
  */
 async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
+  // The acting person (for the assignee-action New clear) and, from the sort
+  // route only, the hand sort command (schema-v157).
+  user?: AuthUser, sort?: SortCommand,
 ): Promise<PatchFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
@@ -2063,6 +2129,38 @@ async function applyPatch(
       current, { ...current, ...effectivePatch }, effectivePatch, mut.origin_machine, originOf(env) !== null,
     );
     if (rsErr) throw new RefusalError('value_invalid', rsErr);
+
+    // schema-v157: the kind of work (api/lib/task-work-kind.ts). A sort
+    // command is the only way to 'hand' or to Reset, and its pair is stamped
+    // here; any other patch that changes work_kind is a PB fill or refused.
+    if (sort) {
+      const target = sortTarget(sort);
+      effectivePatch = { ...effectivePatch, [WORK_KIND_COL]: target.work_kind, [WORK_KIND_SET_COL]: target.work_kind_set };
+    } else {
+      const wkRefusal = workKindPatchRefusal(current, effectivePatch, originOf(env) !== null);
+      if (wkRefusal) throw new RefusalError(wkRefusal.code, wkRefusal.message);
+    }
+    const nextKind = effectivePatch[WORK_KIND_COL];
+    if (nextKind !== undefined && (nextKind ?? null) !== (current[WORK_KIND_COL] ?? null)) {
+      const wkErr = await unknownWorkKind(env.DB, nextKind);
+      if (wkErr) throw new RefusalError('value_invalid', wkErr);
+    }
+
+    // New clears on ANY action by the assignee from a Hub session (Nick,
+    // 2026-11-03: "Any action on it (Recommended)" -- check, plan, move,
+    // open, date change). Opening already acknowledges (POST
+    // /api/tasks/:id/acknowledge); this covers every other write through the
+    // door. Not for the PB key (a machine is not Nick looking at it), not
+    // when the patch names acknowledged_at itself, and not when it hands the
+    // task to someone else (the reassignment arm above clears it for them).
+    if (
+      originOf(env) === null && user?.slug && current.assignee === user.slug &&
+      current.acknowledged_at == null &&
+      !Object.prototype.hasOwnProperty.call(effectivePatch, 'acknowledged_at') &&
+      (effectivePatch.assignee === undefined || effectivePatch.assignee === current.assignee)
+    ) {
+      effectivePatch = { ...effectivePatch, acknowledged_at: nowInstant(), acknowledged_by: user.slug };
+    }
   }
 
   const patchKeys = Object.keys(effectivePatch || {});
@@ -2438,6 +2536,12 @@ async function commitRowWrite(
     // fails the write does not land (CAS miss), so a check-then-write race
     // cannot slip a change past it.
     undoWhere?: SqlFragment;
+    // Statements that must run in the batch BEFORE the row write (a hand
+    // sort's event row, which the schema-v157 transition trigger reads) and
+    // AFTER the receipt insert (that event's take-back when the write did not
+    // land). Neither may change the batch's first or last two results.
+    before?: D1PreparedStatement[];
+    after?: D1PreparedStatement[];
   } = {},
 ): Promise<MutationResult | CasMiss> {
   const pk = pkWhere(mut.table, mut.record_id);
@@ -2450,6 +2554,7 @@ async function commitRowWrite(
 
   const stmts: D1PreparedStatement[] = [
     env.DB.prepare('SELECT outcome FROM processed_mutations WHERE mutation_id = ?').bind(mut.mutation_id),
+    ...(opts.before ?? []),
     // PK term LAST so its binds are last, the order every row write in this
     // file has always used.
     env.DB.prepare(
@@ -2472,6 +2577,7 @@ async function commitRowWrite(
        ON CONFLICT(mutation_id) DO UPDATE SET outcome = excluded.outcome, original_response_json = excluded.original_response_json, processed_at = excluded.processed_at
        WHERE processed_mutations.outcome = 'dependency_failed'`,
     ).bind(mut.mutation_id, mut.origin_machine, outcome, placeholder, mut.table, mut.record_id, ...landed.vals),
+    ...(opts.after ?? []),
     ...(opts.dependentLinksRead ? [opts.dependentLinksRead] : []),
     env.DB.prepare(`SELECT * FROM ${mut.table} WHERE ${pk.sql}`).bind(...pk.vals),
   ];

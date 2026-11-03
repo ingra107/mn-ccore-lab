@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T16:40:11.019620+00:00",
+  "generated_at": "2026-11-03T17:23:40.363454+00:00",
   "note": "Checked-in schema snapshot for Hub CI test (mutations.schema-drift.test.ts). Update when brain.db schema changes. hub-schema-sync specialist owns updates. Regenerate: python scripts/db/generate_hub_schema_snapshot.py --out <mn-ccore-lab>/api/brain-db-schema-snapshot.json",
   "hub_to_local": {
     "tasks": {
@@ -66,7 +66,9 @@
       "status",
       "thread_id",
       "waiting_on",
-      "waiting_since"
+      "waiting_since",
+      "work_kind",
+      "work_kind_set"
     ],
     "projects": [
       "analysis_path",

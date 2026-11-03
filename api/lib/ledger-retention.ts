@@ -58,6 +58,17 @@ export interface LedgerEntry {
  */
 export const LEDGER_REGISTRY: readonly LedgerEntry[] = [
   {
+    table: 'task_sort_events',
+    retentionColumn: 'at',
+    retentionDays: 730,
+    maxRows: 20_000,
+    requiredIndex: 'idx_task_sort_events_at',
+    note:
+      'Hand sorts of a task\'s kind of work (schema-v157), a few per day. Nick reads it to see ' +
+      'how often he sorts and whether a category is missing; two years covers that. Pruning is ' +
+      'safe: trg_tasks_work_kind_transition reads only the current write\'s own event.',
+  },
+  {
     table: 'processed_mutations',
     retentionColumn: 'processed_at',
     retentionDays: 7,

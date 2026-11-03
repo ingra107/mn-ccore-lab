@@ -127,6 +127,8 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - POST /api/tasks (accepts `key_link_1/_desc/2/3` + `status`), POST /api/tasks/:id, POST /api/tasks/:id/status
 - POST /api/tasks/:id optional `expected_description` (text or null): the description an edit started from. If the stored one differs, nothing is written and the answer is 409 `{code:'description_changed', description:<current>}`; the same read is the write's compare-and-swap. Omitted = unguarded write. The task panel always sends it.
 - POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
+- POST /api/tasks/:id/sort (schema-v157: `{op:'sort', work_kind, from_section?, missing_category_note?}` | `{op:'unsort', from_section?}` | `{op:'reset'}`; the only door to a hand placement, logged in `task_sort_events`; refused under the PB key)
+- GET /api/tasks?others_of=<slug> (schema-v157: open work assigned to someone else in that person's projects or assigned by them; the Today "With others" section)
 - GET /api/tasks/:id/comments, POST /api/tasks/:id/comments — **projection over activity_entries since v77** (shape byte-preserved; writes via postActivityEntry)
 - **GET /api/task-comments/recent?since=&since_id=&limit=** — projection; compound (created_at,id) cursor since 2026-06-10 (PB collector adopted)
 - POST /api/tasks/:id/updates — projection over activity_entries (kind='update')

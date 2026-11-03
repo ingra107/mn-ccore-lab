@@ -27,7 +27,7 @@ import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleGetNextStepGaps, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleGetNextStepGaps, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleSortTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMarkThreadSeen } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -2333,6 +2333,15 @@ defineRoute({
   auth: 'authed',
   entity: 'tasks',
   handler: (c) => handleAcknowledgeTask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// schema-v157: hand sort / unsort / Reset of a task's kind of work (Today
+// sections). The only door to work_kind_set='hand'; logged in task_sort_events.
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/sort',
+  auth: 'authed',
+  entity: 'tasks',
+  handler: (c) => handleSortTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',

@@ -247,7 +247,8 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   for a list of source keys, PB key or Nick), api/routes/receipts.ts.
     // 295 as of 2026-11-01 -- the Re-plan button (+2): GET + POST
     //   /api/week-plan/replan (Nick only), api/lib/week-plan-replan.ts.
-    expect(ROUTE_REGISTRY).toHaveLength(295)
+    // 296 as of 2026-11-03 -- schema-v157 Today sections (+1): POST /api/tasks/:id/sort.
+    expect(ROUTE_REGISTRY).toHaveLength(296)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

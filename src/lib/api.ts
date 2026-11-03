@@ -214,6 +214,12 @@ export interface TaskRow {
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
    *  via getGroupForTask. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
+  /** Kind of work (schema-v157): review | writing | analysis | admin; null =
+   *  unsorted (Sort strip). Codes live in the work_kinds lookup table. */
+  work_kind?: string | null
+  /** Who placed work_kind (schema-v157), stamped by the Worker from the auth
+   *  path: 'hand' (Hub session sort) or 'auto' (PB key / Gmail / nightly fill). */
+  work_kind_set?: 'auto' | 'hand'
   /** schema-v109 (2026-09-16): the row's kind (shared/taskKinds.ts). A
    *  milestone is a task row rendered as a half-height dated rule (TaskRow
    *  variant), never a fork. REQUIRED (schema-v156): the API always returns it
@@ -318,7 +324,7 @@ export const TASK_ROW_KEYS = [
   'meeting_date', 'meeting_ref', 'approval_status', 'kind', 'parent_id', 'step_total', 'step_done', 'packet_state',
   'deadline', 'deadline_type', 'effort', 'inbox_event_id', 'next_artifact',
   'nick_followup_date', 'related_message_ids', 'requires_nick_brain',
-  'source_thread_id', 'waiting_since', 'run_skill',
+  'source_thread_id', 'waiting_since', 'run_skill', 'work_kind', 'work_kind_set',
   'question_spec_json', 'question_answer_json', 'question_telegram_json',
   'question_consumed_json',
 ] as const satisfies readonly (keyof TaskRow)[]

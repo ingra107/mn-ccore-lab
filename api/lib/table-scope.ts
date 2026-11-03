@@ -59,10 +59,10 @@ export const HUB_TABLES = [
   'project_join_notes', 'project_join_requests', 'project_listing', 'project_member_folders', 'project_members', 'project_publications', 'project_state_log', 'projects',
   'publications', 'pubmed_sync_log', 'reactions', 'regulatory_items', 'research_digest',
   'research_narratives', 'reviewer_comments', 'schema_migrations', 'sessions', 'submission_events',
-  'task_files', 'task_handoffs', 'task_packet_actions', 'task_packet_versions', 'task_packets', 'task_subtasks', 'tasks',
+  'task_files', 'task_handoffs', 'task_packet_actions', 'task_packet_versions', 'task_packets', 'task_sort_events', 'task_subtasks', 'tasks',
   'team_members', 'trainee_milestones',
   'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watch_alarms', 'watch_run_threads', 'watch_runs', 'watch_threads',
-  'watchlist', 'workflow_templates',
+  'watchlist', 'work_kinds', 'workflow_templates',
 ] as const
 
 export type HubTable = (typeof HUB_TABLES)[number]
@@ -557,6 +557,10 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   // By task.
   task_files: byTask('task_files', 'task_id'),
   task_subtasks: byTask('task_subtasks', 'task_id'),
+  // schema-v157: the hand-sort log follows its task. The sort route's
+  // take-back DELETE (api/lib/task-work-kind.ts sortEventCleanup) runs through
+  // the sorter's handle, and they can see the task they just sorted.
+  task_sort_events: byTask('task_sort_events', 'task_id'),
   task_handoffs: byTask('task_handoffs', 'task_id'),
   hub_pomodoro_slots: byTask('hub_pomodoro_slots', 'task_id'),
 
@@ -569,7 +573,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   product_event_roles: LAB, product_kinds: LAB, product_stages: LAB, project_home_seed: LAB, publications: LAB,
   pubmed_sync_log: LAB, research_digest: LAB, research_narratives: LAB, schema_migrations: LAB,
   sessions: LAB, team_members: LAB, trainee_milestones: LAB, user_calendar_events: LAB,
-  user_calendar_feeds: LAB, workflow_templates: LAB,
+  user_calendar_feeds: LAB, work_kinds: LAB, workflow_templates: LAB,
 }
 
 // ── views ────────────────────────────────────────────────────────────────────

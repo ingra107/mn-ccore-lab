@@ -41,6 +41,10 @@ export const TRIGGER_RULE_CODES: Readonly<Record<string, TriggerRuleCode>> = {
   task_parent_question: 'business_rule',
   product_last_live: 'business_rule',
   product_home_live: 'business_rule',
+  // schema-v157: a kind of work changes only by a fill of an unsorted row or a
+  // logged sort. The Worker refuses the reachable cases first with the same
+  // code (api/lib/task-work-kind.ts); this one is the store's backstop.
+  work_kind_transition: 'business_rule',
   // ── question rules: the same rules task-question.ts throws as question_rule ─
   question_answer_frozen: 'question_rule',
   question_kind_immutable: 'question_rule',
