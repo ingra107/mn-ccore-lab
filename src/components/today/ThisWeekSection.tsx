@@ -37,7 +37,9 @@
 // (ReplanControl.tsx, shared with Planned today). Earlier plans' started or finished
 // picks stay here, read-only, tagged "earlier plan" (plan.earlier).
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, type ReactNode } from 'react'
+import { CardCheck } from '../tasks/TaskCardRow'
+import { LinkRow, taskKeyLinks } from './primitives'
 import { useDroppable } from '@dnd-kit/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { PlannedTaskRow } from './PlannedTaskRow'
@@ -107,6 +109,34 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
   const drawerEl = (task: TaskRow | undefined) => canOpen(task) && expandedId === task.id ? (
     <TaskDetailDrawer task={task} project={task.project_id ? projectsByPid.get(task.project_id) ?? null : null} state={state} />
   ) : null
+  // The ONE construction of a pick that is not planned today: the check (finish
+  // or reopen it) and the task's key links (its draft / Doc, one click) are part
+  // of it, so a pick row cannot be built without them (Nick, 2026-11-03: "it's
+  // weird not to have the links ... it's really odd that I can't complete it").
+  // A pick whose task row is not loaded has nothing to check or open.
+  const plainRow = (key: string, testid: string, extraCls: string, task: TaskRow | undefined, label: string, tagsEl: ReactNode, dirEl: ReactNode, actsEl: ReactNode) => {
+    const done = !!task && (isTaskDone(task) || !!state.done[task.id])
+    const links = task ? taskKeyLinks(task) : []
+    return (
+      <div key={key} className={`tk-week-row${extraCls}`} data-testid={testid}>
+        <div className="tk-week-line">
+          {task && (
+            <CardCheck done={done} onToggle={() => (done ? state.uncheck(task.id) : state.markDone(task.id))} taskId={task.id} />
+          )}
+          <div className="tk-week-main">
+            <span className="tk-plan-t" style={done ? { textDecoration: 'line-through', color: 'var(--sk-t3)' } : undefined}>
+              {titleEl(task, label)}
+              {tagsEl}
+            </span>
+            <span className="tk-plan-why">{dirEl}</span>
+            {actsEl}
+          </div>
+          {links.length > 0 && <span className="tk-week-links" data-testid="pick-links"><LinkRow links={links} /></span>}
+        </div>
+        {drawerEl(task)}
+      </div>
+    )
+  }
   const packetTag = (tag: { label: string; cls: string }, openId: string | null) => {
     const help = TAG_HELP[tag.label]
     if (openId && OPENS_DRAWER.has(tag.label)) {
@@ -187,17 +217,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                   </div>
                 )
               }
-              return (
-                <div key={p.task_id} className="tk-week-row" data-testid="this-week-pick">
-                  <span className="tk-plan-t">
-                    {titleEl(task, task?.short_title || task?.title || cand?.title || p.task_id)}
-                    {tagEl}
-                  </span>
-                  <span className="tk-plan-why">{direction}</span>
-                  {acts}
-                  {drawerEl(task)}
-                </div>
-              )
+              return plainRow(`${p.task_id}`, 'this-week-pick', '', task, task?.short_title || task?.title || cand?.title || p.task_id, tagEl, direction, acts)
             })}
             {plan.earlier.map(({ pick, spec }) => {
               // Read-only: started or done on an earlier plan of this week.
@@ -224,16 +244,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
                   </div>
                 )
               }
-              return (
-                <div key={`earlier:${pick.task_id}`} className="tk-week-row tk-week-earlier" data-testid="this-week-earlier">
-                  <span className="tk-plan-t">
-                    {titleEl(task, task?.short_title || task?.title || cand?.title || pick.task_id)}
-                    {tags}
-                  </span>
-                  <span className="tk-plan-why">{pickDirection(pick, spec)}</span>
-                  {drawerEl(task)}
-                </div>
-              )
+              return plainRow(`earlier:${pick.task_id}`, 'this-week-earlier', ' tk-week-earlier', task, task?.short_title || task?.title || cand?.title || pick.task_id, tags, pickDirection(pick, spec), null)
             })}
           </div>
           {extra.length > 0 && (

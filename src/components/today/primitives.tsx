@@ -19,6 +19,23 @@ import { ICON_PROPS } from '../../lib/iconProps'
  *  back to URL-inferred classifyUrl() icon. */
 export interface TaskLink { url: string; desc?: string | null; type?: string | null }
 
+/** The task's key_link_1..3 slots as TaskLinks, in slot order. The one place a
+ *  row turns those columns into LinkRow input (Planned, This week, Today card). */
+// eslint-disable-next-line react-refresh/only-export-components -- a pure helper that feeds LinkRow, kept beside it
+export function taskKeyLinks(task: {
+  key_link_1?: string | null; key_link_1_desc?: string | null
+  key_link_2?: string | null; key_link_2_desc?: string | null
+  key_link_3?: string | null; key_link_3_desc?: string | null
+}): TaskLink[] {
+  return ([
+    [task.key_link_1, task.key_link_1_desc],
+    [task.key_link_2, task.key_link_2_desc],
+    [task.key_link_3, task.key_link_3_desc],
+  ] as const).flatMap(([url, desc]) =>
+    typeof url === 'string' && url.length > 0 ? [{ url, desc: desc ?? undefined } satisfies TaskLink] : [],
+  )
+}
+
 // Mode-B icon-only link buttons (Nick 2026-06-17): borderless, sharp (size 16
 // via ICON_PROPS), brand-color glyph from stored type, hover tooltip shows
 // "type · desc". Uses stored link.type when available; falls back to
@@ -58,6 +75,9 @@ export function LinkRow({ links, slot = false }: { links: TaskLink[]; slot?: boo
             className="tk-lkicon"
             data-lk={tint ?? undefined}
             data-tip={isEmail ? undefined : tooltip}
+            // The Gmail icon has no custom tip (Nick 2026-07-09) but must still
+            // say WHICH draft it opens (Nick 2026-11-03), so it keeps a native title.
+            title={isEmail ? tooltip : undefined}
             aria-label={tooltip}
             onClick={(e) => {
               e.stopPropagation()

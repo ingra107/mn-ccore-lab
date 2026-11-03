@@ -26,7 +26,7 @@
 // the row is correct in BOTH light and dark, on the dark Today/MyTasks page
 // AND on My Hub's lighter card surface.
 
-import { isMilestone } from '../../../shared/taskKinds'
+import { isMilestone, isCheckin } from '../../../shared/taskKinds'
 import { useRef, useState, type ReactNode } from 'react'
 import { GripHorizontal, MapPin, Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -40,7 +40,7 @@ import TaskTitle from './TaskTitle'
 import { useCompletionRing } from '../../lib/completionMoment'
 import { INK, INK_MUTED, withAlpha, type MilestoneRole, type MilestoneEntry } from '../../lib/taskGrouping'
 import { dueLabelCompact, dueTone, isOverdue } from '../../lib/dateUtils'
-import { CardRow, MilestoneCardRow } from './TaskCardRow'
+import { CardRow, MilestoneCardRow, CheckinRow } from './TaskCardRow'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 import { LONG_PRESS_MS } from '../../lib/uiTiming'
@@ -220,7 +220,7 @@ export interface SharedTaskRowProps {
   // drawer), a ◆ glyph in its place, a hairline rule above+below, and a
   // trimmed left→right order (glyph → project link → title → due → caret).
   // Defaults to 'task' so every existing caller renders byte-identical.
-  variant?: 'task' | 'milestone'   // override only — defaults from task.kind
+  variant?: 'task' | 'milestone' | 'checkin'   // override only — defaults from task.kind
 
   // ── milestone two-date rendering (Nick 2026-09-17) ── which of a
   // milestone's 1-2 rule-entries THIS row represents (see milestoneRules in
@@ -380,7 +380,10 @@ export function TaskRow(props: SharedTaskRowProps | CardTaskRowProps) {
   // existing caller (Rule 68: add a prop, never fork).
   // `variant` is an OVERRIDE; the default is read off the row itself, so a
   // caller that never heard of milestones still renders one correctly.
-  const variant = props.variant ?? (isMilestone(props.task) ? 'milestone' : 'task')
+  const variant = props.variant ?? (isMilestone(props.task) ? 'milestone' : isCheckin(props.task) ? 'checkin' : 'task')
+  // A check-in is ONE thin line on every surface (card or standard): dispatching
+  // here, on kind, means no page can build it as a full card.
+  if (variant === 'checkin') return <CheckinRow {...props} />
   if (props.card) return variant === 'milestone' ? <MilestoneCardRow {...props} /> : <CardRow {...props} />
   return variant === 'milestone' ? <MilestoneRow {...props} /> : <StandardRow {...props} />
 }

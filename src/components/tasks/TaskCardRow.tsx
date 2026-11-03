@@ -26,6 +26,7 @@ import { civilDaysOverdue, dueLabelCompact, dueTone, formatShortDate, isOverdue 
 import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { useContext } from 'react'
+import { CHECKIN_TITLE_PREFIX } from '../../../shared/taskKinds'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import { HideViewerFaceContext } from '../today/hideViewerFace'
 import TaskTitle from './TaskTitle'
@@ -331,6 +332,60 @@ export function CardRow(props: CardTaskRowProps) {
         </div>
       </div>
       {isExpanded && children}
+    </div>
+  )
+}
+
+// Check-in as a one-line rule (kind='checkin', Nick 2026-10-30: "a milestone-
+// style kind, one-line row named 'Check in: ...', one-tap done"). The
+// milestone rule's anatomy with the one-tap CardCheck where the diamond sits:
+// check, dim "Check in" label, title, faint leader, project, due pill, caret.
+// Dispatched from SharedTaskRow on task.kind, so no surface can render a
+// check-in as a full card. Clicking the line opens the same drawer/editor a
+// card would (onToggleExpand); the check never does (CardCheck stops it).
+export function CheckinRow(props: Pick<CardTaskRowProps, 'task' | 'project' | 'isDone' | 'onToggleDone' | 'isExpanded' | 'onToggleExpand' | 'hideCaret' | 'children'>) {
+  const { task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret, children } = props
+  const label = taskShortLabel(task)
+  const hasPrefix = label.startsWith(CHECKIN_TITLE_PREFIX)
+  const rest = hasPrefix ? label.slice(CHECKIN_TITLE_PREFIX.length) : label
+  const overdue = !!task.due_date && !isDone && isOverdue(task.due_date, task.status)
+  return (
+    <div data-task-id={task.id} data-task-kind="checkin" className={`tk-msw tk-chkw${isDone ? ' tk-done' : ''}`}>
+      <div
+        className={`tk-ms tk-int tk-chk${isDone ? ' tk-done' : ''}`}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        onClick={onToggleExpand}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onToggleExpand() }
+        }}
+      >
+        <CardCheck done={isDone} onToggle={onToggleDone} taskId={task.id} />
+        {hasPrefix && <span className="tk-ci-l">Check in</span>}
+        <span className="tk-mt2" style={{ textDecoration: isDone ? 'line-through' : 'none' }} data-testid="checkin-title">{rest}</span>
+        <span aria-hidden="true" className="tk-lead" />
+        {project && (
+          <Link
+            to={PATHS.project(project.slug)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Open ${project.name}`}
+            title={project.fullTitle}
+            className="tk-cs"
+            style={{ margin: 0, flexShrink: 0, maxWidth: 160 }}
+          >
+            {project.name}
+          </Link>
+        )}
+        {task.due_date && !isDone && (
+          <span className={`tk-pill${overdue ? ' tk-o' : ''}`} data-tip={`Due ${task.due_date.slice(0, 10)}`} aria-label={`due: ${task.due_date.slice(0, 10)}`}>
+            <i />{dueLabelCompact(task.due_date, overdue)}
+          </span>
+        )}
+        {!hideCaret && !isDone && <span className="tk-caret">{isExpanded ? '▾' : '▸'}</span>}
+      </div>
+      {isExpanded && !isDone && children}
     </div>
   )
 }

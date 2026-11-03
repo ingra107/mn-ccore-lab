@@ -16,7 +16,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { GripHorizontal, Clock, MapPin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { PATHS } from '../../constants/paths'
-import { LinkRow, type TaskLink } from './primitives'
+import { LinkRow, taskKeyLinks } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { CardCheck } from '../tasks/TaskCardRow'
 import { fmtDuration } from './utils'
@@ -35,10 +35,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
   const isDone = isTaskDone(task) || !!state.done[task.id]
   const projectName = usePairName(task, project?.name ?? '')
   const expanded = expandedId === task.id
-  const links: TaskLink[] = []
-  if (task.key_link_1) links.push({ url: task.key_link_1, desc: task.key_link_1_desc })
-  if (task.key_link_2) links.push({ url: task.key_link_2, desc: task.key_link_2_desc })
-  if (task.key_link_3) links.push({ url: task.key_link_3, desc: task.key_link_3_desc })
+  const links = taskKeyLinks(task)
   // Drag handle: dnd-kit useDraggable replaces HTML5 draggable/onDragStart (GH#150).
   // The grip span carries {listeners} so only the grip icon activates the drag,
   // not the whole row — prevents accidental row click + drag conflicts.

@@ -2656,6 +2656,14 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ms .tk-lead{flex:1;min-width:24px;height:1px;background:color-mix(in srgb, var(--job-milestone) 11%, transparent)}
 .tk .tk-ms.tk-int .tk-dia{color:var(--sk-t3)} .tk .tk-ms.tk-int .tk-lead{background:var(--sk-line)}
 .tk .tk-ms.tk-slip{opacity:.55}
+/* check-in rule (kind='checkin'): the milestone's one-line anatomy with a
+   one-tap check where the diamond sits and no gold; the "Check in:" prefix is
+   a small dim label ahead of the title. */
+.tk .tk-ms.tk-chk{cursor:pointer}
+.tk .tk-ms.tk-chk .tk-ck{margin-top:0}
+.tk .tk-ms.tk-chk .tk-ci-l{font-size:11px;color:var(--sk-t3);white-space:nowrap;flex-shrink:0}
+.tk .tk-ms.tk-chk .tk-lead{background:var(--sk-line)}
+.tk .tk-ms.tk-chk.tk-done .tk-mt2{color:var(--sk-t3)}
 .tk .tk-msw{border-top:1px solid var(--sk-line);border-bottom:1px solid var(--sk-line);margin:2px 0}
 /* drawer */
 .tk .tk-drawer{padding:12px 14px 14px 39px;border-top:1px solid var(--sk-line);cursor:default}
@@ -3531,8 +3539,14 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .tk-plan-body{flex:1;overflow-y:auto;padding:14px 16px 18px}
 .tk .tk-plan-prompt{margin:0 0 12px;font-size:14px;color:var(--sk-t1)}
 .tk .tk-plan-step{display:flex;flex-direction:column;gap:6px}
-.tk .tk-plan-link{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.tk .tk-plan-link:hover{text-decoration:underline}
+.tk .tk-plan-link:not(.tk-tag){background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.tk .tk-plan-link:not(.tk-tag):hover{text-decoration:underline}
+/* A tag rendered as a <button> must look exactly like the <span> tag. The link
+   reset above used to strip its padding and font (the "Check it" text touched
+   the pill edge); this normalizes the button's own defaults instead, so every
+   tag button inherits the .tk-tag look (size, weight, padding, pill). */
+.tk button.tk-tag{border:0;font-family:inherit;font-size:10px;font-weight:600;line-height:inherit;min-height:0;white-space:nowrap;cursor:pointer;text-align:center}
+.tk button.tk-tag:hover{filter:brightness(1.15)}
 .tk .tk-plan-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:2px 0 8px;border-bottom:1px solid var(--sk-line)}
 .tk .tk-plan-card>.tk-plan-opt,.tk .tk-plan-card>.tk-plan-set{align-self:stretch}
 .tk .tk-plan-set{border:0;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
@@ -3551,5 +3565,10 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .tk .tk-plan-note{margin:6px 0 0;font-size:12px;color:var(--sk-t3)}
 .tk .tk-plan-err{margin:6px 0 0;font-size:12px;color:var(--job-danger)}
 .tk .tk-week-row.tk-week-planned{padding:2px 0}
+/* A plain pick: check, text block, links on one line (links stay put on wrap). */
+.tk .tk-week-line{display:flex;align-items:flex-start;gap:10px}
+.tk .tk-week-line>.tk-ck{margin-top:2px}
+.tk .tk-week-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tk .tk-week-links{flex-shrink:0;display:inline-flex;align-items:center;min-height:20px}
 /* A pick's actions (Prep, Prep & start): one line, left-aligned under the direction. */
 .tk .tk-week-acts{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}

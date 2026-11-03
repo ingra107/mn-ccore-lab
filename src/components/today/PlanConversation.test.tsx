@@ -351,16 +351,54 @@ describe('This week', () => {
     expect(tag.textContent).toBe('Ready')
     expect(tag.title).toBe('A first step is prepared: open the task to see it')
     const rowKids = () => host.querySelector('[data-testid="this-week-pick"]')!.children.length
-    expect(rowKids()).toBe(2) // title line + direction: no drawer yet
+    expect(rowKids()).toBe(1) // the pick line (check, title, direction, links): no drawer yet
     const title = host.querySelector('[data-testid="pick-open"]') as HTMLButtonElement
     expect(title.getAttribute('aria-expanded')).toBe('false')
     await click(title)
     expect(title.getAttribute('aria-expanded')).toBe('true')
-    expect(rowKids()).toBe(3) // the drawer mounted
+    expect(rowKids()).toBe(2) // the drawer mounted
     await click(title)
     expect(title.getAttribute('aria-expanded')).toBe('false')
     await click(tag) // the Ready tag opens it too
     expect(title.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('a pick not planned today carries a check and its key links, labelled by their descriptions', async () => {
+    stubFetch({ used: 0, cap: 10 })
+    const marked: string[] = []
+    const st = { ...state({}), markDone: (id: string) => { marked.push(id) } } as unknown as TodayStateApi
+    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
+    const host = await mount(
+      <ThisWeekSection
+        plan={plan}
+        allTasks={[task('task_a', {
+          key_link_1: 'https://mail.google.com/mail/u/1/#drafts/abc', key_link_1_desc: 'Gmail Draft',
+          key_link_2: 'https://docs.google.com/document/d/xyz/edit', key_link_2_desc: 'Draft interview questions',
+        })]}
+        stripTasks={[]} state={st} projectsByPid={new Map()}
+      />,
+    )
+    const pick = host.querySelector('[data-testid="this-week-pick"]')!
+    const links = [...pick.querySelectorAll('[data-testid="pick-links"] a')]
+    expect(links.map((a) => a.getAttribute('aria-label'))).toEqual(['Gmail Draft', 'Draft interview questions'])
+    // Even the Gmail icon (no custom tip) says which draft it opens.
+    expect((links[0] as HTMLElement).title).toBe('Gmail Draft')
+    await click(pick.querySelector('button[aria-label="Mark done"]'))
+    expect(marked).toEqual(['task_a'])
+  })
+
+  it('a done pick not planned today shows checked and struck through, and the check reopens it', async () => {
+    stubFetch({ used: 0, cap: 10 })
+    const reopened: string[] = []
+    const st = { ...state({}), done: { task_a: true }, uncheck: (id: string) => { reopened.push(id) } } as unknown as TodayStateApi
+    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
+    const host = await mount(
+      <ThisWeekSection plan={plan} allTasks={[task('task_a')]} stripTasks={[]} state={st} projectsByPid={new Map()} />,
+    )
+    const pick = host.querySelector('[data-testid="this-week-pick"]')!
+    expect((pick.querySelector('.tk-plan-t') as HTMLElement).style.textDecoration).toBe('line-through')
+    await click(pick.querySelector('button[aria-label="Mark not done"]'))
+    expect(reopened).toEqual(['task_a'])
   })
 
   it('the Start button names the shared daily cap', async () => {

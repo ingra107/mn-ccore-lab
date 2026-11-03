@@ -17,7 +17,7 @@ import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { MilestoneDrawer } from './MilestoneDrawer'
 import { isTaskDone, type MilestoneRole } from '../../lib/taskGrouping'
 import { isMilestone } from '../../../shared/taskKinds'
-import { LinkRow, type TaskLink } from './primitives'
+import { LinkRow, taskKeyLinks } from './primitives'
 import { StepsNext } from './StepsNext'
 import { isParent } from '../../lib/taskSteps'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -85,15 +85,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, milestoneR
   // Reuses today/primitives LinkRow (same icon resolution as MyTasks LinksBar).
   // key_link_* slots are the only row-level links; stored DB links appear only
   // in the expanded TaskDetailDrawer (useTaskLinks, per existing design).
-  const rowLinks: TaskLink[] = [
-    [task.key_link_1, task.key_link_1_desc],
-    [task.key_link_2, task.key_link_2_desc],
-    [task.key_link_3, task.key_link_3_desc],
-  ].flatMap(([url, desc]) =>
-    typeof url === 'string' && url.length > 0
-      ? [{ url, desc: desc ?? undefined } satisfies TaskLink]
-      : [],
-  )
+  const rowLinks = taskKeyLinks(task)
   const linkMeta = rowLinks.length > 0 ? <LinkRow links={rowLinks} slot /> : null
 
   // Slot WorkOnActions (📂 + ▶, 24px boxes) — shown when the task's project has a
