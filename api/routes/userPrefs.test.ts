@@ -70,11 +70,11 @@ describe('/api/user-prefs through the real worker', () => {
 
     const views = [{ id: 'v1', name: 'Mine', query: 'a=1', createdAt: 1 }]
     expect((await call('PUT', '/api/user-prefs/savedViews.my-tasks', CASEY_EMAIL, { value: views })).status).toBe(200)
-    expect((await call('PUT', '/api/user-prefs/today.dueWindow', CASEY_EMAIL, { value: '14' })).status).toBe(200)
-    expect((await call('PUT', '/api/user-prefs/today.dueWindow', CASEY_EMAIL, { value: '30' })).status).toBe(200)
-    expect(await prefsOf(CASEY_EMAIL)).toEqual({ labprefs, 'savedViews.my-tasks': views, 'today.dueWindow': '30' })
+    expect((await call('PUT', '/api/user-prefs/today.defaultView', CASEY_EMAIL, { value: '14' })).status).toBe(200)
+    expect((await call('PUT', '/api/user-prefs/today.defaultView', CASEY_EMAIL, { value: '30' })).status).toBe(200)
+    expect(await prefsOf(CASEY_EMAIL)).toEqual({ labprefs, 'savedViews.my-tasks': views, 'today.defaultView': '30' })
 
-    const del = await call('DELETE', '/api/user-prefs/today.dueWindow', CASEY_EMAIL)
+    const del = await call('DELETE', '/api/user-prefs/today.defaultView', CASEY_EMAIL)
     expect(del.status).toBe(200)
     expect(Object.keys(await prefsOf(CASEY_EMAIL)).sort()).toEqual(['labprefs', 'savedViews.my-tasks'])
     expect(rows()).toHaveLength(2)

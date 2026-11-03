@@ -76,7 +76,6 @@ export const LEGACY_SOURCES: readonly LegacySource[] = [
   exact('mnccore.labprefs.v1', 'labprefs', asJson),
   prefixed('mnccore.savedViews.v1.', 'savedViews.', asJson),
   exact('mnccore.today.defaultView', 'today.defaultView', asText),
-  exact('mnccore.today.dueWindow', 'today.dueWindow', asText),
   prefixed('table-config-', 'tableConfig.', asJson),
   exact('mnccore-dashboard-cards', 'dashboard.cards', asJson),
   exact('mnccore-dashboard-pinned', 'dashboard.pinned', asJson),

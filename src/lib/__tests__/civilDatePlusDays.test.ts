@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { civilDatePlusDays } from '../taskGrouping';
 
-// #105. The Today due-window compares a task's civil due_date against an edge
+// #105. The Today fold rule (FOLD_DAYS in taskSections.ts) compares a task's civil due_date against an edge
 // date. Getting this arithmetic wrong shifts the whole window by a day in every
 // western timezone — the same defect isToday() already documents.
 describe('civilDatePlusDays', () => {

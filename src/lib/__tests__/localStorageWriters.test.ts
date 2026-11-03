@@ -58,7 +58,7 @@ const SERVER_BACKED = [
 
 /** The old per-browser keys: only useUserPref.ts (which seeds them) may name them. */
 const OLD_KEYS = [
-  'mnccore.labprefs.v1', 'mnccore.savedViews.v1.', 'mnccore.today.dueWindow', 'table-config-',
+  'mnccore.labprefs.v1', 'mnccore.savedViews.v1.', 'table-config-',
   'mnccore-dashboard-cards', 'mnccore-dashboard-pinned', 'mnccore-dashboard-tab', 'mnccore-dashboard-version',
 ]
 

@@ -87,16 +87,16 @@ describe('planSeed', () => {
     const steps = planSeed(
       [
         entry('labprefs', LABPREFS),
-        entry('today.dueWindow', '7'),
+        entry('today.defaultView', '7'),
         entry('savedViews.my-tasks', [{ id: 'a' }, { id: 'b' }]),
         entry('savedViews.other', [{ id: 'x' }]),
         entry('dashboard.tab', undefined),
       ],
-      new Map<string, unknown>([['today.dueWindow', '30'], ['savedViews.my-tasks', [{ id: 'b' }, { id: 'c' }]], ['savedViews.other', [{ id: 'x' }]]]),
+      new Map<string, unknown>([['today.defaultView', '30'], ['savedViews.my-tasks', [{ id: 'b' }, { id: 'c' }]], ['savedViews.other', [{ id: 'x' }]]]),
     )
     expect(steps).toEqual([
       { key: 'labprefs', lsKeys: ['old:labprefs'], put: LABPREFS },
-      { key: 'today.dueWindow', lsKeys: ['old:today.dueWindow'] },
+      { key: 'today.defaultView', lsKeys: ['old:today.defaultView'] },
       { key: 'savedViews.my-tasks', lsKeys: ['old:savedViews.my-tasks'], put: [{ id: 'b' }, { id: 'c' }, { id: 'a' }] },
       { key: 'savedViews.other', lsKeys: ['old:savedViews.other'] },
       { key: 'dashboard.tab', lsKeys: ['old:dashboard.tab'] },
@@ -154,13 +154,13 @@ describe('the store', () => {
   })
 
   it('a scalar the server holds wins; the old key is dropped with no PUT', async () => {
-    server.set('today.dueWindow', '30')
-    ls.setItem('mnccore.today.dueWindow', '7')
+    server.set('today.defaultView', '30')
+    ls.setItem('mnccore.today.defaultView', '7')
     enableUserPrefSync('nick-ingraham')
     await settle()
-    expect(readUserPref('today.dueWindow')).toBe('30')
+    expect(readUserPref('today.defaultView')).toBe('30')
     expect(calls.filter((c) => c.method !== 'GET')).toEqual([])
-    expect(ls.getItem('mnccore.today.dueWindow')).toBeNull()
+    expect(ls.getItem('mnccore.today.defaultView')).toBeNull()
   })
 
   it('saved views from both laptops survive: the union is PUT', async () => {
@@ -292,7 +292,7 @@ describe('the store', () => {
   })
 
   it('a refetch that reads while a PUT is out does not put the old value back on screen', async () => {
-    server.set('today.dueWindow', '7')
+    server.set('today.defaultView', '7')
     const win = new EventTarget()
     vi.stubGlobal('window', win)
     let releasePut!: () => void
@@ -307,16 +307,16 @@ describe('the store', () => {
     enableUserPrefSync('nick-ingraham')
     await settle()
     vi.useFakeTimers()
-    writeUserPref('today.dueWindow', '30')
+    writeUserPref('today.defaultView', '30')
     await vi.advanceTimersByTimeAsync(300) // PUT sent, not answered
     vi.useRealTimers()
     win.dispatchEvent(new Event('focus')) // GET reads '7'
     await settle()
-    expect(readUserPref('today.dueWindow')).toBe('30')
+    expect(readUserPref('today.defaultView')).toBe('30')
     releasePut()
     await settle()
-    expect(readUserPref('today.dueWindow')).toBe('30')
-    expect(server.get('today.dueWindow')).toBe('30')
+    expect(readUserPref('today.defaultView')).toBe('30')
+    expect(server.get('today.defaultView')).toBe('30')
   })
 
   it('writing the value already shown sends nothing', async () => {
