@@ -1,4 +1,4 @@
-import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
+import { TASK_KIND_OPTIONS, isQuestion, kindChangeFields, statusOptionsFor } from '../../../shared/taskKinds'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import BodyText from '../BodyText'
 import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
@@ -656,7 +656,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               <GhostSelect
                 aria-label="Kind"
                 value={task.kind || 'task'}
-                onChange={(v) => handleFieldUpdate('kind', v)}
+                onChange={(v) => { void saveFields(task.id, kindChangeFields(v, task.title)) }}
                 options={[...TASK_KIND_OPTIONS]}
               />
             )}

@@ -24,21 +24,45 @@
 // 2026-10-30): a one-line, one-tap follow-up titled "Check in: ...". It groups
 // as Quick, never Deep Work, and it is not a project's next step. The title
 // prefix is stored (schema-v152 trg_tasks_checkin_title_*), so a check-in reads
-// as one on every surface that renders `title`. Not in TASK_KIND_OPTIONS yet:
-// flipping an ordinary task to a check-in would fail on its title, and the
-// check-in UI waits on Nick's mockup pick.
+// as one on every surface that renders `title`. It IS in TASK_KIND_OPTIONS:
+// the picker's change handler sends kindChangeFields(), which prefixes the
+// title in the same write so the trigger accepts the flip.
 
 export const TASK_KINDS = ['task', 'milestone', 'question', 'checkin'] as const;
 export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const DEFAULT_TASK_KIND: TaskKind = 'task';
 
+/** The ONE display label per kind. Every surface that shows a kind goes
+ *  through this (Record<TaskKind, ...> so a new kind fails tsc until it has a
+ *  label and can never render raw). */
+export const TASK_KIND_LABELS: Record<TaskKind, string> = {
+  task: 'Task',
+  milestone: 'Milestone',
+  question: 'Question',
+  checkin: 'Check-in',
+};
+
+export function taskKindLabel(kind: string | null | undefined): string {
+  return isTaskKind(kind) ? TASK_KIND_LABELS[kind] : TASK_KIND_LABELS[DEFAULT_TASK_KIND];
+}
+
 /** Picker options for the Kind select (TaskDetailPanel + the drawers' field
- *  row). 'question' is minted, never picked — see the header. */
-export const TASK_KIND_OPTIONS: ReadonlyArray<{ value: TaskKind; label: string }> = [
-  { value: 'task', label: 'Task' },
-  { value: 'milestone', label: 'Milestone' },
-];
+ *  row). 'question' is minted, never picked — see the header. Check-in is
+ *  pickable: switching to it prefixes the title (kindChangeFields). */
+export const TASK_KIND_OPTIONS: ReadonlyArray<{ value: TaskKind; label: string }> = (
+  ['task', 'milestone', 'checkin'] as const
+).map((value) => ({ value, label: TASK_KIND_LABELS[value] }));
+
+/** Fields to PATCH when the Kind picker changes. A check-in's title must start
+ *  "Check in: " (D1 trigger checkin_title), so switching to it sends the
+ *  prefixed title in the same write; switching away leaves the title alone. */
+export function kindChangeFields(kind: string, title: string | null | undefined): Record<string, unknown> {
+  if (kind === 'checkin' && !(title ?? '').startsWith(CHECKIN_TITLE_PREFIX)) {
+    return { kind, title: `${CHECKIN_TITLE_PREFIX}${title ?? ''}`.trimEnd() }
+  }
+  return { kind };
+}
 
 export function isTaskKind(v: unknown): v is TaskKind {
   return typeof v === 'string' && (TASK_KINDS as readonly string[]).includes(v);

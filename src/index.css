@@ -2664,7 +2664,10 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk .tk-ms.tk-chk .tk-ci-l{font-size:11px;color:var(--sk-t3);white-space:nowrap;flex-shrink:0}
 .tk .tk-ms.tk-chk .tk-lead{background:var(--sk-line)}
 .tk .tk-ms.tk-chk.tk-done .tk-mt2{color:var(--sk-t3)}
-.tk .tk-msw{border-top:1px solid var(--sk-line);border-bottom:1px solid var(--sk-line);margin:2px 0}
+/* Nick 2026-11-03: only the middle lead line, no rule above/below the row.
+   Rows stay separate by spacing; a slipped + hard pair is two rows, each with
+   its own lead (slipped dimmed, hard gold). */
+.tk .tk-msw{margin:4px 0}
 /* drawer */
 .tk .tk-drawer{padding:12px 14px 14px 39px;border-top:1px solid var(--sk-line);cursor:default}
 .tk .tk-dact{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
