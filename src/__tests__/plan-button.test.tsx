@@ -126,4 +126,52 @@ describe('Plan button', () => {
       expect(calls).toEqual([])
     }
   })
+
+  it('a failed first read disables the button and says so; Try again re-reads and a queued row then blocks', async () => {
+    let fail = true
+    const calls = stubLaunchApi(() => [launchRow()])
+    const inner = globalThis.fetch
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (fail && url === '/api/launch-log' && (init?.method ?? 'GET') === 'GET') return new Response('{}', { status: 500 })
+      return inner(url, init)
+    }))
+    const host = await mountButton()
+    await waitFor(() => btn(host)?.dataset.state === 'unreadable', 'unreadable')
+    expect(btn(host)!.disabled).toBe(true)
+    expect(host.querySelector('[data-testid="plan-note"]')?.textContent).toContain("Couldn't check the last plan request.")
+    btn(host)!.click()
+    await new Promise((r) => setTimeout(r, 100))
+    expect(posts(calls)).toHaveLength(0)
+
+    fail = false
+    ;(host.querySelector('[data-testid="plan-retry"]') as HTMLButtonElement).click()
+    await waitFor(() => btn(host)?.dataset.state === 'queued', 'Queued after retry')
+    expect(host.querySelector('[data-testid="plan-retry"]')).toBeNull()
+  })
+
+  it('a failed background refetch keeps the row already read: still Queued, no error note', async () => {
+    let fail = false
+    stubLaunchApi(() => [launchRow()])
+    const inner = globalThis.fetch
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (fail && url === '/api/launch-log' && (init?.method ?? 'GET') === 'GET') return new Response('{}', { status: 500 })
+      return inner(url, init)
+    }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const host = await mount(
+      <AuthContext.Provider value={{ user: viewerUser('pi'), isAuthenticated: true, isLoading: false }}>
+        <QueryClientProvider client={qc}>
+          <UndoToastProvider><div data-ready="1"><PlanButton /></div></UndoToastProvider>
+        </QueryClientProvider>
+      </AuthContext.Provider>,
+      { ready: (h) => h.querySelector('[data-ready]'), label: 'PlanButton' },
+    )
+    await waitFor(() => btn(host)?.dataset.state === 'queued', 'Queued')
+    fail = true
+    await qc.refetchQueries({ queryKey: ['launch-log', 'plan'] })
+    await new Promise((r) => setTimeout(r, 50))
+    expect(btn(host)!.dataset.state).toBe('queued')
+    expect(btn(host)!.disabled).toBe(true)
+    expect(host.querySelector('[data-testid="plan-retry"]')).toBeNull()
+  })
 })

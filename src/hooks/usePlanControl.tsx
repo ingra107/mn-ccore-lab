@@ -56,7 +56,11 @@ export function usePlanControl() {
   if (!active) return { buttonEl: null, noteEl: null }
 
   const state = planButtonState(row, now)
-  const enabled = !q.isPending && state.kind !== 'queued' && !pressing
+  // isLoadingError: the read failed and there is no row in hand, so a queued
+  // launch could be hiding behind it. A failed background refetch with a row
+  // already read keeps that row (isError would drop it).
+  const unreadable = q.isLoadingError
+  const enabled = !q.isPending && !unreadable && state.kind !== 'queued' && !pressing
 
   const press = async () => {
     if (!enabled) return
@@ -71,16 +75,28 @@ export function usePlanControl() {
       type="button"
       className={`tk-btn tk-sm${enabled ? '' : ' tk-off'}`}
       data-testid="plan-button"
-      data-state={state.kind}
+      data-state={unreadable ? 'unreadable' : state.kind}
       disabled={!enabled}
-      title={state.note ?? 'Plan the week with Claude, live'}
+      data-tip={state.note || unreadable ? undefined : 'Plan the week with Claude, live'}
       onClick={(e) => { e.stopPropagation(); void press() }}
       style={{ marginLeft: 'auto' }}
     >
       {pressing ? 'Starting...' : state.label}
     </button>
   )
-  const noteEl = state.note ? (
+  const noteEl = unreadable ? (
+    <p className="tk-plan-err" role="alert" data-testid="plan-note" style={{ margin: '0 2px 6px' }}>
+      Couldn't check the last plan request.{' '}
+      <button
+        type="button"
+        data-testid="plan-retry"
+        onClick={(e) => { e.stopPropagation(); void q.refetch() }}
+        style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline' }}
+      >
+        Try again
+      </button>
+    </p>
+  ) : state.note ? (
     <p
       className={state.kind === 'queued' ? 'tk-plan-why' : 'tk-plan-err'}
       role={state.kind === 'queued' ? undefined : 'alert'}
