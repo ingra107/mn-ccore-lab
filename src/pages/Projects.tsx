@@ -1,8 +1,9 @@
+import { findProjects, projectMatchRank } from '../lib/projectSearch'
 import { useState, useMemo, useCallback } from 'react'
 import { portalTitle } from '../constants/pageLabels'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GitBranch, Plus, List, LayoutGrid, Compass } from 'lucide-react'
+import { GitBranch, Plus, List, LayoutGrid, Compass, Search } from 'lucide-react'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useUrlEnumFilter } from '../hooks/useUrlEnumFilter'
@@ -275,6 +276,7 @@ export default function Projects() {
   // consistent population. A count over `projects` while the list renders
   // `filtered` is the badge-dishonesty class (Rule 73).
   const statusScoped = useMemo(() => statusScope(activeStatus, projects), [projects, activeStatus])
+  const [findQ, setFindQ] = useState('')
 
   const filtered = useMemo(() => {
     let base: typeof statusScoped
@@ -295,6 +297,11 @@ export default function Projects() {
     }
     else base = statusScoped.filter((p) => p.category === activeCategory)
     if (stalledOnly) base = base.filter((p) => isStalledProject(p, prefs.projectStaleDays))
+    // The find box looks past the filters above: a finished or other-group project
+    // is still the one being looked for (#159). Name hits lead, then the usual order.
+    if (findQ.trim()) {
+      return findProjects(findQ, projects, (p) => projectMatchRank(findQ, p, productsByProject[p.id ?? ''] ?? []))
+    }
     return [...base].sort((a, b) => {
       const pinCmp =
         (pinnedSlugs.has(a.slug) ? 0 : 1) - (pinnedSlugs.has(b.slug) ? 0 : 1)
@@ -331,7 +338,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly, stageOf])
+  }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly, stageOf, findQ, projects, productsByProject])
 
   // Reset focus when filter/view changes. Adjusted during render (React's
   // "adjusting state based on a prop change" pattern:
@@ -404,6 +411,16 @@ export default function Projects() {
               status axis never splits across wrapped lines. From md up the
               links wrap as before. The scroller engages only because
               TableControls caps each of its groups at the row's width. */}
+          <label className="pd-find" style={{ marginBottom: 8 }}>
+            <Search {...ICON_PROPS} size={14} aria-hidden="true" />
+            <input
+              type="search"
+              value={findQ}
+              onChange={(e) => setFindQ(e.target.value)}
+              placeholder="Find a project, its products, or what it is about"
+              aria-label="Find a project"
+            />
+          </label>
           <div className="tk-flt tk-flt-scroll">
           {categoryFilters.map((f) => (
             <FilterPill

@@ -15,6 +15,9 @@ import { Search } from 'lucide-react'
 import { PATHS } from '../../constants/paths'
 import { FaceDisc } from '../today/skin'
 import { useProjectDirectory, useRequestToJoin } from '../../hooks/useProjectJoin'
+import { useProjects } from '../../hooks/useApiData'
+import { useAllProjectProducts } from '../../hooks/useProjectProducts'
+import { findProjects, projectMatchRank } from '../../lib/projectSearch'
 import { useUndoToast } from '../UndoToast'
 import { memberInitials } from '../../lib/projectMembersRules'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -23,11 +26,21 @@ import type { DirectoryEntry } from '../../lib/projectJoinApi'
 export default function ProjectDirectory() {
   const { data: entries = [], isLoading, isError } = useProjectDirectory()
   const [q, setQ] = useState('')
+  // Past a name and blurb, a row answers only to what THIS viewer can already
+  // read: useProjects and its products are scoped to their projects, so a project
+  // they are not on still exposes nothing but the directory's columns (#162).
+  const { data: visible } = useProjects()
+  const { data: productData } = useAllProjectProducts()
   const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase()
-    if (!needle) return entries
-    return entries.filter((e) => `${e.name} ${e.blurb ?? ''} ${e.pi_name ?? ''}`.toLowerCase().includes(needle))
-  }, [entries, q])
+    if (!q.trim()) return entries
+    const byId = new Map((visible ?? []).map((p) => [p.id, p]))
+    return findProjects(q, entries, (e) => {
+      const mine = byId.get(e.project_id)
+      const base = { title: e.name, description: e.blurb, pi: e.pi_name }
+      if (!mine) return projectMatchRank(q, base)
+      return projectMatchRank(q, { ...mine, ...base, description: `${e.blurb ?? ''} ${mine.description ?? ''}` }, productData?.byProject?.[mine.id ?? ''] ?? [])
+    })
+  }, [entries, q, visible, productData])
 
   return (
     <div className="tk" data-testid="project-directory">

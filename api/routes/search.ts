@@ -1,3 +1,4 @@
+import { parseSearchPrefix } from '../../shared/searchPrefix';
 import type { Env } from '../helpers';
 import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
 import { json, error } from '../helpers';
@@ -10,6 +11,7 @@ import { NOT_QUESTION_SQL, withKindLabel } from '../../shared/taskKinds';
 const TYPE_PRIORITY: Record<string, number> = {
   task: 10,
   project: 8,
+  product: 8,
   artifact: 7,
   meeting: 6,
   idea: 5,
@@ -39,6 +41,14 @@ function recencyBoost(dateStr: string | null | undefined): number {
   if (days <= 30) return 3;
   if (days <= 90) return 1;
   return 0;
+}
+
+/** A project or product NAMED for the word beats any task that mentions it (#162:
+ *  names "should take precedent"). Task ceiling: 10 + 5 + 5 + 2 = 22; a named
+ *  project floor: 8 + 3 + 12 = 23. */
+const NAMED_PROJECT_BOOST = 12;
+function namedProjectBoost(name: string | null | undefined, query: string): number {
+  return name && name.toLowerCase().includes(query.toLowerCase()) ? NAMED_PROJECT_BOOST : 0;
 }
 
 function titleMatchBonus(title: string | null | undefined, query: string): number {
@@ -108,6 +118,17 @@ function pickMatch(q: string, fields: Array<{ name: string; value: string | null
   return { snippet: null, matchedField: null };
 }
 
+interface ProductHitRow {
+  id: string;
+  name: string | null;
+  kind_label: string;
+  venue: string | null;
+  updated_at: string | null;
+  project_title: string;
+  project_short_name: string | null;
+  project_slug: string;
+}
+
 // --- Handler ---
 
 // GET /api/search?q=
@@ -115,7 +136,8 @@ function pickMatch(q: string, fields: Array<{ name: string; value: string | null
 // the caller may read (api/lib/table-scope.ts): projects by membership, and
 // tasks, comments, notes, files and decisions through their project.
 export async function handleGetSearch(url: URL, env: Env, request: Request): Promise<Response> {
-  const q = url.searchParams.get('q')?.trim();
+  // "p: dashboard" narrows the result types (#160, shared/searchPrefix.ts).
+  const { types: onlyTypes, term: q } = parseSearchPrefix(url.searchParams.get('q') ?? '');
   if (!q || q.length < 2) return json({ data: [], count: 0 });
   // Upper bound: 200-char search strings are already absurdly long; cap to
   // avoid HTTP 500 on pathologically large LIKE patterns (deep-audit 13.M).
@@ -169,7 +191,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
   const SOURCE_NAMES = [
     'tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity',
     'notes', 'taskNotes', 'taskComments', 'decisions', 'files',
-    'publications', 'grants', 'artifacts',
+    'publications', 'grants', 'artifacts', 'products',
   ] as const;
 
   const settled = await Promise.allSettled([
@@ -179,8 +201,8 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     env.DB.prepare(
       `SELECT pr.slug, pr.title, pr.category, pr.pi, pr.description, pr.updated_at, ${homeProductCols('pr')}
          FROM projects pr ${homeProductJoin('pr')}
-        WHERE (instr(lower(pr.title), lower(?)) > 0 OR instr(lower(pr.category), lower(?)) > 0 OR instr(lower(pr.description), lower(?)) > 0) AND pr.deleted_at IS NULL LIMIT ?`
-    ).bind(like, like, like, limit).all(),
+        WHERE (instr(lower(pr.short_name), lower(?)) > 0 OR instr(lower(pr.title), lower(?)) > 0 OR instr(lower(pr.category), lower(?)) > 0 OR instr(lower(pr.description), lower(?)) > 0) AND pr.deleted_at IS NULL LIMIT ?`
+    ).bind(like, like, like, like, limit).all(),
     env.DB.prepare(
       'SELECT id, title, date, type, notes FROM meetings WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(notes), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, limit).all(),
@@ -234,6 +256,18 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     env.DB.prepare(
       'SELECT id, title, body_md, version, created_by, updated_at FROM artifacts WHERE (instr(lower(title), lower(?)) > 0 OR instr(lower(body_md), lower(?)) > 0) LIMIT ?'
     ).bind(like, like, limit).all(),
+    // Products of every other kind (abstracts, manuscripts, talks...): a project
+    // is often known by its product (#160). Grant kinds have the leg above.
+    env.DB.prepare(
+      `SELECT p.id, COALESCE(p.title, p.short_name, k.label) AS name, k.label AS kind_label, p.venue, p.updated_at,
+              pr.title AS project_title, pr.short_name AS project_short_name, pr.slug AS project_slug
+         FROM products p
+         JOIN product_kinds k ON k.kind = p.kind
+         JOIN projects pr ON pr.id = p.project_id AND pr.deleted_at IS NULL
+        WHERE p.deleted_at IS NULL AND p.kind NOT IN ('grant_application', 'award', 'honor')
+          AND (instr(lower(p.title), lower(?)) > 0 OR instr(lower(p.short_name), lower(?)) > 0 OR instr(lower(p.venue), lower(?)) > 0)
+        LIMIT ?`
+    ).bind(like, like, like, limit).all(),
   ]);
 
   // Unpack settled results — failed sources yield empty rows and are logged.
@@ -241,7 +275,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
   const [
     tasks, projects, meetings, ideas, comments, activity,
     notes, taskNotes, taskComments, decisions, files,
-    publications, grants, artifacts,
+    publications, grants, artifacts, products,
   ] = settled.map((outcome, i) => {
     if (outcome.status === 'fulfilled') return outcome.value;
     failedSources.push(SOURCE_NAMES[i]);
@@ -297,7 +331,8 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     const timestamp = p.updated_at;
     const score = TYPE_PRIORITY.project
       + recencyBoost(timestamp)
-      + titleMatchBonus(p.title, q);
+      + titleMatchBonus(p.title, q)
+      + namedProjectBoost(`${p.title ?? ''} ${p.short_name ?? ''}`, q);
     const match = pickMatch(q, [
       { name: 'title', value: p.title },
       { name: 'description', value: p.description },
@@ -613,6 +648,32 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     });
   }
 
+  // Products
+  for (const r of (products.results || []) as unknown as ProductHitRow[]) {
+    const timestamp = r.updated_at ?? undefined;
+    const name = r.name;
+    const score = TYPE_PRIORITY.product
+      + recencyBoost(timestamp)
+      + titleMatchBonus(name, q)
+      + namedProjectBoost(name, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: name },
+      { name: 'venue', value: r.venue },
+    ]);
+    results.push({
+      id: r.id,
+      type: 'product',
+      title: `${r.kind_label}: ${name}`,
+      subtitle: [r.project_short_name || r.project_title, r.project_title !== r.project_short_name ? r.project_title : null].filter(Boolean).join(' · '),
+      url: `/portal/projects/${r.project_slug}`,
+      score,
+      timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: { project_slug: r.project_slug, venue: r.venue },
+    });
+  }
+
   // Sort by score descending, then by recency as tiebreaker
   results.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
@@ -624,7 +685,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
   // Return top 50 — with 14 entity types searched, 20 was too narrow
   // (notes/decisions/files got pushed out by tasks/projects hitting the
   // cap). 50 gives per-type visibility without overwhelming the UI.
-  const top = results.slice(0, 50);
+  const top = (onlyTypes ? results.filter((r) => onlyTypes.includes(r.type as string)) : results).slice(0, 50);
 
   // `failedSources` is additive — the frontend's typed shape only reads
   // `data` and `count`, so this field is safely ignored by existing consumers.

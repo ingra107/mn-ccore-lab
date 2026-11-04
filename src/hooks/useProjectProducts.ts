@@ -28,8 +28,9 @@ const BULK_KEY = ['projects-products'] as const
 /** Every visible project's products, for the list views (Projects stage cell,
  *  Manuscripts stage and drag). One request; the Worker scopes it to the
  *  caller's projects. */
-export function useAllProjectProducts() {
+export function useAllProjectProducts(options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled ?? true,
     queryKey: BULK_KEY,
     queryFn: async (): Promise<ProductsByProject> => {
       const data = (await fetchApi<unknown>('/api/projects/products')) as unknown as Partial<ProductsByProject>

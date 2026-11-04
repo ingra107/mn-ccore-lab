@@ -1,3 +1,6 @@
+import { parseSearchPrefix } from '../../shared/searchPrefix'
+import { projectKeywords, rankPaletteItems } from '../lib/projectSearch'
+import { useAllProjectProducts } from '../hooks/useProjectProducts'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,6 +34,8 @@ interface CommandItem {
   sublabel?: string
   icon: typeof Search
   action: () => void
+  /** What else it answers to (a project's description and products), searched but not shown. */
+  keywords?: string
   category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter' | 'context' | 'recent'
   shortcut?: string
 }
@@ -69,6 +74,7 @@ export default function CommandPalette() {
 
   const { data: tasks = [] } = useRecentTasks(undefined, { enabled: open })
   const { data: projects = [] } = useProjects(undefined, { enabled: open })
+  const { data: productData } = useAllProjectProducts({ enabled: open })
   const { data: team = [] } = useTeam({ enabled: open })
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
   const { user } = useAuth()
@@ -493,6 +499,7 @@ export default function CommandPalette() {
         id: `project-${project.slug}`,
         label: project.title,
         sublabel: [compactStageLabel(project), project.category].filter(Boolean).join(' · '),
+        keywords: `${project.short_name ?? ''} ${projectKeywords(project, productData?.byProject?.[project.id ?? ''] ?? [])}`.toLowerCase(),
         icon: FolderKanban,
         action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project',
@@ -524,7 +531,7 @@ export default function CommandPalette() {
     }
 
     return items
-  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch, currentUserSlug, location.pathname, recentRoutes, showSuccess, showError])
+  }, [tasks, projects, productData, team, meetings, navigate, user?.isPi, launch, currentUserSlug, location.pathname, recentRoutes, showSuccess, showError])
 
   // Project mode: when query starts with `/`
   const isProjectMode = query.startsWith('/')
@@ -596,20 +603,13 @@ export default function CommandPalette() {
       // Show recent + context + actions + filters + navigation when no query
       return allItems.filter((i) => i.category === 'recent' || i.category === 'context' || i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
     }
-    const q = query.toLowerCase()
-    return allItems
-      .filter((i) => {
-        const text = `${i.label} ${i.sublabel || ''}`.toLowerCase()
-        // Fuzzy: every character of query appears in order
-        let idx = 0
-        for (const char of q) {
-          idx = text.indexOf(char, idx)
-          if (idx === -1) return false
-          idx++
-        }
-        return true
-      })
-      .slice(0, 12)
+    // #159: this used to fuzzy-match in list order and cut at 12, so tasks that
+    // merely held the letters pushed every project off the list. Whole-word hits
+    // rank first and projects lead them; fuzzy only fills what is left.
+    const { types, term } = parseSearchPrefix(query)
+    const pool = types ? allItems.filter((i) => (types as readonly string[]).includes(i.category)) : allItems
+    if (!term) return pool.slice(0, 12)
+    return rankPaletteItems(pool, term).slice(0, 12)
   }, [allItems, query, isProjectMode, projectModeItems])
 
   // #88 follow-up (Nick 2026-06-24): reset to the top when the QUERY changes

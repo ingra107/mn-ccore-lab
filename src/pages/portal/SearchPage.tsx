@@ -1,3 +1,4 @@
+import { parseSearchPrefix } from '../../../shared/searchPrefix'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -50,6 +51,7 @@ interface SearchResult {
 const typeConfig: Record<string, { icon: typeof Search; color: string; label: string; plural: string }> = {
   task: { icon: SquareCheck, color: 'var(--sk-t3)', label: 'Task', plural: 'Tasks' },
   project: { icon: FolderKanban, color: 'var(--sk-t3)', label: 'Project', plural: 'Projects' },
+  product: { icon: FolderKanban, color: 'var(--sk-t3)', label: 'Product', plural: 'Products' },
   meeting: { icon: Users, color: 'var(--sk-t3)', label: 'Meeting', plural: 'Meetings' },
   idea: { icon: Lightbulb, color: 'var(--sk-t3)', label: 'Idea', plural: 'Ideas' },
   note: { icon: ScrollText, color: 'var(--sk-t3)', label: 'Note', plural: 'Notes' },
@@ -298,7 +300,8 @@ export default function SearchPage() {
   })
 
   const results = data?.data || []
-  const tokens = useMemo(() => tokenize(debouncedQuery), [debouncedQuery])
+  // Highlight and retry on the words, not a "p:" shortcut (#160).
+  const tokens = useMemo(() => tokenize(parseSearchPrefix(debouncedQuery).term), [debouncedQuery])
 
   // S-15: token-retry. When the full query has 0 results, run a search
   // per token and surface the best non-empty as "Did you mean?".
