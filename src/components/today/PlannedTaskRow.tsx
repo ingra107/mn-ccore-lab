@@ -90,10 +90,6 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           {note && <div className="tk-plan-why">{note}</div>}
         </div>
         <div className="tk-tr-r">
-          {/* Duration — read-only; shows estimated_minutes ?? 30 */}
-          <span className="tk-mt" title={`Estimated duration${task.estimated_minutes ? '' : ' (default)'}`}>
-            <Clock {...ICON_PROPS} size={12} aria-hidden />{fmtDuration(task.estimated_minutes ?? 30)}
-          </span>
           {/* Compact WorkOnActions — revealed by hovering the ROW (.tk-hovv),
               so it can be found by landing on the row, not on something
               invisible (#117). stopPropagation prevents expanding the row. */}
@@ -108,7 +104,13 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
             </span>
           )}
           <LinkRow links={links} />
-          {!isDone && <span className="tk-caret">{expanded ? '▾' : '▸'}</span>}
+          {/* Duration — read-only; shows estimated_minutes ?? 30. It sits right of
+              the links in a fixed box, and the caret keeps its slot on a done row,
+              so every row's duration lands in one column (#157). */}
+          <span className="tk-mt" data-testid="planned-duration" title={`Estimated duration${task.estimated_minutes ? '' : ' (default)'}`} style={{ minWidth: 54, justifyContent: 'flex-end' }}>
+            <Clock {...ICON_PROPS} size={12} aria-hidden />{fmtDuration(task.estimated_minutes ?? 30)}
+          </span>
+          <span className="tk-caret" style={isDone ? { visibility: 'hidden' } : undefined}>{expanded ? '▾' : '▸'}</span>
           <Button size="icon"
             type="button"
             onClick={(e) => { e.stopPropagation(); state.unplan(task.id) }}
