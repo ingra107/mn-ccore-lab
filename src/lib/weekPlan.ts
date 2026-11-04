@@ -31,8 +31,8 @@ export interface AcceptedWeekPlan {
   picks: WeekPlanPick[]
   /** The answer's `at`, for picking the newest plan. */
   at: string
-  /** "Today forward" (Nick 2026-11-01): earlier plans' started or finished
-   *  picks this week, for tasks the newest plan does not pick. */
+  /** "Today forward" (Nick 2026-11-01): earlier plans' started picks this week
+   *  that are still open, for tasks the newest plan does not pick. */
   earlier: EarlierPick[]
 }
 
@@ -46,13 +46,15 @@ export interface AcceptedWeekPlan {
  *
  * After a mid-week Re-plan (2026-11-01) the week has more than one answered
  * plan. Nick's ruling: "This week keeps the earlier plan's started or finished
- * picks, read-only, marked 'earlier plan'". So `earlier` carries every pick of
- * an older answered plan of the SAME week_start that was started (start:true)
- * or whose task is done, when the newest plan does not pick that task; the
- * newest earlier plan wins a task named twice. Computed on read: nothing is
+ * picks, read-only, marked 'earlier plan'", then 2026-11-04 (#167): "earlier
+ * plan stuff that is COMPLETED should drop off". So `earlier` carries every pick
+ * of an older answered plan of the SAME week_start that was started (start:true)
+ * and whose task is still open, when the newest plan does not pick that task;
+ * the newest earlier plan wins a task named twice. Computed on read: nothing is
  * copied into a spec, so the plans cannot drift apart. A saved pick that was
  * never started is not carried: PB offered it again ("from what is still
- * open"), and the newest plan's answer is the decision on it.
+ * open"), and the newest plan's answer is the decision on it. A pick whose task
+ * row is gone (deleted) has nothing left to show either.
  */
 export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPlan | null {
   const plans: Omit<AcceptedWeekPlan, 'earlier'>[] = []
@@ -79,7 +81,7 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
     for (const pick of plan.picks) {
       if (taken.has(pick.task_id)) continue
       const row = byId.get(pick.task_id)
-      if (!pick.start && !(row && isTaskDone(row))) continue
+      if (!pick.start || !row || isTaskDone(row)) continue
       taken.add(pick.task_id)
       earlier.push({ pick, task: plan.task, spec: plan.spec })
     }

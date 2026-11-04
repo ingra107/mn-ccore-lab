@@ -28,7 +28,7 @@ describe('rule rows outside a .tk surface (#165)', () => {
   })
 
   it('a milestone lays out in a row too', async () => {
-    const host = await mount(bare(<MilestoneCardRow task={{ ...task, kind: 'milestone' } as TaskRow} project={null} isDone={false} isExpanded={false} onToggleExpand={noop} />), { ready: (h) => h.querySelector('.tk-ms'), label: 'milestone' })
+    const host = await mount(bare(<MilestoneCardRow task={{ ...task, kind: 'milestone' } as TaskRow} card project={null} isDone={false} onToggleDone={noop} isExpanded={false} onToggleExpand={noop} />), { ready: (h) => h.querySelector('.tk-ms'), label: 'milestone' })
     expect(getComputedStyle(host.querySelector('.tk-ms')!).display).toBe('flex')
   })
 })

@@ -567,14 +567,14 @@ describe('Re-plan', () => {
     expect(host.querySelector('[data-testid="replan"]')).toBeNull()
   })
 
-  it('currentWeekPlan carries earlier started or done picks of the same week, read-only, tagged', async () => {
+  it('currentWeekPlan carries earlier started picks still open, read-only, tagged; done ones drop off (#167)', async () => {
     const SPEC2 = { ...SPEC, candidates: [...SPEC.candidates, { task_id: 'task_d', title: 'Old done', why: '', evidence: [], options: [opt('d1', true), opt('d2')] }] }
     const older = row({
       id: 'p_old', question_spec_json: JSON.stringify(SPEC2),
       question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', picks: [
         { task_id: 'task_a', option_key: 'a1', text: null, start: true }, // started: carried
         { task_id: 'task_c', option_key: 'c1', text: null, start: false }, // saved, not done: re-offered, not carried
-        { task_id: 'task_d', option_key: 'd1', text: null, start: false }, // saved but done: carried
+        { task_id: 'task_d', option_key: 'd1', text: null, start: true }, // started and done: dropped off
         { task_id: 'task_b', option_key: 'b1', text: null, start: true }, // the newer plan picks it: not carried
       ] }),
     })
@@ -586,19 +586,18 @@ describe('Re-plan', () => {
     const all = [older, otherWeek, newer, task('task_a'), task('task_b'), task('task_c'), task('task_d', { status: 'done', completed: 1 })]
     const plan = currentWeekPlan(all, '2026-10-28')!
     expect(plan.task.id).toBe('p_new')
-    expect(plan.earlier.map((e) => [e.pick.task_id, e.task.id])).toEqual([['task_a', 'p_old'], ['task_d', 'p_old']])
+    expect(plan.earlier.map((e) => [e.pick.task_id, e.task.id])).toEqual([['task_a', 'p_old']]) // task_d is done, so it dropped off (#167)
 
     stubFetch({ used: 0, cap: 3 })
     const host = await mount(<ThisWeekSection plan={plan} allTasks={all} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
     const rows = [...host.querySelectorAll('[data-testid="this-week-earlier"]')]
-    expect(rows).toHaveLength(2)
+    expect(rows).toHaveLength(1)
     expect(rows.every((r) => r.querySelector('[data-testid="earlier-tag"]')?.textContent === 'earlier plan')).toBe(true)
     expect(rows.every((r) => r.querySelector('[data-testid="pick-start"]') === null)).toBe(true)
     expect(rows[0].textContent).toContain('Direction a1') // its own plan's direction
-    expect(rows[1].textContent).toContain('Done')
     // The newer plan's saved pick still has Start, against the NEWER plan.
     expect(host.querySelectorAll('[data-testid="pick-start"]')).toHaveLength(1)
-    expect(host.querySelector('.tk-cnt')?.textContent).toBe('3')
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('2')
   })
 
   it('newestWaitingWeekPlan: only the newest offer counts, and only while it waits', () => {
