@@ -4,7 +4,7 @@
 // Peripheral-Brain/Context/Decisions/2026-10-30-first-step-packet.md.
 //
 //   GET  /api/tasks/:id/packet       -> { packet, version, freshness } | { packet: null }
-//   POST /api/packets/:id/use        {version, manifest_hash} -> 200 {url} | 409 {reasons}
+//   POST /api/packets/:id/use        {version, manifest_hash, accept_changed?} -> 200 {url} | 409 {reasons}
 //   POST /api/packets/:id/dismiss
 //
 // The types below mirror that decision doc. Nothing here sends mail: Use opens
@@ -86,7 +86,13 @@ export function PacketBlock({ taskId }: { taskId: string }) {
         const res = await fetch(`/api/packets/${packet.id}/use`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ version: version.version, manifest_hash: version.manifest_hash }),
+          // Changed is on screen with its button reading "... anyway": pressing
+          // it is the decision. A packet stays changed after any refresh, so
+          // without this it could only be dismissed (#164).
+          body: JSON.stringify({
+            version: version.version, manifest_hash: version.manifest_hash,
+            ...(data?.freshness?.state === 'changed' ? { accept_changed: true } : {}),
+          }),
         })
         if (res.status === 409) {
           const j = (await res.json().catch(() => ({}))) as { code?: string; reasons?: unknown[]; url?: string | null; close_reason?: string }
@@ -151,9 +157,10 @@ export function PacketBlock({ taskId }: { taskId: string }) {
         {state === 'unverified' && <span className="tk-tag tk-n first">Unverified</span>}
         <span className="tk-pk-fl">
           {state === 'ready' && 'Prepared from what the task and thread say now.'}
-          {state === 'changed' && 'Something changed since this was prepared.'}
+          {state === 'changed' && 'Something changed since this was prepared, so it may be out of date.'}
           {state === 'unverified' && 'Not checked against the latest.'}
-          {reasons.length > 0 && ` ${reasons.map(asText).join('; ')}`}
+          {reasons.length > 0 && ` ${reasons.map(asText).join('; ')}.`}
+          {state === 'changed' && ` Read it again: if it still holds, press ${copy.button} anyway. If not, Dismiss it.`}
         </span>
       </div>
 
@@ -191,7 +198,7 @@ export function PacketBlock({ taskId }: { taskId: string }) {
 
       {blocked && (
         <div className="tk-pk-why" role="alert" data-testid="packet-refused">
-          <b>This changed before you opened it.</b>
+          <b>This changed since the page loaded it. Nothing was done.</b>
           {refused!.length > 0 && <ul>{refused!.map((r, i) => <li key={i}>{r}</li>)}</ul>}
         </div>
       )}
@@ -211,9 +218,9 @@ export function PacketBlock({ taskId }: { taskId: string }) {
             type="button" className="tk-ask-go"
             onClick={() => { setRefused(null); use.reset(); refreshAll() }}
             disabled={query.isFetching}
-          >Refresh, then use</button>
+          >Refresh to read it again</button>
         ) : (
-          <button type="button" className="tk-ask-go" onClick={() => use.mutate()} disabled={use.isPending}>{copy.button}</button>
+          <button type="button" className="tk-ask-go" onClick={() => use.mutate()} disabled={use.isPending}>{state === 'changed' ? `${copy.button} anyway` : copy.button}</button>
         )}
         {/* Prep & start on a prepared task (2026-11-02): the same interactive session,
             starting from this step. Hidden for members and without the launcher. */}

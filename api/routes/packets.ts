@@ -10,6 +10,10 @@
 //   GET  /api/tasks/:id/packet    the live packet + freshness, or {packet: null}
 //   POST /api/packets/:id/use     compare-and-set on (version, manifest_hash); stale or
 //                                 changed -> 409 with reasons; one Use per packet.
+//                                 accept_changed:true is Nick having read the Changed
+//                                 state and using it anyway (#164); without it a changed
+//                                 packet could never be used, since a refresh leaves it
+//                                 changed. A new version still refuses.
 //                                 Returns the deliverable url. Completes nothing.
 //   POST /api/packets/:id/dismiss closes the packet. The Gmail draft stays.
 //
@@ -348,12 +352,12 @@ export async function handleUsePacket(packetId: string, request: Request, db: D1
   const nowMs = Date.parse(nowInstant())
   const freshness = await packetFreshness(db, p.task_id, toVersion(v).inputs, nowMs)
   const moved = version !== p.current_version || hash !== v.manifest_hash
-  if (moved || freshness.state === 'changed') {
+  if (moved || (freshness.state === 'changed' && body?.accept_changed !== true)) {
     const reasons = moved
       ? [{ kind: 'task' as const, ref: p.task_id, code: 'version_moved' as const, text: 'This step was re-prepared since you loaded it' }, ...freshness.reasons]
       : freshness.reasons
     return reply({
-      error: 'Something changed since this was prepared. Refresh, then use.', code: 'stale',
+      error: 'Something changed since this was prepared. Refresh and read it again.', code: 'stale',
       reasons, current_version: p.current_version, manifest_hash: v.manifest_hash,
     }, 409)
   }

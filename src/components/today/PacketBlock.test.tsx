@@ -119,14 +119,30 @@ describe('PacketBlock', () => {
     await expect.poll(() => open.mock.calls.some((c) => c[0] === 'https://mail.google.com/draft/1')).toBe(true)
   })
 
-  it('409 shows the reasons and the button reads "Refresh, then use"', async () => {
+  it('409 shows the reasons and the button offers a refresh, not a use it cannot do', async () => {
     vi.spyOn(window, 'open').mockReturnValue(null)
     const { host } = await mountPacket(payload('ready'), () => json({ reasons: ['A reply landed'] }, 409))
     await waitFor(() => host.querySelector('.tk-pk-acts'), 'actions')
     ;(host.querySelector('.tk-pk-acts .tk-ask-go') as HTMLButtonElement).click()
     await waitFor(() => host.querySelector('[data-testid="packet-refused"]'), 'refusal')
     expect(host.querySelector('[data-testid="packet-refused"]')!.textContent).toContain('A reply landed')
-    expect(host.querySelector('.tk-pk-acts .tk-ask-go')!.textContent).toBe('Refresh, then use')
+    expect(host.querySelector('.tk-pk-acts .tk-ask-go')!.textContent).toBe('Refresh to read it again')
+  })
+
+  it('a changed packet says what to do and its button sends the decision (#164)', async () => {
+    vi.spyOn(window, 'open').mockReturnValue(null)
+    const p = payload('changed', ['The task changed after this was prepared'])
+    const answer = { ...p, version: { ...p.version!, deliverable: { kind: 'answer' as const } } }
+    const { host, calls } = await mountPacket(answer)
+    const go = await waitFor(() => host.querySelector<HTMLButtonElement>('.tk-pk-acts .tk-ask-go'), 'button')
+    expect(go.textContent).toBe('Got it anyway')
+    expect(host.querySelector('[data-testid="packet-freshness"]')!.textContent).toContain('if it still holds, press Got it anyway')
+    go.click()
+    await expect.poll(() => calls).toEqual(['/api/packets/pk1/use'])
+    const posted = vi.mocked(window.fetch).mock.calls.find(([, i]) => i?.method === 'POST')!
+    expect(JSON.parse(String(posted[1]!.body))).toEqual({ version: 2, manifest_hash: 'abc', accept_changed: true })
+    await waitFor(() => host.textContent!.includes('Marked as used.'), 'used note')
+    expect(host.querySelector('[data-testid="packet-refused"]')).toBeNull()
   })
 
   it('Dismiss posts and says the draft stays in Gmail', async () => {

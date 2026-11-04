@@ -314,6 +314,19 @@ describe('POST /api/packets/:id/use and /dismiss', () => {
     expect(one('SELECT COUNT(*) AS n FROM task_packet_actions')?.n).toBe(0)
   })
 
+  it('accept_changed uses a changed packet; it never overrides a moved version (#164)', async () => {
+    const p = await publish()
+    const v = p.body.version as { version: number; manifest_hash: string }
+    // Same setup as the stale test above: a reply landed after prepare.
+    insertRow(db, 'mail_messages', { message_id: 'm1', thread_id: T1, internal_at: '2026-10-28T16:03:00.000Z', party: 'other', from_display: 'Jane', first_run_id: 'wr_x', baseline: 0 })
+    const id = (p.body.packet as { id: string }).id
+    const wrong = await call('POST', `/api/packets/${id}/use`, { as: NICK }, { version: v.version, manifest_hash: 'not-the-hash', accept_changed: true })
+    expect(wrong.status).toBe(409)
+    const r = await call('POST', `/api/packets/${id}/use`, { as: NICK }, { version: v.version, manifest_hash: v.manifest_hash, accept_changed: true })
+    expect(r.status).toBe(200)
+    expect(r.body.ok).toBe(true)
+  })
+
   it('a Use naming the wrong manifest hash is a 409 stale', async () => {
     const p = await publish()
     const r = await call('POST', `/api/packets/${(p.body.packet as { id: string }).id}/use`, { as: NICK }, { version: 1, manifest_hash: 'c'.repeat(64) })
