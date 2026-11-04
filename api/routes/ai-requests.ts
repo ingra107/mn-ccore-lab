@@ -3,7 +3,7 @@ import { json, error, generateId, projectRefToCanonical, resolveSlug, isPiReques
 import { prepareActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
-import { LANE_SOURCE_TYPES, isLaneSourceType } from '../../shared/weekPlan';
+import { LANE_SOURCE_TYPES, RETIRED_LANE_SOURCE_TYPES, isLaneSourceType, isRetiredLaneSourceType } from '../../shared/weekPlan';
 import { packetOwnerEmailSql } from '../lib/packet-owner';
 
 // GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
@@ -174,8 +174,7 @@ export function aiRequestInsert(
  * Where a request's answer lands, as the listener reads it (#119): the
  * triggering activity entry's visibility, or NULL. A lane request (a week
  * plan's started pick answers into task_packets, which only Nick and the PB
- * key can read, table-scope.ts nickOnly; a Re-plan press answers with a new
- * week_plan question for Nick) lands private by construction: 'author', when
+ * key can read, table-scope.ts nickOnly) lands private by construction: 'author', when
  * Nick made it. Without this its source_id is no entry, the subquery reads
  * NULL, and the listener would give Nick's own press the member tier. PB's
  * answer_lands_private lists every lane (hub_ai_listener LANE_SOURCES).
@@ -204,10 +203,9 @@ export async function handleCreateAIRequest(
   }
   // A lane request is made only by its own route: a week plan's Start makes
   // packet_prepare (api/lib/week-plan-start.ts, in the answer's own batch,
-  // under the cap), the Re-plan button makes week_replan (api/lib/
-  // week-plan-replan.ts, one pending at a time). One posted here would skip
-  // the cap, the pending guard and the owner check.
-  if (isLaneSourceType(body.source_type)) {
+  // under the cap). One posted here would skip the cap and the owner check. A
+  // retired lane has no route left and is refused the same way.
+  if (isLaneSourceType(body.source_type) || isRetiredLaneSourceType(body.source_type)) {
     return error(`${body.source_type} requests are made by their own route, not posted`, 400);
   }
 
@@ -308,13 +306,12 @@ interface AIRequestRow {
 
 /**
  * Claim capability (2026-10-31; one lane table 2026-11-01). A lane request
- * (shared/weekPlan.ts LANE_SOURCE_TYPES: a week plan's Start, a Re-plan
- * press) must reach only a listener that has that lane's branch: an older
+ * (shared/weekPlan.ts LANE_SOURCE_TYPES: a week plan's Start) must reach only a listener that has that lane's branch: an older
  * listener would answer it as a public Hermes reply. So the pending list, the
  * queue and /claim hand a lane row only to a caller that names its source in
  * `accepts`, as a query parameter (all three) or as a body field on the POSTs
  * (a string, comma list, or array). Per lane: a listener that names only
- * packet_prepare never sees a week_replan row. A refused claim is 409
+ * one lane never sees another's row. A refused claim is 409
  * {code:'capability_required'}.
  */
 export function acceptedLanes(request: Request, body?: unknown): Set<string> {
@@ -332,10 +329,11 @@ function laneListSql(lanes: readonly string[]): string {
   return lanes.map((t) => `'${t}'`).join(', ');
 }
 
-/** SQL (with a leading AND, or empty): hide every lane row the caller did not name. */
+/** SQL (with a leading AND): hide every lane row the caller did not name, and
+ *  every retired lane's row from everyone. */
 function laneFilterSql(accepted: Set<string>): string {
-  const hidden = LANE_SOURCE_TYPES.filter((t) => !accepted.has(t));
-  return hidden.length ? ` AND source_type NOT IN (${laneListSql(hidden)})` : '';
+  const hidden = [...RETIRED_LANE_SOURCE_TYPES, ...LANE_SOURCE_TYPES.filter((t) => !accepted.has(t))];
+  return ` AND source_type NOT IN (${laneListSql(hidden)})`;
 }
 
 async function readRequest(env: Env, id: string): Promise<AIRequestRow | null> {
@@ -570,10 +568,9 @@ export async function handleUpdateAIResponse(
     ).bind(responseText, status, inTok, outTok, commitId, id, token, token, token),
   ];
   // A lane answer is a status line for the PB runner; its work lands
-  // elsewhere (a packet on the task, the Ready tag; a new week_plan question in
-  // Needs you), so it posts no comment and sends no "Hermes replied"
-  // notification.
-  if (status === 'completed' && !isLaneSourceType(current.source_type)) {
+  // elsewhere (a packet on the task, the Ready tag), so it posts no comment and
+  // sends no "Hermes replied" notification.
+  if (status === 'completed' && !isLaneSourceType(current.source_type) && !isRetiredLaneSourceType(current.source_type)) {
     stmts.push(...await _hermesPublication(env, current, responseText, guard));
     stmts.push(...await _submitterNotification(env, current, responseText, guard));
   }

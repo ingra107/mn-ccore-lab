@@ -47,7 +47,6 @@ import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
-import { useShowPlanRowRequests } from '../../lib/showPlanRow'
 import { ThisWeekSection } from '../../components/today/ThisWeekSection'
 import { currentWeekPlan } from '../../lib/weekPlan'
 import { TaskGroup } from '../../components/today/TaskGroup'
@@ -161,7 +160,6 @@ export default function TodayPage() {
   )
   // The whole card can be folded into the stat line ("N needs you").
   const { folded: needsYouFolded, count: needsYouCount, collapse: collapseNeedsYou, restore: restoreNeedsYou } = useNeedsYouCollapsed(questionTasks)
-  useShowPlanRowRequests(needsYouFolded, restoreNeedsYou)
   // Snoozed questions (due_date after today) are off the card; the card
   // says how many and when the next one is back.
   const snoozedQuestions: TaskRow[] = useMemo(
@@ -648,7 +646,9 @@ export default function TodayPage() {
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
-        {!needsYouFolded && (
+        {!needsYouFolded && tasksQuery.data && (
+          // Tasks not read yet is not "no plan": the card waits for them, or the
+          // Plan your week nudge would flash on every load.
           // Pick P1, the Decision desk, is the questions section INSIDE this card
           // (Nick 2026-10-30: one gold card on Today).
           <QuestionsCard

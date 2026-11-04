@@ -356,7 +356,7 @@ export function questionAnswerFrozenError(
   // A week plan's answer is the work it started (v1 contract, 2026-10-30): the
   // same write created one ai_request per started pick, so a second answer
   // (or an Undo then a re-answer) would start them again. One answer per
-  // offer; Re-plan mints a new offer. Same refusal as a decided join request.
+  // offer; a new session mints a new one. Same refusal as a decided join request.
   //
   // One follow-up shape is allowed (2026-10-31): a start flip, the stored
   // answer with saved picks flipped start false -> true and nothing else
@@ -372,11 +372,11 @@ export function questionAnswerFrozenError(
     if (next === storedPlan) return null;
     const spec = parseWeekPlanSpec(current.question_spec_json);
     if (next !== null && next !== undefined && spec && weekPlanExpired(spec, nowInstant())) {
-      return `question_expired: this week plan expired at ${spec.expires_at}; press Re-plan or wait for Sunday's`;
+      return `question_expired: this week plan expired at ${spec.expires_at}; press Plan to plan again`;
     }
     if (storedPlan === null || storedPlan === undefined) return null;
     if (spec && next !== null && next !== undefined && weekPlanFlipError(storedPlan, next, spec) === null) return null;
-    return 'question_answer_frozen: this week plan was already answered; only starting saved picks may follow (Re-plan asks again)';
+    return 'question_answer_frozen: this week plan was already answered; only starting saved picks may follow (Plan asks again)';
   }
   if (current.source !== 'project_join') return null;
   const stored = current.question_answer_json;

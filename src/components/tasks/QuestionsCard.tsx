@@ -28,11 +28,12 @@
 // return day and a "Bring back now" that writes due_date = today. The 1-day
 // snooze reads "For today", which is what it does.
 //
-// Week plan (source 'week_plan', PB decision 2026-10-30-planning-conversation.md):
-// a waiting one is ONE row, "Plan your week", above the other questions, so
-// Today still has one gold card. Tapping it opens the planning conversation in
-// a side panel (PlanPanel). It has no snooze and no Answered line: answered,
-// it leaves this card and shows as This week on Today.
+// Plan your week (2026-11-04, design docs/superpowers/specs/2026-11-04-plan-
+// session-design.md): ONE row above the questions, so Today still has one gold
+// card, for the PI, while the week in hand has no plan (lib/weekPlan.ts
+// planNudgeWeek). It is no task row: nothing to answer or snooze, and it adds to
+// no count. Its Plan button starts a live session (hooks/usePlanControl.tsx).
+// week_plan question rows never show here: answered, they are This week on Today.
 //
 // Renders null when tasks is empty (no card appears when nothing is waiting).
 //
@@ -47,11 +48,12 @@ import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { Button } from '../ui/Button'
 import { nowInstant, parseDbUtc } from '../../lib/time'
-import { civilDatePlusDays, newestWaitingWeekPlan, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
+import { civilDatePlusDays, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
-import { isWeekPlan } from '../../lib/weekPlan'
-import { useWeekPlanNow } from '../../hooks/useWeekPlanNow'
-import { PlanPanel } from '../today/PlanPanel'
+import { isWeekPlan, weekRangeLabel } from '../../lib/weekPlan'
+import { usePlanNudgeWeek } from '../../hooks/usePlanNudgeWeek'
+import { useAuth } from '../../hooks/useAuth'
+import { PlanButton } from '../today/PlanButton'
 import { answeredLine } from '../../lib/answerEta'
 
 interface QuestionsCardProps {
@@ -78,12 +80,12 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   // Nick's Telegram card alone, so it is not shown here a second time.
   const tasks = all.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
   const snoozed = allSnoozed.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
-  // The week plan he is asked to answer: the newest offer, only while it
-  // waits (newestWaitingWeekPlan, the one rule the count shares).
-  // useWeekPlanNow re-renders at the offer's expires_at, so the row drops then.
-  const planNow = useWeekPlanNow(all)
-  const plan = newestWaitingWeekPlan(all, planNow)
-  const [planOpen, setPlanOpen] = useState(false)
+  // The week that needs a plan. Only the PI can start the session, and a row
+  // with no button would ask for what the viewer cannot do (the same gate as
+  // hooks/usePlanControl.tsx; unresolved shows nothing).
+  const { isPi, piResolved } = useAuth().user
+  const nudgeWeek = usePlanNudgeWeek(all)
+  const planWeek = isPi && piResolved ? nudgeWeek : null
   // Three states, each read off the row (questionCardState). Waiting rows are
   // his turn; answered rows stay visible until the PB lane acts, so an answer
   // nothing picked up cannot drop off every surface, but as one muted line that
@@ -100,12 +102,12 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   const [held, setHeld] = useState<string[]>([])
   const shownAnswered = renderWaiting ? answered.filter((t) => !held.includes(t.id)) : answered
   const [showAnswered, setShowAnswered] = useState(false)
-  // Gold = his turn: a waiting question, the week plan, or the desk's folded
+  // Gold = his turn: a waiting question, a week to plan, or the desk's folded
   // outcomes this visit. Answered rows are Claude's turn (2026-11-02, Nick: "i
   // technically answered these things... so what happens now. it still says
   // these things need me"), so alone they get the quiet line below, never the
   // gold card; acted-on rows alone get nothing.
-  const gold = !!plan || waiting.length > 0 || held.length > 0
+  const gold = planWeek !== null || waiting.length > 0 || held.length > 0
   if (!gold && shownAnswered.length === 0) return null
 
   // One muted line for every answered row, opening to the list (the rows keep
@@ -143,8 +145,10 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
         <div className="tk-attn-h">
           <span className="tk-attn-dot" aria-hidden="true" />
           Needs you
-          {waiting.length + (plan ? 1 : 0) > 0 && <span className="tk-cnt">{waiting.length + (plan ? 1 : 0)}</span>}
-          {onCollapse && (
+          {waiting.length > 0 && <span className="tk-cnt">{waiting.length}</span>}
+          {/* Folding needs a count to fold into (useNeedsYouCollapsed), so with no
+              waiting question this control would do nothing. */}
+          {onCollapse && waiting.length > 0 && (
             <Button
               size="icon"
               type="button"
@@ -158,18 +162,15 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
             </Button>
           )}
         </div>
-        {plan && (
+        {planWeek !== null && (
           <div className="tk-qrow" data-testid="q-week-plan">
-            <button
-              type="button"
-              className="tk-plan-row"
-              onClick={(e) => { e.stopPropagation(); setPlanOpen(true) }}
-              aria-haspopup="dialog"
-            >
-              <span style={{ fontWeight: 600, color: 'var(--sk-t1)' }}>Plan your week</span>
-              <span style={{ fontSize: 12, color: 'var(--sk-t3)' }}>{planSubtitle(plan)}</span>
-            </button>
-            {planOpen && <PlanPanel task={plan} onClose={() => setPlanOpen(false)} />}
+            <div className="tk-plan-row">
+              <span className="tk-plan-row-text">
+                <span style={{ fontWeight: 600, color: 'var(--sk-t1)' }}>Plan your week</span>
+                <span style={{ fontSize: 12, color: 'var(--sk-t3)' }}>{weekRangeLabel(planWeek)}</span>
+              </span>
+              <PlanButton />
+            </div>
           </div>
         )}
         {renderWaiting
@@ -237,16 +238,6 @@ function AnsweredSummary({ rows, open, onToggle }: { rows: TaskRow[]; open: bool
       )}
     </div>
   )
-}
-
-/** "4 to choose from" off the offer's spec; the title when it does not parse. */
-function planSubtitle(task: TaskRow): string {
-  try {
-    const n = (JSON.parse(task.question_spec_json ?? '{}') as { candidates?: unknown[] }).candidates?.length ?? 0
-    return n > 0 ? `${n} to choose from · pick what to start on` : 'Pick what to start on'
-  } catch {
-    return 'Pick what to start on'
-  }
 }
 
 /** The earliest date a snoozed row comes back. */

@@ -90,8 +90,8 @@ export function usePlanControl() {
       <button
         type="button"
         data-testid="plan-retry"
+        className="tk-plan-retry"
         onClick={(e) => { e.stopPropagation(); void q.refetch() }}
-        style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline' }}
       >
         Try again
       </button>

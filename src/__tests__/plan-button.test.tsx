@@ -9,6 +9,7 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../components/UndoToast'
+import '../index.css'
 import { PlanButton } from '../components/today/PlanButton'
 import { AuthContext, type AuthUser } from '../hooks/useAuth'
 import { PLAN_SEED, type LaunchRow } from '../lib/planLaunch'
@@ -63,7 +64,7 @@ async function mountButton(viewer: Viewer = 'pi'): Promise<HTMLElement> {
   return mount(
     <AuthContext.Provider value={{ user: viewerUser(viewer), isAuthenticated: true, isLoading: false }}>
       <QueryClientProvider client={qc}>
-        <UndoToastProvider><div data-ready="1"><PlanButton /></div></UndoToastProvider>
+        <UndoToastProvider><div className="tk" data-ready="1"><PlanButton /></div></UndoToastProvider>
       </QueryClientProvider>
     </AuthContext.Provider>,
     { ready: (h) => h.querySelector('[data-ready]'), label: 'PlanButton' },
@@ -143,8 +144,19 @@ describe('Plan button', () => {
     await new Promise((r) => setTimeout(r, 100))
     expect(posts(calls)).toHaveLength(0)
 
+    // A keyboard user can see where they are: no `all: unset` wiping the outline
+    // (WCAG 2.4.7). Read off the real stylesheet, on a real focus.
+    const retry = host.querySelector('[data-testid="plan-retry"]') as HTMLButtonElement
+    expect(retry.getAttribute('style')).toBeNull()
+    expect(retry.closest('.tk')).not.toBeNull()
+    retry.focus()
+    expect(document.activeElement).toBe(retry)
+    expect(retry.matches(':focus-visible')).toBe(true)
+    expect(getComputedStyle(retry).outlineStyle).toBe('solid')
+    expect(parseFloat(getComputedStyle(retry).outlineWidth)).toBeGreaterThanOrEqual(2)
+
     fail = false
-    ;(host.querySelector('[data-testid="plan-retry"]') as HTMLButtonElement).click()
+    retry.click()
     await waitFor(() => btn(host)?.dataset.state === 'queued', 'Queued after retry')
     expect(host.querySelector('[data-testid="plan-retry"]')).toBeNull()
   })

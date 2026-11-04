@@ -109,10 +109,9 @@ export async function handleDailyPacketCount(url: URL, db: D1Database, owner: bo
 type Guard = { sql: string; vals: unknown[] };
 
 /**
- * The newest-offer rule at the arbiter (Re-plan, 2026-11-01). Two week_plan
- * offers can be waiting at once for a moment (two PB runs overlapping: a
- * Re-plan press, the Sunday job, either laptop; PB's supersede then deletes
- * the older). Only the NEWEST non-deleted offer OF ITS WEEK by (created_at, id),
+ * The newest-offer rule at the arbiter (2026-11-01). Two week_plan offers can
+ * be waiting at once for a moment (two sessions overlapping, on either laptop;
+ * PB's supersede then deletes the older). Only the NEWEST non-deleted offer OF ITS WEEK by (created_at, id),
  * shared/weekPlan.ts weekPlanOfferNewer, may take a FIRST answer; an answer to
  * any other is refused, so an older offer answered in that window cannot
  * become a second plan for the week. A start flip on an already answered plan

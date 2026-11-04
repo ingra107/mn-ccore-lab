@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { useUserPref } from './useUserPref'
-import { useWeekPlanNow } from './useWeekPlanNow'
 import { cardQuestionCount } from '../lib/taskGrouping'
 import type { TaskRow } from '../lib/api'
 
@@ -13,6 +12,8 @@ import type { TaskRow } from '../lib/api'
 // `folded` is what the page acts on: the flag AND at least one row the card
 // would show. With nothing waiting the flag has nothing to hide, so neither the
 // card nor the stat appears (the flag itself is kept for the next question).
+// The Plan your week nudge is not counted (cardQuestionCount), so it alone cannot
+// fold: the card stays, and it offers no fold control (QuestionsCard).
 
 function validate(stored: unknown): boolean {
   return stored === true
@@ -27,9 +28,7 @@ export function useNeedsYouCollapsed(questionTasks: TaskRow[]): {
   restore: () => void
 } {
   const [collapsed, setCollapsed] = useUserPref<boolean>('today.needsYouCollapsed', false, validate)
-  // The week plan's offer stops counting at its expires_at with no data change.
-  const now = useWeekPlanNow(questionTasks)
-  const count = useMemo(() => cardQuestionCount(questionTasks, now), [questionTasks, now])
+  const count = useMemo(() => cardQuestionCount(questionTasks), [questionTasks])
   const collapse = useCallback(() => setCollapsed(true), [setCollapsed])
   const restore = useCallback(() => setCollapsed(false), [setCollapsed])
   return { folded: collapsed && count > 0, count, collapse, restore }

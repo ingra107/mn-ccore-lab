@@ -1,7 +1,6 @@
 // shared/weekPlan.ts -- the planning conversation's v1 contract, the ONE
 // vocabulary for the API (api/lib/task-question.ts validates it,
-// api/lib/week-plan-start.ts acts on it) and the UI (PlanConversation, the
-// This week section).
+// api/lib/week-plan-start.ts acts on it) and the UI (the This week section).
 //
 // Nick, 2026-10-29: "you're asking me questions about what things do you want
 // to take the next step on and then I would click which ones and then you
@@ -23,8 +22,6 @@ import { DELIVERABLE_KINDS, type DeliverableKind } from './packets'
 export const WEEK_PLAN_SOURCE = 'week_plan'
 /** ai_requests.source_type of a started pick. */
 export const PACKET_PREPARE_SOURCE_TYPE = 'packet_prepare'
-/** ai_requests.source_type of a Re-plan press (api/lib/week-plan-replan.ts). */
-export const WEEK_REPLAN_SOURCE_TYPE = 'week_replan'
 /**
  * The LANE sources: ai_requests rows that are not questions. Each is made only
  * by its own Hub route, answered by a PB runner with a status line (no
@@ -34,10 +31,22 @@ export const WEEK_REPLAN_SOURCE_TYPE = 'week_replan'
  * ai-requests.ts reads it at every lane seam. PB's twin is
  * scripts/scheduled/hub_ai_listener.py LANE_SOURCES (parity-tested from PB).
  */
-export const LANE_SOURCE_TYPES = [PACKET_PREPARE_SOURCE_TYPE, WEEK_REPLAN_SOURCE_TYPE] as const
+export const LANE_SOURCE_TYPES = [PACKET_PREPARE_SOURCE_TYPE] as const
 export type LaneSourceType = (typeof LANE_SOURCE_TYPES)[number]
 export function isLaneSourceType(v: unknown): v is LaneSourceType {
   return (LANE_SOURCE_TYPES as readonly unknown[]).includes(v)
+}
+/**
+ * Lanes that no longer exist: `week_replan`, the Re-plan button, retired
+ * 2026-11-04. No route makes one and no listener runs one, but its rows stay in
+ * ai_requests. Without this a row still pending at cutover would stop being a
+ * lane row, reach every listener's queue and be answered as a Hermes question,
+ * and a raw POST of the type would be accepted. So it stays hidden from every
+ * caller, named or not, and stays refused.
+ */
+export const RETIRED_LANE_SOURCE_TYPES = ['week_replan'] as const
+export function isRetiredLaneSourceType(v: unknown): boolean {
+  return (RETIRED_LANE_SOURCE_TYPES as readonly unknown[]).includes(v)
 }
 /** Packets a day may start, across the 05:15 job and Start, counted on the Hub. */
 export const PACKET_DAILY_CAP = 10
@@ -97,43 +106,14 @@ export interface PacketPreparePayload {
   expected_packet: { id: string; version: number } | null
 }
 
-/** The payload of one week_replan ai_request (JSON in ai_requests.context):
- *  the Chicago date of the press. PB picks the week with its one rule
- *  (week_plan.week_start_for): a Sunday press plans next week, any other day
- *  this one. */
-export interface WeekReplanPayload {
-  v: 1
-  pressed_on: string
-}
-
-/** A press no PB listener has ever claimed after this long is treated as
- *  not picked up (an old listener that does not name week_replan, or no
- *  listener running): the button offers Try again, and the next press fails
- *  the stale row and makes a new one, so an unclaimed row cannot block
- *  Re-plan forever (api/lib/week-plan-replan.ts). */
-export const REPLAN_UNCLAIMED_S = 10 * 60
-
-/** GET /api/week-plan/replan: the latest re-plan request, as the button
- *  reads it. Never the claim token. */
-export interface ReplanState {
-  id: string
-  status: 'pending' | 'completed' | 'failed'
-  /** A runner holds a live lease on it: PB is preparing the offer. */
-  claimed: boolean
-  response: string | null
-  /** Seconds since the press, on D1's clock. */
-  age_s: number
-}
-
 /**
  * The newest-offer rule, the one every reader of week_plan offers shares:
  * offers OF ONE WEEK (weekPlanSpecWeek) are ordered by (created_at, id), and
  * only the NEWEST non-deleted offer of that week counts. PB's supersede
  * (scripts/planning/week_plan.py offer_order, offer_week) keeps that one and
  * deletes the week's other waiting ones; the Worker refuses a first answer to
- * any other of the week (week_plan_superseded); Needs you shows it only while
- * it waits and has not expired (src/lib/taskGrouping.ts newestWaitingWeekPlan,
- * weekPlanExpired). Per week since the 2026-11-01 refuter: a late run for one
+ * any other of the week (week_plan_superseded), and one past its expires_at
+ * (weekPlanExpired). Per week since the 2026-11-01 refuter: a late run for one
  * week must never retire or block a LATER week's offer. A run does delete the
  * waiting offers of EARLIER weeks, which can no longer take an answer.
  */

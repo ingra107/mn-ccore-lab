@@ -6,10 +6,10 @@
 // live here. Surface-specific items (view types, mentee slugs, localStorage
 // helpers) remain in each surface's own constants.ts.
 
-import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanOfferNewer, weekPlanSpecWeek } from '../../shared/weekPlan'
+import { WEEK_PLAN_SOURCE } from '../../shared/weekPlan'
 import type { TaskRow } from './api'
 import { isMilestone, isQuestion } from '../../shared/taskKinds'
-import { nowInstant, parseDbUtc } from './time'
+import { parseDbUtc } from './time'
 
 // GroupKey and GROUP_ORDER were deleted 2026-11-03: the section a task sits in
 // is lib/taskSections.ts, shared by Today and My Tasks.
@@ -311,88 +311,6 @@ export function isQuestionWaiting(t: {
   return questionCardState(t) === 'waiting'
 }
 
-type WeekPlanOfferRow = {
-  id?: string | null
-  created_at?: string | null
-  deleted_at?: string | null
-  kind?: string | null
-  question_answer_json?: string | null
-  question_consumed_json?: string | null
-  question_spec_json?: string | null
-  status?: string | null
-  source?: string | null
-  due_date?: string | null
-}
-
-/**
- * The week_plan offer Nick is asked to answer, or null (Re-plan, 2026-11-01).
- * The ONE display rule, shared by the Needs you card (QuestionsCard) and its
- * count (cardQuestionCount). Per WEEK (refuter, 2026-11-01), the same scope as
- * PB's supersede and the Worker's week_plan_superseded refusal: for each spec
- * week_start only the NEWEST live offer by (created_at, id) counts
- * (shared/weekPlan.ts weekPlanOfferNewer), and it counts only while it waits.
- * Of the weeks whose newest offer waits, the LATEST week is shown: at most one
- * row ever asks. An older offer of a week still waiting (two PB runs
- * overlapped; PB deletes it next) is never shown; once a week's newest is
- * answered that week asks nothing. An offer with no readable week is skipped.
- * An offer past its expires_at is skipped too (second refuter, 2026-11-01):
- * the Worker refuses its answer (question_expired, the same weekPlanExpired),
- * so showing it would ask for an answer that cannot land. PB's next run
- * deletes it (week_plan.py supersede retires earlier weeks' waiting offers).
- *
- * The newest-per-week pick reads every live offer it is handed, so callers
- * hand it the unfiltered rows: isQuestionOnCard keeps every live week_plan
- * row for that reason. A snooze (due_date after the local day of nowIso) is a
- * display rule on the WINNER only: a snoozed newest asks nothing, and never
- * lets an older offer of its week through (the Worker would refuse that one
- * as week_plan_superseded, NEWER_OFFER_EXISTS_SQL counts every live row).
- * The render clock: src/hooks/useWeekPlanNow.ts re-renders at the next
- * expires_at so a tab left open across Monday 00:00 drops the row.
- */
-export function newestWaitingWeekPlan<T extends WeekPlanOfferRow>(
-  tasks: readonly T[],
-  nowIso: string = nowInstant(),
-): T | null {
-  const today = localDayKey(new Date(nowIso))
-  const newestByWeek = new Map<string, T>()
-  for (const t of tasks) {
-    if (t.source !== WEEK_PLAN_SOURCE || t.kind !== 'question') continue
-    if (t.deleted_at || t.status === 'deleted') continue
-    const week = weekPlanSpecWeek(t.question_spec_json)
-    if (!week) continue
-    const cur = newestByWeek.get(week)
-    if (!cur || weekPlanOfferNewer(t, cur)) newestByWeek.set(week, t)
-  }
-  let shown: { week: string; row: T } | null = null
-  for (const [week, row] of newestByWeek) {
-    if (questionCardState(row) !== 'waiting') continue
-    const spec = parseWeekPlanSpec(row.question_spec_json)
-    if (spec && weekPlanExpired(spec, nowIso)) continue
-    if (questionSnoozedUntil(row, today) !== null) continue
-    if (!shown || week > shown.week) shown = { week, row }
-  }
-  return shown?.row ?? null
-}
-
-/**
- * The next instant (ms) at which newestWaitingWeekPlan's answer can change
- * on the clock alone: just past the earliest expires_at still ahead of nowIso
- * among the live week_plan offers (weekPlanExpired is strict, so +1 ms). Null
- * when no offer has one ahead. useWeekPlanNow sets its timeout to it.
- */
-export function nextWeekPlanExpiry(tasks: readonly WeekPlanOfferRow[], nowIso: string): number | null {
-  const now = Date.parse(nowIso)
-  let next: number | null = null
-  for (const t of tasks) {
-    if (t.source !== WEEK_PLAN_SOURCE || t.kind !== 'question') continue
-    if (t.deleted_at || t.status === 'deleted') continue
-    const at = Date.parse(parseWeekPlanSpec(t.question_spec_json)?.expires_at ?? '')
-    if (isNaN(at) || at < now) continue
-    if (next === null || at + 1 < next) next = at + 1
-  }
-  return next
-}
-
 /**
  * How many rows the Needs you card shows as asking for him: the waiting ones
  * only. Project-join asks are left out (they are answered on
@@ -403,17 +321,23 @@ export function nextWeekPlanExpiry(tasks: readonly WeekPlanOfferRow[], nowIso: s
  * technically answered these things... so what happens now. it still says
  * these things need me"). They are Claude's turn, not his: the card shows them
  * as one muted line (QuestionsCard, lib/answerEta.ts), never in the number.
+ *
+ * A week_plan row never counts (2026-11-04): a plan is made in a session, its
+ * answered row shows as This week, and a stray waiting one is on no list. The
+ * Plan your week nudge is not a row and asks no one to answer anything, so it
+ * is not in this number either.
  */
-export function cardQuestionCount(tasks: Array<WeekPlanOfferRow>, nowIso: string = nowInstant()): number {
-  // A week plan asks once (the gold "Plan your week" row shows
-  // newestWaitingWeekPlan only), so at most one counts; once answered, This
-  // week is its surface, not Needs you, so it stops counting.
-  const others = tasks.filter((t) => {
+export function cardQuestionCount(tasks: ReadonlyArray<{
+  source?: string | null
+  kind?: string | null
+  question_answer_json?: string | null
+  question_consumed_json?: string | null
+  status?: string | null
+}>): number {
+  return tasks.filter((t) => {
     if (t.source === 'project_join' || t.source === WEEK_PLAN_SOURCE) return false
     return questionCardState(t) === 'waiting'
   }).length
-  const plan = newestWaitingWeekPlan(tasks, nowIso) ? 1 : 0
-  return others + plan
 }
 
 /**
@@ -471,11 +395,10 @@ export function snoozeChoiceDays(choice: { payload?: unknown } | null | undefine
  * answered-but-not-acted-on and not snoozed, plus those acted on today (the
  * receipt's local day). An older acted-on row is history, not news.
  *
- * Every live week_plan offer is handed over whatever its state: the card
- * shows a week plan only through newestWaitingWeekPlan, whose newest-per-week
- * pick must see the rows a snooze or an old receipt would drop here (else an
- * older offer the Worker refuses could win). The card's own lists leave week
- * plans out (QuestionsCard isWeekPlan), and so does the count.
+ * Every live week_plan row is handed over whatever its state: the card's Plan
+ * your week nudge (lib/weekPlan.ts planNudgeWeek) must see a plan a snooze or an
+ * old receipt would drop here, or a planned week would ask again. The card's own
+ * lists leave week plans out (QuestionsCard isWeekPlan), and so does the count.
  */
 export function isQuestionOnCard(t: {
   kind?: string | null

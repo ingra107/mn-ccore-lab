@@ -506,7 +506,7 @@ describe('a packet_prepare request routes as private, only to a capable runner, 
 
 describe('week plan: atomic cap, start flips, expiry and the mint', () => {
   it('two Starts on two plans cannot pass the cap: the second, racing on a stale read, does not land', async () => {
-    // Since the Re-plan (2026-11-01) only the NEWEST offer takes a first
+    // Since 2026-11-01 only the NEWEST offer takes a first
     // answer (week_plan_superseded), so two first answers on two offers can
     // no longer race. The race that remains is a first-answer Start on the
     // newest offer against a Start flip on an OLDER answered plan: (CAP-2)

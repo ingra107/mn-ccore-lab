@@ -1316,8 +1316,7 @@ async function decideAndCommitUpdate(
     ]);
   }
   const write = await applyPatch(env, mut, current, user, sort);
-  // Only the newest week_plan offer takes a first answer (Re-plan,
-  // 2026-11-01): read here for the refusal code (before Start, so a
+  // Only the newest week_plan offer takes a first answer (2026-11-01): read here for the refusal code (before Start, so a
   // superseded offer says so rather than naming the cap), and carried in the
   // row write's WHERE so a newer offer minted meanwhile makes the write miss.
   const superseded = await weekPlanSupersededCheck(env, mut, current);

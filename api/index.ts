@@ -109,7 +109,6 @@ import { handlePublishPacket, handleGetPacket, handleUsePacket, handleDismissPac
 import { registerReceiptRoutes } from './routes/receipts';
 import { receiptsMiddleware } from './lib/receipts-middleware';
 import { handleDailyPacketCount } from './lib/week-plan-start';
-import { handleGetReplan, handlePostReplan } from './lib/week-plan-replan';
 import { projectResponseFor } from './lib/pi-only-project-fields';
 import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks, handleUpdateLink, handlePromoteLink, handleCreateProjectLink } from './routes/links';
 import { handleGetProductsSync, handleGetProjectProducts, handleGetAllProjectProducts, handleProjectProductWrite } from './routes/products';
@@ -3241,29 +3240,13 @@ defineRoute({
 });
 // The day's count against the packet cap (planning conversation, v1 contract:
 // PB Context/Decisions/2026-10-30-planning-conversation.md). The 05:15 PB job
-// reads it before preparing; the planning panel shows it beside Start.
+// reads it before preparing.
 defineRoute({
   method: 'GET',
   path: '/api/packets/daily-count',
   auth: 'pi',
   entity: 'packets',
   handler: (c) => handleDailyPacketCount(U(c), E(c).DB, PACKET_OWNER(c)),
-});
-// The Re-plan button (PB Scratch/plans/2026-11-01-replan-RECONCILED.md): one
-// week_replan lane request at a time, Nick only (the packet-owner rule).
-defineRoute({
-  method: 'GET',
-  path: '/api/week-plan/replan',
-  auth: 'pi',
-  entity: 'packets',
-  handler: (c) => handleGetReplan(E(c).DB, PACKET_OWNER(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/week-plan/replan',
-  auth: 'pi',
-  entity: 'packets',
-  handler: (c) => handlePostReplan(E(c), USER(c), PACKET_OWNER(c)),
 });
 defineRoute({
   method: 'POST',

@@ -2,7 +2,7 @@
 // Planned today", PB Context/Decisions/2026-10-30-planning-and-first-step-
 // mockup-picks.md). Shown in BOTH timeline and agenda modes, in Planned
 // today's place, whenever an answered week plan covers today (from the
-// Sunday evening before its week starts, lib/weekPlan.ts currentWeekPlan).
+// Sunday before its week starts, lib/weekPlan.ts currentWeekPlan).
 //
 // What it lists:
 //   - each pick, with the direction he chose and its packet state (Ready /
@@ -14,8 +14,8 @@
 //     A pick not planned today is a plain row.
 //   - a Saved pick carries a Prep button: the one follow-up write a stored
 //     plan takes (the stored answer with that pick flipped to start:true,
-//     under the same daily cap as Prep in the panel). It runs in the
-//     background and leaves a prepared step (Ready).
+//     under the shared daily cap). It runs in the background and leaves a
+//     prepared step (Ready).
 //   - every open pick carries Prep & start (PrepStartAction, 2026-11-02): an
 //     interactive Claude session on Nick's laptop for that one task, which
 //     re-reads its threads, prepares the step WITH him and opens what he needs.
@@ -50,9 +50,9 @@ import { collapseToggleProps } from './collapseToggleProps'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
-import { pickTag, postWeekPlanAnswer, startFlipAnswer, type AcceptedWeekPlan } from '../../lib/weekPlan'
+import { pickTag, postWeekPlanAnswer, startFlipAnswer, weekRangeLabel, type AcceptedWeekPlan } from '../../lib/weekPlan'
 import { usePlanControl } from '../../hooks/usePlanControl'
-import { pickDirection, weekPlanEnd, PACKET_DAILY_CAP } from '../../../shared/weekPlan'
+import { pickDirection, PACKET_DAILY_CAP } from '../../../shared/weekPlan'
 
 /** What each packet tag means, said where it is shown (Nick, 2026-11-02: "it now says ready which i don't know what that means"). */
 const TAG_HELP: Record<string, string> = {
@@ -72,14 +72,6 @@ interface ThisWeekSectionProps {
   stripTasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
-}
-
-function weekLabel(start: string): string {
-  const fmt = (c: string) => {
-    const [y, m, d] = c.split('-').map(Number)
-    return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  }
-  return `${fmt(start)} to ${fmt(weekPlanEnd(start))}`
 }
 
 export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByPid }: ThisWeekSectionProps) {
@@ -150,7 +142,6 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
     setErr(null)
     const r = await postWeekPlanAnswer(plan.task.id, answer)
     setStarting(null)
-    qc.invalidateQueries({ queryKey: ['packets', 'daily-count'] })
     if (r.ok) { qc.invalidateQueries({ queryKey: ['tasks'] }); return }
     if (r.code === 'daily_cap' && 'used' in r) setErr(`Today's ${r.cap} prepared first steps are already used or queued. Try tomorrow.`)
     else setErr(`Not prepped: ${r.error}`)
@@ -168,7 +159,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
           <h3>This week</h3>
           <span className="tk-cnt">{plan.picks.length + plan.earlier.length}</span>
         </div>
-        <span className="tk-hintx">{weekLabel(plan.spec.week_start)}</span>
+        <span className="tk-hintx">{weekRangeLabel(plan.spec.week_start)}</span>
         {planCtl.buttonEl}
       </div>
 

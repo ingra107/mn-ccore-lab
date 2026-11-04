@@ -3,7 +3,7 @@
 // session". The button renders only for the PI with the launcher, only on an open
 // task, fires mnccore://prep/<task id> with nothing else in the URI, and reads
 // "Open session" on a task whose first step is already prepared. This week shows it
-// per pick beside the background Prep; the plan conversation shows it per card.
+// per pick beside the background Prep.
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
@@ -11,7 +11,6 @@ import { DndContext } from '@dnd-kit/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import PrepStartAction from '../components/PrepStartAction'
 import { ThisWeekSection } from '../components/today/ThisWeekSection'
-import { PlanConversation } from '../components/today/PlanConversation'
 import { PacketBlock } from '../components/today/PacketBlock'
 import { UndoToastProvider } from '../components/UndoToast'
 import { AuthContext, type AuthUser } from '../hooks/useAuth'
@@ -162,15 +161,6 @@ describe('This week', () => {
       <ThisWeekSection plan={p} allTasks={[task(B)]} stripTasks={[]} state={state} projectsByPid={new Map()} />, MEMBER,
     )
     expect(h.querySelector('.tk-week-acts')).toBeNull()
-  })
-})
-
-describe('Plan conversation', () => {
-  it('each card carries Prep & start, and the footer is the batch Prep', async () => {
-    const h = await mount(<PlanConversation task={plan(null)} onDone={() => {}} />)
-    expect(prep(h)).toHaveLength(2)
-    const footer = [...h.querySelectorAll('.tk-plan-acts button')].map((b) => b.textContent)
-    expect(footer).toEqual(['Save without prepping', 'Prep'])
   })
 })
 
