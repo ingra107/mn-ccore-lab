@@ -1,6 +1,6 @@
 # Week planning as a live session plus a saved artifact (#169)
 
-Status: revision 2, after independent critiques from Codex and a Claude critic. Awaiting Nick's approval. Repos: `mn-ccore-lab` (Hub) and `Peripheral-Brain` (PB).
+Status: revision 2, after independent critiques from Codex and a Claude critic. Approved by Nick 2026-11-04. Repos: `mn-ccore-lab` (Hub) and `Peripheral-Brain` (PB).
 
 ## Why
 
@@ -126,7 +126,7 @@ This does not cancel a queued prep or dismiss a packet. Those stay visible on th
 
 ## Rollout
 
-See "Decision open" below.
+Nick's call, 2026-11-04: retire as soon as tests pass, with no waiting schedule. Ship the new flow and retire the pick page (`PlanConversation`, `PlanPanel`), the `week_replan` lane and the Sunday unattended offer together, through `/substrate-swap`. Gate: deterministic tests for interrupted apply, duplicate submissions, empty plans, cap races, Sunday boundaries and artifact reloads, plus the three real-call proofs above, which are what the build rests on. There is no old page to fall back on afterward: rollback is reverting the commits. The Sunday job becomes a Plan your week nudge tested against the intended `week_start`, since `currentWeekPlan` overlaps two weeks on a Sunday.
 
 ## Cross-repo and deploy
 
