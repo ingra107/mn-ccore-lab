@@ -97,29 +97,31 @@ export async function handleGetPulse(request: Request, env: Env, counts: CountsF
         ORDER BY datetime(created_at) DESC, id DESC LIMIT 1`,
     ).bind(nowIso).first<{ id: string; body: string; author_slug: string; created_at: string }>(),
     env.DB.prepare(
-      `SELECT title, completed_at AS date FROM tasks
-        WHERE kind = 'milestone' AND deleted_at IS NULL AND completed_at IS NOT NULL
-          AND datetime(completed_at) > datetime(?1, '-30 days')
-        ORDER BY datetime(completed_at) DESC LIMIT 3`,
-    ).bind(nowIso).all<{ title: string; date: string }>(),
+      // The project's slug, so a win links to where it happened (#158).
+      `SELECT t.title, t.completed_at AS date, p.slug AS project_slug FROM tasks t
+         LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+        WHERE t.kind = 'milestone' AND t.deleted_at IS NULL AND t.completed_at IS NOT NULL
+          AND datetime(t.completed_at) > datetime(?1, '-30 days')
+        ORDER BY datetime(t.completed_at) DESC LIMIT 3`,
+    ).bind(nowIso).all<{ title: string; date: string; project_slug: string | null }>(),
     env.DB.prepare(
       // A bulk sync (more than BULK_SYNC_ROWS sharing one created_at) is not a
       // win, the same rule the papers count applies (pulse-aggregates.ts).
-      `SELECT title, created_at AS date FROM publications
+      `SELECT id, title, created_at AS date FROM publications
         WHERE datetime(created_at) > datetime(?1, '-30 days')
           AND created_at NOT IN (
             SELECT created_at FROM publications
              WHERE datetime(created_at) > datetime(?1, '-30 days')
              GROUP BY created_at HAVING COUNT(*) > ?2)
         ORDER BY datetime(created_at) DESC LIMIT 3`,
-    ).bind(nowIso, BULK_SYNC_ROWS).all<{ title: string; date: string }>(),
+    ).bind(nowIso, BULK_SYNC_ROWS).all<{ id: string; title: string; date: string }>(),
     counts({ nowIso, weekStartIso }),
   ])
 
   const releases = approved.results ?? []
   const wins: PulseWin[] = [
-    ...(milestones.results ?? []).map((r) => ({ kind: 'milestone' as const, title: r.title, date: r.date, href: null })),
-    ...(papers.results ?? []).map((r) => ({ kind: 'publication' as const, title: r.title, date: r.date, href: null })),
+    ...(milestones.results ?? []).map((r) => ({ kind: 'milestone' as const, title: r.title, date: r.date, href: r.project_slug ? `/portal/projects/${encodeURIComponent(r.project_slug)}` : null })),
+    ...(papers.results ?? []).map((r) => ({ kind: 'publication' as const, title: r.title, date: r.date, href: `/publications/${encodeURIComponent(r.id)}` })),
   ].sort((a, b) => instant(b.date) - instant(a.date)).slice(0, 3)
 
   const payload: PulsePayload = {

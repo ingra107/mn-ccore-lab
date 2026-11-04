@@ -230,6 +230,8 @@ describe('GET /api/pulse wins', () => {
     insertRow(db, 'tasks', { id: 'm1', title: 'Older milestone', assignee: 'casey-eddington', kind: 'milestone', status: 'done', completed: 1, completed_at: new Date(Date.now() - 5 * 86_400_000).toISOString().slice(0, 10) })
     const wins = (await pulseAs(CASEY, MEMBER_EMAIL)).wins
     expect(wins.map((w) => w.title)).toEqual(['Newer paper', 'Older milestone'])
+    // #158: a paper links to its page; a milestone with no project has nowhere to go.
+    expect(wins.map((w) => w.href)).toEqual(['/publications/p1', null])
   })
 })
 

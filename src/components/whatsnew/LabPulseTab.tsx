@@ -1,5 +1,6 @@
 // The Lab pulse tab (#156): Nick's announcement, who was active in the last
 // day, this week's lab-wide numbers, and a few recent wins.
+import { Link } from 'react-router-dom'
 import type { PulsePayload } from '../../../shared/pulse'
 import { Face } from '../today/skin'
 import { formatRelativeTime, formatShortDate } from '../../lib/dateUtils'
@@ -47,7 +48,7 @@ export function LabPulseTab({ data, isPi }: { data: PulsePayload | undefined; is
       {data.wins.length > 0 && (
         <ul className="pulse-rows" aria-label="Recent wins">
           {data.wins.map((w, i) => (
-            <li key={i}><span>{w.kind === 'milestone' ? 'Milestone: ' : 'Paper: '}{w.title}</span><span className="pulse-date">{formatShortDate(w.date)}</span></li>
+            <li key={i}><span>{w.kind === 'milestone' ? 'Milestone: ' : 'Paper: '}{w.href ? <Link to={w.href} className="link-affordance">{w.title}</Link> : w.title}</span><span className="pulse-date">{formatShortDate(w.date)}</span></li>
           ))}
         </ul>
       )}
