@@ -7,6 +7,9 @@
 // page already loads) with an "Add next step" action that opens the existing
 // CreateTaskModal on that project: no second form. At most 5 rows; the rest are
 // named "and N more" and link to the projects view. Zero gaps hides the card.
+//
+// "Waiting" (#168) says the ball is with someone else: one click moves the project
+// to the Waiting on card (status waiting_external leaves this list server-side).
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -16,7 +19,7 @@ import { collapseToggleProps } from '../collapseToggleProps'
 import CreateTaskModal from '../../tasks/CreateTaskModal'
 import { PATHS } from '../../../constants/paths'
 import { useNextStepGaps, useProjects } from '../../../hooks/useApiData'
-import { useCreateTask } from '../../../hooks/useMutations'
+import { useCreateTask, useUpdateProjectFields } from '../../../hooks/useMutations'
 import { useToast } from '../../../hooks/useToast'
 import { projectShortLabel } from '../../../lib/displayNames'
 
@@ -28,8 +31,9 @@ export function NoNextStepCard() {
   const gaps = useNextStepGaps()
   const projects = useProjects()
   const createTask = useCreateTask()
+  const updateProject = useUpdateProjectFields()
   const queryClient = useQueryClient()
-  const { showSuccess } = useToast()
+  const { showSuccess, showUndo } = useToast()
 
   const rows = gaps.data ?? []
   if (rows.length === 0) return null
@@ -42,6 +46,9 @@ export function NoNextStepCard() {
   }
   const label = (g: (typeof rows)[number]) =>
     projectShortLabel({ ...(byRef.get(g.id) ?? (g.slug ? byRef.get(g.slug) : undefined)), title: g.title, slug: g.slug, id: g.id })
+
+  const refreshGaps = () => { void queryClient.invalidateQueries({ queryKey: ['next-step-gaps'] }) }
+  const setStatus = (slug: string, status: string) => updateProject.mutate({ slug, fields: { status } }, { onSettled: refreshGaps })
 
   const shown = rows.slice(0, MAX_ROWS)
   const more = rows.length - shown.length
@@ -62,6 +69,19 @@ export function NoNextStepCard() {
               <Link className="tk-t" to={PATHS.project(g.slug ?? g.id)}>{label(g)}</Link>
               <button type="button" className="tk-more" style={{ marginLeft: 0 }} onClick={() => setAddFor(g.slug ?? g.id)}>
                 Add next step
+              </button>
+              <button
+                type="button"
+                className="tk-more"
+                style={{ marginLeft: 0 }}
+                title="The ball is with someone else: move this to Waiting on"
+                onClick={() => {
+                  const slug = g.slug ?? g.id
+                  setStatus(slug, 'waiting_external')
+                  showUndo(`${label(g)} moved to Waiting on`, () => setStatus(slug, 'active'))
+                }}
+              >
+                Waiting
               </button>
             </div>
           ))}

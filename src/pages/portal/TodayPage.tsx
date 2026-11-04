@@ -84,6 +84,7 @@ import { DecisionDesk } from '../../components/today/DecisionDesk'
 import { WalkInCard } from '../../components/today/WalkInCard'
 import { GapStack } from '../../components/today/GapStack'
 import { SlippingCard } from '../../components/today/rail/SlippingCard'
+import { WaitingOnCard } from '../../components/today/rail/WaitingOnCard'
 import { NoNextStepCard } from '../../components/today/rail/NoNextStepCard'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
@@ -919,6 +920,8 @@ export default function TodayPage() {
         <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} />
         {/* Active projects with no open task; hides itself at zero. */}
         <NoNextStepCard />
+        {/* Projects whose ball is with someone else (#168); hides itself at zero. */}
+        <WaitingOnCard tasks={tasks} />
         {/* Nick only (the site admin): mail where the ball is his (schema-v151). */}
         <MailWatchCard isNick={!!user?.canShowAllProjects} />
         <NewActivityCard />
