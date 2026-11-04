@@ -95,56 +95,70 @@ function LinkRow({
   const label = archived ? 'Restore link' : 'Archive link'
   const name = link.short_title || link.canonical_url
   const chip = <StoredLinkChip link={{ ...link, short_title: link.short_title ? stripLinkKindSuffix(link.short_title) : link.short_title }} />
+  // The tiers' rows carry a kind picker and maybe a source line on top of the
+  // date and buttons. That does not fit beside a chip in the ~270px rail: the
+  // chip ran under "Unfiled" (#161). So the chip takes its own line and the rest
+  // sits on one line under it, the source giving way first.
+  const stacked = !!source || !!(kinds && onSetKind)
+  const meta = (
+    <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
+      {kinds && onSetKind && canEditKind(link) && (
+        <KindPicker link={link} kinds={kinds} onSetKind={onSetKind} />
+      )}
+      {date && (
+        // --muted, not a dimmed --slate: the opacity policy floors secondary
+        // text at 0.85 and reserves 0.55-0.70 for decoration.
+        <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+          {date}
+        </span>
+      )}
+      {onPromote && !archived && (
+        <Button
+          variant="ghost"
+          onClick={() => onPromote(link)}
+          data-tip="Put on every task"
+          aria-label={`Put on every task: ${name}`}
+          className={iconBtnClass}
+          size="icon"
+          style={{ color: 'var(--slate)' }}
+        >
+          <ArrowUpToLine {...ICON_PROPS} size={12} />
+        </Button>
+      )}
+      {onSetRole && canChangeRole(link) && (
+        <Button
+          variant="ghost"
+          onClick={() => onSetRole(link, archived ? 'key' : 'archive')}
+          data-tip={label}
+          aria-label={`${label}: ${name}`}
+          className={iconBtnClass}
+          size="icon"
+          style={{ color: 'var(--slate)' }}
+        >
+          {archived
+            ? <ArchiveRestore {...ICON_PROPS} size={12} />
+            : <Archive {...ICON_PROPS} size={12} />}
+        </Button>
+      )}
+    </span>
+  )
+  if (stacked) {
+    return (
+      <div className="group flex flex-col" style={{ gap: 2, minWidth: 0 }} data-testid="link-row-stacked">
+        {chip}
+        <div className="flex items-center justify-between gap-2" style={{ minWidth: 0 }}>
+          <span title={source ? `from ${source}` : undefined} style={{ fontSize: '10px', color: 'var(--muted)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {source ? `from ${source}` : ''}
+          </span>
+          {meta}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="group flex items-center justify-between gap-2">
-      {source ? (
-        <span className="flex flex-col" style={{ minWidth: 0, alignItems: 'flex-start' }}>
-          {chip}
-          <span style={{ fontSize: '10px', color: 'var(--muted)', marginTop: 2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            from {source}
-          </span>
-        </span>
-      ) : chip}
-      <span className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
-        {kinds && onSetKind && canEditKind(link) && (
-          <KindPicker link={link} kinds={kinds} onSetKind={onSetKind} />
-        )}
-        {date && (
-          // --muted, not a dimmed --slate: the opacity policy floors secondary
-          // text at 0.85 and reserves 0.55-0.70 for decoration.
-          <span style={{ fontSize: '10px', color: 'var(--muted)', whiteSpace: 'nowrap' }}>
-            {date}
-          </span>
-        )}
-        {onPromote && !archived && (
-          <Button
-            variant="ghost"
-            onClick={() => onPromote(link)}
-            data-tip="Put on every task"
-            aria-label={`Put on every task: ${name}`}
-            className={iconBtnClass}
-            size="icon"
-            style={{ color: 'var(--slate)' }}
-          >
-            <ArrowUpToLine {...ICON_PROPS} size={12} />
-          </Button>
-        )}
-        {onSetRole && canChangeRole(link) && (
-          <Button
-            variant="ghost"
-            onClick={() => onSetRole(link, archived ? 'key' : 'archive')}
-            data-tip={label}
-            aria-label={`${label}: ${name}`}
-            className={iconBtnClass}
-            size="icon"
-            style={{ color: 'var(--slate)' }}
-          >
-            {archived
-              ? <ArchiveRestore {...ICON_PROPS} size={12} />
-              : <Archive {...ICON_PROPS} size={12} />}
-          </Button>
-        )}
-      </span>
+      {chip}
+      {meta}
     </div>
   )
 }

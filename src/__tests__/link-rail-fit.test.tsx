@@ -41,4 +41,27 @@ describe('right-rail Links fit a narrow rail', () => {
     const chip = h.querySelector('a[title]') as HTMLElement
     expect(chip.getBoundingClientRect().width).toBeLessThan(240)
   })
+
+  it('a task document keeps its chip clear of the kind picker, date and buttons (#161)', async () => {
+    const task: StoredLink = { id: 't1', role: 'key', type: 'web', canonical_url: 'https://example.com/t', short_title: LONG, sort_order: 1, created_at: '2026-10-27 12:00:00', task_title: 'Run Aartik CLIF request' } as unknown as StoredLink
+    const h = await mount(
+      <MemoryRouter><div style={{ width: 260 }} data-rail>
+        <ProjectLinkLibrary links={[]} taskLinks={[task]} kinds={[{ key: 'draft', label: 'Draft' }] as never} onSetKind={() => {}} onSetRole={() => {}} onPromote={() => {}} />
+      </div></MemoryRouter>,
+      { ready: (x) => x.querySelector('[data-testid="link-row-stacked"]'), label: 'task document row' },
+    )
+    const rail = (h.querySelector('[data-rail]') as HTMLElement).getBoundingClientRect()
+    const row = h.querySelector('[data-testid="link-row-stacked"]') as HTMLElement
+    const chip = row.querySelector('a[title]')!.getBoundingClientRect()
+    const buttons = [...row.querySelectorAll('button')] as HTMLElement[]
+    expect(buttons.length).toBeGreaterThanOrEqual(2)
+    for (const b of buttons) {
+      const r = b.getBoundingClientRect()
+      expect(r.right).toBeLessThanOrEqual(rail.right + 0.5)
+      // No overlap with the chip: every control sits below it.
+      expect(r.top).toBeGreaterThanOrEqual(chip.bottom - 0.5)
+    }
+    expect(chip.right).toBeLessThanOrEqual(rail.right + 0.5)
+    expect(row.textContent).toContain('from Run Aartik CLIF request')
+  })
 })
