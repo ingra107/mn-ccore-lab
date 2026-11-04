@@ -148,7 +148,7 @@ const FULL_NAME_OVERRIDES: Record<string, string> = {
   henkle: 'Benjamin Henkle',
   macdonald: 'David MacDonald',
   trujeque: 'Joshua Trujeque',
-  pendleton: 'Katherine Pendleton',
+  pendleton: 'Kathryn Pendleton',
   kalinoski: 'Michael Kalinoski',
   wacker: 'David Wacker',
   arriaza: 'Steven Arriaza',
