@@ -38,6 +38,7 @@ const DEVICE_LOCAL: Record<string, string> = {
   'hooks/useOnboarding.ts': 'onboarding steps seen in this browser',
   'hooks/useProjectPins.ts': 'retry list of the one-time pin import (pins are on the server)',
   'lib/dailyThoughts.ts': 'per-browser day blob, read once for migration',
+  'lib/planDraft.ts': 'an unsent plan answer, kept through a reload (#166: Nick asked for browser-specific)',
   'pages/Dashboard.tsx': 'card click counts (usage telemetry)',
   'pages/MyTasks/views/LanesView.tsx': 'lane fold state',
   'pages/ProjectDetail.tsx': 'banner dismissed in this browser',

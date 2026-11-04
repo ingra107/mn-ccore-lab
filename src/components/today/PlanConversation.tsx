@@ -33,16 +33,18 @@
 // Container-agnostic: it takes the question row and an onDone, and renders no
 // chrome of its own (PlanPanel is the side panel it sits in today).
 //
-// Nothing acts on close or silence. The draft is component-local state ON
-// PURPOSE. The only write is the one answer, on a click of Prep or Save,
+// Nothing acts on close or silence. The draft lives in this browser only
+// (lib/planDraft.ts, #166: a reload used to lose it) and is dropped when the
+// answer lands. The only write is the one answer, on a click of Prep or Save,
 // through the question-answer route (POST /api/tasks/:id).
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import PrepStartAction from '../PrepStartAction'
 import type { TaskRow } from '../../lib/api'
 import { nowInstant } from '../../lib/time'
 import { postWeekPlanAnswer, useDailyPacketCount } from '../../lib/weekPlan'
+import { clearPlanDraft, prunePlanDrafts, readPlanDraft, writePlanDraft } from '../../lib/planDraft'
 import {
   PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_SAVE, WEEK_PLAN_CHOICE_START,
   parseWeekPlanSpec, weekPlanPicksError, type WeekPlanPick,
@@ -55,11 +57,14 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
   const qc = useQueryClient()
   const spec = useMemo(() => parseWeekPlanSpec(task.question_spec_json), [task.question_spec_json])
   const count = useDailyPacketCount()
-  // Draft state: local only, see the header.
-  const [picked, setPicked] = useState<string[]>([])
-  const [open, setOpen] = useState<Record<string, boolean>>({})
-  const [choice, setChoice] = useState<Record<string, string>>({})
-  const [text, setText] = useState<Record<string, string>>({})
+  // Draft state: this browser only, see the header.
+  const [saved] = useState(() => readPlanDraft(task.id))
+  const [picked, setPicked] = useState<string[]>(saved.picked)
+  const [open, setOpen] = useState<Record<string, boolean>>(saved.open)
+  const [choice, setChoice] = useState<Record<string, string>>(saved.choice)
+  const [text, setText] = useState<Record<string, string>>(saved.text)
+  useEffect(() => { prunePlanDrafts(Date.now()) }, [])
+  useEffect(() => { writePlanDraft(task.id, { picked, open, choice, text }, Date.now()) }, [task.id, picked, open, choice, text])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -105,6 +110,7 @@ export function PlanConversation({ task, onDone }: { task: TaskRow; onDone: () =
     setBusy(false)
     qc.invalidateQueries({ queryKey: ['packets', 'daily-count'] })
     if (r.ok) {
+      clearPlanDraft(task.id)
       qc.invalidateQueries({ queryKey: ['tasks'] })
       onDone()
       return

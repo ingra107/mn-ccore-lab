@@ -18,6 +18,7 @@ import { PlannedTodaySection } from './PlannedTodaySection'
 import { currentWeekPlan, pickTag, replanButtonState, REPLAN_RESULT_SHOWN_S, REPLAN_UNCLAIMED_WARN_S } from '../../lib/weekPlan'
 import { cardQuestionCount, isQuestionOnCard, newestWaitingWeekPlan, nextWeekPlanExpiry } from '../../lib/taskGrouping'
 import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
+import { clearPlanDraft, readPlanDraft } from '../../lib/planDraft'
 import type { ReplanState } from '../../../shared/weekPlan'
 import type { TaskRow } from '../../lib/api'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -37,6 +38,7 @@ afterEach(() => {
   mounted = []
   document.querySelectorAll('[data-testid="plan-panel"]').forEach((n) => n.parentElement?.remove())
   vi.unstubAllGlobals()
+  clearPlanDraft('task_plan')
 })
 
 async function until(pred: () => boolean, what: string): Promise<void> {
@@ -293,6 +295,32 @@ describe('PlanConversation', () => {
       expect(p.querySelector('[role="alert"]')!.textContent).toBe(words)
     })
   }
+
+  it('a reload keeps the picks and notes; the answer landing drops them (#166)', async () => {
+    const calls = stubFetch({ used: 0, cap: 10 })
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    const p = await openAndPick(['Answer Jane'])
+    await setValue(p.querySelector('textarea') as HTMLTextAreaElement, 'move this to next week')
+    expect(calls.filter((c) => c.method === 'POST')).toHaveLength(0) // saved here, not on the Hub
+
+    // The reload: everything mounted goes away, then the page mounts fresh.
+    for (const { host, root } of mounted) { root.unmount(); host.remove() }
+    mounted = []
+    document.querySelectorAll('[data-testid="plan-panel"]').forEach((n) => n.parentElement?.remove())
+    await mount(<QuestionsCard tasks={[row()]} band={false} />)
+    await click(document.querySelector('[data-testid="q-week-plan"] button'))
+    await until(() => !!panel(), 'the panel')
+    const again = panel()!
+    expect((again.querySelector('textarea') as HTMLTextAreaElement).value).toBe('move this to next week')
+    const box = [...again.querySelectorAll('label')].find((l) => l.textContent?.includes('Answer Jane'))!.querySelector('input') as HTMLInputElement
+    expect(box.checked).toBe(true)
+
+    await until(() => /10 left today/.test(again.querySelector('[data-testid="plan-cap"]')?.textContent ?? ''), 'the cap line')
+    await click(buttonNamed(again, /^Prep this one/))
+    await until(() => !panel(), 'the panel to close')
+    expect(readPlanDraft('task_plan').picked).toEqual([])
+    expect(localStorage.getItem('mnccore.planDraft.v1.task_plan')).toBeNull()
+  })
 
   it('closing writes nothing', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
