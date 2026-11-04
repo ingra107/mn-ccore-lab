@@ -94,6 +94,21 @@ export function todayCivil(zone?: string, now: Date = new Date()): CivilDate {
   return `${get('year')}-${get('month')}-${get('day')}` as CivilDate;
 }
 
+/** Instant → its weekday (0 = Sunday) and 24-hour clock hour in a zone. The civil
+ *  day of the same instant is civilFromInstant. */
+export function zoneWeekdayHour(iso: string, zone?: string): { weekday: number; hour: number } {
+  const tz = zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, weekday: 'short', hour: '2-digit', hourCycle: 'h23',
+  });
+  const parts = fmt.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  return {
+    weekday: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday')),
+    hour: Number(get('hour')),
+  };
+}
+
 /** Instant → its civil day in a zone (for grouping by viewer-local day). */
 export function civilFromInstant(iso: string, zone?: string): CivilDate {
   const tz = zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;

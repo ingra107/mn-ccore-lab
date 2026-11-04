@@ -89,9 +89,11 @@ function stubFetch(
   return calls
 }
 
-type Viewer = 'pi' | 'member' | 'unresolved'
+// 'pi' is the owner: the server sets canShowAllProjects for the site admin alone
+// (api/index.ts, isSiteAdmin). 'other-pi' is a PI who is not.
+type Viewer = 'pi' | 'other-pi' | 'member' | 'unresolved'
 const viewerUser = (v: Viewer): AuthUser => ({
-  email: 'pi@umn.edu', slug: 'pi', name: 'X', isAuthenticated: true, isPi: v === 'pi', isMember: true,
+  email: 'pi@umn.edu', slug: 'pi', name: 'X', isAuthenticated: true, isPi: v === 'pi' || v === 'other-pi', isMember: true,
   canShowAllProjects: v === 'pi', piResolved: v !== 'unresolved',
 })
 
@@ -139,7 +141,7 @@ describe('Needs you: the Plan your week row', () => {
   it('a week with no plan is one gold row with the Plan button, and adds to no count', async () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z')) // Tuesday
     const calls = stubFetch({ used: 0, cap: 3 })
-    const host = await mount(<QuestionsCard tasks={[]} band={false} />)
+    const host = await mount(<QuestionsCard tasks={[]} band={false} planNudge />)
     await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
     expect(nudgeRow(host)?.textContent).toContain('Plan your week')
     expect(nudgeRow(host)?.querySelector('[data-testid="plan-button"]')?.textContent).toBe('Plan')
@@ -152,7 +154,7 @@ describe('Needs you: the Plan your week row', () => {
   it('this week planned: no row and no card', async () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
     stubFetch({ used: 0, cap: 3 })
-    const host = await mount(<QuestionsCard tasks={[planFor('2026-11-02')]} band={false} />)
+    const host = await mount(<QuestionsCard tasks={[planFor('2026-11-02')]} band={false} planNudge />)
     await tick()
     expect(nudgeRow(host)).toBeNull()
     expect(host.querySelector('.tk-attn')).toBeNull()
@@ -161,11 +163,11 @@ describe('Needs you: the Plan your week row', () => {
   it('Sunday evening with this week planned asks about next week, and a plan for next week ends it', async () => {
     vi.setSystemTime(new Date('2026-11-08T22:00:00Z'))
     stubFetch({ used: 0, cap: 3 })
-    const host = await mount(<QuestionsCard tasks={[planFor('2026-11-02')]} band={false} />)
+    const host = await mount(<QuestionsCard tasks={[planFor('2026-11-02')]} band={false} planNudge />)
     await until(() => !!nudgeRow(host), 'the row')
     const label = new Date(2026, 10, 9).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     expect(nudgeRow(host)?.textContent).toContain(label)
-    const host2 = await mount(<QuestionsCard tasks={[planFor('2026-11-02'), planFor('2026-11-09')]} band={false} />)
+    const host2 = await mount(<QuestionsCard tasks={[planFor('2026-11-02'), planFor('2026-11-09')]} band={false} planNudge />)
     await tick()
     expect(nudgeRow(host2)).toBeNull()
   })
@@ -173,18 +175,36 @@ describe('Needs you: the Plan your week row', () => {
   it('a member gets no row, no gold card and no launch request', async () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
     const calls = stubFetch({ used: 0, cap: 3 })
-    const host = await mount(<QuestionsCard tasks={[]} band={false} />, 'member')
+    const host = await mount(<QuestionsCard tasks={[]} band={false} planNudge />, 'member')
     await tick()
     expect(nudgeRow(host)).toBeNull()
     expect(host.querySelector('.tk-attn')).toBeNull()
     expect(calls.some((c) => c.url.startsWith('/api/launch-log'))).toBe(false)
   })
 
+  it('opt-in: a page that has not said it read the owner\'s own list gets no row', async () => {
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(<QuestionsCard tasks={[]} band={false} />)
+    await tick()
+    expect(nudgeRow(host)).toBeNull()
+    expect(host.querySelector('.tk-attn')).toBeNull()
+  })
+
+  it('a PI who is not the owner gets no row and no gold card: planning stays Nick-only', async () => {
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(<QuestionsCard tasks={[]} band={false} planNudge />, 'other-pi')
+    await tick()
+    expect(nudgeRow(host)).toBeNull()
+    expect(host.querySelector('.tk-attn')).toBeNull()
+  })
+
   it('a stray waiting offer is no row of its own and no count: the nudge stands alone', async () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
     stubFetch({ used: 0, cap: 3 })
     const stray = row({ id: 'w1', question_spec_json: JSON.stringify({ ...SPEC, week_start: '2026-11-02', expires_at: '2026-11-09T06:00:00Z' }) })
-    const host = await mount(<QuestionsCard tasks={[stray]} band={false} />)
+    const host = await mount(<QuestionsCard tasks={[stray]} band={false} planNudge />)
     await until(() => !!nudgeRow(host), 'the row')
     expect(host.querySelectorAll('.tk-qrow')).toHaveLength(1)
     expect(host.querySelector('.tk-cnt')).toBeNull()
@@ -200,7 +220,7 @@ describe('Needs you: the Plan your week row', () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
     stubFetch({ used: 0, cap: 3 })
     const tasks = [question('q1'), question('q2')]
-    const host = await mount(<QuestionsCard tasks={tasks} band={false} />)
+    const host = await mount(<QuestionsCard tasks={tasks} band={false} planNudge />)
     await until(() => !!nudgeRow(host), 'the row')
     expect(host.querySelector('.tk-cnt')?.textContent).toBe('2')
     expect(cardQuestionCount(tasks)).toBe(2)
@@ -209,10 +229,10 @@ describe('Needs you: the Plan your week row', () => {
   it('the fold control shows only when there is a count to fold into', async () => {
     vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
     stubFetch({ used: 0, cap: 3 })
-    const alone = await mount(<QuestionsCard tasks={[]} band={false} onCollapse={() => {}} />)
+    const alone = await mount(<QuestionsCard tasks={[]} band={false} planNudge onCollapse={() => {}} />)
     await until(() => !!nudgeRow(alone), 'the row')
     expect(alone.querySelector('[data-testid="q-collapse"]')).toBeNull()
-    const withQuestion = await mount(<QuestionsCard tasks={[question('q1')]} band={false} onCollapse={() => {}} />)
+    const withQuestion = await mount(<QuestionsCard tasks={[question('q1')]} band={false} planNudge onCollapse={() => {}} />)
     expect(withQuestion.querySelector('[data-testid="q-collapse"]')).not.toBeNull()
   })
 })
@@ -224,7 +244,7 @@ describe('The nudge on the clock (usePlanNudgeWeek)', () => {
     return (
       <>
         <span data-testid="count">{count}</span>
-        <QuestionsCard tasks={tasks} band={false} />
+        <QuestionsCard tasks={tasks} band={false} planNudge />
       </>
     )
   }

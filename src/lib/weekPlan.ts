@@ -6,7 +6,7 @@
 
 import type { TaskRow } from './api'
 import { isTaskDone, questionCardState } from './taskGrouping'
-import { nowInstant } from './time'
+import { civilFromInstant, nowInstant, zoneWeekdayHour } from './time'
 import {
   WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd, weekPlanWithdrawn,
   type WeekPlanPick, type WeekPlanSpec,
@@ -56,15 +56,10 @@ const NUDGE_SUNDAY_HOUR = 16
  * the browser's zone.
  */
 export function planNudgeTargetWeek(nowIso: string): string | null {
-  const at = new Date(nowIso)
-  if (isNaN(at.getTime())) return null
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: NUDGE_ZONE, weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23',
-  }).formatToParts(at)
-  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
-  const day = `${part('year')}-${part('month')}-${part('day')}`
-  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(part('weekday'))
-  if (weekday === 0) return Number(part('hour')) >= NUDGE_SUNDAY_HOUR ? civilPlusDays(day, 1) : null
+  if (isNaN(new Date(nowIso).getTime())) return null
+  const day = civilFromInstant(nowIso, NUDGE_ZONE)
+  const { weekday, hour } = zoneWeekdayHour(nowIso, NUDGE_ZONE)
+  if (weekday === 0) return hour >= NUDGE_SUNDAY_HOUR ? civilPlusDays(day, 1) : null
   return civilPlusDays(day, 1 - weekday)
 }
 
@@ -84,8 +79,11 @@ function weekIsPlanned(tasks: readonly TaskRow[], week: string): boolean {
 
 /**
  * The week_start that needs a plan, or null. Computed on read, with no job and
- * no row behind it: hand it every live week_plan row (isQuestionOnCard keeps
- * them for this). The gold row reads it through hooks/usePlanNudgeWeek.ts.
+ * no row behind it, so a row missing from `tasks` reads as "not planned": hand
+ * it every live week_plan row of the owner's own full list (isQuestionOnCard
+ * keeps them for this) and nothing less. The gold row reads it through
+ * hooks/usePlanNudgeWeek.ts, and only where QuestionsCard's planNudge says the
+ * page read that list.
  */
 export function planNudgeWeek(tasks: readonly TaskRow[], nowIso: string = nowInstant()): string | null {
   const week = planNudgeTargetWeek(nowIso)

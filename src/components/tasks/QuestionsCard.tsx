@@ -30,9 +30,11 @@
 //
 // Plan your week (2026-11-04, design docs/superpowers/specs/2026-11-04-plan-
 // session-design.md): ONE row above the questions, so Today still has one gold
-// card, for the PI, while the week in hand has no plan (lib/weekPlan.ts
+// card, for the owner, while the week in hand has no plan (lib/weekPlan.ts
 // planNudgeWeek). It is no task row: nothing to answer or snooze, and it adds to
 // no count. Its Plan button starts a live session (hooks/usePlanControl.tsx).
+// Opt-in (planNudge): no plan row in a list means "not planned" only in the
+// owner's own full list, so the page says when it has read that.
 // week_plan question rows never show here: answered, they are This week on Today.
 //
 // Renders null when tasks is empty (no card appears when nothing is waiting).
@@ -72,20 +74,26 @@ interface QuestionsCardProps {
    *  in place of the plain rows, INSIDE this card, so Today keeps one gold
    *  card and each question shows once. Absent = the plain rows, as on My Tasks. */
   renderWaiting?: (waiting: TaskRow[], hold: (ids: string[]) => void) => ReactNode
+  /** `tasks` comes from a successful read of the viewer's own full list, so the
+   *  Plan your week row may read a missing plan as "not planned". Absent = no row:
+   *  a failed read or another member's list holds no plan rows either. */
+  planNudge?: boolean
 }
 
-export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [], onCollapse, renderWaiting }: QuestionsCardProps) {
+export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [], onCollapse, renderWaiting, planNudge = false }: QuestionsCardProps) {
   // A request to join (source 'project_join', schema-v139) is answered on
   // JoinRequestsCard, where Nate decides too; its question row exists for
   // Nick's Telegram card alone, so it is not shown here a second time.
   const tasks = all.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
   const snoozed = allSnoozed.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
-  // The week that needs a plan. Only the PI can start the session, and a row
-  // with no button would ask for what the viewer cannot do (the same gate as
-  // hooks/usePlanControl.tsx; unresolved shows nothing).
-  const { isPi, piResolved } = useAuth().user
+  // The week that needs a plan. Planning is the owner's alone and the plan rows
+  // are assigned to him, so another PI's list could never show a plan and the row
+  // would never clear. canShowAllProjects is the server's isSiteAdmin, the identity
+  // PACKET_OWNER uses (api/index.ts). isPi && piResolved is the Plan button's own
+  // gate (hooks/usePlanControl.tsx), so the row never shows without its button.
+  const { isPi, piResolved, canShowAllProjects } = useAuth().user
   const nudgeWeek = usePlanNudgeWeek(all)
-  const planWeek = isPi && piResolved ? nudgeWeek : null
+  const planWeek = planNudge && isPi && piResolved && canShowAllProjects ? nudgeWeek : null
   // Three states, each read off the row (questionCardState). Waiting rows are
   // his turn; answered rows stay visible until the PB lane acts, so an answer
   // nothing picked up cannot drop off every surface, but as one muted line that

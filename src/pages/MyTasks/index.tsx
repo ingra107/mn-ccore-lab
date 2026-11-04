@@ -416,7 +416,7 @@ export default function UnifiedMyTasks() {
         <div style={pageScroll ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' } : { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* "Needs you" questions — shown above the pending-meetings card, same
               guard shape. Disappears once every question is answered. */}
-          {!isLoading && !needsYouFolded && <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} onCollapse={collapseNeedsYou} />}
+          {!isLoading && !needsYouFolded && <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} onCollapse={collapseNeedsYou} planNudge={!!tasksQuery.data && !viewingOther} />}
           {/* Pending meetings triage card — shown above the task list on all views.
               Disappears automatically once all meetings are accepted or declined. */}
           {!isLoading && <PendingMeetingsCard tasks={pendingMeetingTasks} />}

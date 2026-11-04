@@ -646,13 +646,12 @@ export default function TodayPage() {
             above PendingMeetingsCard: an unanswered question blocks something,
             a captured meeting is merely awaiting triage. Both are the warm gold
             attention card and sit FIRST, ahead of the stat line. */}
-        {!needsYouFolded && tasksQuery.data && (
-          // Tasks not read yet is not "no plan": the card waits for them, or the
-          // Plan your week nudge would flash on every load.
+        {!needsYouFolded && (
           // Pick P1, the Decision desk, is the questions section INSIDE this card
           // (Nick 2026-10-30: one gold card on Today).
           <QuestionsCard
             tasks={questionTasks} snoozed={snoozedQuestions} band={false} onCollapse={collapseNeedsYou}
+            planNudge={!!tasksQuery.data}
             renderWaiting={(waiting, hold) => <DecisionDesk waiting={waiting} projectsByPid={projectsByPid} onHold={hold} />}
           />
         )}
