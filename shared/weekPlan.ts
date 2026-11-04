@@ -255,15 +255,44 @@ export function parseWeekPlanSpec(raw: unknown): WeekPlanSpec | null {
 }
 
 /**
+ * The withdrawn rules (the answer's optional `withdrawn`, 2026-11-04): task
+ * ids Nick took off This week, even ones prep already started on. Absent is
+ * fine. Present, it is an array of distinct non-empty strings. An id need not
+ * be a candidate of the offer (a started pick of an earlier plan is not one).
+ * PB's twin is scripts/questions/state.py Answer.withdrawn.
+ */
+export function weekPlanWithdrawnError(answer: unknown): string | null {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value)) return null // the answer's own shape is judged elsewhere
+  const w = l.value.withdrawn
+  if (w === undefined) return null
+  if (!Array.isArray(w) || !w.every(nonEmpty)) return 'withdrawn must be an array of non-empty task id strings'
+  if (new Set(w).size !== w.length) return 'withdrawn names a task twice'
+  return null
+}
+
+/** The task ids the answer withdraws: [] when absent or malformed (a
+ *  malformed one is refused by weekPlanWithdrawnError, so none is stored). */
+export function weekPlanWithdrawn(answer: unknown): string[] {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value) || weekPlanWithdrawnError(l.value) !== null) return []
+  return Array.isArray(l.value.withdrawn) ? [...(l.value.withdrawn as string[])] : []
+}
+
+/**
  * The picks rules (the answer's `picks`):
- *   picks is a non-empty array; each pick is an object with a non-empty
+ *   picks is a non-empty array, unless `allowEmpty` (true only when the answer
+ *   has a non-empty `withdrawn`: then picks may be empty or absent); each pick is an object with a non-empty
  *   task_id (unique across picks), option_key a non-empty string or null,
  *   text a non-empty string or null, start a boolean; at least one of
  *   option_key / text is non-null (both is an option plus Nick's note). With a spec: task_id names one of its
  *   candidates, and option_key one of that candidate's option keys.
  * `spec` null = judge the shape only.
  */
-export function weekPlanPicksError(picks: unknown, spec: WeekPlanSpec | null): string | null {
+export function weekPlanPicksError(
+  picks: unknown, spec: WeekPlanSpec | null, opts: { allowEmpty: boolean } = { allowEmpty: false },
+): string | null {
+  if (opts.allowEmpty && (picks === undefined || (Array.isArray(picks) && picks.length === 0))) return null
   if (!Array.isArray(picks) || picks.length === 0) return 'a week_plan answer needs a non-empty picks array'
   const seen = new Set<string>()
   for (const [i, p] of picks.entries()) {
@@ -296,12 +325,15 @@ export function pickDirection(pick: WeekPlanPick, spec: WeekPlanSpec): string {
   return dir === '' ? note : `${dir}\n\nNick's note: ${note}`
 }
 
-/** The answer's picks, or null when they break weekPlanPicksError's rules. */
+/** The answer's picks, or null when they break weekPlanPicksError's rules
+ *  (or withdrawn breaks weekPlanWithdrawnError's). [] for a withdrawal-only answer. */
 export function parseWeekPlanPicks(answer: unknown, spec: WeekPlanSpec | null): WeekPlanPick[] | null {
   const l = loads(answer)
   if (!l.ok || !isObj(l.value)) return null
   const picks = l.value.picks
-  if (weekPlanPicksError(picks, spec) !== null) return null
+  if (weekPlanWithdrawnError(l.value) !== null) return null
+  if (weekPlanPicksError(picks, spec, { allowEmpty: weekPlanWithdrawn(l.value).length > 0 }) !== null) return null
+  if (!Array.isArray(picks)) return [] // absent picks beside a withdrawal
   return (picks as Record<string, unknown>[]).map((p) => ({
     task_id: p.task_id as string,
     option_key: (p.option_key as string | null),

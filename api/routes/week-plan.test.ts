@@ -269,6 +269,25 @@ describe('POST /api/tasks/:id with a week_plan answer (Start)', () => {
     expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).not.toBeNull()
   })
 
+  it('an answer with empty picks and a withdrawn id is stored: 200, no packet_prepare, no note', async () => {
+    const r = await call('POST', `/api/tasks/${PLAN}`, { as: NICK }, {
+      question_answer_json: answer([], { choice: 'save', withdrawn: ['task_a'] }),
+    })
+    expect(r.status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    expect(JSON.parse(String(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a)).withdrawn).toEqual(['task_a'])
+    expect(all("SELECT 1 FROM activity_entries WHERE source_table = 'week_plan_note'")).toHaveLength(0)
+  })
+
+  it('empty picks without withdrawn, or with a malformed withdrawn, is refused and stores nothing', async () => {
+    for (const body of [answer([]), answer([], { withdrawn: [] }), answer([], { withdrawn: [7] }), answer([], { withdrawn: 'task_a' })]) {
+      const r = await call('POST', `/api/tasks/${PLAN}`, { as: NICK }, { question_answer_json: body })
+      expect(r.status).toBe(409)
+      expect(String(r.body.error)).toMatch(/question_answer_invalid/)
+    }
+    expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).toBeNull()
+  })
+
   it('a refused answer (bad picks) stores nothing and starts nothing', async () => {
     const r = await answerPlan([{ task_id: 'task_z', option_key: 'a1', text: null, start: true }])
     expect(r.status).toBe(409)

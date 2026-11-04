@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TaskRow } from './api'
 import { isTaskDone, questionCardState } from './taskGrouping'
 import {
-  WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd,
+  WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd, weekPlanWithdrawn,
   REPLAN_UNCLAIMED_S, type ReplanState, type WeekPlanPick, type WeekPlanSpec,
 } from '../../shared/weekPlan'
 
@@ -34,6 +34,10 @@ export interface AcceptedWeekPlan {
   /** "Today forward" (Nick 2026-11-01): earlier plans' started picks this week
    *  that are still open, for tasks the newest plan does not pick. */
   earlier: EarlierPick[]
+  /** Task ids any answered plan of this week took off (2026-11-04): Nick's
+   *  "not this week", even for a pick prep had started. They are not in
+   *  `earlier`; the Sunday job and the brief read them to not offer them again. */
+  withdrawn: string[]
 }
 
 /**
@@ -57,7 +61,7 @@ export interface AcceptedWeekPlan {
  * row is gone (deleted) has nothing left to show either.
  */
 export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPlan | null {
-  const plans: Omit<AcceptedWeekPlan, 'earlier'>[] = []
+  const plans: (Omit<AcceptedWeekPlan, 'earlier' | 'withdrawn'> & { withdrawn: string[] })[] = []
   for (const t of tasks) {
     if (!isWeekPlan(t)) continue
     const state = questionCardState(t)
@@ -68,13 +72,16 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
     if (!picks) continue
     let at = ''
     try { at = String((JSON.parse(t.question_answer_json ?? '{}') as { at?: unknown }).at ?? '') } catch { /* parsed above */ }
-    plans.push({ task: t, spec, picks, at })
+    plans.push({ task: t, spec, picks, at, withdrawn: weekPlanWithdrawn(t.question_answer_json) })
   }
   if (plans.length === 0) return null
   plans.sort((a, b) => (a.at === b.at ? 0 : a.at > b.at ? -1 : 1))
   const [best, ...older] = plans
   const byId = new Map(tasks.map((t) => [t.id, t]))
-  const taken = new Set(best.picks.map((p) => p.task_id))
+  // A withdrawal holds against every OLDER plan's pick; a newer plan that
+  // picks the task again wins (its pick is in `taken` or the main list).
+  const taken = new Set([...best.picks.map((p) => p.task_id), ...best.withdrawn])
+  const withdrawn = new Set(best.withdrawn)
   const earlier: EarlierPick[] = []
   for (const plan of older) {
     if (plan.spec.week_start !== best.spec.week_start) continue
@@ -85,8 +92,9 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
       taken.add(pick.task_id)
       earlier.push({ pick, task: plan.task, spec: plan.spec })
     }
+    for (const id of plan.withdrawn) { taken.add(id); withdrawn.add(id) }
   }
-  return { ...best, earlier }
+  return { task: best.task, spec: best.spec, picks: best.picks, at: best.at, earlier, withdrawn: [...withdrawn] }
 }
 
 export interface DailyPacketCount { date: string; used: number; cap: number }

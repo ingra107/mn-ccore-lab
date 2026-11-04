@@ -48,7 +48,7 @@
 // would manufacture a false conflict on the next PB update.
 
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
-import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanSpecError } from '../../shared/weekPlan';
+import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanSpecError, weekPlanWithdrawn, weekPlanWithdrawnError } from '../../shared/weekPlan';
 import { nowInstant } from './time';
 
 /**
@@ -188,7 +188,9 @@ export function questionRowError(effective: Record<string, unknown>): QuestionEr
     // picks (v1 contract, 2026-10-30): required on a week_plan answer and
     // judged against its spec; optional elsewhere, shape-judged when present.
     if (isWeekPlan) {
-      const why = weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec));
+      // withdrawn (2026-11-04): empty picks pass only beside a non-empty withdrawn.
+      const why = weekPlanWithdrawnError(parsed.value)
+        ?? weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec), { allowEmpty: weekPlanWithdrawn(parsed.value).length > 0 });
       if (why) return `question_answer_invalid: ${why}`;
     } else if (parsed.value.picks !== undefined) {
       const why = weekPlanPicksError(parsed.value.picks, null);
