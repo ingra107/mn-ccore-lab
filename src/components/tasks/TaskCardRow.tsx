@@ -336,6 +336,9 @@ export function CardRow(props: CardTaskRowProps) {
   )
 }
 
+// Both rule rows carry `tk` themselves: their CSS is `.tk .tk-ms ...`, and a
+// surface with no `.tk` around it (the meeting page) rendered them bare (#165).
+//
 // Check-in as a one-line rule (kind='checkin', Nick 2026-10-30: "a milestone-
 // style kind, one-line row named 'Check in: ...', one-tap done"). The
 // milestone rule's anatomy with the one-tap CardCheck where the diamond sits:
@@ -350,7 +353,7 @@ export function CheckinRow(props: Pick<CardTaskRowProps, 'task' | 'project' | 'i
   const subject = taskSubjectLabel(task)
   const overdue = !!task.due_date && !isDone && isOverdue(task.due_date, task.status)
   return (
-    <div data-task-id={task.id} data-task-kind="checkin" className={`tk-msw tk-chkw${isDone ? ' tk-done' : ''}`}>
+    <div data-task-id={task.id} data-task-kind="checkin" className={`tk tk-msw tk-chkw${isDone ? ' tk-done' : ''}`}>
       <div
         className={`tk-ms tk-int tk-chk${isDone ? ' tk-done' : ''}`}
         role="button"
@@ -405,7 +408,7 @@ export function MilestoneCardRow(props: CardTaskRowProps) {
   const isInternal = role === 'internal' || role === 'slipped'
   const overdue = !isInternal && !!date && isOverdue(date, task.status)
   return (
-    <div data-task-id={task.id} data-task-kind="milestone" {...(role ? { 'data-milestone-role': role } : {})} className="tk-msw">
+    <div data-task-id={task.id} data-task-kind="milestone" {...(role ? { 'data-milestone-role': role } : {})} className="tk tk-msw">
       <div
         className={`tk-ms${isInternal ? ' tk-int' : ''}${role === 'slipped' ? ' tk-slip' : ''}`}
         onClick={onToggleExpand}
