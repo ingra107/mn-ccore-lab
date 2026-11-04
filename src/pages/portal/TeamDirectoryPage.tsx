@@ -57,7 +57,7 @@ export default function TeamDirectoryPage() {
       )}
       <QueryState
         isLoading={teamQuery.isLoading}
-        isError={teamQuery.isError}
+        isError={teamQuery.isLoadingError}
         isEmpty={members.length === 0}
         emptyTitle="No team members yet"
       >

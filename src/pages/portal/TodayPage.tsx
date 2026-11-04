@@ -501,7 +501,10 @@ export default function TodayPage() {
   }
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
-  const isError = tasksQuery.isError || projectsQuery.isError
+  // #163: load errors only. A failed REFETCH also sets isError, with the data
+  // still in hand, and that swapped the whole page for this error screen during
+  // D1 overload bursts. It gets the small "tasks unavailable" note below instead.
+  const isError = tasksQuery.isLoadingError || projectsQuery.isLoadingError
   const [completedOpen, setCompletedOpen] = useState(false)
   // Section collapse state — session-only (no localStorage), every section
   // starts expanded on every load per Nick's ask. timelineOpen is shared by
@@ -734,6 +737,12 @@ export default function TodayPage() {
             today" — zero signal (masked the 2026-07-06 calendar outage for
             a month in the calendar hook alone). Surface each here, subtle
             and non-blocking, above whichever of Timeline/Agenda is active. */}
+        {tasksQuery.isRefetchError && (
+          <QueryErrorNote label="tasks" onRetry={() => tasksQuery.refetch()} />
+        )}
+        {projectsQuery.isRefetchError && (
+          <QueryErrorNote label="projects" onRetry={() => projectsQuery.refetch()} />
+        )}
         {calendarEventsQuery.isError && (
           <QueryErrorNote label="calendar" onRetry={() => calendarEventsQuery.refetch()} />
         )}

@@ -97,7 +97,8 @@ type Tab = 'overview' | 'tasks' | 'meetings' | 'files' | 'activity' | 'revisions
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
-  const { data: projects = [], isLoading, isError } = useProjects()
+  // #163: isLoadingError, so a failed refetch keeps the page it already has.
+  const { data: projects = [], isLoading, isLoadingError: isError } = useProjects()
   // A link may carry the typed id (proj_*) instead of the slug; both name the
   // same row, and the URL is rewritten to the slug below so the page has one
   // canonical address.
