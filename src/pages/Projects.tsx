@@ -411,13 +411,14 @@ export default function Projects() {
               status axis never splits across wrapped lines. From md up the
               links wrap as before. The scroller engages only because
               TableControls caps each of its groups at the row's width. */}
-          <label className="pd-find" style={{ marginBottom: 8 }}>
+          <label className="tk-find" data-testid="projects-find">
             <Search {...ICON_PROPS} size={14} aria-hidden="true" />
             <input
               type="search"
               value={findQ}
               onChange={(e) => setFindQ(e.target.value)}
-              placeholder="Find a project, its products, or what it is about"
+              placeholder="Find a project"
+              title="Searches names, descriptions and products, across every filter"
               aria-label="Find a project"
             />
           </label>
