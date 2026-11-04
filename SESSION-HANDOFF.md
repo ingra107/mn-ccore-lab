@@ -1,3 +1,20 @@
+# ▶▶ 2026-11-04 (work): BUG SWEEP #156-#168 SHIPPED; #169 OPEN. main `2f4e291e` live (probe PASS). **Schema v157.**
+
+## Shipped
+- #163 a failed refetch keeps Today (`isLoadingError`, not `isError`) with a retry note; Project detail and Team directory too (`4b7d0090`). #164 a changed packet can be used: "Got it anyway" sends `accept_changed` (`dd8a3698`). #165 check-in/milestone rows carry `.tk` themselves (`1ac8eeee`). #167 done earlier-plan picks drop off (`0d117ef9`). #166 plan draft in localStorage, `lib/planDraft.ts` (`21bd9218`). #157 duration column (`cca2fbb0`). #161 link rows stack (`ad983a9a`). #158 pulse wins link (`4dc125d1`). #159/#160/#162 search: products source, `p:`-style prefixes in `shared/searchPrefix.ts`, named projects outrank tasks, one matcher `lib/projectSearch.ts` (`9310fa33`, `884d0d4f`, `2f4e291e`). #168 Waiting on card, status `waiting_external` + optional check-in task, no schema change (`055ffe8a`). #156 was already live.
+
+## Open
+- **#169 stays open: a design call for Nick** (replace the Hub pick page with a terminal session plus a saved planning artifact). Crosses into PB.
+- **D1 overload is unexplained.** `hub_errors`: 237 "D1 DB is overloaded" on 2026-11-04 (08:46-13:43 UTC), 253 this week vs 20 last. #163 only stops it blanking Today. `d1 insights` returned empty and `hub_errors` keeps one sample path per fingerprint, so the source is not identified.
+- Release draft `rel_01M6HAQMME6P2D8DZVXD2V2EZ1` has title + blurbs; Nick approves it in the pill.
+- #157 passes its component test but nothing was planned on 11-04, so it was not seen on live rows.
+
+## Landmines added
+- `.pd-find` CSS lives in a `<style>` that only mounts on Browse; use `.tk-find` (index.css) elsewhere.
+- Palette fuzzy match is now a typo fallback only (`rankPaletteItems`).
+
+---
+
 # ▶▶ 2026-10-26 (work): BUG SWEEP #150-#155 + WHAT'S NEW / LAB PULSE (#156). **Schema v150.** **Routes 274.**
 
 ## Shipped
