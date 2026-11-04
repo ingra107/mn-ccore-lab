@@ -57,8 +57,8 @@ export interface PaletteRankable {
 }
 
 /** Palette order for a typed term (#159): a name holding every word (projects
- *  first), then a project's keywords, then words in the sublabel, then the old
- *  in-order fuzzy match, which alone used to fill the 12 rows with tasks. */
+ *  first), then a project's keywords, then words in the sublabel. The old in-order
+ *  fuzzy match, which used to fill the 12 rows with tasks, is only a fallback. */
 export function rankPaletteItems<T extends PaletteRankable>(items: readonly T[], term: string): T[] {
   const words = searchWords(term)
   const q = term.toLowerCase()
@@ -81,5 +81,8 @@ export function rankPaletteItems<T extends PaletteRankable>(items: readonly T[],
     const r = rankOf(i)
     if (r >= 0) buckets[r].push(i)
   }
-  return buckets.flat()
+  // Fuzzy is a typo net, not a filler: letters in order match most long titles,
+  // so it shows only when nothing really matched.
+  const real = buckets.slice(0, 4).flat()
+  return real.length > 0 ? real : buckets[4]
 }

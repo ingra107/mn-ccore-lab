@@ -43,7 +43,11 @@ describe('rankPaletteItems', () => {
     const fuzzy = Array.from({ length: 30 }, (_, i) => task(`Do a short board review ${i}`))
     const project = { label: grant.title, category: 'project', keywords: 'ats 2027 qi dashboard' }
     const out = rankPaletteItems([...fuzzy, project], 'dashboard')
-    expect(out[0]).toBe(project)
+    expect(out).toEqual([project]) // the letter-matches do not pad the list
+  })
+  it('fuzzy still catches a typo when nothing really matched', () => {
+    const p = { label: 'Vent Dashboard', category: 'project' }
+    expect(rankPaletteItems([p], 'dashbrd')).toEqual([p])
   })
   it('a project named for the word leads a task named for it', () => {
     const t = task('Review the dashboard')
