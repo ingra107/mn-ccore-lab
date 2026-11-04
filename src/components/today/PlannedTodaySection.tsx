@@ -17,10 +17,10 @@
 // Look (Today reskin, 2026-10-09): a panel (the middle surface step) holding a
 // stack of hatched dashed cards; a drop highlights the panel in teal.
 //
-// Re-plan (2026-11-01): when no answered week plan covers today, TodayPage
-// renders this section instead of This week, so Nick's Re-plan button sits in
-// this header too (ReplanControl.tsx, same state). `replanTasks` is passed only
-// for Nick; without it there is no button and no request.
+// Plan: when no answered week plan covers today, TodayPage renders this section
+// instead of This week, so the Plan button sits in this header too
+// (PlanButton.tsx, same state). It renders for the PI only and makes no
+// request for anyone else.
 
 import { useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
@@ -29,23 +29,20 @@ import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
-import { useReplanControl } from './ReplanControl'
+import { usePlanControl } from '../../hooks/usePlanControl'
 
 interface PlannedTodaySectionProps {
   stripTasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
-  /** Every task row, passed only for Nick: shows the Re-plan button. */
-  replanTasks?: TaskRow[]
 }
 
 export function PlannedTodaySection({
   stripTasks,
   state,
   projectsByPid,
-  replanTasks,
 }: PlannedTodaySectionProps) {
-  const replan = useReplanControl(replanTasks ?? [], replanTasks !== undefined)
+  const plan = usePlanControl()
   // Per-surface expand state (Item 2 fix).
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
@@ -73,9 +70,9 @@ export function PlannedTodaySection({
           <span className="tk-cnt">{stripTasks.length}</span>
         </div>
         {open && stripTasks.length > 0 && <span className="tk-hintx today-section-hint">check to finish · × to unplan</span>}
-        {replan.buttonEl}
+        {plan.buttonEl}
       </div>
-      {open && replan.noteEl}
+      {open && plan.noteEl}
 
       {open && (stripTasks.length === 0 ? (
         // One quiet line, no box (design-system: empty states never reserve a

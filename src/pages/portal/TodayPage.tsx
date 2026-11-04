@@ -793,7 +793,6 @@ export default function TodayPage() {
             stripTasks={stripTasks}
             state={state}
             projectsByPid={projectsByPid}
-            replanTasks={user?.canShowAllProjects ? tasksQuery.data ?? [] : undefined}
           />
         )}
 

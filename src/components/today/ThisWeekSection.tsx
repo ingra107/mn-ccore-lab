@@ -31,10 +31,8 @@
 // It keeps the `slot:strip` droppable PlannedTodaySection registered, so a
 // drag onto it still plans a task for today.
 //
-// Re-plan (2026-11-01, PB Scratch/plans/2026-11-01-replan-RECONCILED.md): asks
-// PB for a new offer covering today through Sunday (a Sunday press plans next
-// week). The new offer lands in Needs you; its state shows on the button
-// (ReplanControl.tsx, shared with Planned today). Earlier plans' started picks
+// Plan: starts a live planning session with Claude (PlanButton.tsx, shared
+// with Planned today; PI only). Earlier plans' started picks
 // stay here until finished, read-only, tagged "earlier plan" (plan.earlier).
 
 import { useState, useCallback, type ReactNode } from 'react'
@@ -53,7 +51,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { pickTag, postWeekPlanAnswer, startFlipAnswer, type AcceptedWeekPlan } from '../../lib/weekPlan'
-import { useReplanControl } from './ReplanControl'
+import { usePlanControl } from '../../hooks/usePlanControl'
 import { pickDirection, weekPlanEnd, PACKET_DAILY_CAP } from '../../../shared/weekPlan'
 
 /** What each packet tag means, said where it is shown (Nick, 2026-11-02: "it now says ready which i don't know what that means"). */
@@ -93,7 +91,7 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
   const [err, setErr] = useState<string | null>(null)
   const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
 
-  const replan = useReplanControl(allTasks)
+  const planCtl = usePlanControl()
   const prepStartAllowed = usePrepStartAllowed()
 
   const byId = new Map(allTasks.map((t) => [t.id, t]))
@@ -171,13 +169,19 @@ export function ThisWeekSection({ plan, allTasks, stripTasks, state, projectsByP
           <span className="tk-cnt">{plan.picks.length + plan.earlier.length}</span>
         </div>
         <span className="tk-hintx">{weekLabel(plan.spec.week_start)}</span>
-        {replan.buttonEl}
+        {planCtl.buttonEl}
       </div>
 
       {open && (
         <>
           {err && <p className="tk-plan-err" role="alert" style={{ margin: '0 2px 6px' }}>{err}</p>}
-          {replan.noteEl}
+          {planCtl.noteEl}
+          {plan.picks.length + plan.earlier.length === 0 && (
+            // An answer can withdraw every pick: say so rather than show an empty list under "This week 0".
+            <div data-testid="this-week-empty" style={{ fontSize: 12, color: 'var(--sk-t3)', padding: '0 2px 2px' }}>
+              Nothing planned this week.
+            </div>
+          )}
           <div className="tk-week-list">
             {plan.picks.map((p) => {
               const task = byId.get(p.task_id)

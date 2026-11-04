@@ -12,6 +12,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { DndContext } from '@dnd-kit/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../UndoToast'
+import { AuthContext, type AuthUser } from '../../hooks/useAuth'
 import { QuestionsCard } from '../tasks/QuestionsCard'
 import { ThisWeekSection } from './ThisWeekSection'
 import { PlannedTodaySection } from './PlannedTodaySection'
@@ -96,25 +97,34 @@ function stubFetch(
     if (url.startsWith('/api/week-plan/replan')) {
       return init?.method === 'POST' ? (replan.post ?? (() => new Response('{}', { status: 201 })))() : replan.get()
     }
+    if (url.startsWith('/api/launch-log')) return new Response(JSON.stringify({ data: [] }), { status: 200 })
     if (url.startsWith('/api/tasks/')) return answer(body)
     return new Response('[]', { status: 200 })
   }))
   return calls
 }
 
-async function mount(node: React.ReactNode) {
+type Viewer = 'pi' | 'member' | 'unresolved'
+const viewerUser = (v: Viewer): AuthUser => ({
+  email: 'pi@umn.edu', slug: 'pi', name: 'X', isAuthenticated: true, isPi: v === 'pi', isMember: true,
+  canShowAllProjects: v === 'pi', piResolved: v !== 'unresolved',
+})
+
+async function mount(node: React.ReactNode, viewer: Viewer = 'pi') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   const host = document.createElement('div')
   document.body.appendChild(host)
   const root = createRoot(host)
   root.render(
-      <QueryClientProvider client={qc}>
-        <MemoryRouter>
-          <UndoToastProvider>
-            <DndContext>{node}</DndContext>
-          </UndoToastProvider>
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <AuthContext.Provider value={{ user: viewerUser(viewer), isAuthenticated: true, isLoading: false }}>
+        <QueryClientProvider client={qc}>
+          <MemoryRouter>
+            <UndoToastProvider>
+              <DndContext>{node}</DndContext>
+            </UndoToastProvider>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </AuthContext.Provider>,
   )
   mounted.push({ host, root })
   await tick()
@@ -515,84 +525,47 @@ describe('Re-plan', () => {
     expect(replanButtonState(rs({ status: 'failed', response: 'x', age_s: REPLAN_RESULT_SHOWN_S + 1 }), false).note).toBeNull()
   })
 
-  it('press: POSTs the route, then the re-read state shows Queued and disabled', async () => {
-    let latest: ReplanState | null = null
-    const calls = stubFetch({ used: 0, cap: 3 }, undefined, {
-      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
-      post: () => { latest = rs({}); return new Response(JSON.stringify({ data: latest }), { status: 201 }) },
-    })
-    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
-    await until(() => btn()?.dataset.state === 'ready', 'Re-plan ready')
-    expect(btn().disabled).toBe(false)
-    await click(btn())
-    await until(() => calls.some((c) => c.url === '/api/week-plan/replan' && c.method === 'POST'), 'the press')
-    await until(() => btn().dataset.state === 'queued', 'Queued')
-    expect(btn().disabled).toBe(true)
-    expect(btn().textContent).toBe('Queued')
-  })
-
-  it('a 409 replan_pending shows no error; the state re-read says Queued', async () => {
-    let latest: ReplanState | null = null
-    stubFetch({ used: 0, cap: 3 }, undefined, {
-      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
-      post: () => { latest = rs({ claimed: true }); return new Response(JSON.stringify({ error: 'queued', code: 'replan_pending', id: 'r1' }), { status: 409 }) },
-    })
-    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
-    await until(() => btn()?.dataset.state === 'ready', 'ready')
-    await click(btn())
-    await until(() => btn().dataset.state === 'preparing', 'Preparing')
-    expect(host.querySelector('[role="alert"]')).toBeNull()
-  })
-
-  it('a refused press never leaves the button pressable: disabled, with the reason, until the row changes', async () => {
-    // The refuter's dead button: the state reads Try again, but the press is
-    // refused and the row does not change. Before, the 409 was swallowed and
-    // the button stayed enabled.
-    const latest = rs({ age_s: REPLAN_UNCLAIMED_WARN_S + 5 })
-    let status = 409
-    stubFetch({ used: 0, cap: 3 }, undefined, {
-      get: () => new Response(JSON.stringify({ data: latest }), { status: 200 }),
-      post: () => new Response(JSON.stringify(status === 409 ? { error: 'queued', code: 'replan_pending', id: 'r1' } : { error: 'boom' }), { status }),
-    })
-    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const btn = () => host.querySelector('[data-testid="replan"]') as HTMLButtonElement
-    await until(() => btn()?.textContent === 'Try again' && !btn().disabled, 'Try again')
-    await click(btn())
-    await until(() => btn().dataset.state === 'refused', 'refused')
-    expect(btn().disabled).toBe(true)
-    expect(host.querySelector('[role="alert"]')?.textContent).toMatch(/already queued or running/)
-
-    status = 500
-    const host2 = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const btn2 = () => host2.querySelector('[data-testid="replan"]') as HTMLButtonElement
-    await until(() => btn2()?.textContent === 'Try again' && !btn2().disabled, 'Try again (2)')
-    await click(btn2())
-    await until(() => btn2().dataset.state === 'refused', 'refused (2)')
-    expect(btn2().disabled).toBe(true)
-    expect(host2.querySelector('[role="alert"]')?.textContent).toMatch(/^Not re-planned: /)
-  })
-
-  it('Planned today (no answered plan) carries the same Re-plan button for Nick, and none for a member', async () => {
+  it('This week and Planned today carry the Plan button for the PI, and no Re-plan control or request', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
-    const nick = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} replanTasks={[task('task_a')]} />)
-    const btn = () => nick.querySelector('[data-testid="replan"]') as HTMLButtonElement
-    await until(() => btn()?.dataset.state === 'ready', 'Re-plan ready in Planned today')
-    expect(btn().disabled).toBe(false)
-    expect(btn().textContent).toBe(replanButtonState(null, false).label)
-    const before = calls.filter((c) => c.url.startsWith('/api/week-plan/replan')).length
-    const member = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    await tick(); await tick()
-    expect(member.querySelector('[data-testid="replan"]')).toBeNull()
-    expect(calls.filter((c) => c.url.startsWith('/api/week-plan/replan')).length).toBe(before)
+    const week = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    const planned = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    for (const host of [week, planned]) {
+      await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
+      const btn = host.querySelector('[data-testid="plan-button"]') as HTMLButtonElement
+      expect(btn.textContent).toBe('Plan')
+      expect(btn.className).toContain('tk-btn tk-sm')
+      expect(btn.disabled).toBe(false)
+      expect(host.querySelector('[data-testid="replan"]')).toBeNull()
+    }
+    expect(calls.some((c) => c.url.startsWith('/api/week-plan/replan'))).toBe(false)
   })
 
-  it('a member (403) sees no Re-plan button', async () => {
-    stubFetch({ used: 0, cap: 3 }, undefined, { get: () => new Response('{}', { status: 403 }) })
-    const host = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+  it('a member sees no Plan button in either section, and nothing is requested', async () => {
+    const calls = stubFetch({ used: 0, cap: 3 })
+    const week = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />, 'member')
+    const planned = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />, 'member')
     await tick(); await tick()
-    expect(host.querySelector('[data-testid="replan"]')).toBeNull()
+    for (const host of [week, planned]) {
+      expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
+      expect(host.querySelector('[data-testid="plan-note"]')).toBeNull()
+    }
+    expect(calls.some((c) => c.url.startsWith('/api/launch-log'))).toBe(false)
+  })
+
+  it('an answer that withdraws every pick shows one empty line, not "This week 0" over a blank list', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const withdrawnAll = row({
+      question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', picks: [], withdrawn: ['task_a'] }),
+    })
+    const plan = currentWeekPlan([withdrawnAll], '2026-10-28')!
+    expect(plan.picks).toEqual([])
+    expect(plan.earlier).toEqual([])
+    const host = await mount(<ThisWeekSection plan={plan} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    expect(host.querySelector('[data-testid="this-week-empty"]')?.textContent).toBe('Nothing planned this week.')
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('0')
+    // With a pick the line is gone.
+    const host2 = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
+    expect(host2.querySelector('[data-testid="this-week-empty"]')).toBeNull()
   })
 
   it('currentWeekPlan carries earlier started picks still open, read-only, tagged; done ones drop off (#167)', async () => {

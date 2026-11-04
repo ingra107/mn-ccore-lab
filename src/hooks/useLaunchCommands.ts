@@ -21,7 +21,7 @@
 // re-pass a receiver-detached native fetch (the #543 regression).
 
 import { useCallback } from 'react'
-import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, LAUNCH_AUTH_UNRESOLVED_MSG, type LaunchExecutionContext } from '../lib/launchCommands'
+import { matchLaunchCommand, executeLaunchCommand, currentPageRoute, LAUNCH_AUTH_UNRESOLVED_MSG, type LaunchCommand, type LaunchExecutionContext } from '../lib/launchCommands'
 import { detectOrigin } from '../lib/launchOrigin'
 import { useProtocolLaunch } from './useProtocolLaunch'
 import { useToast } from './useToast'
@@ -39,6 +39,21 @@ export function taskLaunchContext(
   base: Omit<LaunchCommandContext, 'taskId'> = {},
 ): LaunchCommandContext {
   return { ...base, taskId }
+}
+
+/** Launch a command with no typed text (a button, not a compose box): the same
+ *  executor and the same dependencies as the tag routes below, so origin
+ *  routing, the clipboard fallback and the toasts stay in one place. The caller
+ *  is responsible for the PI check (the Plan button renders for a resolved PI
+ *  only). Resolves after the attempt; it never rejects. */
+export function useRunLaunch() {
+  const { launch: protocolLaunch } = useProtocolLaunch()
+  const { showInfo, showError } = useToast()
+  return useCallback(
+    (cmd: LaunchCommand, ctx: LaunchCommandContext = {}, onLaunched?: () => void): Promise<void> =>
+      executeLaunchCommand(cmd, ctx, { detectOriginFn: detectOrigin, pageRouteFn: currentPageRoute, protocolLaunch, showInfo, showError }, onLaunched),
+    [protocolLaunch, showInfo, showError],
+  )
 }
 
 export function useLaunchCommands() {
