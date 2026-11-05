@@ -121,47 +121,6 @@ export function EditableShortTitle({ value, onSave }: { value: string; onSave: (
   )
 }
 
-// ── Editable Textarea ────────────────────────────────────────
-
-export function EditableTextarea({ value, onSave, placeholder }: { value: string; onSave: (v: string) => void; placeholder: string }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value)
-  const ref = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => { setDraft(value) }, [value])
-  useEffect(() => { if (editing) ref.current?.focus() }, [editing])
-
-  const save = () => {
-    if (draft !== value) onSave(draft)
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <textarea
-        ref={ref}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={save}
-        onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
-        rows={3}
-        className="w-full text-sm outline-none rounded-md px-3 py-2 resize-none"
-        style={{ color: 'var(--ink)', boxShadow: '0 0 0 1px var(--job-accent)', background: 'none' }}
-      />
-    )
-  }
-
-  return (
-    <div
-      onClick={() => setEditing(true)}
-      className="text-sm cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-3 py-2 -mx-1 transition-colors min-h-[60px]"
-      style={{ color: value ? 'var(--ink)' : 'var(--slate)', opacity: value ? 1 : 0.85, whiteSpace: 'pre-wrap' }}
-    >
-      {value || placeholder}
-    </div>
-  )
-}
-
 // ── Date Input ───────────────────────────────────────────────
 // One date affordance everywhere (handoff §3): the boxed date button is
 // retired in favour of the shared, portal-positioned InlineDatePicker (which
