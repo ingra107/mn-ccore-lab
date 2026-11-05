@@ -1009,8 +1009,8 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
         <div className="flex items-center gap-3 mt-1.5 ml-6" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
           <span>@name</span>
           <span>#project</span>
-          <span>p1-p3</span>
-          <span>Apr 15</span>
+          <span>p1-p3 priority</span>
+          <span>Apr 15 due date</span>
         </div>
       )}
     </div>
