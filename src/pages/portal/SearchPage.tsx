@@ -22,7 +22,7 @@ import { FaceDisc } from '../../components/today/skin'
 import CategoryIcon from '../../components/CategoryIcon'
 import HermesMark from '../../components/HermesMark'
 import { staggerContainer, staggerItem } from '../../lib/animations'
-import { orderSearchTypes } from '../../lib/searchTypes'
+import { openSearchResult, orderSearchTypes } from '../../lib/searchTypes'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -333,7 +333,7 @@ export default function SearchPage() {
   const handleSearchEnter = useCallback(() => {
     if (focusedIndex >= 0 && results[focusedIndex]?.url) {
       submitQuery(debouncedQuery)
-      window.location.href = results[focusedIndex].url!
+      openSearchResult(results[focusedIndex])
     }
   }, [focusedIndex, results, debouncedQuery, submitQuery])
   useListKeyboardNav({ itemCount: results.length, focusedIndex, setFocusedIndex, onEnter: handleSearchEnter })

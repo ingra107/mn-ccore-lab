@@ -51,7 +51,10 @@ function EventMark({ e }: { e: CalendarEvent }) {
 // 34); the full title is the hover tip. Meetings and milestones carry no
 // short_title, so they fall through to their title.
 function eventLabel(e: CalendarEvent): string {
-  return formatBrandName(taskShortLabel(e))
+  const label = formatBrandName(taskShortLabel(e))
+  // A hard date, shown because the task has no internal one (R14). Most rows
+  // here are due dates, so only this one says what its date means.
+  return e.meta?.date_kind === 'deadline' ? `Deadline: ${label}` : label
 }
 function eventFullTitleHint(e: CalendarEvent): string | undefined {
   const full = taskFullTitleHint(e)

@@ -10,6 +10,7 @@
  */
 
 import { escapeHtml } from './escapeHtml';
+import { taskLinkFor } from '../../shared/taskLink';
 
 const RESEND_URL = 'https://api.resend.com/emails';
 const FROM_EMAIL = 'MN-CCORE Hub <hub@mnccore.org>';
@@ -139,7 +140,7 @@ export async function sendEmail(env: RecipientEnv, options: EmailOptions): Promi
 }
 
 export function taskAssignmentEmail(assignerName: string, taskTitle: string, taskId: string): EmailOptions {
-  const link = `${HUB_URL}/portal/my-tasks?open=${encodeURIComponent(taskId)}`;
+  const link = `${HUB_URL}${taskLinkFor(taskId)}`;
   return {
     to: '', // filled by caller
     // Subject is plain text, not HTML; strip line breaks so a title cannot add headers.

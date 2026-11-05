@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, resolveSlug, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { taskLinkFor } from '../../shared/taskLink';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation, applyWorkKindSort, hashTouched } from './mutations';
@@ -279,7 +280,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
       const assignerSlug = await resolveSlug(env, item.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), taskLinkFor(id)).run();
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
@@ -824,7 +825,7 @@ export async function handleCreateTask(
         resultId,
         `${user.name || user.email} assigned you a task`,
         title.slice(0, 200),
-        `/portal/my-tasks?open=${resultId}`,
+        taskLinkFor(resultId),
       ).run();
 
       // Email notification, only if Resend is configured. sendEmail applies the
@@ -1541,7 +1542,7 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
     try {
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} opened the task you assigned`, (task.title || task.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} opened the task you assigned`, (task.title || task.description).slice(0, 200), taskLinkFor(id)).run();
     } catch (e) { console.error('Failed to create acknowledge notification:', e); }
   }
 

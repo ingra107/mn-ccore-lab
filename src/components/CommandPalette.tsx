@@ -273,7 +273,6 @@ export default function CommandPalette() {
       icon: CalendarPlus,
       action: () => { navigate(`${PATHS.meetings}?create=true`); setOpen(false) },
       category: 'action',
-      shortcut: 'M',
     })
     items.push({
       id: 'action-create-decision',

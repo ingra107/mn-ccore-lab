@@ -34,3 +34,22 @@ describe('every result type the route can return has a place in the order', () =
     for (const k of [...routeKeys, ...pageKeys]) expect(SEARCH_TYPE_ORDER as readonly string[], k).toContain(k)
   })
 })
+
+describe('openSearchResult', () => {
+  const fake = () => {
+    const calls: unknown[][] = []
+    return { calls, open: (...a: unknown[]) => { calls.push(a); return null }, location: { href: 'start' } }
+  }
+  it('Enter on a public-site row opens a new tab and leaves the portal tab alone', () => {
+    const w = fake()
+    openSearchResult({ url: '/publications/1', details: { external: true } }, w as never)
+    expect(w.calls).toEqual([['/publications/1', '_blank', 'noopener']])
+    expect(w.location.href).toBe('start')
+  })
+  it('Enter on any other row stays in this tab', () => {
+    const w = fake()
+    openSearchResult({ url: '/portal/projects/a', details: {} }, w as never)
+    expect(w.calls).toEqual([])
+    expect(w.location.href).toBe('/portal/projects/a')
+  })
+})

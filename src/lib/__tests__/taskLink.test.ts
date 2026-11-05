@@ -30,7 +30,9 @@ function walk(dir: string, out: string[] = []): string[] {
 describe('no surface hand-builds a task link', () => {
   it('no source file writes ?open= / ?openTask= / ?task= against the task pages', () => {
     const bad: string[] = []
-    for (const f of walk(join(__dirname, '..', '..'))) {
+    const repo = join(__dirname, '..', '..', '..')
+    const roots = ['src', 'api', 'shared', 'functions'].map((d) => join(repo, d))
+    for (const f of roots.flatMap((r) => walk(r))) {
       if (f.endsWith('taskLink.ts')) continue
       const src = readFileSync(f, 'utf8')
       src.split('\n').forEach((line, i) => {

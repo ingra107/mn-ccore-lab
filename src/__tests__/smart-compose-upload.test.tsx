@@ -22,7 +22,7 @@
 // Run: npx vitest run src/__tests__/smart-compose-upload.test.tsx
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { useState, type ReactElement } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SmartCompose from '../components/SmartCompose'
 import { mount as mountShared, cleanupMountsAfterEach, waitFor } from './testMount'
@@ -258,6 +258,25 @@ describe('SmartCompose insert at cursor (#1360)', () => {
       expect(latestValue).toBe('existing notes@')
     })
   }
+
+  // The caret move used to be a passive effect, which runs after paint. A click
+  // landing between the commit and that effect read a caret of 0 and put the
+  // insert at the START of the text (the test above, failing under load).
+  it('the caret is at the end when the composer commits, before any passive effect', async () => {
+    let caretAtCommit: number | null = null
+    function Probe() {
+      const wrap = useRef<HTMLDivElement>(null)
+      // A parent's layout effect runs right after the children's commit.
+      useLayoutEffect(() => { caretAtCommit = wrap.current!.querySelector('textarea')!.selectionStart }, [])
+      return (
+        <div ref={wrap}>
+          <SmartCompose onSubmit={async () => {}} value="existing notes" onChange={() => {}} uploadContext={{ type: 'project', id: 'proj-1' }} alwaysShowToolbar />
+        </div>
+      )
+    }
+    await renderQuery(<Probe />)
+    expect(caretAtCommit).toBe('existing notes'.length)
+  })
 
   it('autoFocus focuses the textarea on mount', async () => {
     const host = await renderQuery(
