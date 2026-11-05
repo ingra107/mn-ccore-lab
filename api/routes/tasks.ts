@@ -15,7 +15,7 @@ import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { blockedByContainsSql } from '../../shared/blockedBy';
-import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
+import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, notApprovalSql, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
 import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
 import { TASK_PACKET_ID_COL, attachPacketStates, livePacketView } from './packets';
 
@@ -53,13 +53,15 @@ function gmailThreadUrl(threadId: string | null | undefined): string | null {
 // (acknowledged_at IS NULL — auto-ack fires on first view; self-created tasks
 // are born acknowledged). Both counts exclude soft-deleted rows (deleted_at
 // guard added same date — deleted overdue tasks previously inflated the badge).
+// Approvals are out too: the New and Overdue lists the badge opens drop them, so
+// an unopened approval read "3" over a list of 2.
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee')
   const today = ctToday()
   let query = `SELECT
     SUM(CASE WHEN due_date < ? THEN 1 ELSE 0 END) as count,
     SUM(CASE WHEN acknowledged_at IS NULL THEN 1 ELSE 0 END) as unseen
-    FROM tasks WHERE completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL}`
+    FROM tasks WHERE completed = 0 AND deleted_at IS NULL AND ${NOT_QUESTION_SQL} AND ${notApprovalSql()}`
   const params: string[] = [today]
   if (assignee) { query += ' AND assignee = ?'; params.push(assignee) }
   const result = await env.DB.prepare(query).bind(...params).first<{ count: number | null; unseen: number | null }>()

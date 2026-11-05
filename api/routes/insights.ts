@@ -1,7 +1,7 @@
 import type { Env } from '../helpers';
 import { homeProductCols, homeProductJoin, homeStageWords, PRODUCT_STAGE_COUNTS_SQL, type ProductStageCount } from '../lib/project-home'
 import { json } from '../helpers';
-import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
+import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, notApprovalSql } from '../../shared/taskKinds';
 
 // UTC-safe YYYY-MM-DD from a Date object (pure UTC integer arithmetic).
 // Avoids .toISOString().split/.slice lint ban (R21).
@@ -363,7 +363,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // 2. Tasks per person (open only)
   const taskDistRes = await env.DB.prepare(
     `SELECT assignee, COUNT(*) as c FROM tasks
-     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL AND ${NOT_QUESTION_SQL}
+     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL AND ${NOT_QUESTION_SQL} AND ${notApprovalSql()}
      GROUP BY assignee ORDER BY c DESC`
   ).all<{ assignee: string; c: number }>()
   const distribution = (taskDistRes.results ?? []).map((r) => ({ slug: r.assignee, count: r.c }))

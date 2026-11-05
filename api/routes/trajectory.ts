@@ -4,6 +4,14 @@ import { json } from '../helpers';
 import { mayReadPerson } from '../lib/person-access';
 import type { Viewer } from '../lib/viewer-db';
 import { MEMBER_PUBLICATIONS_WHERE, memberSlugParam } from '../lib/member-publications';
+import { ctToday } from '../lib/ct-date';
+import { NOT_QUESTION_SQL, notApprovalSql } from '../../shared/taskKinds';
+
+// A person's work: live rows only, no question, no approval. The metrics query
+// had no deleted_at check at all, so Nick's page read "427 overdue" and "548 open"
+// (500 of those rows soft-deleted) beside 8 and 45 everywhere else (live walk,
+// 2026-11-05). The same filter the task lists apply.
+const WORK = `deleted_at IS NULL AND ${NOT_QUESTION_SQL} AND ${notApprovalSql()}`;
 
 // The member's papers, newest first. `year` is the only date a publication row
 // carries; the client buckets on it.
@@ -40,7 +48,7 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
     // Task completion stats by month (last 12 months)
     env.DB.prepare(`
       SELECT strftime('%Y-%m', completed_at) as month, COUNT(*) as completed
-      FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND completed_at > datetime('now', '-12 months')
+      FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND completed_at > datetime('now', '-12 months') AND ${WORK}
       GROUP BY month ORDER BY month
     `).bind(slug).all(),
 
@@ -53,7 +61,7 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       SELECT DISTINCT p.id, p.title, p.slug, p.status, p.category, ${homeProductCols('p')}
       FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE instr(lower(t.assignee), lower(?)) > 0 AND NOT ${projectDoneSql('p')}
+      WHERE instr(lower(t.assignee), lower(?)) > 0 AND t.deleted_at IS NULL AND NOT ${projectDoneSql('p')}
       ORDER BY p.title
     `).bind(slug).all(),
 
@@ -65,7 +73,7 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       FROM tasks m
       JOIN projects p ON p.id = m.project_id
       WHERE m.kind = 'milestone' AND m.deleted_at IS NULL
-        AND EXISTS (SELECT 1 FROM tasks t WHERE t.project_id = p.id AND instr(lower(t.assignee), lower(?)) > 0)
+        AND EXISTS (SELECT 1 FROM tasks t WHERE t.project_id = p.id AND t.deleted_at IS NULL AND instr(lower(t.assignee), lower(?)) > 0)
       ORDER BY COALESCE(m.due_date, m.deadline)
     `).bind(slug).all(),
 
@@ -74,11 +82,11 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN completed = 0 AND due_date IS NOT NULL AND due_date < date('now') THEN 1 ELSE 0 END) as overdue,
+        SUM(CASE WHEN completed = 0 AND due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue,
         AVG(CASE WHEN completed = 1 AND completed_at IS NOT NULL
           THEN julianday(completed_at) - julianday(created_at) ELSE NULL END) as avg_days_to_complete
-      FROM tasks WHERE instr(lower(assignee), lower(?)) > 0
-    `).bind(slug).all(),
+      FROM tasks WHERE instr(lower(assignee), lower(?)) > 0 AND ${WORK}
+    `).bind(ctToday(), slug).all(),
 
     // Project velocity: each unfinished project with days on its home
     // product's current rung (the product's own stage clock). Finished =
@@ -90,7 +98,7 @@ export async function handleTrajectory(slug: string, env: Env, viewer: Viewer, i
         CAST(julianday('now') - julianday(p.created_at) AS INTEGER) as total_days
       FROM projects p ${homeProductJoin('p')}
       INNER JOIN tasks t ON t.project_id = p.id
-      WHERE instr(lower(t.assignee), lower(?)) > 0 AND NOT ${projectDoneSql('p')}
+      WHERE instr(lower(t.assignee), lower(?)) > 0 AND t.deleted_at IS NULL AND NOT ${projectDoneSql('p')}
       ORDER BY days_in_stage DESC
     `).bind(slug).all(),
   ]);

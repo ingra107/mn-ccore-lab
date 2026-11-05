@@ -12,7 +12,7 @@ import { initialAudience, isLabSeriesTitle, isMeetingAudience, meetingSeriesKey 
 import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/viewer-db';
 import { meetingArms } from '../lib/table-scope';
 import { prepActivityWhere } from '../lib/activity-feed-types';
-import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
+import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, notApprovalSql } from '../../shared/taskKinds';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
@@ -561,7 +561,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     env.DB.prepare(
       `SELECT t.id, t.short_title, t.title, t.description, t.kind, t.assignee, t.due_date, t.priority
        FROM tasks t
-       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T}
+       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND ${notApprovalSql('t')}
        ORDER BY t.due_date`
     ).bind(today).all(),
   ]);
