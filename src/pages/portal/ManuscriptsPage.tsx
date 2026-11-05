@@ -645,6 +645,7 @@ export default function ManuscriptsPage() {
       </DataPage>
 
       <CreateProjectModal
+        nounFromKind
         open={showCreate}
         onClose={() => setShowCreate(false)}
         // A manuscript made here starts at the first rung this page lists, so it

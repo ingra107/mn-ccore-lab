@@ -18,6 +18,10 @@ export interface CreateProjectPrefill {
 }
 
 interface CreateProjectModalProps {
+  /** Name the modal after the first product it is making, not "Project": the
+   *  Manuscripts page's button says New Manuscript, and a label is a claim. It
+   *  follows the picker, so switching to Abstract says Create Abstract. */
+  nounFromKind?: boolean
   open: boolean
   onClose: () => void
   prefill?: CreateProjectPrefill
@@ -46,7 +50,7 @@ interface CreateProjectModalProps {
 const DEFAULT_KIND = 'manuscript'
 
 
-export default function CreateProjectModal({ open, onClose, prefill, onCreate }: CreateProjectModalProps) {
+export default function CreateProjectModal({ open, onClose, prefill, onCreate, nounFromKind = false }: CreateProjectModalProps) {
   const { user } = useAuth()
 
   const categories = createCategoryOptions(user.canShowAllProjects)
@@ -109,11 +113,13 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     onClose()
   }
 
+  const noun = (nounFromKind && kindOptions.find((o) => o.value === kind)?.label) || 'Project'
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="New Project"
+      title={`New ${noun}`}
       maxWidth="lg"
       footer={
         <>
@@ -134,7 +140,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
               fontWeight: 600,
             }}
           >
-            Create Project
+            Create {noun}
           </button>
         </>
       }
@@ -172,16 +178,16 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
 
         {/* Category */}
         <Field label="Category" htmlFor="create-project-category" noContainer>
-          <InlineSelect value={category} options={categories} onChange={setCategory} />
+          <InlineSelect value={category} options={categories} onChange={setCategory} alwaysShowChevron />
         </Field>
 
         {/* The first product: what it is, and where it stands on its ladder */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="First product" htmlFor="create-project-kind" hint="What this project makes first" noContainer>
-            <InlineSelect value={kind} options={kindOptions} onChange={setKind} />
+            <InlineSelect value={kind} options={kindOptions} onChange={setKind} alwaysShowChevron />
           </Field>
           <Field label="Stage" htmlFor="create-project-stage" noContainer>
-            <InlineSelect value={effectiveStage} options={stageOptions} onChange={setStage} />
+            <InlineSelect value={effectiveStage} options={stageOptions} onChange={setStage} alwaysShowChevron />
           </Field>
         </div>
 
@@ -209,7 +215,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
 
         {/* Submit hint */}
         {!title.trim() && (
-          <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+          <p id="project-submit-hint" className="sr-only">
             Title is required.
           </p>
         )}

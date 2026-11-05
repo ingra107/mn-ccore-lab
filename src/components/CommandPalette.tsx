@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, LayoutDashboard, User, SquareCheck, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, BookOpen, DollarSign,
-  Users, Plus, ArrowRight, Command, CalendarPlus,
+  Users, Plus, ArrowRight, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
   Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink, X,
 } from 'lucide-react'
@@ -23,6 +23,8 @@ import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { chordLabelFor } from '../constants/chords'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
+import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
+import { modKeyLabel } from '../lib/platform'
 import { ICON_PROPS } from '../lib/iconProps'
 import { compactStageLabel } from '../lib/projectStage'
 import { projectShortLabel } from '../lib/displayNames'
@@ -177,8 +179,8 @@ export default function CommandPalette() {
           ? projectShortLabel(project)
           : isProjectPage
             ? 'Project'
-            : slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        sublabel: path,
+            // The name the sidebar uses: /portal/dashboard is Today, not "Dashboard".
+            : PORTAL_PAGE_LABELS[path] ?? slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
         icon: Clock,
         action: () => { navigate(path); setOpen(false) },
         category: 'recent',
@@ -780,20 +782,17 @@ export default function CommandPalette() {
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}>
+        <div className="flex items-center gap-4 px-4 py-2 border-t text-[10px] whitespace-nowrap" style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)' }}>
           {/* Keyboard hints hide on touch (.kbd-hint) so the list keeps the sheet. */}
           <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>↑↓ navigate</span>
           <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>↵ select</span>
           <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>esc close</span>
           {!isProjectMode && <span className="kbd-hint" style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
-          <span style={{ opacity: 'var(--ink-hint)' }}>
-            {tasks.filter(t => !isTaskDone(t)).length} tasks · {projects.length} projects · {team.length} people · {meetings.length} meetings
-          </span>
           {query.length >= 2 && (
             <button
               type="button"
               onClick={() => { navigate(`${PATHS.search}?q=${encodeURIComponent(query)}`); setOpen(false) }}
-              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px]"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] flex-shrink-0"
               style={{ color: 'var(--job-accent)', background: 'color-mix(in srgb, var(--job-accent) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--job-accent) 30%, transparent)', cursor: 'pointer' }}
               title="Open full Search page with this query"
             >
@@ -801,7 +800,7 @@ export default function CommandPalette() {
             </button>
           )}
           <span className="kbd-hint ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
-            <Command {...ICON_PROPS} size={9} />K to toggle
+            {modKeyLabel()}+K to toggle
           </span>
         </div>
       </motion.div>

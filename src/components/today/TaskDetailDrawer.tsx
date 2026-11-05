@@ -51,6 +51,14 @@ const DURATION_STEP = 15
 // `project` is still accepted (the row adapter passes it) but no longer used in
 // the drawer — #93 removed the duplicate WorkOnActions launch (it lives in the
 // task row's title area). Kept in the prop type for caller compatibility.
+/** A task made from a one-line ask often stores the same words as title and
+ *  description; the card already shows the title, so say it once (principle 2). */
+// eslint-disable-next-line react-refresh/only-export-components -- a small pure rule, tested with its drawer
+export function descriptionIsJustTheTitle(task: { title?: string | null; description?: string | null }): boolean {
+  const d = stripMeetingMarker(task.description ?? '').trim()
+  return !!d && d === (task.title ?? '').trim()
+}
+
 export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project?: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
@@ -221,7 +229,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       {/* Description — static context below the live feed; ghost opener when empty.
           stripMeetingMarker removes the machine dedup token [meeting:cal-...:hash]
           from display; stored value stays intact. */}
-      {task.description ? (
+      {descriptionIsJustTheTitle(task) ? null : task.description ? (
         <div style={{ marginTop: 12, marginBottom: 4 }}>
           {/* Rule 72: 3 lines; "more"/"less" only when it overflows (#8635). */}
           <CollapsibleBody maxLines={3} fontSize={12} contentKey={task.description}>

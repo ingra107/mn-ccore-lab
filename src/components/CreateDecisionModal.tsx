@@ -139,7 +139,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
       footer={
         <>
           {!title.trim() && (
-            <p id="decision-submit-hint" style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, marginRight: 'auto' }}>
+            <p id="decision-submit-hint" className="sr-only">
               Decision title is required.
             </p>
           )}

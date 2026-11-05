@@ -200,11 +200,11 @@ function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: str
       onFocus={() => setFocused(true)}
       onBlur={() => { setFocused(false); commit() }}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-      // compact (Today drawer) = the .tk ghost: no box at rest, hover tint only,
-      // a quiet ring on focus. The full editor keeps the boxed field.
+      // compact (Today drawer) = the same field edge at a smaller size: a field
+      // with no edge at rest read as plain text (rules-ui-design 20).
       className={`w-full outline-none rounded-md ${sizeClass}${compact ? ' hov-bg' : ''}`}
       style={compact
-        ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--job-accent)' : 'transparent'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
+        ? ({ color: 'var(--ink)', background: 'transparent', border: `1px solid ${focused ? 'var(--job-accent)' : 'var(--field-edge)'}`, '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties)
         : { color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--field-edge)' }}
     />
   )
