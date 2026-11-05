@@ -302,7 +302,7 @@ export default function DeadlinesPage() {
             )}
           </>
         ) : (
-          <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} onOpenTask={openTask} />
+          <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} projects={projectsBySlug} onOpenTask={openTask} />
         )}
       </div>
 
@@ -330,7 +330,7 @@ export default function DeadlinesPage() {
 
 // ── Deadline Row ─────────────────────────────────────────────
 
-function DeadlineRow({ item, onOpen }: { item: DeadlineItem; onOpen: () => void }) {
+export function DeadlineRow({ item, project, onOpen }: { item: DeadlineItem; project?: DeadlineProject; onOpen: () => void }) {
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
   const isMilestone = item.type === 'milestone'
@@ -340,7 +340,7 @@ function DeadlineRow({ item, onOpen }: { item: DeadlineItem; onOpen: () => void 
       type="button"
       data-deadline-row
       onClick={onOpen}
-      className="w-full text-left flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+      className="w-full text-left flex items-start sm:items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
       style={{ opacity: isDone ? 0.85 : 1, background: 'none', border: 'none', cursor: 'pointer' }}
     >
       {/* Type icon */}
@@ -352,46 +352,52 @@ function DeadlineRow({ item, onOpen }: { item: DeadlineItem; onOpen: () => void 
         <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t3)', flexShrink: 0, opacity: 0.85 }} />
       )}
 
-      {/* Title */}
-      <span
-        className="flex-1 text-sm truncate"
-        style={{
-          color: 'var(--ink)',
-          textDecoration: isDone ? 'line-through' : 'none',
-        }}
-        title={item.fullTitle}
-      >
-        {item.title}
+      {/* A phone gives the title its own line, whole, with the rest under it.
+          From sm up, one line as before. */}
+      <span className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-1">
+        {/* Title */}
+        <span
+          className="sm:flex-1 min-w-0 text-sm sm:truncate"
+          style={{
+            color: 'var(--ink)',
+            textDecoration: isDone ? 'line-through' : 'none',
+          }}
+          title={item.fullTitle}
+        >
+          {item.title}
+        </span>
+
+        <span className="flex items-center gap-3 min-w-0">
+          {/* Project: its short name (principle 8). `item.project` is the slug. */}
+          {project && (
+            <span className="text-[10px] truncate min-w-0 flex-1 sm:flex-none sm:max-w-[200px]" style={{ color: 'var(--sk-t3)', opacity: 0.85 }} title={project.fullTitle}>
+              {project.name}
+            </span>
+          )}
+
+          {/* Priority */}
+          {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0" style={{ color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--sk-t2)', backgroundColor: item.priority === 'urgent' ? 'color-mix(in srgb, var(--job-stale) 10%, transparent)' : 'var(--sk-line)' }}>
+              {item.priority}
+            </span>
+          )}
+
+          {/* Assignee */}
+          {person && (
+            <span className="flex-shrink-0" style={{ display: 'block', width: 22, height: 22 }}>
+              <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
+            </span>
+          )}
+
+          {/* Date: pushed right on a phone when no project name holds the space. */}
+          <DueLabel
+            due={item.due_date}
+            status={item.status}
+            className="text-[11px] flex-shrink-0 w-16 text-right ml-auto sm:ml-0"
+            style={{ opacity: item.isOverdue ? 1 : 0.85 }}
+          />
+        </span>
       </span>
-
-      {/* Project */}
-      {item.project && (
-        <span className="text-[10px] hidden sm:block" style={{ color: 'var(--sk-t3)', opacity: 0.85 }}>
-          {item.project}
-        </span>
-      )}
-
-      {/* Priority */}
-      {item.priority && (item.priority === 'urgent' || item.priority === 'high') && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ color: item.priority === 'urgent' ? 'var(--job-stale)' : 'var(--sk-t2)', backgroundColor: item.priority === 'urgent' ? 'color-mix(in srgb, var(--job-stale) 10%, transparent)' : 'var(--sk-line)' }}>
-          {item.priority}
-        </span>
-      )}
-
-      {/* Assignee */}
-      {person && (
-        <div style={{ width: 22, height: 22 }}>
-          <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} />
-        </div>
-      )}
-
-      {/* Date */}
-      <DueLabel
-        due={item.due_date}
-        status={item.status}
-        className="text-[11px] flex-shrink-0 w-16 text-right"
-        style={{ opacity: item.isOverdue ? 1 : 0.85 }}
-      />
     </button>
   )
 }
@@ -573,7 +579,7 @@ function UpcomingConferencesSection() {
 
 // ── Timeline View ────────────────────────────────────────────
 
-function DeadlineTimeline({ items, onOpenTask }: { items: DeadlineItem[]; onOpenTask: (task: TaskRow) => void }) {
+function DeadlineTimeline({ items, projects, onOpenTask }: { items: DeadlineItem[]; projects: Map<string, DeadlineProject>; onOpenTask: (task: TaskRow) => void }) {
   // Group by week — must be above the early return to satisfy Rules of Hooks.
   // When items is empty the memo returns an empty array and the EmptyState
   // renders below; the memo result is never used in that branch.
@@ -650,7 +656,7 @@ function DeadlineTimeline({ items, onOpenTask }: { items: DeadlineItem[]; onOpen
               {weekItems.map((item, idx) => (
                 <Fragment key={item.id}>
                   {idx > 0 && item.id === nowBeforeId && nowMarker}
-                  <DeadlineRow item={item} onOpen={() => { if (item.task) onOpenTask(item.task) }} />
+                  <DeadlineRow item={item} project={item.project ? projects.get(item.project) : undefined} onOpen={() => { if (item.task) onOpenTask(item.task) }} />
                 </Fragment>
               ))}
             </div>

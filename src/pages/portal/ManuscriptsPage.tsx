@@ -857,7 +857,7 @@ function PipelineBoard({
           column to the tallest (Published, 65 cards), so the two columns on
           screen were ~14,000px of empty gray and the cards sat off-screen. */}
       <div
-        className="grid grid-cols-1 gap-5 pb-4 md:overflow-x-auto md:grid-cols-[repeat(var(--ms-stages),minmax(180px,1fr))]"
+        className="grid grid-cols-1 gap-5 pb-4 md:overflow-x-auto md:grid-cols-[repeat(var(--ms-stages),minmax(148px,1fr))]"
         style={{ '--ms-stages': STAGES.length } as React.CSSProperties}
       >
         {STAGES.map((stage) => {
@@ -879,7 +879,9 @@ function PipelineBoard({
                     <DraggableCard key={p.slug} project={p} isAnyDragging={activeId !== null} />
                   ))}
                 </AnimatePresence>
-                {stageProjects.length === 0 && (
+                {/* Says so only while a card is in the air: at rest an empty column
+                    is just empty, and on a phone it stays one header tall. */}
+                {stageProjects.length === 0 && activeId !== null && (
                   <div style={{ padding: 'var(--sp-xl) var(--sp-sm)', textAlign: 'center' }}>
                     <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
                       Drop here
