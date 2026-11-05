@@ -12,6 +12,7 @@ import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
+import { isMilestone } from '../../../shared/taskKinds'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/SleekRows'
 import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
@@ -34,9 +35,13 @@ const eventColors: Record<string, { color: string; bg: string; mark?: string }> 
   milestone: { color: 'var(--ink)', bg: 'transparent', mark: 'var(--job-milestone)' },
 }
 
+// A milestone is a task with kind 'milestone' (the feed has no `milestone`
+// type since F07); it draws as a milestone and opens as a task.
+const visualType = (e: CalendarEvent): string => (isMilestone(e) ? 'milestone' : e.type)
+
 /** The gold diamond before a milestone's title; nothing for other types. */
 function EventMark({ e }: { e: CalendarEvent }) {
-  const mark = eventColors[e.type]?.mark
+  const mark = eventColors[visualType(e)]?.mark
   return mark ? <span aria-hidden="true" style={{ color: mark, marginRight: 3 }}>◆</span> : null
 }
 
@@ -53,12 +58,11 @@ function eventFullTitleHint(e: CalendarEvent): string | undefined {
 }
 
 // S13: every calendar event type gets a sensible destination, not just
-// meetings. Tasks open via the S1 deep-link consumer on My Tasks; milestones
-// (deadlines) land on the Deadlines page.
+// meetings. Tasks, milestone tasks included, open via the S1 deep-link
+// consumer on My Tasks.
 function eventLinkTo(e: CalendarEvent): string | null {
   if (e.type === 'meeting') return PATHS.meeting(e.id)
   if (e.type === 'task') return taskLinkFor(e.id)
-  if (e.type === 'milestone') return PATHS.deadlines
   return null
 }
 
@@ -91,7 +95,7 @@ export default function CalendarPage() {
     }
   }, [currentDate])
 
-  // Meetings and grant milestones are lab-wide; task deadlines are the
+  // Meetings are lab-wide; task deadlines (milestones included) are the
   // viewer's own, scoped by the Worker (api/routes/calendar.ts), so a task
   // row needs no assignee label here.
   const { data: rawEvents = [], isLoading } = useCalendarEvents({ start, end })
@@ -400,13 +404,13 @@ function DayCellRender({ dateStr, today, dayEvents, onOpenDay }: { dateStr: stri
       {isToday && <span className="cal-today-lbl">Today</span>}
       {dayEvents.length > 0 && (
         <div className="cal-dots" aria-hidden="true">
-          {dayEvents.slice(0, 4).map((e) => <span key={e.id} className="cal-dot" data-type={e.type} />)}
+          {dayEvents.slice(0, 4).map((e) => <span key={e.id} className="cal-dot" data-type={visualType(e)} />)}
           {dayEvents.length > 4 && <span className="cal-dot-more">+{dayEvents.length - 4}</span>}
         </div>
       )}
       <div className="cal-chips">
         {dayEvents.slice(0, 3).map((e) => {
-          const config = eventColors[e.type] || eventColors.task
+          const config = eventColors[visualType(e)] || eventColors.task
           const to = eventLinkTo(e)
           const Wrapper: ElementType = to ? Link : 'div'
           const wrapperProps = to ? { to } : {}
@@ -474,7 +478,7 @@ export function WeekView({ weekStart, events }: { weekStart: Date; events: Calen
 
             <div className="cal-week-events p-1.5">
               {dayEvents.map((e) => {
-                const config = eventColors[e.type] || eventColors.task
+                const config = eventColors[visualType(e)] || eventColors.task
                 const to = eventLinkTo(e)
                 const Wrapper: ElementType = to ? Link : 'div'
                 const wrapperProps = to ? { to } : {}
@@ -549,17 +553,13 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 const KIND_WORD: Record<string, string> = { meeting: 'Meeting', task: 'Task', milestone: 'Milestone' }
 
 function KindGlyph({ e }: { e: CalendarEvent }) {
-  const word = KIND_WORD[e.type] ?? e.type
+  const word = KIND_WORD[visualType(e)] ?? e.type
   if (e.type === 'meeting') return <span className="sr-kind" title={word}><Users {...ICON_PROPS} size={13} aria-hidden="true" /><span className="sr-only">{word}</span></span>
-  if (e.type === 'milestone') return <span className="sr-dia" title={word}><span aria-hidden="true">◆</span><span className="sr-only">{word}</span></span>
+  if (visualType(e) === 'milestone') return <span className="sr-dia" title={word}><span aria-hidden="true">◆</span><span className="sr-only">{word}</span></span>
   return <span className="sr-only">{word}</span>
 }
 
 function agendaContext(e: CalendarEvent) {
-  if (e.type === 'milestone') {
-    const grant = typeof e.meta?.grant_title === 'string' ? e.meta.grant_title : null
-    return grant ? <span className="sr-m">{grant}</span> : null
-  }
   if (e.type === 'task') {
     const status = typeof e.meta?.status === 'string' ? e.meta.status : 'todo'
     // To Do is the default: saying it on every row is the noise item 89 names.
@@ -572,7 +572,7 @@ function agendaContext(e: CalendarEvent) {
 // and every title ~26px in (prod check 2026-10-10). The kind column exists
 // only on a day that has a meeting or a milestone; the kind word for screen
 // readers rides in the title cell when the column is gone.
-const hasGlyph = (e: CalendarEvent) => e.type === 'meeting' || e.type === 'milestone'
+const hasGlyph = (e: CalendarEvent) => e.type === 'meeting' || isMilestone(e)
 
 const kindColumn: SleekColumn<CalendarEvent> = { key: 'kind', width: '18px', phone: 'lead', render: (e) => <KindGlyph e={e} /> }
 
@@ -584,7 +584,7 @@ const agendaRestColumns = (withKind: boolean): SleekColumn<CalendarEvent>[] => [
       const label = eventLabel(e)
       return (
         <div className="sr-tt">
-          {!withKind && <span className="sr-only">{KIND_WORD[e.type] ?? e.type}</span>}
+          {!withKind && <span className="sr-only">{KIND_WORD[visualType(e)] ?? e.type}</span>}
           {to ? <Link to={to} className="sr-x sr-open sr-lk" title={eventFullTitleHint(e)}>{label}</Link> : <span className="sr-x" title={eventFullTitleHint(e)}>{label}</span>}
           {e.type === 'task' && e.category === 'urgent' && <TaskPriorityLabel priority="urgent" />}
         </div>

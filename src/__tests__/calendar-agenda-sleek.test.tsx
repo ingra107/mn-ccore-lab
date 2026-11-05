@@ -27,7 +27,7 @@ const events: CalendarEvent[] = [
   { id: 'm1', date: today, title: 'Lab meeting', kind: null, type: 'meeting', category: 'biweekly' },
   { id: 't1', date: today, title: 'Submit the long-named data core synthesis', short_title: 'Data core synthesis', kind: 'task', type: 'task', category: 'urgent', meta: { assignee: 'nick-ingraham', status: 'in_progress' } },
   { id: 't2', date: later, title: 'Plain task', kind: 'task', type: 'task', category: 'medium', meta: { assignee: 'nick-ingraham', status: 'todo' } },
-  { id: 'ms1', date: later, title: 'Data freeze', kind: null, type: 'milestone', category: 'grant', meta: { grant_title: 'R01 LPV' } },
+  { id: 'ms1', date: later, title: 'Data freeze', kind: 'milestone', type: 'task', category: 'medium', meta: { status: 'todo' } },
   { id: 'old', date: past, title: 'Gone by', kind: 'task', type: 'task', category: 'low', meta: {} },
 ]
 
@@ -87,11 +87,9 @@ describe('Calendar Agenda: sleek rows', () => {
     const t2 = host.querySelector('[data-event-id="t2"]') as HTMLElement
     expect(t2.textContent).not.toContain('To Do')
     expect(t2.classList.contains('sr-urg')).toBe(false)
-    // A milestone carries the gold diamond and its grant as context.
+    // A milestone task carries the gold diamond.
     const ms = host.querySelector('[data-event-id="ms1"]') as HTMLElement
     expect(ms.querySelector('.sr-dia')).not.toBeNull()
-    expect(ms.textContent).toContain('R01 LPV')
-    expect(ms.querySelector('[data-col="owner"]')?.children.length).toBe(0)
   })
 
   it('a row click opens the event; the title is a real link and its click is not doubled', async () => {
@@ -148,5 +146,21 @@ describe('Calendar Agenda: sleek rows', () => {
     expect(t1.querySelector('.sr-ph-t a.sr-lk')).not.toBeNull()
     expect(t1.querySelector('.sr-ph-l')?.textContent).toContain('In Progress')
     expect(t1.querySelector('.sr-ph-trail [data-col="owner"]')).not.toBeNull()
+  })
+})
+
+// F07 (2026-11-05): the calendar feed no longer carries `type: 'milestone'`
+// rows. A milestone is a task with kind 'milestone': it keeps the gold
+// diamond and its title opens the TASK, not the Deadlines page.
+describe('Calendar Agenda: a milestone task', () => {
+  it('draws the diamond from kind and links to the task', async () => {
+    const evs: CalendarEvent[] = [
+      { id: 'k1', date: today, title: 'LOI due', kind: 'milestone', type: 'task', category: 'medium', meta: { status: 'todo' } },
+    ]
+    const host = await mountAgenda(1000, evs)
+    const row = host.querySelector('[data-event-id="k1"]') as HTMLElement
+    expect(row.querySelector('.sr-dia')).not.toBeNull()
+    const a = row.querySelector('a') as HTMLAnchorElement
+    expect(a.getAttribute('href')).toContain('open=k1')
   })
 })
