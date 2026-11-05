@@ -30,6 +30,7 @@ import { parseDbUtc } from '../../lib/time'
 import { getPersonInfo, getAllMembers } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { Button } from '../../components/ui/Button'
+import { FilterChip } from '../MyTasks/components/FilterChip'
 
 interface SearchResult {
   id: string
@@ -559,61 +560,26 @@ export default function SearchPage() {
         {/* S-11: secondary filter row — person / time / status. */}
         {results.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap mt-2 text-xs">
-            <label className="flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              <span>Person:</span>
-              <select
-                value={personFilter}
-                onChange={(e) => setPersonFilter(e.target.value)}
-                aria-label="Filter results by person"
-                className="rounded-md px-2 py-1"
-                style={{
-                  border: '1px solid var(--field-edge)',
-                  background: 'var(--field-bg)',
-                  color: 'var(--ink)',
-                }}
-              >
-                <option value="">Anyone</option>
-                {teamMembers.map(m => (
-                  <option key={m.slug} value={m.slug}>{m.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              <span>Time:</span>
-              <select
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-                aria-label="Filter results by time"
-                className="rounded-md px-2 py-1"
-                style={{
-                  border: '1px solid var(--field-edge)',
-                  background: 'var(--field-bg)',
-                  color: 'var(--ink)',
-                }}
-              >
-                <option value="all">All time</option>
-                <option value="7d">Last 7d</option>
-                <option value="30d">Last 30d</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              <span>Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                aria-label="Filter task results by status"
-                className="rounded-md px-2 py-1"
-                style={{
-                  border: '1px solid var(--field-edge)',
-                  background: 'var(--field-bg)',
-                  color: 'var(--ink)',
-                }}
-              >
-                <option value="all">All</option>
-                <option value="open">Open</option>
-                <option value="done">Done</option>
-              </select>
-            </label>
+            <span className="tk flex items-center gap-2 flex-wrap">
+              <FilterChip
+                label="Person"
+                value={personFilter || null}
+                options={[{ v: null, l: 'Anyone' }, ...teamMembers.map((m) => ({ v: m.slug ?? null, l: m.name }))]}
+                onChange={(v) => setPersonFilter(v ?? '')}
+              />
+              <FilterChip
+                label="Time"
+                value={timeFilter === 'all' ? null : timeFilter}
+                options={[{ v: null, l: 'All time' }, { v: '7d', l: 'Last 7d' }, { v: '30d', l: 'Last 30d' }]}
+                onChange={(v) => setTimeFilter((v ?? 'all') as TimeFilter)}
+              />
+              <FilterChip
+                label="Status"
+                value={statusFilter === 'all' ? null : statusFilter}
+                options={[{ v: null, l: 'All' }, { v: 'open', l: 'Open' }, { v: 'done', l: 'Done' }]}
+                onChange={(v) => setStatusFilter((v ?? 'all') as StatusFilter)}
+              />
+            </span>
 
             {/* S-02: view picker — Mixed / By type / Timeline. */}
             <div className="ml-auto">
@@ -809,7 +775,7 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2">
-            <p className="text-sm truncate flex-1" style={{ color: 'var(--ink)' }}>
+            <p className="text-sm flex-1 min-w-0" style={{ color: 'var(--ink)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               <HighlightedText text={formatBrandName(item.title)} tokens={tokens} />
             </p>
             <TypeBadge result={item} />
@@ -823,12 +789,13 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
             )}
           </div>
           {/* S-03: snippet (matched body text, with highlights). Falls back to subtitle when no snippet. */}
-          {item.snippet ? (
+          {/* A match in the title is already on the line above: printing it again
+              with "title:" says nothing. */}
+          {item.snippet && item.matchedField !== 'title' ? (
             <p
               className="text-[11px] mt-0.5"
               style={{
-                color: 'var(--slate)',
-                opacity: 'var(--ink-label)',
+                color: 'var(--sk-t2)',
                 lineHeight: 1.4,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -837,7 +804,7 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
               }}
             >
               {item.matchedField && (
-                <span style={{ opacity: 0.7, marginRight: 4 }}>
+                <span style={{ marginRight: 4 }}>
                   {item.matchedField}:
                 </span>
               )}
