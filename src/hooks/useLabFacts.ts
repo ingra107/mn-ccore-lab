@@ -1,9 +1,9 @@
 /**
  * useLabFacts -- every number on the public Home, from live data.
  *
- * Papers, years and areas come from /api/publications; the active-project
- * count from /api/projects (anonymous callers get the status only, never a
- * title); funding from /api/grants (usePublicGrants: funded awards for everyone). People and sites are the roster and the
+ * Papers, years and areas come from /api/publications; the active research
+ * project count from /api/projects (anonymous callers get status and domain only,
+ * never a title); funding from /api/grants (usePublicGrants: funded awards for everyone). People and sites are the roster and the
  * site list, counted once each (lib/roster, data/clifSites). A count whose
  * list has not loaded yet is null, so the page shows a dash, never a guess.
  */
@@ -52,10 +52,10 @@ export function useLabFacts() {
       // count above runs back to 1935 and read as "579 ... 2017 to 2026".
       papersShown: publications ? byYear.reduce((sum, y) => sum + y.n, 0) : null,
       byYear,
-      areas: areaCounts(list),
+      areas: areaCounts(list, thisYear - YEARS_SHOWN + 1),
       recent,
       featured,
-      activeProjects: projectRows ? projectRows.filter((p) => isProjectActive(p.status)).length : null,
+      activeProjects: projectRows ? projectRows.filter((p) => isProjectActive(p.status) && p.domain === 'Research').length : null,
       sites: CLIF_SITES.length,
       people: rosterCount,
       funders: [...new Set(activeGrants.map((g) => agencyOf(g.venue)).filter(Boolean))],

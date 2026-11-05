@@ -64,7 +64,7 @@ export default function PublicationFilters({
   const years = [...new Set(publications.map((p) => p.year))].sort(
     (a, b) => b - a
   )
-  const statuses = ['Published', 'In Review', 'In Preparation']
+  const statuses = ['Published', 'Abstract', 'Preprint', 'In Review', 'In Preparation']
   const topics = [
     ...new Set(publications.flatMap((p) => p.topics)),
   ].sort((a, b) => topicLabel(a).localeCompare(topicLabel(b)))

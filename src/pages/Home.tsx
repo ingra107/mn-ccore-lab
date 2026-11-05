@@ -74,7 +74,7 @@ export default function Home() {
       {/* The proof: live counts, fixed dark in both themes */}
       <section className="pub-band" aria-label="The lab in numbers">
         <div><b>{facts.papersShown ?? dash}</b><small>Papers by lab members, {firstYear.year} to {thisYear.year}</small></div>
-        <div><b>{facts.activeProjects ?? dash}</b><small>Active projects</small></div>
+        <div><b>{facts.activeProjects ?? dash}</b><small>Active research projects</small></div>
         <div><b>{facts.sites}</b><small>Institutions sharing ICU data</small></div>
         <div><b>{facts.people}</b><small>People on the team</small></div>
         {/* Bar heights are pixels, not percent of the row: the year and count
@@ -93,15 +93,15 @@ export default function Home() {
           {facts.activeGrants
             ? <>Funded by {facts.funders.join(' and ')} through {facts.activeGrants} active {facts.activeGrants === 1 ? 'grant' : 'grants'}{facts.mechanisms.length > 0 ? ` (${facts.mechanisms.join(', ')})` : ''}. </>
             : null}
-          Founding member of the CLIF Consortium. <Link to="/network">See the network</Link>
+          Co-Chair of the CLIF Consortium. <Link to="/network">See the network</Link>
         </p>
       </section>
 
       <SecHead title="What we study" />
       <div className="pub-areas">
         {facts.areas.map(({ area, papers }) => (
-          <Link key={area.id} to={areaHref(area)} className="pub-area">
-            <span className="pub-n">{papers} {papers === 1 ? 'paper' : 'papers'}</span>
+          <Link key={area.id} to={areaHref(area, facts.byYear.map((y) => y.year))} className="pub-area">
+            <span className="pub-n">{papers} {papers === 1 ? 'paper' : 'papers'} since {firstYear.year}</span>
             <span className="pub-rt" style={{ margin: '4px 0 0' }}>{area.label}</span>
             <p>{area.blurb}</p>
           </Link>

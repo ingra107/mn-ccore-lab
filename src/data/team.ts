@@ -9,8 +9,8 @@ export const directors: Director[] = [
     role: 'Co-Director, MN-CCORE',
     initials: 'NI',
     slug: 'nick-ingraham',
-    bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
-    fullBio: 'Physician-scientist at the University of Minnesota studying how provider-level variation in clinical practice impacts ICU outcomes. Founding member of the CLIF Consortium. Research interests include lung-protective ventilation adherence, clinical decision-making styles, and multi-center ICU data science.',
+    bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Co-Chair of the CLIF Consortium.',
+    fullBio: 'Physician-scientist at the University of Minnesota studying how provider-level variation in clinical practice impacts ICU outcomes. Co-Chair of the CLIF Consortium. Research interests include lung-protective ventilation adherence, clinical decision-making styles, and multi-center ICU data science.',
     links: [
       { label: 'ORCID', href: 'https://orcid.org/0000-0002-0292-0594' },
       { label: 'GitHub', href: 'https://github.com/ingra107' },
@@ -64,7 +64,7 @@ export const seniorMentors: TeamMember[] = [
     slug: 'jeff-chipman',
     orcidId: '0000-0002-0759-3705', // #905 OpenAlex backfill (Jeffrey G. Chipman, UMN)
     authorName: 'Chipman JG',
-    bio: 'Professor of Surgery and surgical critical care physician. Co-investigator on multiple MNCCORE studies involving provider variation and ventilator management.',
+    bio: 'Surgical critical care physician at Baylor College of Medicine. Co-investigator on multiple MNCCORE studies involving provider variation and ventilator management.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-08/Copy%20of%20UMN-8471.jpg?itok=UqPdFLCU',
     photoFrame: { y: 22, zoom: 1.2 },
   },

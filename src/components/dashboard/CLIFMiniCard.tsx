@@ -15,10 +15,10 @@ const CLIF_SITES = [
   { label: 'Johns Hopkins', x: 236, y: 72 },
   { label: 'Emory', x: 210, y: 100 },
   { label: 'UCSF', x: 30, y: 68 },
-  { label: 'UCLA', x: 35, y: 88 },
   { label: 'Michigan', x: 195, y: 55 },
-  { label: 'Washington U', x: 175, y: 73 },
-  { label: 'Columbia', x: 240, y: 60 },
+  { label: 'Sunnybrook', x: 214, y: 44 },
+  { label: 'Cornell', x: 240, y: 60 },
+  { label: 'MIMIC (BIDMC)', x: 248, y: 52 },
   { label: 'OHSU', x: 32, y: 38 },
 ]
 

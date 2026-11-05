@@ -192,10 +192,11 @@ const PUBLIC_PUBLICATION: AnonShape = {
   id: true, title: true, authors: true, journal: true, year: true, status: true,
   doi: true, pubmed: true, abstract: true, topics: true, featured: true, author_slugs: true,
 };
-// Logged-out visitors see published work only; 'In Preparation' and
-// 'In Review' rows (title, authors, abstract) stay with signed-in members.
-// 'Published' is the only finished value in prod and the POST default.
-const PUBLISHED_ONLY: AnonRowFilter = (row) => row.status === 'Published';
+// Logged-out visitors see finished public work: papers, abstracts and preprints.
+// 'In Preparation' and 'In Review' rows (title, authors, abstract) stay with
+// signed-in members. 'Published' is the POST default.
+const PUBLIC_STATUSES = new Set<unknown>(['Published', 'Abstract', 'Preprint']);
+const PUBLISHED_ONLY: AnonRowFilter = (row) => PUBLIC_STATUSES.has(row.status);
 // Funded awards only (Nick 2026-10-12): an anonymous reader sees an award that
 // is live (bucket 'active' = kind award, non-terminal stage). Applications,
 // proposals, honors and ended awards stay private, rows and all.
@@ -945,9 +946,10 @@ defineRoute({
   path: '/api/projects',
   auth: 'public',
   anonShape: {
-    // Home and /pulse count active projects from `status`; nothing public
-    // renders a project's title, notes, links or folders.
-    data: [{ status: true }],
+    // Home and /pulse count active projects from `status`, and Home counts
+    // research ones from `domain`; nothing public renders a project's title,
+    // notes, links or folders.
+    data: [{ status: true, domain: true }],
     count: true,
   },
   // P7: a non-PI never receives the PI's local-path fields (api/lib/pi-only-project-fields.ts).

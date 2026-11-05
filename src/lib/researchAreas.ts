@@ -82,9 +82,11 @@ export function areaById(id: string | null | undefined): ResearchArea | undefine
   return RESEARCH_AREAS.find((a) => a.id === id)
 }
 
-/** Where an area's card links: the title-matched list, or its raw topic tag. */
-export function areaHref(area: ResearchArea): string {
-  return area.terms ? `/publications?area=${area.id}` : `/publications?topic=${encodeURIComponent(area.topic ?? '')}`
+/** Where an area's card links: the title-matched list, or its raw topic tag.
+ *  Pass `years` when the card shows a count for those years, so the list matches it. */
+export function areaHref(area: ResearchArea, years?: ReadonlyArray<number>): string {
+  const base = area.terms ? `/publications?area=${area.id}` : `/publications?topic=${encodeURIComponent(area.topic ?? '')}`
+  return years?.length ? `${base}&year=${years.join(',')}` : base
 }
 
 export interface AreaCount {
@@ -94,9 +96,12 @@ export interface AreaCount {
   papers: number
 }
 
-/** Published papers per area, in RESEARCH_AREAS order. */
-export function areaCounts(pubs: ReadonlyArray<Pick<Publication, 'title' | 'status' | 'topics'>>): AreaCount[] {
-  const published = pubs.filter(isPublished)
+/** Published papers per area from `fromYear` on, in RESEARCH_AREAS order. */
+export function areaCounts(
+  pubs: ReadonlyArray<Pick<Publication, 'title' | 'status' | 'topics'> & { year?: number }>,
+  fromYear = 0,
+): AreaCount[] {
+  const published = pubs.filter((p) => isPublished(p) && (p.year ?? 0) >= fromYear)
   return RESEARCH_AREAS.map((area) => ({
     area,
     papers: area.terms

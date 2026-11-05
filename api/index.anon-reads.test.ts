@@ -167,7 +167,7 @@ describe('anonymous reads (REQUIRE_AUTH=1)', () => {
 
   it('the public shapes keep what the website renders', async () => {
     const projects = JSON.parse((await get('/api/projects')).text)
-    expect(projects.data).toEqual([{ status: 'active' }, { status: 'active' }])
+    expect(projects.data).toEqual([{ status: 'active', domain: null }, { status: 'active', domain: null }])
     const team = JSON.parse((await get('/api/team')).text)
     expect(team.data).toEqual([{ slug: 'nate-mesfin', name: 'Nate Mesfin' }, { slug: 'nick-ingraham', name: 'Nick Ingraham' }])
     const pubs = JSON.parse((await get('/api/publications')).text)

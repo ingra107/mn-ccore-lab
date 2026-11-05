@@ -22,7 +22,7 @@ export default function Contact() {
       <PublicHead
         kicker="Contact"
         title={<>Find us, <em>write</em> to us.</>}
-        lede="For a collaboration, a question about our research, or a press inquiry, email us. We read every message."
+        lede="For a collaboration, a question about our research, or a press inquiry, email us."
         small
       />
 
@@ -39,7 +39,7 @@ export default function Contact() {
               Minneapolis, MN 55455
             </p>
             <p style={{ margin: '16px 0 0', fontSize: 15 }}>
-              <a href="mailto:mnccore@umn.edu" className="pub-link">mnccore@umn.edu</a>
+              <a href="mailto:ingra107@umn.edu" className="pub-link">ingra107@umn.edu</a>
             </p>
           </div>
           <div className="pub-map">

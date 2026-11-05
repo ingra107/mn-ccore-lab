@@ -1,3 +1,19 @@
+# ▶▶ 2026-11-04 (work, night): PUBLIC SITE AUDIT SHIPPED. Schema unchanged (v157); `publications.status` takes two new values, no CHECK on the column.
+
+## Shipped
+- Faces, layout and claims, then Nick's data rulings. Detail: CHANGELOG 2026-11-04 "Public site audit". Backups, forward and rollback SQL: PB `Scratch/public-site-audit-2026-11-04/`. Time Travel bookmarks before each write: `000007e3-00000068-0000511a-640adc4b6a1a7a2bb3123f959b7589d1`, `000007e3-0000007a-0000511a-041576292084c77c7c6377f3386d4c0d`.
+
+## Landmines added
+- **Vitest does not type-check and the commit gate does not run `tsc -b`.** A type error in a test passes the commit and stops the deploy at the build, after the push. Run `npx tsc -b` before committing a test change.
+- **`npm run deploy:pages:gated | tail` reports the pipe's exit 0.** A failed build looked like a finished deploy. Redirect to a file and read `$?`.
+- `scripts/fetch-publications.ts` still writes the member's name as the whole byline when contributors are missing, and still matches OpenAlex name clusters. Before the next import, read `src/data/publicationExclusions.json`; `dave-macdonald`'s `openalexId` A5077559572 is a conflated cluster. New rows also arrive as `Published`, so a new abstract counts as a paper until someone relabels it.
+
+## Open
+- 5 journal fields still read "PubMed" (Dudley 4, McEachron 1). `GrantGantt.test.tsx` "a swipe up that starts on a bar" timed out the commit gate twice on 2026-11-04 and passes alone. Six people have no photo; photos hotlink med.umn.edu, including Jeff Chipman's now that he has moved.
+- Footer "Join the lab" conflicts with the site's not-recruiting purpose (`project_public-site-purpose`).
+
+---
+
 # ▶▶ 2026-11-04 (work, late): #169 LIVE, WAITING ON ONE REAL PLAN. main `23f8e898` deployed `3339bf31` (probe PASS). PB main `96db2a6fb`, home listener restarted. **Schema v157.**
 
 ## Shipped

@@ -155,17 +155,23 @@ describe('GrantGantt drag gesture, real touch input', () => {
       const bar = document.querySelector<HTMLElement>('[data-testid="gantt-bar-p-k23"]')!
       expect(getComputedStyle(bar).touchAction).toBe('pan-y')
       let gaps: number[] = []
-      for (let attempt = 0; attempt < 3; attempt++) {
+      // Under the same load a gesture can miss this frame entirely: no touchmove
+      // arrives, which says nothing about the bar, so it is re-run too (three of
+      // five gate runs on 2026-11-04 failed here and all passed alone). A run where
+      // none ever arrives still fails below.
+      for (let attempt = 0; attempt < 6; attempt++) {
         cancelled = []
         onMove.mockClear() // a too-slow attempt was a hold; it is not the swipe under test
         const o = at(0, 0)
         await touch('touchStart', o)
         for (let i = 1; i <= 10; i++) await touch('touchMove', { x: o.x + i * 0.4, y: o.y - i * 8 })
         await touch('touchEnd')
-        await expect.poll(() => cancelled.length).toBeGreaterThan(0)
+        const arrived = await expect.poll(() => cancelled.length, { timeout: 500 }).toBeGreaterThan(0).then(() => true, () => false)
+        if (!arrived) { await wait(250); continue }
         gaps = [...gaps, firstMoveAt - startAt]
         if (firstMoveAt - startAt < BAR_DRAG.holdMs) break
       }
+      expect(gaps.length, 'no swipe ever reached this frame').toBeGreaterThan(0)
       expect(gaps[gaps.length - 1], `every swipe reached the bar after the hold delay: ${gaps.join(', ')} ms`).toBeLessThan(BAR_DRAG.holdMs)
       expect(cancelled.every((c) => !c)).toBe(true)
       expect(onMove).not.toHaveBeenCalled()

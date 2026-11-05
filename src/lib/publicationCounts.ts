@@ -9,8 +9,9 @@
  * the byline by `authorName`, so the two disagreed for anyone on a shared paper.
  *
  * The rules, so every surface reads the same number:
- *   - A lab "publication" is a row with status 'Published'. Papers in review or
- *     in preparation are named as such, never folded into the headline.
+ *   - A lab "publication" is a row with status 'Published'. Abstracts, preprints
+ *     and papers in review or in preparation are named as such, never folded
+ *     into the headline.
  *   - A member's papers are the rows whose `authorSlugs` carry the member's slug
  *     OR whose byline lists the member's `authorName` as a whole name (the
  *     MemberPage rule; `authorSlugs` alone misses co-authored rows, see

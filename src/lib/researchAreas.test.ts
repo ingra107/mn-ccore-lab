@@ -19,6 +19,23 @@ describe('researchAreas', () => {
     expect(by.data).toBe(0)
   })
 
+  it('counts only the years asked for, and links to the same years', () => {
+    const counts = areaCounts([
+      { title: 'COVID-19 trial', status: 'Published', topics: [], year: 2016 },
+      { title: 'COVID-19 cohort', status: 'Published', topics: [], year: 2020 },
+    ], 2017)
+    expect(counts.find((c) => c.area.id === 'covid')?.papers).toBe(1)
+    expect(areaHref(areaById('covid')!, [2019, 2020])).toBe('/publications?area=covid&year=2019,2020')
+  })
+
+  it('leaves abstracts and preprints out of the paper count', () => {
+    const counts = areaCounts([
+      { title: 'COVID-19 abstract', status: 'Abstract', topics: [] },
+      { title: 'COVID-19 preprint', status: 'Preprint', topics: [] },
+    ])
+    expect(counts.find((c) => c.area.id === 'covid')?.papers).toBe(0)
+  })
+
   it('looks an area up by id and rejects an unknown one', () => {
     expect(areaById('covid')?.label).toBe('COVID-19')
     expect(areaById('nope')).toBeUndefined()

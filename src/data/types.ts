@@ -46,13 +46,17 @@ export interface TeamMember {
   email?: string
 }
 
+// 'Abstract' and 'Preprint' are finished public work that is not a paper: they stay
+// in the list under their own status and out of every paper count (isPublished).
+export type PublicationStatus = 'Published' | 'Abstract' | 'Preprint' | 'In Review' | 'In Preparation'
+
 export interface Publication {
   id: string
   authors: string
   title: string
   journal: string
   year: number
-  status: 'Published' | 'In Review' | 'In Preparation'
+  status: PublicationStatus
   doi?: string
   pubmed?: string
   abstract?: string
@@ -86,6 +90,9 @@ export interface Project {
   // migration's rationale. Nullable: pre-2026-06-06 rows may not be
   // backfilled.
   type?: string | null
+  // Research, Grants, Teaching, Personal or Professional Development. The public
+  // home page counts active projects in Research.
+  domain?: string | null
   pi: string
   slug: string
   short_name?: string

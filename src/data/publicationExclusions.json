@@ -123,6 +123,147 @@
     {
       "id": "gen-adams-dudley-2004-figure-c27-scenario-6-three",
       "reason": "not a lab paper (AHRQ report figure)"
+    },
+    {
+      "id": "gen-10-1136-bmj-1-3878-953",
+      "doi": "10.1136/bmj.1.3878.953",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1960-fistula-of-sigmoid-colon-with",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1960-neurilemmoma-of-10th-dorsal-nerve",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1960-survival-of-sigmoid-colon-after",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2133-1974-tb12505-x",
+      "doi": "10.1111/j.1365-2133.1974.tb12505.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1016-s0300-9785-74-80075-x",
+      "doi": "10.1016/s0300-9785(74)80075-x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2133-1983-tb11586-x",
+      "doi": "10.1111/j.1365-2133.1983.tb11586.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1984-progressive-bacterial-synergistic-gangrene-in",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2230-1987-tb01881-x",
+      "doi": "10.1111/j.1365-2230.1987.tb01881.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2133-1988-tb05402-x",
+      "doi": "10.1111/j.1365-2133.1988.tb05402.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2230-1988-tb00647-x",
+      "doi": "10.1111/j.1365-2230.1988.tb00647.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1111-j-1365-2133-1991-tb05513-x",
+      "doi": "10.1111/j.1365-2133.1991.tb05513.x",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1991-is-graft-versus-leukaemia-separable",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-1993-isolated-unilateral-clavicular-hypoplasia-a",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-dave-macdonald-2001-using-a-transcultural-patient-based",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-4064-5-1-75-87",
+      "doi": "10.4064/-5-1-75-87",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1097-00006231-198405000-00008",
+      "doi": "10.1097/00006231-198405000-00008",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1016-j-annemergmed-2020-09-318",
+      "doi": "10.1016/j.annemergmed.2020.09.318",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1039-c6ta04289a",
+      "doi": "10.1039/c6ta04289a",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1016-j-jneb-2018-10-006",
+      "doi": "10.1016/j.jneb.2018.10.006",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1016-j-jand-2018-08-098",
+      "doi": "10.1016/j.jand.2018.08.098",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1002-alz70858-106799",
+      "doi": "10.1002/alz70858_106799",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-18848-2327-7920-cgp-v28i01-79-97",
+      "doi": "10.18848/2327-7920/cgp/v28i01/79-97",
+      "reason": "wrong person, same name (namesake via OpenAlex name cluster) -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-10-1101-2021-12-23-21267853",
+      "doi": "10.1101/2021.12.23.21267853",
+      "reason": "preprint of the CID 2022 paper already listed -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-nick-ingraham-2012-the-first-twoweeks-in-rat",
+      "reason": "truncated duplicate of the 2012 J Signal Transduct paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-methods-for-literature-search",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-methods-for-assessing-the-usefulness",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-quality-based-purchasing-technical-expert",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-assessing-the-usefulness-of-outcome",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-general-approach-to-simulations",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
+    },
+    {
+      "id": "gen-adams-dudley-2004-results-of-simulations-to-assess",
+      "reason": "chapter of the 2004 AHRQ report 'Strategies To Support Quality-based Purchasing', listed as its own paper -- public site audit 2026-11-04, approved by Nick"
     }
   ]
 }
