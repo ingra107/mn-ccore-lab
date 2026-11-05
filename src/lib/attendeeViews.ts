@@ -22,6 +22,8 @@ export interface AttendeeView {
   listed: boolean
   /** A team member. False for outside emails, typed names and unnamed ids; the tooltip says so. */
   onTeam: boolean
+  /** The team member's slug, for a link to their page. */
+  slug?: string
   /** Profile photo for a team member who has one (rules-ui-design 18). */
   photo?: string
 }
@@ -65,7 +67,7 @@ export function resolveAttendeeViews(values: readonly unknown[] | null | undefin
       const name = known ? fullNameForSlug(slug) : rowName
       view = !name || NETID.test(name)
         ? unlisted(v)
-        : { ...fromName(v, name, known ? firstNameFor(slug) : undefined, true), photo: photoFor(slug) ?? row?.photoUrl }
+        : { ...fromName(v, name, known ? firstNameFor(slug) : undefined, true), slug, photo: photoFor(slug) ?? row?.photoUrl }
     } else if (v.includes('@')) {
       const local = v.split('@')[0] ?? ''
       view = NETID.test(local) ? unlisted(v) : fromName(v, words(local) || v)

@@ -49,13 +49,15 @@ export function sessionProjectName(raw: unknown): string | null {
 export const PROJECT_NAME_SQL =
   `(CASE WHEN project_name LIKE '[%' THEN NULLIF(TRIM(REPLACE(REPLACE(REPLACE(project_name, '[', ''), ']', ''), '"', '')), '') ELSE NULLIF(project_name, '') END)`
 
-/** Short names by lower(title), one row per title. Joined ONCE onto the
- *  already-filtered, already-limited rows: a correlated subquery per session
- *  row read 174k rows (141 ms) on a 13.8k-row table on every Session History
- *  load (cold review, 2026-10-14). */
+/** Short name and slug by lower(title), one row per title; a deleted project
+ *  has no page to link to. A session records only a project's NAME, so this is
+ *  how a row finds its project. Joined ONCE onto the already-filtered,
+ *  already-limited rows: a correlated subquery per session row read 174k rows
+ *  (141 ms) on a 13.8k-row table on every Session History load (cold review,
+ *  2026-10-14). */
 const PROJECT_SHORT_JOIN =
-  `LEFT JOIN (SELECT lower(title) AS title_key, MAX(short_name) AS short_name FROM projects
-     WHERE short_name IS NOT NULL AND short_name != '' GROUP BY lower(title)) sp
+  `LEFT JOIN (SELECT lower(title) AS title_key, MAX(NULLIF(short_name, '')) AS short_name, MAX(slug) AS slug FROM projects
+     WHERE deleted_at IS NULL GROUP BY lower(title)) sp
    ON sp.title_key = lower(s.project_name)`
 
 const SESSION_COLUMNS =
@@ -88,7 +90,7 @@ export async function handlePBSessions(request: Request, env: Env): Promise<Resp
   sql += ' ORDER BY started_at DESC LIMIT ?'
   binds.push(limit)
   // Filter and limit first, then look up short names for the rows kept.
-  sql = `SELECT s.*, sp.short_name AS project_short_name FROM (${sql}) s ${PROJECT_SHORT_JOIN} ORDER BY s.started_at DESC`
+  sql = `SELECT s.*, sp.short_name AS project_short_name, sp.slug AS project_slug FROM (${sql}) s ${PROJECT_SHORT_JOIN} ORDER BY s.started_at DESC`
 
   const result = await env.DB.prepare(sql).bind(...binds).all()
   return json({ data: result.results || [], count: (result.results || []).length })

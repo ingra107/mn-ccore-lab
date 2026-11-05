@@ -472,12 +472,24 @@ export interface ProjectUpdateRow {
   created_at: string
 }
 
+/** A decision logged on a meeting (hub_decisions.meeting_id), as the meeting read sends it. */
+export interface MeetingLoggedDecision {
+  id: string
+  title: string
+  decided_by: string | null
+  outcome: string | null
+  outcome_status: string
+  created_at: string
+}
+
 export interface MeetingDetail extends MeetingRow {
   // T3/T7: action_items is real task rows (TASK_SELECT_COLS-shaped) —
   // `tasks WHERE meeting_id IN (id, source_id)`. The legacy action_items
   // table + its /api/action-items routes/hooks were retired in T19 (#547).
   action_items: TaskRow[]
   agenda_items: AgendaItemRow[]
+  /** What "Log decision" wrote. `decisions` above is the PB debrief's JSON, a separate list. */
+  logged_decisions?: MeetingLoggedDecision[]
   /** The server's answer to "may this viewer flip the audience and grant projects" (owner or Nick). */
   can_manage_access?: boolean
 }
