@@ -61,6 +61,18 @@ describe('Calendar page', () => {
   })
 })
 
+describe('Calendar date labels (R14)', () => {
+  it('a row on its hard deadline says so; a row on its due date does not', async () => {
+    const today = new Date()
+    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-15`
+    const row = (id: string, title: string, date_kind: string) => ({ id, date, title, kind: 'task', type: 'task', category: 'medium', meta: { date_kind } })
+    stubFetch([['/api/calendar/events', () => respond(200, { data: [row('t1', 'Progress report', 'deadline'), row('t2', 'Write summary', 'due')], count: 2 })]])
+    const host = await mount(tree('/portal/calendar', '/portal/calendar', <CalendarPage />), { ready: (h) => text(h).includes('Write summary'), label: 'calendar rows' })
+    expect(text(host)).toContain('Deadline: Progress report')
+    expect(text(host)).not.toContain('Deadline: Write summary')
+  })
+})
+
 describe('Artifact page', () => {
   const artifact = {
     id: 'art_1', title: 'The doc', body_md: 'Body', content_type: 'markdown', visibility: 'team', version: 1,
