@@ -470,6 +470,16 @@ function tzOffsetMinutes(tzid: string, ymd: string, hms: string): number {
   }
 }
 
+/**
+ * The UTC instant a civil day (`YYYY-MM-DD`) begins in an IANA zone, in the same
+ * ISO form the parser stores, so it compares as a string against start_at. DST-safe
+ * by the two-pass probe above, which is why it lives here.
+ */
+export function civilDayStartUtc(civil: string, zone: string): string {
+  const ymd = civil.replace(/-/g, '')
+  return composeIso(ymd, '000000', tzOffsetMinutes(zone, ymd, '000000'))
+}
+
 // ─── RRULE ──────────────────────────────────────────────────────────────
 
 interface RRule {
