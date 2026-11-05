@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronDown, Calendar, ArrowRight, AlertTriangle, CheckCircle2, GitBranch } from 'lucide-react'
+import { Calendar, ArrowRight, AlertTriangle, CheckCircle2, GitBranch } from 'lucide-react'
 import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
 import { formatShortDate, isOverdue, civilDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { Button } from './ui/Button'
+import { Caret } from './ui/Caret'
 
 // ── Status helpers ──────────────────────────────────────────
 
@@ -177,8 +178,8 @@ function CascadeRow({
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
           >
             {expanded
-              ? <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-              : <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              ? <Caret />
+              : <Caret dir="right" />
             }
           </Button>
         ) : (

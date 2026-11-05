@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { AlertTriangle, ChevronDown, ChevronRight, Layers, ThumbsUp } from 'lucide-react'
+import { AlertTriangle, ChevronRight, Layers, ThumbsUp } from 'lucide-react'
 import { TaskRow as CardTaskRow } from '../today/TaskRow'
 import { Face } from '../today/skin'
 import { getPersonInfo } from '../../data/team'
@@ -26,6 +26,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 import { PRIORITY_OPTIONS } from '../../lib/taskConstants'
 import { hasBlockers } from '../../../shared/blockedBy'
 import { Button } from '../ui/Button'
+import { Caret } from '../ui/Caret'
 
 // Board cards are the Today card (today/TaskRow over tasks/TaskCardRow), the same
 // one List renders: bold title, the project as a muted line, due pill + priority
@@ -300,7 +301,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect, project
                       title="Collapse column"
                       aria-label={`Collapse ${col.label}`}
                     >
-                      <ChevronDown {...ICON_PROPS} size={12} />
+                      <Caret />
                     </Button>
                     {col.label}
                     <span className="tk-bd-n">{columnTasks.length}</span>
@@ -334,7 +335,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect, project
                     className="tk-bd-lh"
                     aria-expanded={!isLaneCollapsed}
                   >
-                    {isLaneCollapsed ? <ChevronRight {...ICON_PROPS} size={14} /> : <ChevronDown {...ICON_PROPS} size={14} />}
+                    <Caret dir={isLaneCollapsed ? 'right' : 'down'} />
                     {renderLaneLabel(lane.key)}
                     <span className="tk-bd-n">{lane.tasks.length}</span>
                   </button>

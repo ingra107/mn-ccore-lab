@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import HoverCard from '../HoverCard'
 import type { HoverCardData } from '../HoverCard'
@@ -11,6 +11,7 @@ import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { STATUS_FILLS } from '../../lib/projectHealthFills'
+import { Caret } from '../ui/Caret'
 
 // Color jobs (rules-ui-design 21): orange = going stale, so only the at-risk
 // band (At Risk, Critical) carries it; Healthy and Attention are gray text.
@@ -205,7 +206,7 @@ function ProjectHealthCard() {
               className="hit-area cursor-pointer flex items-center gap-1"
               style={{ background: 'none', border: 'none', padding: 0, fontSize: 'var(--label-size)', color: 'var(--sk-t3)' }}
             >
-              {showAll ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
+              <Caret dir={showAll ? 'up' : 'down'} />
               {showAll ? 'Show fewer' : `Show all ${ordered.length}`}
             </button>
           )}

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { FaceDisc } from './today/skin'
 import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
@@ -7,7 +6,7 @@ import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors } from '../data/team'
 import { getAssignableMembers } from '../lib/assignableMembers'
 import { displayName } from '../lib/nameUtils'
-import { ICON_PROPS } from '../lib/iconProps'
+import { Caret } from './ui/Caret'
 
 interface InlineAssigneePickerProps {
   value: string
@@ -143,7 +142,7 @@ export default function InlineAssigneePicker({ value, onChange, compact, display
             {value ? displayName(value, 'short') : person.name.split(' ')[0]}
           </span>
         )}
-        <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
+        <Caret />
       </button>
       )}
 

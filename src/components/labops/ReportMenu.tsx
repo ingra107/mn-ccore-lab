@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, Copy, Download, Printer, RefreshCw } from 'lucide-react'
+import { Copy, Download, Printer, RefreshCw } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { localDateKey } from '../../lib/dateUtils'
 import { isProjectActive } from '../../lib/taskConstants'
@@ -12,6 +12,7 @@ import { insightsKey } from '../../hooks/useInsightsDashboard'
 import { useWeekParam } from '../../hooks/useWeekParam'
 import { useWeekStats } from '../../hooks/useWeekStats'
 import { useAuth } from '../../hooks/useAuth'
+import { Caret } from '../ui/Caret'
 
 // The Lab overview's Report menu (PI only): every report action the old pages
 // carried, in one place. Analytics gave Copy report and Export CSV; PI
@@ -112,7 +113,7 @@ export default function ReportMenu() {
         className="tk-btn"
       >
         {note ?? 'Report'}
-        <ChevronDown {...ICON_PROPS} size={12} />
+        <Caret />
       </button>
       {open && (
         <div

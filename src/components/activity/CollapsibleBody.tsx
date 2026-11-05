@@ -13,8 +13,7 @@
 // which line-clamp handles inconsistently across block children.
 
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { ChevronDown } from 'lucide-react'
-import { ICON_PROPS } from '../../lib/iconProps'
+import { Caret } from '../ui/Caret'
 
 interface CollapsibleBodyProps {
   children: ReactNode
@@ -97,7 +96,7 @@ export function CollapsibleBody({ children, maxLines = 5, fontSize, contentKey, 
               className="hit-area collapsible-more"
             >
               {expanded ? 'Show less' : 'Show more'}
-              <ChevronDown size={12} {...ICON_PROPS} aria-hidden="true" style={{ transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 120ms' }} />
+              <Caret dir={expanded ? 'up' : 'down'} />
             </button>
           )}
           {actions}

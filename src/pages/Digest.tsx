@@ -2,8 +2,6 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ChevronDown,
-  ChevronUp,
   Link2,
   Search,
   Copy,
@@ -33,6 +31,7 @@ import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import SectionHead from '../components/ui/SectionHead'
 import BodyText from '../components/BodyText'
 import { taskLinkFor } from '../lib/taskLink'
+import { Caret } from '../components/ui/Caret'
 
 // All = one digest date; Unprocessed and Saved each span every date.
 type StatusFilter = 'all' | 'unprocessed' | 'saved'
@@ -487,7 +486,7 @@ function PaperCard({ paper, projects, compactWhenProcessed }: { paper: DigestPap
                 // 24px tall on every pointer (WCAG 2.5.8); .hit-area takes it to 44px on touch.
                 style={{ color: 'var(--slate)', background: 'none', border: 'none', padding: '4px 0', minHeight: 24 }}
               >
-                {expanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
+                <Caret dir={expanded ? 'up' : 'down'} />
                 {expanded ? 'Hide abstract' : 'Show abstract'}
               </button>
             </div>
@@ -1088,7 +1087,7 @@ export default function Digest() {
                 >
                   Topics
                   {topicFilter && <span className="tk-cnt">1</span>}
-                  {topicsExpanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
+                  <Caret dir={topicsExpanded ? 'up' : 'down'} />
                 </button>
               </div>
               {topicsExpanded && (

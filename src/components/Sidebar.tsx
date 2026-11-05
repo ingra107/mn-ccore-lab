@@ -9,7 +9,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   ExternalLink,
   Bug,
   History,
@@ -35,6 +34,7 @@ import { PORTAL_PAGE_ICONS, PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { FaceDisc } from './today/skin'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Caret } from './ui/Caret'
 
 // Premium icon weight (Nick 2026-06-11): lucide's default stroke (2 on a 24
 // grid) scales fuzzy at small sizes; a true 1.5px absolute stroke is crisper
@@ -559,7 +559,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   <div className="text-xs font-medium truncate">{person?.name ?? user?.name ?? 'Account'}</div>
                   {user?.email && <div className="text-[10px] truncate" style={{ color: 'var(--slate)', opacity: 0.75 }}>{user.email}</div>}
                 </div>
-                <ChevronUp size={14} {...ICON_PROPS} style={{ color: 'var(--slate)', transform: menuOpen ? 'none' : 'rotate(180deg)', transition: 'transform 150ms ease' }} />
+                <Caret dir={menuOpen ? 'up' : 'down'} />
               </>
             )}
           </button>

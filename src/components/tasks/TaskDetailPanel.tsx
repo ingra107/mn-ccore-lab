@@ -1989,7 +1989,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
             <span style={{ color: 'var(--slate)', opacity: 0.85 }}>Unassigned</span>
           </>
         )}
-        <span aria-hidden="true" style={{ fontSize: 9, color: 'var(--slate)', opacity: 0.70, marginLeft: 1 }}>▾</span>
+        <span aria-hidden="true" className="caret" />
       </button>
       {open && (
         <div

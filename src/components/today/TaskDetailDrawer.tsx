@@ -27,7 +27,7 @@ import { useTaskPacket } from '../../hooks/useTaskPacket'
 import PrepStartAction from '../PrepStartAction'
 import TaskDetailPanel from '../tasks/LazyTaskDetailPanel'
 import { LinkCards } from './LinkCards'
-import { Pin, Rows3, Maximize2, ChevronDown } from 'lucide-react'
+import { Pin, Rows3, Maximize2 } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isOverdue } from '../../lib/dateUtils'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
@@ -41,6 +41,7 @@ import { CollapsibleBody } from '../activity/CollapsibleBody'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { Button } from '../ui/Button'
+import { Caret } from '../ui/Caret'
 
 // ── helpers ───────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             aria-expanded={moveOpen}
             title="Set which Today section this task lives in (Review / Writing / Analysis & Build / Replies & admin)"
           >
-            <Rows3 {...ICON_PROPS} size={13} />Set section<ChevronDown {...ICON_PROPS} size={11} />
+            <Rows3 {...ICON_PROPS} size={13} />Set section<Caret />
           </button>
           {moveOpen && <SortMenu task={task} onDone={closeMove} />}
         </div>

@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown } from 'lucide-react'
-import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 import { dropdownTop } from '../lib/viewportBottom'
+import { Caret } from './ui/Caret'
 
 interface InlineSelectProps {
   value: string
@@ -161,10 +160,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
           {current?.label || value}
         </span>
-        <ChevronDown {...ICON_PROPS}
-          size={10}
-          className={alwaysShowChevron ? 'inline-select-chevron-always' : 'inline-select-chevron'}
-        />
+        <Caret className={alwaysShowChevron ? 'inline-select-chevron-always' : 'inline-select-chevron'} />
       </button>
       )}
 

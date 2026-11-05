@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, CalendarDays } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import { formatShortDate, addDaysYmd, dueLabelText, dueLabelCompact } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 import { dropdownTop } from '../lib/viewportBottom'
 import { Button } from './ui/Button'
+import { Caret } from './ui/Caret'
 
 interface InlineDatePickerProps {
   value: string | null
@@ -203,7 +204,7 @@ export default function InlineDatePicker({ value, onChange, tableCell, done, dis
           : isThisWeek ? (() => { const days = Math.ceil((dueDate!.getTime() - today.getTime()) / 86400000); return `in ${days}d` })()
           : formatShortDate(value)
         }</span>
-        <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
+        <Caret />
       </button>
       )}
 

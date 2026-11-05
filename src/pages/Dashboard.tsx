@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
+import { Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
 import { Button } from '../components/ui/Button'
 import { DASHBOARD_SECTIONS, resetLayouts } from '../lib/dashboardLayout'
@@ -38,6 +38,7 @@ import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
 import { PANEL_BG, withAlpha } from '../lib/taskGrouping'
 import { DashboardMountedContext } from '../components/dashboard/dashboardMounted'
+import { Caret } from '../components/ui/Caret'
 
 // Tab categories for card filtering
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'
@@ -651,7 +652,7 @@ export default function Dashboard() {
                   opacity: 0.85,
                 }}
               >
-                <ChevronDown size={14} strokeWidth={1.5} absoluteStrokeWidth />
+                <Caret />
                 Show {unpinnedSecondaryCards.length} more card{unpinnedSecondaryCards.length > 1 ? 's' : ''}
               </button>
             )}
@@ -680,7 +681,7 @@ export default function Dashboard() {
                     opacity: 0.85,
                   }}
                 >
-                  <ChevronUp size={14} strokeWidth={1.5} absoluteStrokeWidth />
+                  <Caret dir="up" />
                   Show less
                 </button>
               </>
