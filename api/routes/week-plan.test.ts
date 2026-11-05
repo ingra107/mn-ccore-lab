@@ -15,7 +15,9 @@
  *   - GET /api/packets/daily-count: Nick or the PB key only, the Chicago day,
  *     a published request counted once;
  *   - a packet_prepare request reads landing_visibility 'author', and its
- *     answer posts no comment and no notification.
+ *     answer posts no comment and no notification;
+ *   - a kept pick makes no request, uses no cap and posts no note, and kept is
+ *     frozen across a start flip; a candidate holds 1 to 4 options.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -140,7 +142,7 @@ describe('the week_plan question contract (task-question.ts)', () => {
       ['kind', { ...SPEC, kind: 'meeting_match' }],
       ['week_start', { ...SPEC, week_start: '2026-02-30' }],
       ['no candidates', { ...SPEC, candidates: [] }],
-      ['one option', { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [opt('a1', true)] }] }],
+      ['no options', { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [] }] }],
       ['five options', { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: ['1', '2', '3', '4', '5'].map((k, i) => opt(k, i === 0)) }] }],
       ['two recommended', { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [opt('a1', true), opt('a2', true)] }] }],
       ['none recommended', { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [opt('a1'), opt('a2')] }] }],
@@ -379,6 +381,154 @@ describe('week plan: typed pick notes become task comments', () => {
     const before = notes().length
     db.prepare("INSERT OR IGNORE INTO activity_entries (id, entity_type, entity_id, kind, visibility, actor_slug, body, source_table, source_id) VALUES ('dup', 'task', 'task_b', 'comment', 'team', 'nick-ingraham', 'x', 'week_plan_note', ?)").run(`${PLAN}:task_b`)
     expect(notes()).toHaveLength(before)
+  })
+})
+
+// ── kept picks (2026-11-04, round 2): a pick the session carried, not a new one ──
+
+describe('week plan: a kept pick makes no request, uses no cap and posts no note', () => {
+  const notes = () => all("SELECT entity_id FROM activity_entries WHERE source_table = 'week_plan_note' ORDER BY entity_id")
+  const storedAnswer = (id = PLAN) => JSON.parse(String(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', id)?.a))
+  const send = (body: unknown, id = PLAN) => call('POST', `/api/tasks/${id}`, { as: NICK }, { question_answer_json: body })
+  const started = (task_id: string, option_key: string, text: string | null = null) => ({ task_id, option_key, text, start: true })
+
+  it('kept_started_picks_make_no_request_and_use_no_cap', async () => {
+    const before = await dailyPacketCount(env.DB, '2026-10-28')
+    const r = await send(answer([started('task_a', 'a1'), started('task_b', 'b1'), started('task_c', 'c1')], { kept: ['task_a', 'task_b'] }))
+    expect(r.status).toBe(200)
+    expect(requests().map((x) => x.source_id)).toEqual(['task_c'])
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBe(before + 1)
+    expect(storedAnswer().kept).toEqual(['task_a', 'task_b'])
+    // The kept picks stay started on the stored answer.
+    expect(storedAnswer().picks.map((p: { start: boolean }) => p.start)).toEqual([true, true, true])
+  })
+
+  it('only the unkept picks count against the cap', async () => {
+    fill(CAP - 1)
+    const r = await send(answer([started('task_a', 'a1'), started('task_b', 'b1'), started('task_c', 'c1')], { kept: ['task_a', 'task_b'] }))
+    expect(r.status).toBe(200)
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBe(CAP)
+  })
+
+  it('kept_pick_text_posts_no_note', async () => {
+    const r = await send(answer([started('task_a', 'a1', 'old note'), started('task_b', 'b1', 'new note')], { kept: ['task_a'] }))
+    expect(r.status).toBe(200)
+    expect(notes().map((n) => n.entity_id)).toEqual(['task_b'])
+  })
+
+  it('kept_naming_a_non_pick_is_refused', async () => {
+    const r = await send(answer([started('task_a', 'a1')], { kept: ['task_b'] }))
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toMatch(/question_answer_invalid: kept names task_b/)
+    expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).toBeNull()
+    expect(requests()).toHaveLength(0)
+  })
+
+  it('a malformed kept is refused and stores nothing', async () => {
+    for (const kept of ['task_a', [7], [''], ['task_a', 'task_a'], null]) {
+      const r = await send(answer([started('task_a', 'a1')], { kept }))
+      expect(r.status).toBe(409)
+      expect(String(r.body.error)).toMatch(/question_answer_invalid: kept/)
+    }
+    expect(one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a).toBeNull()
+  })
+
+  it('kept beside a withdrawal-only answer names no pick, so it is refused', async () => {
+    const r = await send(answer([], { withdrawn: ['task_a'], kept: ['task_a'] }))
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toMatch(/kept names task_a/)
+  })
+
+  it('kept_is_frozen_across_a_start_flip', async () => {
+    const saved = { task_id: 'task_b', option_key: 'b1', text: null, start: false }
+    expect((await send(answer([started('task_a', 'a1'), saved], { choice: 'save', kept: ['task_a'] }))).status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    const stored = storedAnswer()
+    const flipped = { ...stored, choice: 'start', picks: stored.picks.map((p: { task_id: string }) => (p.task_id === 'task_b' ? { ...p, start: true } : p)) }
+
+    // Changing kept in a flip is refused, however it changes.
+    const noKept = { ...flipped }
+    delete noKept.kept
+    for (const bad of [{ ...flipped, kept: [] }, { ...flipped, kept: ['task_a', 'task_b'] }, noKept]) {
+      const r = await send(bad)
+      expect(r.status).toBe(409)
+      expect(String(r.body.error)).toMatch(/question_answer_frozen/)
+    }
+    expect(requests()).toHaveLength(0)
+
+    // The flip itself starts the unkept pick and leaves kept alone.
+    expect((await send(flipped)).status).toBe(200)
+    expect(requests().map((x) => x.source_id)).toEqual(['task_b'])
+    expect(storedAnswer().kept).toEqual(['task_a'])
+  })
+
+  it('a flip of a kept saved pick starts nothing: kept holds on a flip too', async () => {
+    const saved = { task_id: 'task_b', option_key: 'b1', text: null, start: false }
+    expect((await send(answer([saved], { choice: 'save', kept: ['task_b'] }))).status).toBe(200)
+    const stored = storedAnswer()
+    const r = await send({ ...stored, choice: 'start', picks: [{ ...saved, start: true }] })
+    expect(r.status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    expect(storedAnswer().kept).toEqual(['task_b'])
+  })
+
+  it('one_option_candidate_is_accepted', async () => {
+    const spec = { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [opt('keep', true)] }] }
+    expect(weekPlanSpecError(spec)).toBeNull()
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(PLAN)
+    seedPlan(PLAN, spec)
+    const r = await send(answer([started('task_a', 'keep')], { kept: ['task_a'] }))
+    expect(r.status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    expect(parseWeekPlanSpec(spec)?.candidates[0].options).toHaveLength(1)
+  })
+
+  it('zero_option_candidate_is_refused', async () => {
+    const spec = { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [] }] }
+    expect(weekPlanSpecError(spec)).toMatch(/must hold 1 to 4 options/)
+    const row = { kind: 'question', source: 'week_plan', status: 'todo', question_spec_json: JSON.stringify(spec), question_answer_json: null }
+    expect(questionRowError(row)).toMatch(/^question_spec_invalid: .*must hold 1 to 4 options/)
+    // The ceiling did not move, and exactly one recommended still holds.
+    const five = { ...SPEC, candidates: [{ ...SPEC.candidates[0], options: ['1', '2', '3', '4', '5'].map((k, i) => opt(k, i === 0)) }] }
+    expect(weekPlanSpecError(five)).toMatch(/must hold 1 to 4 options/)
+    expect(weekPlanSpecError({ ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [opt('a1')] }] })).toMatch(/exactly one option recommended/)
+  })
+
+  it('an_answer_with_no_kept_behaves_as_before', async () => {
+    const r = await send(answer([started('task_a', 'a1', 'a note'), started('task_b', 'b1')]))
+    expect(r.status).toBe(200)
+    expect(requests().map((x) => x.source_id)).toEqual(['task_a', 'task_b'])
+    expect(notes().map((n) => n.entity_id)).toEqual(['task_a'])
+    expect(storedAnswer()).not.toHaveProperty('kept')
+  })
+
+  it('a daily re-plan with 7 kept started picks: no new requests, no cap use, no repeated notes', async () => {
+    const ids = ['1', '2', '3', '4', '5', '6', '7'].map((n) => `task_seven_${n}`)
+    for (const id of ids) insertRow(db, 'tasks', { id, project_id: null, title: id, assignee: 'nick-ingraham', status: 'todo' })
+    const spec = (key: string) => ({ ...SPEC, candidates: ids.map((id) => ({ task_id: id, title: id, why: '', evidence: [], options: [opt(key, true)] })) })
+    const offer = (id: string, created_at: string, key: string) => insertRow(db, 'tasks', {
+      id, title: `Plan ${id}`, kind: 'question', status: 'todo', priority: 'medium', assignee: 'nick-ingraham', source: 'week_plan',
+      project_id: null, created_at, question_spec_json: JSON.stringify(spec(key)), question_answer_json: null,
+    })
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(PLAN)
+    offer('task_plan_round_1', '2026-10-26T10:00:00Z', 'fresh')
+
+    const picks = (key: string) => ids.map((id) => started(id, key, 'my note'))
+    expect((await send(answer(picks('fresh')), 'task_plan_round_1')).status).toBe(200)
+    expect(requests()).toHaveLength(7)
+    expect(notes()).toHaveLength(7)
+
+    // The rest of the cap goes to other work, so one more request would be refused.
+    fill(CAP - 7)
+    const before = await dailyPacketCount(env.DB, '2026-10-28')
+    expect(before).toBe(CAP)
+    offer('task_plan_round_2', '2026-10-27T10:00:00Z', 'keep')
+
+    const r = await send(answer(picks('keep'), { kept: ids }), 'task_plan_round_2')
+    expect(r.status).toBe(200)
+    expect(requests()).toHaveLength(CAP)
+    expect(notes()).toHaveLength(7)
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBe(before)
   })
 })
 

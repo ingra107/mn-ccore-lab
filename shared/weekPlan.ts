@@ -50,8 +50,9 @@ export function isRetiredLaneSourceType(v: unknown): boolean {
 }
 /** Packets a day may start, across the 05:15 job and Start, counted on the Hub. */
 export const PACKET_DAILY_CAP = 10
-/** Options a candidate offers. */
-export const WEEK_PLAN_MIN_OPTIONS = 2
+/** Options a candidate offers. One is a carried pick with no fresh step
+ *  (2026-11-04): its only option is its current step. */
+export const WEEK_PLAN_MIN_OPTIONS = 1
 export const WEEK_PLAN_MAX_OPTIONS = 4
 /** Answer choices the Hub UI writes: `start` when any pick starts, else `save`.
  *  Not enforced (the spec has no `choices` list); readers act on `picks`. */
@@ -164,7 +165,7 @@ function loads(raw: unknown): { ok: true; value: unknown } | { ok: false } {
  *   is a non-empty string; candidates is a non-empty array; each candidate has
  *   a non-empty task_id (unique across candidates) and title; why, when
  *   present, is a string; evidence, when present, is an array; options is an
- *   array of 2 to 4, each with a non-empty key (unique in its candidate),
+ *   array of 1 to 4, each with a non-empty key (unique in its candidate),
  *   label and direction, a deliverable_kind from DELIVERABLE_KINDS and a
  *   boolean recommended; exactly one option per candidate is recommended.
  *   tz and expires_at are not judged.
@@ -260,6 +261,37 @@ export function weekPlanWithdrawn(answer: unknown): string[] {
 }
 
 /**
+ * The kept rules (the answer's optional `kept`, 2026-11-04): picks the session
+ * carried from the plan before, not new ones. A kept pick makes no
+ * packet_prepare, uses no cap and posts no week plan note (weekPlanNewlyStarted,
+ * week-plan-start.ts weekPlanNotes), however its start reads. Absent is fine, and
+ * an old answer has none. Present, it is an array of distinct non-empty strings,
+ * each the task_id of one of this answer's picks.
+ * PB's twin is scripts/questions/state.py Answer.kept.
+ */
+export function weekPlanKeptError(answer: unknown, picks: unknown): string | null {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value)) return null // the answer's own shape is judged elsewhere
+  const k = l.value.kept
+  if (k === undefined) return null
+  if (!Array.isArray(k) || !k.every(nonEmpty)) return 'kept must be an array of non-empty task id strings'
+  if (new Set(k).size !== k.length) return 'kept names a task twice'
+  const pickIds = new Set(Array.isArray(picks) ? picks.filter(isObj).map((p) => p.task_id) : [])
+  for (const id of k) {
+    if (!pickIds.has(id)) return `kept names ${id}, which is not a pick of this answer`
+  }
+  return null
+}
+
+/** The task ids the answer keeps: [] when absent or malformed (a malformed one
+ *  is refused by weekPlanKeptError, so none is stored). */
+export function weekPlanKept(answer: unknown): string[] {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value) || weekPlanKeptError(l.value, l.value.picks) !== null) return []
+  return Array.isArray(l.value.kept) ? [...(l.value.kept as string[])] : []
+}
+
+/**
  * The picks rules (the answer's `picks`):
  *   picks is a non-empty array, unless `allowEmpty` (true only when the answer
  *   has a non-empty `withdrawn`: then picks may be empty or absent); each pick is an object with a non-empty
@@ -306,13 +338,15 @@ export function pickDirection(pick: WeekPlanPick, spec: WeekPlanSpec): string {
 }
 
 /** The answer's picks, or null when they break weekPlanPicksError's rules
- *  (or withdrawn breaks weekPlanWithdrawnError's). [] for a withdrawal-only answer. */
+ *  (or withdrawn breaks weekPlanWithdrawnError's, or kept weekPlanKeptError's).
+ *  [] for a withdrawal-only answer. */
 export function parseWeekPlanPicks(answer: unknown, spec: WeekPlanSpec | null): WeekPlanPick[] | null {
   const l = loads(answer)
   if (!l.ok || !isObj(l.value)) return null
   const picks = l.value.picks
   if (weekPlanWithdrawnError(l.value) !== null) return null
   if (weekPlanPicksError(picks, spec, { allowEmpty: weekPlanWithdrawn(l.value).length > 0 }) !== null) return null
+  if (weekPlanKeptError(l.value, picks) !== null) return null
   if (!Array.isArray(picks)) return [] // absent picks beside a withdrawal
   return (picks as Record<string, unknown>[]).map((p) => ({
     task_id: p.task_id as string,
@@ -341,9 +375,9 @@ export function civilPlusDays(civil: string, n: number): string {
  * A follow-up write to an answered week plan is allowed in exactly one shape
  * (2026-10-31, cold review: "Save without starting" was a one-way door): the
  * same answer with one or more picks flipped start false -> true, and
- * `choice` set to 'start'. Nothing else may change: v, via, at, text, every
- * pick's task_id / option_key / text and order, and no pick may go back to
- * start:false. Returns the reason it is not such a flip, or null when it is.
+ * `choice` set to 'start'. Nothing else may change: v, via, at, text, withdrawn,
+ * kept, every pick's task_id / option_key / text and order, and no pick may go
+ * back to start:false. Returns the reason it is not such a flip, or null when it is.
  */
 export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlanSpec): string | null {
   const a = loads(stored)
@@ -370,20 +404,22 @@ export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlan
 }
 
 /**
- * The picks a week plan write starts: on the first answer, every pick with
- * start:true; on a start flip (weekPlanFlipError null), the flipped ones.
+ * The picks a week plan write starts, never a kept one: on the first answer,
+ * every pick with start:true; on a start flip (weekPlanFlipError null), the
+ * flipped ones.
  * Null when the write starts nothing or is not one of those two shapes.
  */
 export function weekPlanNewlyStarted(stored: unknown, next: unknown, spec: WeekPlanSpec): WeekPlanPick[] | null {
   const after = parseWeekPlanPicks(next, spec)
   if (!after) return null
+  const kept = new Set(weekPlanKept(next))
   if (stored === null || stored === undefined) {
-    const s = after.filter((p) => p.start)
+    const s = after.filter((p) => p.start && !kept.has(p.task_id))
     return s.length ? s : null
   }
   if (weekPlanFlipError(stored, next, spec) !== null) return null
   const before = parseWeekPlanPicks(stored, spec)!
-  return after.filter((p, i) => p.start && !before[i].start)
+  return after.filter((p, i) => p.start && !before[i].start && !kept.has(p.task_id))
 }
 
 /** True when the offer's expires_at is set and is before `nowIso`. */

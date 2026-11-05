@@ -8,7 +8,7 @@ import type { TaskRow } from './api'
 import { isTaskDone, questionCardState } from './taskGrouping'
 import { civilFromInstant, nowInstant, zoneWeekdayHour } from './time'
 import {
-  WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd, weekPlanWithdrawn,
+  WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd, weekPlanKept, weekPlanWithdrawn,
   type WeekPlanPick, type WeekPlanSpec,
 } from '../../shared/weekPlan'
 
@@ -38,6 +38,9 @@ export interface AcceptedWeekPlan {
    *  "not this week", even for a pick prep had started. They are not in
    *  `earlier`; the session's brief reads them to not offer them again. */
   withdrawn: string[]
+  /** This plan's picks carried from the plan before (2026-11-04): they made no
+   *  request and no note here, whatever their start reads. */
+  kept: string[]
 }
 
 /** The Sunday line: from 16:00 Chicago a Sunday asks about the week ahead. */
@@ -131,7 +134,7 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
     if (!picks) continue
     let at = ''
     try { at = String((JSON.parse(t.question_answer_json ?? '{}') as { at?: unknown }).at ?? '') } catch { /* parsed above */ }
-    plans.push({ task: t, spec, picks, at, withdrawn: weekPlanWithdrawn(t.question_answer_json) })
+    plans.push({ task: t, spec, picks, at, withdrawn: weekPlanWithdrawn(t.question_answer_json), kept: weekPlanKept(t.question_answer_json) })
   }
   if (plans.length === 0) return null
   plans.sort((a, b) => (a.at === b.at ? 0 : a.at > b.at ? -1 : 1))
@@ -153,7 +156,7 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
     }
     for (const id of plan.withdrawn) { taken.add(id); withdrawn.add(id) }
   }
-  return { task: best.task, spec: best.spec, picks: best.picks, at: best.at, earlier, withdrawn: [...withdrawn] }
+  return { task: best.task, spec: best.spec, picks: best.picks, at: best.at, earlier, withdrawn: [...withdrawn], kept: best.kept }
 }
 
 export type AnswerResult =
