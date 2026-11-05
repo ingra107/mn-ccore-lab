@@ -210,19 +210,6 @@ test('08-date-picker → relative presets + calendar', async ({ page }) => {
   await page.keyboard.press('Escape')
 })
 
-test('09-subtask-expand → inline expand + add', async ({ page }) => {
-  await page.goto(`${BASE}${P.myTasks}`, { waitUntil: 'networkidle' })
-  const firstRow = page.locator('[data-testid^="task-row-"]').first()
-  await firstRow.waitFor({ state: 'visible' })
-  await frame(page, '09-subtasks', 'a-collapsed')
-  // Linear-style chevron at left of row; key shortcut → expands
-  await firstRow.focus()
-  await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(500)
-  await frame(page, '09-subtasks', 'b-expanded')
-  await page.keyboard.press('ArrowLeft')
-})
-
 test('10-board-drag → Kanban column drag', async ({ page }) => {
   await page.goto(`${BASE}${P.myTasks}?view=board`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)

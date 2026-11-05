@@ -37,7 +37,7 @@ export default function QuickWinsCard() {
         // Higher priority = more impactful to close
         const pScore: Record<string, number> = { urgent: 20, high: 15, medium: 5, low: 0 }
         score += pScore[t.priority] ?? 5
-        // Has subtasks or description = well-defined
+        // Has a description = well-defined
         if (t.description && t.description.length > 20) score += 5
         return { task: t, score }
       })

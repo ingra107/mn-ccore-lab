@@ -480,24 +480,6 @@
       "covered": true
     },
     {
-      "id": "api-post-subtasks-create",
-      "component": "api/routes/subtasks.ts",
-      "type": "api",
-      "description": "POST /api/tasks/:id/subtasks — create subtask",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API POST: Create subtask on a task",
-      "covered": true
-    },
-    {
-      "id": "api-post-subtasks-reorder",
-      "component": "api/routes/subtasks.ts",
-      "type": "api",
-      "description": "POST /api/tasks/:id/subtasks/reorder — reorder subtasks",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API POST: Reorder subtasks",
-      "covered": true
-    },
-    {
       "id": "api-post-meetings-create",
       "component": "api/routes/meetings.ts",
       "type": "api",

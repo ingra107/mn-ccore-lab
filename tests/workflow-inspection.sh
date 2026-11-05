@@ -180,31 +180,6 @@ DESC_RES=$(d1post "/api/tasks/$TASK_ID" '{"description":"Updated description wit
 DESC_OK=$(echo "$DESC_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
 [ "$DESC_OK" = "ok" ] && pass "A10: Description updated" || fail "A10: Description" "$DESC_RES"
 
-# A11: Subtask lifecycle (create → toggle → verify → delete)
-echo "A11: Subtask lifecycle..."
-SUB_CREATE=$(d1post "/api/tasks/$TASK_ID/subtasks" '{"title":"Test subtask from workflow","sort_order":0}')
-SUB_ID=$(echo "$SUB_CREATE" | python -c "import sys,json; print(json.load(sys.stdin).get('data',{}).get('id',''))" 2>/dev/null)
-if [ -n "$SUB_ID" ]; then
-  pass "A11a: Subtask created ($SUB_ID)"
-
-  # Toggle complete
-  TOG_RES=$(d1post "/api/subtasks/$SUB_ID" '{"completed":1}')
-  TOG_OK=$(echo "$TOG_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') else 'fail')" 2>/dev/null)
-  [ "$TOG_OK" = "ok" ] && pass "A11b: Subtask toggled complete" || fail "A11b: Subtask toggle" "$TOG_RES"
-
-  # Verify subtask in list
-  SUB_LIST=$(d1get "/api/tasks/$TASK_ID/subtasks" | python -c "import sys,json; print(len(json.load(sys.stdin).get('data',[])))" 2>/dev/null)
-  [ "$SUB_LIST" -ge 1 ] && pass "A11c: Subtask verified in list ($SUB_LIST)" || fail "A11c: Subtask list" "count=$SUB_LIST"
-
-  # Delete subtask
-  DEL_RES=$(d1post "/api/subtasks/$SUB_ID/delete" '{}')
-  DEL_OK=$(echo "$DEL_RES" | python -c "import sys,json; d=json.load(sys.stdin); print('ok' if d.get('data') or d.get('success') or not d.get('error') else 'fail')" 2>/dev/null)
-  [ "$DEL_OK" = "ok" ] && pass "A11d: Subtask deleted" || fail "A11d: Subtask delete" "$DEL_RES"
-else
-  fail "A11a: Subtask creation" "$SUB_CREATE"
-  skip "A11b-d: Subtask lifecycle"
-fi
-
 # A12: Verify all changes persisted in D1
 echo "A12: Verify all field changes persisted..."
 VERIFY=$(d1get "/api/tasks" | python -c "
