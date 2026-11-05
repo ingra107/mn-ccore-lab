@@ -49,7 +49,7 @@ test.describe('Journey 2: Coordinator Workflow', () => {
 
     // 11-12. Navigate to /meeting-notes
     await go(page, P.meetingNotes)
-    await expect(page.locator('h1')).toContainText(/Transcript|Note/i, { timeout: 5000 })
+    await expect(page.getByTestId('page-tabs').getByRole('tab', { name: 'Transcripts' })).toHaveAttribute('aria-selected', 'true', { timeout: 5000 })
 
     // 13-14. Navigate back to /meetings
     await go(page, P.meetings)
