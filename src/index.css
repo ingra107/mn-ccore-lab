@@ -1092,7 +1092,7 @@ a:hover {
 /* The one exception to the cap (principle 17, Nick 2026-10-10: "Columns may
    go full width"): My Tasks Columns keeps the shared left edge above and runs
    right to the viewport minus P, so all five columns show at 1440+. */
-.band-anchored-wide.band-anchored-full { max-width: none; }
+.band-anchored-wide.band-anchored-full { max-width: none; margin-right: 12px; }
 
 /* ── Section heads by weight (color back pick 3, Nick 2026-10-11) ──
    Bold head, dim count, a short gray hairline that fades out. Replaces the
@@ -2057,7 +2057,7 @@ button[aria-label="Deselect task"]::before {
    row is hovered or focused, or a selection is open; always there on touch.
    `opacity`, not `visibility`, so it stays in the tab order. It keeps its width
    at rest so every title holds one left edge. The ::before is the 24px+ hit area. */
-.task-selbox{position:relative;width:14px;height:14px;margin-right:8px;padding:0;flex-shrink:0;display:grid;place-items:center;border-radius:4px;border:0;background:transparent;box-shadow:inset 0 0 0 1.5px var(--sk-line2);cursor:pointer;opacity:0;transition:opacity 140ms}
+.task-selbox{position:relative;width:14px;height:14px;margin-right:8px;padding:0;flex-shrink:0;display:grid;place-items:center;border-radius:50%;border:0;background:transparent;box-shadow:inset 0 0 0 1.5px var(--sk-line2);cursor:pointer;opacity:0;transition:opacity 140ms}
 .task-selbox::before{content:'';position:absolute;inset:-9px}
 .task-selbox svg{opacity:0}
 .task-selbox[data-on="true"]{background:var(--job-accent);box-shadow:none}
@@ -2645,7 +2645,9 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
    never wrap the title onto an empty line; its controls overhang into the
    gutter beside the title column plus the padding-right CardRow reserves on
    .tk-ct for the rest of their width. */
-.tk .tk-tail{display:inline-block;width:0;white-space:nowrap;vertical-align:baseline}
+.tk .tk-ct{position:relative}
+.tk .tk-tail{position:absolute;top:0;right:-14px;display:inline-flex;align-items:center;white-space:nowrap}
+.tk .tk-tail-gap{display:inline-block;flex-shrink:0}
 .tk .tk-caret{color:var(--sk-t3);font-size:11px;width:12px;text-align:center}
 .tk .tk-x{color:var(--sk-t3);padding:0 4px;font-size:14px;line-height:1}
 .tk .tk-x:hover{color:var(--sk-t1)}
@@ -2716,6 +2718,7 @@ html[data-density="compact"] .tk .tk-ft{padding-bottom:7px}
 .tk-mact-hd{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border:0;background:transparent;font:inherit;font-size:12px;font-weight:600;color:var(--sk-t2);text-align:left}
 button.tk-mact-hd{cursor:pointer}
 button.tk-mact-hd:hover{color:var(--sk-t1)}
+.tk-mact-hd>span:first-child{white-space:nowrap}
 .tk-mact-n{margin-right:auto;font-weight:400;color:var(--sk-t3)}
 .tk-mact-hd .tk-mt{margin-left:auto}
 .tk-mact .md-actions [data-task-id]{padding-left:0}
@@ -2998,9 +3001,27 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
   /* Other pills shrink and ellipsize; the due label, faces and the fixed
      slots keep their width. The due label is excluded here, not restored by a
      later rule, because this selector outranks any short one (item 1/2/28). */
-  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp):not(.tk-faces):not(.tk-slots):not(.tk-duepill){flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tk .tk-ctx>.tk-faces,.tk .tk-ctx>.tk-slots,.tk .tk-ctx>.tk-duepill{flex-shrink:0;white-space:nowrap}
-  .tk .tk-lks{min-width:52px}
+  .tk .tk-ctx>:not(.tk-cs):not(.tk-sp):not(.tk-faces):not(.tk-slots):not(.tk-duepill):not(.planned-chip){flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tk .tk-ctx>.tk-faces,.tk .tk-ctx>.tk-slots,.tk .tk-ctx>.tk-duepill,.tk .tk-ctx>.planned-chip{flex-shrink:0;white-space:nowrap}
+  /* A 342px card spends nothing on what is not there (sweep audit H4): an empty
+     slot reserves no room, and the meeting slot stays flush right when it or the
+     links hold something, so the icons still line up down the list. */
+  .tk .tk-lks{min-width:0}
+  .tk .tk-slots:has(.tk-lks:empty):has(.tk-mks:empty){display:none}
+  /* The context line runs under the face, as on the Board: box | title | face,
+     then the line spans title and face. Folder + Work on end that line, with a
+     spacer reserving their room. An empty face keeps its column, so the title
+     line's pin and grip hold one x on every card (principle 14). */
+  .tk .tk-tch{display:grid;grid-template-columns:17px minmax(0,1fr) auto;column-gap:10px;row-gap:2px}
+  .tk .tk-tch>.tk-hdr,.tk .tk-tch>.tk-tr-r{display:contents}
+  .tk .tk-tch>.tk-ck{grid-column:1;grid-row:1}
+  .tk .tk-ct{grid-column:2;grid-row:1;align-self:start}
+  .tk .tk-av{grid-column:3;grid-row:1;margin-left:4px;align-self:start}
+  .tk .tk-ctx{grid-column:2/-1;grid-row:2}
+  .tk .tk-hdr>:not(.tk-ct):not(.tk-ctx){grid-column:2/-1}
+  .tk .tk-wk{grid-column:2/-1;grid-row:2;justify-self:end;align-self:end;width:auto}
+  .tk .tk-wk:empty{display:none}
+  .tk .tk-tc:has(.tk-wk:not(:empty)) .tk-ctx::after{content:"";flex:0 0 52px;height:24px}
 }
 
 /* Link icon tints (row + drawer): muted brand = --link-strength brand, the

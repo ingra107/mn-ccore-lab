@@ -268,7 +268,7 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
 }
 
 /** The quiet overdue line: a red dot, "N overdue", then a muted note. */
-export function SleekOverdueLine({ count, note = 'sorted to the top, oldest first' }: { count: number; note?: string }) {
+export function SleekOverdueLine({ count, note = 'oldest first in each section' }: { count: number; note?: string }) {
   if (count <= 0) return null
   return (
     <div className="sr-ovl" role="status">

@@ -14,7 +14,8 @@ import { useEffect, useRef, useState } from 'react'
 import { TaskRow as CardTaskRow } from '../../../components/today/TaskRow'
 import { useTodayState } from '../../../hooks/useTodayState'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
-import { OverdueBanner } from './OverdueBanner'
+import { SleekOverdueLine } from '../../../components/table/SleekRows'
+import { isOverdue } from '../../../lib/dateUtils'
 import { NoTasksMatch, AllCaughtUp, LaneEmpty } from './MyTasksEmpty'
 import {
   INK_DIM, INK_MUTED, PAGE_BG,
@@ -60,15 +61,16 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
   const overflowing = edge.left || edge.right
 
   // One column floor, used by both the grid template and its minWidth. 5 x 190
-  // + 4 gaps = 1006px, which fits the 1,034px Columns gets at a 1440 viewport,
+  // + 4 gaps = 1006px, which fits the 1,070px Columns gets at a 1440 viewport,
   // so all five columns show there with no scroll (Nick 2026-10-10, "Columns
-  // may go full width"). Below that the grid scrolls inside its own box.
+  // may go full width"). Six or seven populated sections scroll inside its own
+  // box, with the pager; so does anything narrower.
   const minWidth = colCount * COL_MIN + (colCount - 1) * COL_GAP
   const page = (dir: 1 | -1) => scrollerRef.current?.scrollBy({ left: dir * (COL_MIN + COL_GAP), behavior: 'smooth' })
   return (
     // Columns is the one Tasks view allowed past --page-width (principle 17
     // exception, Nick 2026-10-10): .band-anchored-full keeps the shared left
-    // edge of .band-anchored-wide and lifts only its right-edge cap, so the
+    // edge of .band-anchored-wide and lifts its right-edge cap and gutter, so the
     // toolbar's left edge does not move when switching views.
     <div className="band-anchored-wide band-anchored-full" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
     {/* When the grid still overflows (about 1280 and below), the pager sits in
@@ -108,7 +110,7 @@ export function ColumnsView({ filtered, isEmpty, byGroup, onOpenEditor, projects
       `}</style>
       {/* Sticky left: the banner stays in view while the columns scroll sideways. */}
       <div style={{ position: 'sticky', left: 0 }}>
-        <OverdueBanner tasks={filtered} />
+        <SleekOverdueLine count={filtered.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length} />
       </div>
       <div className="tk" style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(${COL_MIN}px, 1fr))`, gap: COL_GAP, minWidth }}>
         {visibleGroups.map((gkey) => {

@@ -240,17 +240,16 @@ export function CardRow(props: CardTaskRowProps) {
     </span>
   ) : null
 
-  // The plan pin and grip sit right after the title text but are hidden until
-  // hover (always shown on touch). In the text flow they wrapped onto a line of
-  // their own whenever the title nearly filled its last line, so an invisible
-  // pin left an empty second line in the card (site audit 2026-10-10, "CLIF 3.0
-  // baseline + acute dists"). Now they live in a zero-width tail that overhangs
-  // into a strip reserved on the title's right edge: they take no line room, so
-  // they can never push the text onto another line, and where they appear is
-  // room nothing else uses: first the gutter beside the title column, then
-  // padding for whatever does not fit there.
-  const tailW = (planBtn ? TAIL_PLAN_W : 0) + (grip ? TAIL_GRIP_W : 0)
-  const tailReserve = Math.max(0, tailW - TAIL_GUTTER)
+  // The plan pin and grip are hidden until hover (always shown on touch). In the
+  // text flow they wrapped onto a line of their own whenever the title nearly
+  // filled its last line, so an invisible pin left an empty second line in the
+  // card (site audit 2026-10-10, "CLIF 3.0 baseline + acute dists"), and they
+  // followed the last chip, so they sat somewhere else on every card (sweep audit
+  // M4, principle 14). Now they are two fixed slots at the title line's right
+  // end, out of the text flow: first the gutter beside the title column, then
+  // padding for what does not fit there. An empty slot keeps its space.
+  const hasTail = !!planBtn || !!grip
+  const tailReserve = hasTail ? TAIL_PLAN_W + TAIL_GRIP_W - TAIL_GUTTER : 0
 
   const plannedName = plannedLabel ? plannedLabel.charAt(0).toUpperCase() + plannedLabel.slice(1) : 'Planned'
   const plannedPill = isPlanned && !isDone ? (
@@ -306,7 +305,12 @@ export function CardRow(props: CardTaskRowProps) {
             {titleTag}
             <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} packetTag={packetTag} />
             {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
-            {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
+            {hasTail && (
+              <span className="tk-tail">
+                {planBtn ?? <span className="tk-tail-gap" style={{ width: TAIL_PLAN_W }} />}
+                {grip ?? <span className="tk-tail-gap" style={{ width: TAIL_GRIP_W }} />}
+              </span>
+            )}
           </div>
           <div className="tk-ctx">
             <CardProjectLine project={project} task={task} />

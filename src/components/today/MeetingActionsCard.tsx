@@ -94,11 +94,11 @@ export function MeetingActionsCard({ meetingId, placeholder, command, onOpenChan
         type="button"
         className="tk-mact-hd"
         aria-expanded={open}
-        aria-label={`Action items, ${done} of ${total} done${yours > 0 ? `, ${yours} yours open` : ''}`}
+        aria-label={`Action items, ${done} of ${total} done${yours > 0 ? `, ${yours} open for you` : ''}`}
         onClick={() => setUserOpen(!open)}
       >
         <span>Action items</span>
-        <span className="tk-mact-n">{yours > 0 ? `${yours} yours open · ` : ''}{done} of {total} done</span>
+        <span className="tk-mact-n">{yours > 0 ? `${yours} open for you · ` : ''}{done} of {total} done</span>
         <span className="tk-caret" aria-hidden="true">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
