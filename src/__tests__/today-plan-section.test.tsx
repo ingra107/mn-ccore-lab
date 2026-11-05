@@ -13,10 +13,11 @@ import { UndoToastProvider } from '../components/UndoToast'
 import TodayPage from '../pages/portal/TodayPage'
 import { civilDatePlusDays, todayKey } from '../lib/taskGrouping'
 import { nowInstant } from '../lib/time'
+import { LAUNCHER_STORAGE_KEY } from '../hooks/useLauncherInstalled'
 import { mount, cleanupMountsAfterEach, waitFor } from './testMount'
 
 cleanupMountsAfterEach()
-afterEach(() => { vi.unstubAllGlobals() })
+afterEach(() => { vi.unstubAllGlobals(); localStorage.removeItem(LAUNCHER_STORAGE_KEY) })
 
 const nick = {
   email: 'ingra107@umn.edu', slug: 'nick-ingraham', isAuthenticated: true, isPi: true, isMember: true,
@@ -284,49 +285,66 @@ describe('The Plan section on Today', () => {
 })
 
 describe('Who does the step, on the Plan card', () => {
-  const card = (h: ParentNode, id: string) => section(h)!.querySelector(`[data-task-id="${id}"]`) as HTMLElement
-  const cardText = (h: ParentNode, id: string) => card(h, id).textContent ?? ''
-  const hasBtn = (h: ParentNode, id: string, label: string) => [...card(h, id).querySelectorAll('button')].some((b) => b.textContent?.trim() === label)
+  // Prep & start needs the launcher and a PI, and a task id that is a real ULID (buildPrepStartUri).
+  const ID = 'task_01M6CZS7KZGSA0663NBB3H4HMG'
+  const card = (h: ParentNode) => section(h)!.querySelector(`[data-task-id="${ID}"]`) as HTMLElement
+  const text = (h: ParentNode) => card(h).textContent ?? ''
+  const hasBtn = (h: ParentNode, label: string) => [...card(h).querySelectorAll('button')].some((b) => b.textContent?.trim() === label)
+  const open = async (owners: Record<string, string>, row: Row = {}, extra: Row[] = []) => {
+    localStorage.setItem(LAUNCHER_STORAGE_KEY, 'yes')
+    stubHub([plan('p', AT1, [ID], owners), task(ID, row), ...extra])
+    const h = await mount(page(), { ready: loaded(ID), label: 'today' })
+    await waitFor(() => inSection(h, ID), 'the pick')
+    return h
+  }
 
-  it('a step that is yours says Yours and offers no Prep', async () => {
-    stubHub([plan('p', AT1, ['a'], { a: 'nick' }), task('a')])
-    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
-    await waitFor(() => inSection(h, 'a'), 'the pick')
-    expect(cardText(h, 'a')).toContain('Yours')
-    expect(hasBtn(h, 'a', 'Prep')).toBe(false)
-    expect(cardText(h, 'a')).not.toContain('Prep & start')
+  it('a step that is yours says Yours and offers neither Prep nor Prep & start', async () => {
+    const h = await open({ [ID]: 'nick' })
+    expect(text(h)).toContain('Yours')
+    expect(hasBtn(h, 'Prep')).toBe(false)
+    expect(hasBtn(h, 'Prep & start')).toBe(false)
   })
 
-  it('a step with Claude and no packet says With Claude and keeps Prep', async () => {
-    stubHub([plan('p', AT1, ['a'], { a: 'claude' }), task('a')])
-    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
-    await waitFor(() => inSection(h, 'a'), 'the pick')
-    expect(cardText(h, 'a')).toContain('With Claude')
-    expect(hasBtn(h, 'a', 'Prep')).toBe(true)
+  it('a step with Claude and no packet says With Claude and keeps Prep and Prep & start', async () => {
+    const h = await open({ [ID]: 'claude' })
+    expect(text(h)).toContain('With Claude')
+    expect(hasBtn(h, 'Prep')).toBe(true)
+    expect(hasBtn(h, 'Prep & start')).toBe(true)
   })
 
   it('a ready packet beats the owner tag', async () => {
-    stubHub([plan('p', AT1, ['a'], { a: 'claude' }), task('a', { packet_state: 'ready' })])
-    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
-    await waitFor(() => inSection(h, 'a'), 'the pick')
-    expect(cardText(h, 'a')).toContain('Ready')
-    expect(cardText(h, 'a')).not.toContain('With Claude')
+    const h = await open({ [ID]: 'claude' }, { packet_state: 'ready' })
+    expect(text(h)).toContain('Ready')
+    expect(text(h)).not.toContain('With Claude')
   })
 
   it('a plan with no owner shows Saved, as before', async () => {
-    stubHub([plan('p', AT1, ['a']), task('a')])
-    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
-    await waitFor(() => inSection(h, 'a'), 'the pick')
-    expect(cardText(h, 'a')).toContain('Saved')
-    expect(cardText(h, 'a')).not.toMatch(/Yours|With Claude/)
+    const h = await open({})
+    expect(text(h)).toContain('Saved')
+    expect(text(h)).not.toMatch(/Yours|With Claude/)
+  })
+
+  it('a carried pick (kept, started) with an owner shows its tag', async () => {
+    localStorage.setItem(LAUNCHER_STORAGE_KEY, 'yes')
+    const p = plan('p', AT1, [ID], { [ID]: 'claude' })
+    const ans = JSON.parse(String(p.question_answer_json))
+    ans.kept = [ID]
+    ans.picks[0].start = true
+    p.question_answer_json = JSON.stringify(ans)
+    stubHub([p, task(ID)])
+    const h = await mount(page(), { ready: loaded(ID), label: 'today' })
+    await waitFor(() => inSection(h, ID), 'the pick')
+    expect(text(h)).toContain('With Claude')
   })
 
   it('a task on an old and a newer plan follows the newest', async () => {
-    stubHub([plan('p1', AT1, ['a'], { a: 'claude' }), plan('p2', AT2, ['a'], { a: 'nick' }), task('a')])
-    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
-    await waitFor(() => inSection(h, 'a'), 'the pick')
-    expect(cardText(h, 'a')).toContain('Yours')
-    expect(cardText(h, 'a')).not.toContain('With Claude')
+    localStorage.setItem(LAUNCHER_STORAGE_KEY, 'yes')
+    stubHub([plan('p1', AT1, [ID], { [ID]: 'claude' }), plan('p2', AT2, [ID], { [ID]: 'nick' }), task(ID)])
+    const h = await mount(page(), { ready: loaded(ID), label: 'today' })
+    await waitFor(() => inSection(h, ID), 'the pick')
+    expect(text(h)).toContain('Yours')
+    expect(text(h)).not.toContain('With Claude')
+    expect(hasBtn(h, 'Prep & start')).toBe(false)
   })
 })
 

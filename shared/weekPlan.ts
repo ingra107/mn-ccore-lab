@@ -347,7 +347,8 @@ export function weekPlanAllowsEmptyPicks(answer: unknown): boolean {
  *   picks is a non-empty array, unless `allowEmpty` (true only when the answer has
  *   a non-empty `withdrawn` or `cleared`: then picks may be empty or absent); each pick is an object with a non-empty
  *   task_id (unique across picks), option_key a non-empty string or null,
- *   text a non-empty string or null, start a boolean, owner (when present) 'claude' or 'nick'; at least one of
+ *   text a non-empty string or null, start a boolean, owner (when present)
+ *   'claude' or 'nick'; at least one of
  *   option_key / text is non-null (both is an option plus Nick's note). With a spec: task_id names one of its
  *   candidates, and option_key one of that candidate's option keys.
  * `spec` null = judge the shape only.
@@ -457,7 +458,9 @@ export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlan
   let flipped = 0
   for (const [i, p] of before.entries()) {
     const q = after[i]
-    if (q.task_id !== p.task_id || q.option_key !== p.option_key || q.text !== p.text || q.owner !== p.owner) return `picks[${i}] may only change start`
+    if (q.task_id !== p.task_id || q.option_key !== p.option_key || q.text !== p.text || q.owner !== p.owner) {
+      return `picks[${i}] may only change start`
+    }
     if (p.start && !q.start) return `picks[${i}] was started and cannot be unstarted`
     if (!p.start && q.start) flipped++
   }
