@@ -19,6 +19,7 @@ import Modal from '../../components/ui/Modal'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIdeas } from '../../hooks/useApiData'
+import { useAuth } from '../../hooks/useAuth'
 import { useCreateIdea, useVoteIdea, useUpdateIdea, useCreateProject } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
@@ -101,6 +102,8 @@ export default function IdeasPage() {
 
   const { data: ideas = [], isLoading } = useIdeas(filterStatus ? { status: filterStatus } : undefined)
   const vote = useVoteIdea()
+  const { user } = useAuth()
+  const mySlug = user?.slug ?? ''
   const updateIdea = useUpdateIdea()
   const createProject = useCreateProject()
   const { showUndo } = useUndoToast()
@@ -199,9 +202,9 @@ export default function IdeasPage() {
     showUndo(`Moved to ${IDEA_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
   }
 
-  const handleVote = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+  const handleVote = (e: React.MouseEvent<HTMLButtonElement>, idea: IdeaRow) => {
     e.stopPropagation()
-    vote.mutate(id)
+    vote.mutate({ id: idea.id, voted: !votersOf(idea).includes(mySlug), slug: mySlug })
     // Bounce animation (CSS transform, no Framer Motion)
     const btn = e.currentTarget
     btn.style.transform = 'scale(1.3)'
@@ -353,6 +356,8 @@ export default function IdeasPage() {
                   >
                     {colIdeas.map((idea) => (
                       <IdeaBoardCard
+                        mySlug={mySlug}
+                        onVote={(e) => handleVote(e, idea)}
                         key={idea.id}
                         idea={idea}
                         onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
@@ -425,7 +430,8 @@ export default function IdeasPage() {
                     setEditingId(null)
                     setExpandedId(expandedId === idea.id ? null : idea.id)
                   }}
-                  onVote={(e) => handleVote(e, idea.id)}
+                  mySlug={mySlug}
+                  onVote={(e) => handleVote(e, idea)}
                   onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
                   onEdit={() => {
                     setExpandedId(idea.id)
@@ -517,15 +523,78 @@ const IDEA_STATUS_OPTIONS = [
   { value: 'archived', label: 'Archived' },
 ]
 
+/** The people who voted. An old cached row may predate the field. */
+const votersOf = (idea: IdeaRow): string[] => idea.voters ?? []
+
+// The faces beside a vote count (Nick, 2026-11-05): up to three, then +N. +N also
+// holds the votes from before voters were kept, which have no name to show.
+const MAX_VOTE_FACES = 3
+function IdeaVoteFaces({ idea }: { idea: IdeaRow }) {
+  const voters = votersOf(idea)
+  const shown = voters.slice(0, MAX_VOTE_FACES)
+  const more = Math.max(idea.votes - shown.length, 0)
+  if (shown.length === 0 && more === 0) return null
+  const names = voters.map((slug) => getPersonInfo(slug).name)
+  const unnamed = idea.votes - voters.length
+  const said = [...names, ...(unnamed > 0 ? [`${unnamed} earlier ${unnamed === 1 ? 'vote' : 'votes'} with no name`] : [])].join(', ')
+  return (
+    <span className="inline-flex items-center gap-0.5" data-testid="idea-vote-faces" data-tip={said} role="img" aria-label={`Voted: ${said}`}>
+      {shown.map((slug) => {
+        const p = getPersonInfo(slug)
+        return <FaceDisc key={slug} decorative label={p.name} initials={p.initials} photo={p.photoUrl} px={16} />
+      })}
+      {more > 0 && <span style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', fontVariantNumeric: 'tabular-nums' }}>+{more}</span>}
+    </span>
+  )
+}
+
+/** The one vote control: press to vote, press again to take it back. */
+function IdeaVoteButton({ idea, mine, onVote, iconSize, style }: {
+  idea: IdeaRow
+  mine: boolean
+  onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
+  iconSize: number
+  style?: React.CSSProperties
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onVote}
+      draggable={false}
+      className="inline-flex items-center gap-1 rounded-md"
+      data-testid="idea-vote"
+      aria-pressed={mine ? 'true' : 'false'}
+      aria-label={mine ? `Remove your vote (${idea.votes})` : `Vote (${idea.votes})`}
+      style={{
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        color: mine ? 'var(--job-accent)' : idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)',
+        transition: 'transform var(--duration-normal) var(--ease-out), color var(--duration-normal)',
+        padding: '2px var(--sp-sm)',
+        fontVariantNumeric: 'tabular-nums',
+        ...style,
+      }}
+    >
+      <ThumbsUp {...ICON_PROPS} size={iconSize} fill={mine ? 'currentColor' : 'none'} />
+      <span style={{ fontSize: iconSize > 11 ? 'var(--text-small)' : 'var(--text-label)', fontWeight: 600 }}>{idea.votes}</span>
+    </button>
+  )
+}
+
 // IdeaBoardCard: Today-card anatomy (title, quiet context line, age on the
 // left, face on the right). Draggable between columns; the status select lives
 // in the corner menu for keyboard and touch, where drag does not work.
 function IdeaBoardCard({
   idea,
+  mySlug,
+  onVote,
   onStatusChange,
   onPromote,
 }: {
   idea: IdeaRow
+  mySlug: string
+  onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
   onStatusChange: (status: string) => void
   onPromote: () => void
 }) {
@@ -568,7 +637,10 @@ function IdeaBoardCard({
       <div className="flex items-center justify-between" style={{ marginTop: 'var(--sp-sm)' }}>
         <span style={{ fontSize: 'var(--text-label)', color: 'var(--sk-t3)', fontVariantNumeric: 'tabular-nums' }}>
           {formatRelativeTime(idea.created_at)}
-          {idea.votes > 0 && <> &middot; {idea.votes} {idea.votes === 1 ? 'vote' : 'votes'}</>}
+        </span>
+        <span className="inline-flex items-center gap-1" style={{ marginLeft: 'auto', marginRight: 'var(--sp-xs)' }}>
+          <IdeaVoteButton idea={idea} mine={votersOf(idea).includes(mySlug)} onVote={onVote} iconSize={11} />
+          <IdeaVoteFaces idea={idea} />
         </span>
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />
@@ -596,6 +668,7 @@ function IdeaRowView({
   isFocused,
   isExpanded,
   isEditing,
+  mySlug,
   onToggleExpand,
   onVote,
   onStatusChange,
@@ -609,6 +682,7 @@ function IdeaRowView({
   isFocused: boolean
   isExpanded: boolean
   isEditing: boolean
+  mySlug: string
   onToggleExpand: () => void
   onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
   onStatusChange: (status: string) => void
@@ -739,33 +813,9 @@ function IdeaRowView({
         </div>
 
         {/* Votes (right-aligned numeric with bounce) */}
-        <div style={{ textAlign: 'right' as const }}>
-          <button
-            onClick={onVote}
-            className="inline-flex items-center gap-1 rounded-md"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)',
-              transition: 'transform var(--duration-normal) var(--ease-out), color var(--duration-normal)',
-              padding: '2px var(--sp-sm)',
-              minHeight: '44px',
-              minWidth: '44px',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-            aria-label={`Vote (${idea.votes})`}
-          >
-            <ThumbsUp {...ICON_PROPS} size={13} />
-            <span
-              style={{
-                fontSize: 'var(--text-small)',
-                fontWeight: 600,
-              }}
-            >
-              {idea.votes}
-            </span>
-          </button>
+        <div className="inline-flex items-center justify-end gap-1">
+          <IdeaVoteFaces idea={idea} />
+          <IdeaVoteButton idea={idea} mine={votersOf(idea).includes(mySlug)} onVote={onVote} iconSize={13} style={{ minHeight: '44px', minWidth: '44px' }} />
         </div>
 
         {/* Age (recedes) */}
@@ -879,22 +929,8 @@ function IdeaRowView({
           {idea.title}
         </span>
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={onVote}
-            className="flex items-center gap-1"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: idea.votes > 0 ? 'var(--sk-t1)' : 'var(--slate)',
-              padding: '0 var(--sp-sm)',
-              minHeight: '44px',
-              transition: 'transform var(--duration-normal) var(--ease-out)',
-            }}
-          >
-            <ThumbsUp {...ICON_PROPS} size={11} />
-            <span style={{ fontSize: 'var(--text-label)', fontWeight: 600 }}>{idea.votes}</span>
-          </button>
+          <IdeaVoteButton idea={idea} mine={votersOf(idea).includes(mySlug)} onVote={onVote} iconSize={11} style={{ minHeight: '44px' }} />
+          <IdeaVoteFaces idea={idea} />
           <span
             style={{
               fontSize: 'var(--text-label)',

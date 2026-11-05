@@ -2520,7 +2520,7 @@ defineRoute({
   path: '/api/ideas/:id/vote',
   auth: 'authed',
   entity: 'ideas',
-  handler: (c) => handleVoteIdea(c.req.param('id'), E(c)),
+  handler: (c) => handleVoteIdea(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',

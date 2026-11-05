@@ -1,6 +1,30 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { isLegacyVote } from '../../shared/ideaVotes';
+
+/**
+ * An idea's vote fields, from idea_votes (schema-v158): `votes` is every row,
+ * `voters` the people, oldest first. A placeholder for a vote from before the
+ * table counts and has no face. ideas.votes is a frozen column: never read it.
+ * The handle is the viewer's, so a hidden idea's rows are not here.
+ */
+async function withVotes<T extends { id: unknown }>(env: Env, ideas: T[]): Promise<Array<T & { votes: number; voters: string[] }>> {
+  const result = await env.DB.prepare(
+    'SELECT idea_id, slug FROM idea_votes ORDER BY created_at, slug'
+  ).all<{ idea_id: string; slug: string }>();
+  const byIdea = new Map<string, string[]>();
+  for (const r of result.results ?? []) byIdea.set(r.idea_id, [...(byIdea.get(r.idea_id) ?? []), r.slug]);
+  return ideas.map((idea) => {
+    const slugs = byIdea.get(String(idea.id)) ?? [];
+    return { ...idea, votes: slugs.length, voters: slugs.filter((s) => !isLegacyVote(s)) };
+  });
+}
+
+async function oneIdea(env: Env, id: string) {
+  const row = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first<{ id: string }>();
+  return row ? (await withVotes(env, [row]))[0] : null;
+}
 
 // GET /api/ideas?status=&submitted_by=&research_area=
 export async function handleGetIdeas(url: URL, env: Env): Promise<Response> {
@@ -16,10 +40,10 @@ export async function handleGetIdeas(url: URL, env: Env): Promise<Response> {
   if (submittedBy) { query += ' AND submitted_by = ?'; params.push(submittedBy); }
   if (researchArea) { query += ' AND research_area = ?'; params.push(researchArea); }
 
-  query += ' ORDER BY CASE status WHEN \'new\' THEN 0 WHEN \'under_review\' THEN 1 WHEN \'approved\' THEN 2 WHEN \'parked\' THEN 3 ELSE 4 END, votes DESC, created_at DESC';
+  query += ' ORDER BY CASE status WHEN \'new\' THEN 0 WHEN \'under_review\' THEN 1 WHEN \'approved\' THEN 2 WHEN \'parked\' THEN 3 ELSE 4 END, (SELECT COUNT(*) FROM idea_votes v WHERE v.idea_id = ideas.id) DESC, created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  const rows = filterFixtures(result.results || [], 'title', includeFixtures);
+  const rows = await withVotes(env, filterFixtures((result.results || []) as Array<{ id: unknown; title: string }>, 'title', includeFixtures));
   return json({ data: rows, count: rows.length });
 }
 
@@ -40,8 +64,7 @@ export async function handleCreateIdea(request: Request, user: AuthUser, env: En
 
   await logActivity(env, 'idea', `New idea: "${body.title}"`, submittedBy, id, 'idea');
 
-  const created = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+  return json({ data: await oneIdea(env, id) }, 201);
 }
 
 // POST /api/ideas/:id — update idea fields
@@ -64,15 +87,29 @@ export async function handleUpdateIdea(id: string, request: Request, user: AuthU
   params.push(id);
   await env.DB.prepare(`UPDATE ideas SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
 
-  const updated = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
+  const updated = await oneIdea(env, id);
   if (!updated) return error('Idea not found', 404);
   return json({ data: updated });
 }
 
-// POST /api/ideas/:id/vote — upvote
-export async function handleVoteIdea(id: string, env: Env): Promise<Response> {
-  await env.DB.prepare('UPDATE ideas SET votes = votes + 1 WHERE id = ?').bind(id).run();
-  const updated = await env.DB.prepare('SELECT * FROM ideas WHERE id = ?').bind(id).first();
-  if (!updated) return error('Idea not found', 404);
-  return json({ data: updated });
+// POST /api/ideas/:id/vote { voted?: boolean } -- the viewer's one vote. `voted`
+// states the outcome, so a retry cannot flip it; with no body it toggles. The voter
+// is always the signed-in person: nothing in the body can name another. An idea the
+// viewer may not read answers as absent, through their own handle.
+export async function handleVoteIdea(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json().catch(() => ({})) as { voted?: unknown };
+  if (body.voted !== undefined && typeof body.voted !== 'boolean') return error('voted must be true or false', 400);
+  const actor = await resolveActor(env, user, undefined, { allowImpersonation: false });
+  if ('error' in actor) return error(actor.error, 400);
+
+  const idea = await env.DB.prepare('SELECT id FROM ideas WHERE id = ?').bind(id).first();
+  if (!idea) return error('Idea not found', 404);
+  const had = await env.DB.prepare('SELECT 1 AS one FROM idea_votes WHERE idea_id = ? AND slug = ?').bind(id, actor.slug).first();
+  const want = typeof body.voted === 'boolean' ? body.voted : !had;
+  if (want && !had) {
+    await env.DB.prepare('INSERT OR IGNORE INTO idea_votes (idea_id, slug) VALUES (?, ?)').bind(id, actor.slug).run();
+  } else if (!want && had) {
+    await env.DB.prepare('DELETE FROM idea_votes WHERE idea_id = ? AND slug = ?').bind(id, actor.slug).run();
+  }
+  return json({ data: await oneIdea(env, id) });
 }

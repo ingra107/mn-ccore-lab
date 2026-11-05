@@ -48,7 +48,7 @@ export const HUB_TABLES = [
   'artifact_tags', 'artifact_versions', 'artifacts', 'bug_reports', 'commitments',
   'conference_submissions', 'current_draft_changes', 'contributions', 'day_capacity', 'deadline_dependencies', 'decisions',
   'digest_comments', 'digest_paper_state', 'dispatch_queue', 'entity_seen', 'expertise_tags', 'file_activity_daily',
-  'file_attachments', 'hub_announcements', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'hub_releases', 'ideas',
+  'file_attachments', 'hub_announcements', 'hub_decisions', 'hub_errors', 'hub_pomodoro_slots', 'hub_releases', 'idea_votes', 'ideas',
   'inbox', 'inbox_events', 'kg_entities', 'kg_relation_type_registry', 'kg_relations',
   'lab_settings', 'launch_log', 'link_kinds', 'links', 'mail_messages', 'manuscript_revisions', 'meeting_project_grants', 'meetings',
   'member_featured_publications', 'memory_facts', 'mentee_milestones', 'milestones',
@@ -513,6 +513,11 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   file_activity_daily: byProject('file_activity_daily', 'project_id'),
   milestones: byProject('milestones', 'project_id'),
   ideas: byProject('ideas', 'project_id'),
+  // Who voted follows the idea: a hidden idea's voters reach nobody (schema-v158).
+  idea_votes: {
+    kind: 'scoped', key: ['idea_id', 'slug'], dependsOn: ['ideas'],
+    where: (v) => (projectsScoped(v) ? 'idea_votes.idea_id IN (SELECT id FROM ideas)' : null),
+  },
   inbox: byProject('inbox', 'project_id'),
   contributions: byProject('contributions', 'project_slug'),
   paper_project_links: byProject('paper_project_links', 'project_slug', 'id', false),

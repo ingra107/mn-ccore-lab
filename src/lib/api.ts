@@ -683,7 +683,10 @@ export interface IdeaRow {
   submitted_by: string
   research_area: string | null
   status: string // new, under_review, approved, parked, archived
+  /** Every vote, counted from idea_votes, including ones from before voters were kept. */
   votes: number
+  /** The people who voted, oldest first. `votes` can exceed this: see shared/ideaVotes.ts. */
+  voters: string[]
   project_id: string | null
   created_at: string
   updated_at: string
@@ -711,8 +714,9 @@ export function updateIdea(id: string, fields: Record<string, unknown>) {
   })
 }
 
-export function voteIdea(id: string) {
-  return fetchApi<IdeaRow>(`/api/ideas/${id}/vote`, { method: 'POST' })
+/** `voted` is the outcome wanted, so a retry cannot flip it. */
+export function voteIdea(id: string, voted: boolean) {
+  return fetchApi<IdeaRow>(`/api/ideas/${id}/vote`, { method: 'POST', body: JSON.stringify({ voted }) })
 }
 
 // ── Calendar events ──────────────────────────────────────────
