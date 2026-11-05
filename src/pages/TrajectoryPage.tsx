@@ -23,6 +23,7 @@ import ActivityHeatmap from '../components/ActivityHeatmap'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
 import { parseDbUtc } from '../lib/time'
+import { isPublished } from '../lib/publicationCounts'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
@@ -103,9 +104,9 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', }}>
-          Cumulative publications by year
+          Cumulative published papers by year
         </span>
-        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--job-accent)' }}>
+        <span data-testid="curve-total" style={{ fontSize: '20px', fontWeight: 700, color: 'var(--job-accent)' }}>
           {maxCount}
         </span>
       </div>
@@ -491,6 +492,11 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
                 marginTop: '0.4rem',
               }}
             >
+              {pub.status && !isPublished(pub) && (
+                <span style={{ fontSize: 'var(--label-size)', color: 'var(--sk-t2)' }}>
+                  {pub.status} &middot;
+                </span>
+              )}
               {pub.journal && (
                 <span
                   style={{
@@ -1511,8 +1517,11 @@ export default function TrajectoryPage() {
 
                 {/* Section 1: Publication Curve */}
                 <section id="publication-curve">
-                  <SectionHeader title="Publication Curve" count={trajectory.publications.length} />
-                  <PublicationCurve publications={trajectory.publications} />
+                  {/* Published only: the one "publications" count (lib/publicationCounts),
+                      the number the member page shows. Abstracts, preprints and
+                      papers in preparation are in All papers, named as such. */}
+                  <SectionHeader title="Publication Curve" count={trajectory.publications.filter(isPublished).length} />
+                  <PublicationCurve publications={trajectory.publications.filter(isPublished)} />
                 </section>
 
                 <Divider />
@@ -1565,7 +1574,7 @@ export default function TrajectoryPage() {
 
                 {/* Section 6: Publication Timeline */}
                 <section id="publication-timeline">
-                  <SectionHeader title="Publication Timeline" count={trajectory.publications.length} />
+                  <SectionHeader title="All papers" count={trajectory.publications.length} />
                   <PublicationTimeline publications={trajectory.publications} />
                 </section>
 
