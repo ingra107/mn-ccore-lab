@@ -1,13 +1,11 @@
-// shared/watchers.ts -- reads and writes the tasks.watchers value. The task panel
-// and the task card read through parseWatchers.
+// shared/watchers.ts -- the one reader and writer of tasks.watchers, used by the
+// Worker (handleUpdateTask) and by the task UI.
 //
 // A watcher can see the task: the read rule (taskRule in api/lib/table-scope.ts)
-// runs json_each over the column, so only a JSON array grants anything.
-//
-// The Worker does not use this module yet. POST /api/tasks/:id refuses `watchers`
-// (it is not in TASK_ALLOWED_FIELDS), so nothing can set the field from the Hub and
-// the panel shows stored values read-only. serializeWatchers has no caller until
-// the server half lands. The reader takes both the JSON and the old comma shape.
+// runs json_each over the column, so only a JSON array grants anything. The
+// panel used to send a comma list, which json_valid() would reject, to a route
+// that refused the field. The server now stores the JSON array whatever it is
+// sent; the reader still takes both shapes.
 
 import { parseBlockedBy } from './blockedBy'
 

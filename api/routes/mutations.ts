@@ -407,6 +407,12 @@ export async function handleMutations(
   return json({ results });
 }
 
+/** Task columns the Hub writes that PB never syncs, so they are not in
+ *  TABLE_FIELDS. A closed list: a column joins by being named here. */
+export interface HubOnlyColumns {
+  watchers: string | null;
+}
+
 async function processOne(
   env: Env,
   mut: Mutation,
@@ -420,6 +426,9 @@ async function processOne(
   // unsort / Reset. A parameter, never a Mutation field, so no request body
   // can claim to be one.
   sort?: SortCommand,
+  // applyMutation only: columns off the PB wire that the calling route has
+  // validated. Also a parameter, so /api/mutations still refuses them.
+  hubOnly?: HubOnlyColumns,
 ): Promise<MutationResult> {
   // Validate envelope — ALL required fields checked BEFORE any DB access.
   // Fail-fast here prevents partial-batch commits: if a later mutation in the
@@ -616,7 +625,7 @@ async function processOne(
     if (mut.op === 'insert') {
       result = await applyInsert(env, mut, user, flags);
     } else if (mut.op === 'update' || mut.op === 'append') {
-      result = await applyUpdate(env, mut, user, flags, guard, sort);
+      result = await applyUpdate(env, mut, user, flags, guard, sort, hubOnly);
     } else if (mut.op === 'delete') {
       result = await applyDelete(env, mut, user, guard);
     } else {
@@ -1117,16 +1126,16 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
 const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
 export async function applyUpdate(
-  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand,
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand, hubOnly?: HubOnlyColumns,
 ): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
   // Each attempt re-reads the row and re-runs every check below, so a retry
   // after a CAS miss decides against the row that is actually there.
-  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags, guard, sort));
+  return withCasRetry(env, mut, () => decideAndCommitUpdate(env, mut, user, flags, guard, sort, hubOnly));
 }
 
 async function decideAndCommitUpdate(
-  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand,
+  env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags, guard?: UndoGuard, sort?: SortCommand, hubOnly?: HubOnlyColumns,
 ): Promise<MutationResult | CasMiss> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'envelope_invalid', 'update requires patch');
 
@@ -1315,7 +1324,7 @@ async function decideAndCommitUpdate(
       env.DB.prepare(restoreDeclinedEventProductSql(landed.sql)).bind(mut.mutation_id, mut.record_id, String(current.last_mutation_id), ...landed.vals),
     ]);
   }
-  const write = await applyPatch(env, mut, current, user, sort);
+  const write = await applyPatch(env, mut, current, user, sort, hubOnly);
   // Only the newest week_plan offer takes a first answer (2026-11-01): read here for the refusal code (before Start, so a
   // superseded offer says so rather than naming the cap), and carried in the
   // row write's WHERE so a newer offer minted meanwhile makes the write miss.
@@ -1630,6 +1639,8 @@ export async function applyMutation(
     base_row_hash?: string | null;
     /** A project insert: the home product to be born with (Mutation.home_product). */
     home_product?: { kind: string; stage: string } | null;
+    /** An update: columns off the PB wire, written in the same row write. */
+    hubOnly?: HubOnlyColumns;
   },
 ): Promise<MutationResult> {
   const mutation_id = generateId('mut');
@@ -1653,7 +1664,7 @@ export async function applyMutation(
   // Hub-UI internal writes read the same validation flags; the V2 conflict
   // closure exempts 'hub_ui:' origins (base_seq=null is deliberate here).
   const flags = await getValidationFlags(env);
-  return await processOne(env, mut, new Map(), args.user, flags);
+  return await processOne(env, mut, new Map(), args.user, flags, undefined, undefined, args.hubOnly);
 }
 
 /**
@@ -1980,7 +1991,7 @@ async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
   // The acting person (for the assignee-action New clear) and, from the sort
   // route only, the hand sort command (schema-v157).
-  user?: AuthUser, sort?: SortCommand,
+  user?: AuthUser, sort?: SortCommand, hubOnly?: HubOnlyColumns,
 ): Promise<PatchFragment> {
   // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
   // last_meaningful_movement to canonical UTC space-sep before writing it
@@ -2175,6 +2186,7 @@ async function applyPatch(
     }
   }
 
+  if (hubOnly) effectivePatch = { ...effectivePatch, ...hubOnly };
   const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below
