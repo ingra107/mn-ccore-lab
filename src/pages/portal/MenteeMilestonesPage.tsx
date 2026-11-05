@@ -19,7 +19,7 @@ import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, isOverdue, getDaysAgo } from '../../lib/dateUtils'
-import { parseDbUtc } from '../../lib/time'
+import { dbStampDay, parseDbUtc } from '../../lib/time'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -818,7 +818,7 @@ function MilestoneRow({
               {item.due_date && (
                 <div style={{ marginTop: '8px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
                   Due: {item.due_date}
-                  {item.completed_at && ` | Completed: ${item.completed_at.split('T')[0]}`}
+                  {item.completed_at && ` | Completed: ${dbStampDay(item.completed_at)}`}
                 </div>
               )}
             </div>

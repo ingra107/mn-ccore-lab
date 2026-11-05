@@ -6,6 +6,7 @@ import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
 import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { formatMediumDate, localDateKey, parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
+import { dbStampDay } from '../../lib/time'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
@@ -227,7 +228,7 @@ function SessionHistoryBody() {
   const grouped = useMemo(() => {
     const map = new Map<string, PBSessionRow[]>()
     for (const s of filteredSessions) {
-      const date = s.started_at.split('T')[0]
+      const date = dbStampDay(s.started_at)
       const list = map.get(date) || []
       list.push(s)
       map.set(date, list)

@@ -5,6 +5,7 @@
 // now reads the last-90-days median the Velocity tile shows (it used to read the
 // 365-day median, a second number under the same name). The Report menu copies them to the clipboard.
 
+import { dbStampDay } from './time'
 import type { PIDashboardData } from '../hooks/usePIDashboard'
 
 export function formatCurrency(amount: number): string {
@@ -137,8 +138,8 @@ export function buildTasksCsv(tasks: CsvTask[]): string {
       t.priority || 'medium',
       t.due_date || '',
       t.project_id || '',
-      t.created_at?.split('T')[0] || '',
-      t.completed_at?.split('T')[0] || '',
+      dbStampDay(t.created_at),
+      dbStampDay(t.completed_at),
     ]),
   ]
   return rows.map((r) => r.join(',')).join('\n')

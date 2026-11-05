@@ -23,6 +23,7 @@ import { useAuth, forgetCachedSlugs } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { modKeyLabel, openCommandPalette } from '../lib/platform'
 import NotificationBell from './NotificationBell'
+import { OPEN_BUG_REPORT_EVENT } from '../lib/platform'
 import LogoMark from './LogoMark'
 import { useNextMeeting, useProjects } from '../hooks/useApiData'
 import { civilDaysUntil } from '../lib/dateUtils'
@@ -363,7 +364,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
       {/* Logo area + notification bell. The bell is THE portal notification
           surface (Nick 2026-06-11). align="left" so the dropdown opens
-          rightward over the content instead of off-screen. */}
+          rightward over the content instead of off-screen. Below lg the top bar
+          carries it, seen with the drawer closed, so the drawer has none. */}
       <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <Link to={PATHS.dashboard} className="flex items-center gap-2 min-w-0" aria-label="MN-CCORE Hub — Today">
           <LogoMark
@@ -379,7 +381,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             />
           )}
         </Link>
-        {!collapsed && (
+        {!collapsed && !onNavigate && (
           <span className="ml-auto">
             <NotificationBell align="left" />
           </span>
@@ -487,7 +489,12 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       <div className="border-t px-2 py-2" style={{ borderColor: 'var(--border-subtle)' }}>
         <button
           type="button"
-          onClick={() => setShowBugReport(true)}
+          onClick={() => {
+            // In the phone drawer: close the drawer and let the tab bar's copy of
+            // the modal open. This copy would stay underneath the drawer.
+            if (onNavigate) { onNavigate(); window.dispatchEvent(new CustomEvent(OPEN_BUG_REPORT_EVENT)); return }
+            setShowBugReport(true)
+          }}
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[12px] transition-colors hover:bg-black/5 dark:hover:bg-white/5 w-full cursor-pointer"
           style={{ color: 'var(--slate)', opacity: 0.85, background: 'none', border: 'none', textAlign: 'left' }}
           title={collapsed ? 'Report a bug' : undefined}

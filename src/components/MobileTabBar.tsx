@@ -25,6 +25,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
 import { QUICK_ADD_EVENT, openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { Button } from './ui/Button'
+import { OPEN_BUG_REPORT_EVENT } from '../lib/platform'
 
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 
@@ -61,6 +62,12 @@ export default function MobileTabBar() {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [overflowOpen])
+
+  useEffect(() => {
+    const open = () => setBugReportOpen(true)
+    window.addEventListener(OPEN_BUG_REPORT_EVENT, open)
+    return () => window.removeEventListener(OPEN_BUG_REPORT_EVENT, open)
+  }, [])
 
   const primaryTabs = [
     { to: PATHS.dashboard, icon: PORTAL_PAGE_ICONS[PATHS.dashboard], label: 'Today' },

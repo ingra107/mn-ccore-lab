@@ -13,6 +13,9 @@ export function isTouchOnly(): boolean {
     && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 }
 
+/** The phone drawer's Report a bug closes the drawer, then asks the tab bar to open the modal. */
+export const OPEN_BUG_REPORT_EVENT = 'mn-ccore:open-bug-report'
+
 /** Open the global command palette (it listens for Cmd/Ctrl+K on document). */
 export function openCommandPalette(): void {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
