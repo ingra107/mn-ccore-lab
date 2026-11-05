@@ -21,6 +21,7 @@ const LIVE_TITLE = 'Live project from the API'
 
 let mounted: { host: HTMLElement; root: Root }[] = []
 let calls: { url: string; method: string }[] = []
+let commitments: { status: number; body: unknown } = { status: 401, body: { error: 'unauthorized' } }
 let lastPath = ''
 
 function Probe() {
@@ -40,6 +41,7 @@ function json(body: unknown, status = 200) {
 
 beforeEach(() => {
   calls = []
+  commitments = { status: 401, body: { error: 'unauthorized' } }
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
     calls.push({ url, method: init?.method ?? 'GET' })
@@ -50,7 +52,7 @@ beforeEach(() => {
     if (url === `/api/team/${SLUG}/projects`) {
       return json({ data: [{ id: 'proj_live', slug: 'live', title: LIVE_TITLE, status: 'active', home_kind: null, home_stage: null }] })
     }
-    if (url.startsWith('/api/commitments')) return json({ error: 'unauthorized' }, 401)
+    if (url.startsWith('/api/commitments')) return json(commitments.body, commitments.status)
     // The score card and heatmap are not under test; a failed read renders nothing.
     if (url.includes('contribution') || url.includes('heatmap')) return json({ error: 'not under test' }, 404)
     return json({ data: [] })
@@ -136,5 +138,23 @@ describe('MemberPage projects and commitments', () => {
     const h = await mount(`/team/${SLUG}`, asUser('casey-eddington'))
     expect(h.textContent).toContain(LIVE_TITLE)
     expect(h.textContent).not.toContain(STATIC_TITLE)
+  })
+
+  // Audit G18, Rule 43: a parent opacity multiplies into every child (0.85 x 0.75
+  // on the due line). Done reads through strikethrough and the muted color.
+  it('a done commitment is struck through and muted, with no opacity on the card or a wrapper', async () => {
+    commitments = { status: 200, body: { data: [
+      { id: 'c1', commitment: 'A finished promise', owner_slug: SLUG, status: 'done', due_date: null, to_slug: null, to_whom: null, source: null },
+    ] } }
+    const h = await mount(`/portal/team/${SLUG}`, asUser(SLUG))
+    await expect.poll(() => h.querySelector('#commitments')?.textContent ?? '').toContain('A finished promise')
+    const section = h.querySelector('#commitments')!
+    const text = [...section.querySelectorAll<HTMLElement>('div')].find((d) => d.textContent === 'A finished promise' && d.children.length === 0)!
+    expect(text.style.textDecoration).toContain('line-through')
+    expect(text.style.color).toBe('var(--muted)')
+    expect(text.style.opacity).toBe('')
+    for (let el: HTMLElement | null = text.parentElement; el && el !== section; el = el.parentElement) {
+      expect(el.style.opacity === '' || el.style.opacity === '1').toBe(true)
+    }
   })
 })
