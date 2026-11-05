@@ -16,6 +16,7 @@ import type { Publication } from '../data/types'
 import { topicLabel } from '../lib/topics'
 import { RESEARCH_AREAS, inArea } from '../lib/researchAreas'
 import { isPublished } from '../lib/publicationCounts'
+import { journalDisplayName } from '../lib/journalName'
 import { compactStageLabel } from '../lib/projectStage'
 
 function BackLink() {
@@ -85,7 +86,7 @@ export default function PublicationDetail() {
             {viaGroup.map((a) => a.name).join(', ')}: investigator, {viaGroup[0].viaGroup}.
           </p>
         )}
-        {pub.journal && <p className="pub-rj" style={{ fontSize: 16, marginTop: 14 }}>{pub.journal}</p>}
+        {pub.journal && <p className="pub-rj" style={{ fontSize: 16, marginTop: 14 }}>{journalDisplayName(pub.journal)}</p>}
       </header>
 
       <div className="pub-card" style={{ padding: 'clamp(16px, 3vw, 26px)', marginTop: 24 }}>

@@ -23,6 +23,7 @@ import { labAuthorsOn } from '../../lib/authorAvatars'
 import { isPublished } from '../../lib/publicationCounts'
 import { statusLabel } from '../../lib/textUtils'
 import { FaceDisc } from '../today/skin'
+import { journalDisplayName } from '../../lib/journalName'
 // The row's styles travel with it: member pages also render inside the portal,
 // where the public Layout (the usual importer) is not mounted.
 import '../../styles/public.css'
@@ -37,7 +38,7 @@ export default function PubRow({ pub }: { pub: Publication }) {
         <span className="pub-rt">{pub.title}</span>
         {(pub.journal || !isPublished(pub)) && (
           <span className="pub-rj">
-            {pub.journal}
+            {journalDisplayName(pub.journal)}
             {!isPublished(pub) && `${pub.journal ? ' · ' : ''}${statusLabel(pub.status)}`}
           </span>
         )}
