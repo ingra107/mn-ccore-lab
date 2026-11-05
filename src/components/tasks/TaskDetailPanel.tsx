@@ -1,5 +1,5 @@
 import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
-import { parseWatchers } from '../../../shared/watchers'
+import { parseWatchers, serializeWatchers } from '../../../shared/watchers'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import BodyText from '../BodyText'
 import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
@@ -869,14 +869,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
           >
 
-            {/* Read-only: POST /api/tasks/:id refuses `watchers` until its server
-                half lands, so the panel offers no way to set them and makes no
-                promise. A stored value still shows. */}
-            {parseWatchers(task.watchers).length > 0 && (
-              <FieldBlock label="Watchers" noContainer>
-                <WatcherChips value={task.watchers} />
-              </FieldBlock>
-            )}
+            {/* Being listed here is an access grant: taskRule (api/lib/table-scope.ts)
+                lets a watcher read and edit the task even when they are off its
+                project, and api/lib/task-watchers.ts notifies them. */}
+            <FieldBlock label="Watchers" noContainer>
+              <WatchersPicker value={task.watchers} onChange={(v) => handleFieldUpdate('watchers', v)} />
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--muted)' }}>
+                Each person here can see and edit this task, and is notified when it changes, even if they are not on the project.
+              </p>
+            </FieldBlock>
 
             {/* Row: Recurrence (single field) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
@@ -1254,11 +1255,38 @@ export function DescriptionField({
   )
 }
 
-// ── Watcher chips (read-only) ────────────────────────────
-function WatcherChips({ value }: { value: string | null | undefined }) {
+// ── Watchers Picker ──────────────────────────────────────
+function WatchersPicker({ value, onChange }: { value: string | null | undefined; onChange: (v: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const slugs = parseWatchers(value)
+
+  const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
+  const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
+  const available = uniquePeople.filter(p => !slugs.includes(p.slug!))
+
+  const addWatcher = (slug: string) => {
+    onChange(serializeWatchers([...slugs, slug]))
+    setOpen(false)
+  }
+
+  const removeWatcher = (slug: string) => {
+    onChange(serializeWatchers(slugs.filter(s => s !== slug)))
+  }
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {parseWatchers(value).map(slug => {
+    <div className="flex flex-wrap items-center gap-1.5" ref={ref} style={{ position: 'relative' }}>
+      {slugs.map(slug => {
         const p = getPersonInfo(slug)
         return (
           <span
@@ -1268,9 +1296,56 @@ function WatcherChips({ value }: { value: string | null | undefined }) {
           >
             <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={16} />
             {p.name.split(' ')[0]}
+            <Button size="icon" aria-label={`Remove watcher ${p.name}`}
+              onClick={() => removeWatcher(slug)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: 0, lineHeight: 1 }}
+            >
+              <X size={9} strokeWidth={1.5} absoluteStrokeWidth />
+            </Button>
           </span>
         )
       })}
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-[10px] px-1.5 py-0.5 rounded-full"
+        style={{ background: 'none', border: '1px dashed var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
+      >
+        + Add
+      </button>
+
+      {open && available.length > 0 && (
+        <div
+          className="absolute z-20 rounded-lg shadow-lg"
+          style={{
+            top: '100%',
+            left: 0,
+            marginTop: '4px',
+            backgroundColor: 'var(--cream)',
+            border: '1px solid var(--sk-line2)',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            minWidth: '180px',
+          }}
+        >
+          {available.map(person => {
+            const slug = person.slug!
+            const p = getPersonInfo(slug)
+            return (
+              <button
+                key={slug}
+                onClick={() => addWatcher(slug)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', borderBottom: '1px solid var(--border-subtle)' }}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
+                onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <FaceDisc label={p.name} initials={p.initials} photo={p.photoUrl} px={20} />
+                {p.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
