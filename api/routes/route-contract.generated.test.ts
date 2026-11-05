@@ -254,7 +254,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   (-4): GET + POST /api/settings, GET + POST /api/workflow-templates.
     //   Nothing read what they stored; lab_settings itself stays (pi_emails,
     //   the hub_* flags) and is read in the Worker, not through a route.
-    expect(ROUTE_REGISTRY).toHaveLength(290)
+    // 282 as of 2026-11-05 -- subtask checklist (-5) and the task_files link list
+    // (-3) retired: steps are child tasks, links are key links. Tables stay.
+    expect(ROUTE_REGISTRY).toHaveLength(282)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user
@@ -276,6 +278,9 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
       'POST /api/projects/:slug/documents/:docId/delete',
       'GET /api/questions', 'POST /api/questions', 'GET /api/questions/:id',
       'GET /api/questions/:id/answers', 'POST /api/questions/:id/answers', 'POST /api/answers/:id/accept',
+      'GET /api/tasks/:id/subtasks', 'POST /api/tasks/:id/subtasks', 'POST /api/tasks/:id/subtasks/reorder',
+      'POST /api/subtasks/:id/toggle', 'POST /api/subtasks/:id/delete',
+      'GET /api/tasks/:id/files', 'POST /api/tasks/:id/files', 'POST /api/task-files/:id/delete',
     ]
     const have = new Set(ROUTE_REGISTRY.map((r) => `${r.method} ${r.path}`))
     for (const key of gone) expect(have.has(key), `${key} is back`).toBe(false)

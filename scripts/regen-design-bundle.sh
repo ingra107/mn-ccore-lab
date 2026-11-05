@@ -101,7 +101,6 @@ for d in test-results/capture-interactions-*/; do
     06) id=06-cmd-k ;;
     07) id=07-assignee-picker ;;
     08) id=08-date-picker ;;
-    09) id=09-subtasks ;;
     10) id=10-board-drag ;;
     11) id=11-hermes ;;
     12) id=12-pulse-kiosk ;;

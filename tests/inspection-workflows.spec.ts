@@ -4,7 +4,7 @@
  * COMPLEMENTS inspection.spec.ts by covering:
  * - Routes not tested at all (8 missing pages)
  * - API endpoints not tested (~40 gaps)
- * - Interactive features (peek, subtasks, bulk, snooze, context menu, NLP, etc.)
+ * - Interactive features (peek, bulk, snooze, context menu, NLP, etc.)
  * - Full user journey workflows (daily use patterns)
  * - Edge cases (empty data, special chars, no due date)
  * - Sync round-trips (status change, cross-tab)
@@ -156,28 +156,6 @@ test.describe('API — Missing GET endpoints', () => {
 })
 
 test.describe('API — Missing write endpoints', () => {
-  test('API POST: Create subtask on a task', async ({ request }) => {
-    const taskId = await getFirstTaskId(request)
-    if (!taskId) { test.skip(); return }
-    const res = await request.post(`${BASE}/api/tasks/${taskId}/subtasks`, {
-      data: { title: 'INSPECTION subtask — delete', assignee: 'nick-ingraham' }
-    })
-    expect([200, 201]).toContain(res.status())
-  })
-
-  test('API POST: Reorder subtasks', async ({ request }) => {
-    const taskId = await getFirstTaskId(request)
-    if (!taskId) { test.skip(); return }
-    // Get existing subtasks
-    const subs = await (await request.get(`${BASE}/api/tasks/${taskId}/subtasks`)).json()
-    if (!subs.data?.length) { test.skip(); return }
-    const ids = subs.data.map((s: any) => s.id)
-    const res = await request.post(`${BASE}/api/tasks/${taskId}/subtasks/reorder`, {
-      data: { ids }
-    })
-    expect([200, 201]).toContain(res.status())
-  })
-
   test('API POST: Create meeting with dedup check', async ({ request }) => {
     const uniqueTitle = `INSPECTION meeting ${Date.now()}`
     const res = await request.post(`${BASE}/api/meetings`, {
@@ -367,7 +345,7 @@ test.describe('FEATURE — Right-click context menu', () => {
       await page.waitForTimeout(500)
 
       // Context menu should appear with options
-      const menuItems = ['Open', 'Status', 'Snooze', 'Archive']
+      const menuItems = ['Open', 'Status', 'Snooze']
       let menuFound = false
       for (const item of menuItems) {
         if (await page.locator(`text=${item}`).first().isVisible({ timeout: 500 }).catch(() => false)) {
@@ -835,7 +813,7 @@ test.describe('FEATURE — Settings interactions', () => {
 // ═════════════════════════════════════════════════════════════════════
 
 test.describe('JOURNEY — Full task lifecycle', () => {
-  test('JOURNEY: Create task → assign → set date → add subtask → status cycle → complete → reopen', async ({ page, request }) => {
+  test('JOURNEY: Create task → assign → set date → status cycle → complete → reopen', async ({ page, request }) => {
     await loadPage(page, P.myTasks)
 
     // 1. Create task via API (faster than UI for setup)
@@ -855,12 +833,6 @@ test.describe('JOURNEY — Full task lifecycle', () => {
     // 2. Change status to in_progress
     const s1 = await request.post(`${BASE}/api/tasks/${taskId}/status`, { data: { status: 'in_progress' } })
     expect(s1.status()).toBe(200)
-
-    // 3. Add a subtask
-    const sub = await request.post(`${BASE}/api/tasks/${taskId}/subtasks`, {
-      data: { title: 'Subtask 1 — lifecycle test' }
-    })
-    expect([200, 201]).toContain(sub.status())
 
     // 4. Add a comment with @mention
     const comment = await request.post(`${BASE}/api/tasks/${taskId}/comments`, {

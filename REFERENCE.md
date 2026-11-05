@@ -390,7 +390,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - Task URL params use `id` only (no slug concept on tasks).
 
 ### Single-entity GET endpoints
-- **`GET /api/tasks/:id` EXISTS** (added post-mechanic-I5; registered after the `/:id/<sub>` routes so Hono matches specifics first). Sub-resources: `/:id/comments`, `/:id/files`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`. The deep-audit harness `apiGetTaskFromList()` predates it and still list-filters — fine.
+- **`GET /api/tasks/:id` EXISTS** (added post-mechanic-I5; registered after the `/:id/<sub>` routes so Hono matches specifics first). Sub-resources: `/:id/comments`, `/:id/activity`, `/:id/handoffs`. The deep-audit harness `apiGetTaskFromList()` predates it and still list-filters — fine.
 - **There is no `GET /api/projects/:slug`** either — list + sub-resources only.
 - **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). **`GET /api/questions/:id/answers`** also exists as a dedicated list endpoint (Phase 35).
 

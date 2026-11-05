@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import type { Env } from './types';
 import { slugClaimCheck } from './lib/project-slug';
 import { taskTitleTakenCheck } from './lib/task-dedup-sql';
-import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, isTestModeRequest, getPiEmails, isTeamMember, actorSlugFromRequest, logActivity } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, isTestModeRequest, getPiEmails, isTeamMember, actorSlugFromRequest } from './helpers';
 import { viewerDb, personViewer, serviceViewer, nobodyViewer, isSiteAdmin, ALL_PROJECTS_HEADER, type Viewer } from './lib/viewer-db';
 
 // The PB service key IS Nick's automation (Brief-7, 2026-06-11).
@@ -58,7 +58,6 @@ import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pol
 import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies, handleCreateActivityReply } from './routes/activity';
 import { handleGetDayActivity, handlePostDayActivity } from './routes/days';
 import { handleGetMeetingActivity, handlePostMeetingActivity } from './routes/meeting-activity';
-import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByPublication } from './routes/paper-links';
 import { handleGetProjectPublications, handleLinkProjectPublication, handleUnlinkProjectPublication, handleGetAllProjectPublications } from './routes/project-publications';
@@ -1964,25 +1963,6 @@ defineRoute({
 });
 defineRoute({
   method: 'GET',
-  path: '/api/tasks/:id/files',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: async (c) => {
-  const env = E(c);
-  // Auth required — task files are team-internal content.
-  const authedUser = c.get('authedUser');
-  if (!authedUser && c.get('apiKeyValid') !== true) return error('Authentication required', 401);
-  // task_files follows its task through the caller's handle, so a task the
-  // caller may not read lists no files.
-  const taskId = c.req.param('id');
-  const { results } = await env.DB.prepare(
-    'SELECT id, task_id, filename, url, file_type, uploaded_by, created_at FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
-  ).bind(taskId).all();
-  return json({ data: results });
-},
-});
-defineRoute({
-  method: 'GET',
   path: '/api/tasks/:id/activity',
   auth: 'authed',
   entity: 'tasks',
@@ -1994,13 +1974,6 @@ defineRoute({
   auth: 'authed',
   entity: 'tasks',
   handler: (c) => handleGetTaskDetail(c.req.param('id'), R(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/tasks/:id/subtasks',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: (c) => handleGetSubtasks(c.req.param('id'), E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2352,54 +2325,10 @@ defineRoute({
 });
 defineRoute({
   method: 'POST',
-  path: '/api/tasks/:id/subtasks/reorder',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: (c) => handleReorderSubtasks(c.req.param('id'), R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/tasks/:id/subtasks',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: (c) => handleCreateSubtask(c.req.param('id'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
   path: '/api/tasks/:id/handoffs',
   auth: 'authed',
   entity: 'tasks',
   handler: (c) => handleCreateHandoff(c.req.param('id'), R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/tasks/:id/files',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: async (c) => {
-  const env = E(c);
-  const id = c.req.param('id');
-  // Owner-or-PI gate: only the task owner/assignee or a PI may attach files.
-  const callerSlug = await actorSlugFromRequest(R(c), env);
-  if (!callerSlug) return error('Authentication required', 401);
-  // Read through the caller's handle: a task the caller may not read is a 404.
-  const task = await env.DB.prepare(
-    'SELECT assignee FROM tasks WHERE id = ? LIMIT 1'
-  ).bind(id).first<{ assignee: string | null }>();
-  if (!task) return error('Task not found', 404);
-  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
-  // Only block when assignee is non-null AND differs AND caller is not PI.
-  if (task.assignee != null && task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
-    return error('Forbidden', 403);
-  }
-  const body = await c.req.json() as { filename: string; url: string; file_type?: string };
-  const newId = crypto.randomUUID().slice(0, 8);
-  await env.DB.prepare(
-    'INSERT INTO task_files (id, task_id, filename, url, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(newId, id, body.filename, body.url, body.file_type || 'link', callerSlug).run();
-  await logActivity(env, 'task_file_attach', `Attached file "${body.filename}" to task ${id}`, callerSlug, id, 'task');
-  return json({ data: { id: newId, task_id: id, filename: body.filename, url: body.url } });
-},
 });
 defineRoute({
   method: 'POST',
@@ -2429,56 +2358,7 @@ defineRoute({
   handler: (c) => handleMobileTasksToHub(R(c), USER(c), E(c)),
 });
 
-// Task-files (deletion uses the legacy /api/task-files/:id/delete path).
-// Owner-or-PI gate: look up the file's task assignee; only they or a PI may delete.
-// Hard-delete is intentional (task_files has no deleted_at column — schema-v34).
-// logActivity provides the audit trail in lieu of a soft-delete tombstone.
-defineRoute({
-  method: 'POST',
-  path: '/api/task-files/:id/delete',
-  auth: 'authed',
-  entity: 'tasks',
-  handler: async (c) => {
-  const env = E(c);
-  const fileId = c.req.param('id');
-  const callerSlug = await actorSlugFromRequest(R(c), env);
-  if (!callerSlug) return error('Authentication required', 401);
-  // Look up the file and its task's assignee. task_files follows its task
-  // through the caller's handle, so a file on a task the caller may not read
-  // is absent and takes the idempotent path below.
-  const fileRow = await env.DB.prepare(
-    'SELECT tf.id, tf.task_id, tf.filename, t.assignee FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
-  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null }>();
-  // SEC-10.3 + Phase 1b-extended: idempotent — repeat delete (row already gone)
-  // returns 200 with idempotent:true. Codex flagged that the prior 404 leaked
-  // existence of file IDs to non-owners.
-  if (!fileRow) return json({ data: { deleted: fileId, idempotent: true } });
-  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
-  // Only block when assignee is non-null AND differs AND caller is not PI.
-  if (fileRow.assignee != null && fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
-    return error('Forbidden', 403);
-  }
-  await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(fileId).run();
-  await logActivity(env, 'task_file_delete', `Deleted file "${fileRow.filename}" from task ${fileRow.task_id}`, callerSlug, fileRow.task_id, 'task');
-  return json({ data: { deleted: fileId, idempotent: false } });
-},
-});
 
-// Subtasks
-defineRoute({
-  method: 'POST',
-  path: '/api/subtasks/:id/toggle',
-  auth: 'authed',
-  entity: 'subtasks',
-  handler: (c) => handleToggleSubtask(c.req.param('id'), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/subtasks/:id/delete',
-  auth: 'authed',
-  entity: 'subtasks',
-  handler: (c) => handleDeleteSubtask(c.req.param('id'), R(c), E(c)),
-});
 
 // Action items (GET /api/action-items, POST /api/action-items[/:id/toggle])
 // retired in T19 (#547) — all six live readers converted to the tasks model.

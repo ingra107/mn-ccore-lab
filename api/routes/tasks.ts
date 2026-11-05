@@ -968,7 +968,7 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
 }
 
 // GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.
-// Returns { why, updates, subtasks, blocks } in a single round-trip so the
+// Returns { why, updates, blocks } in a single round-trip so the
 // drawer doesn't have to do four parallel fetches. Read-only.
 //
 // T2.2 (2026-05-28): route through guardTaskProject for visibility + existence.
@@ -987,7 +987,7 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   // actor + summary. The activity_entries read covers ALL kinds; the noteUpdates
   // mapping below renders them as kind:'note'.
   const vis = await activityVisibilityGate(request, env);
-  const [updatesRes, activityRes, subtasksRes, blocksRes, stepsRes] = await Promise.all([
+  const [updatesRes, activityRes, blocksRes, stepsRes] = await Promise.all([
     env.DB.prepare(
       // #98: roots only. This fan-out flattens each row into a standalone
       // kind:'note'; without the guard a reply would surface here detached from
@@ -1000,9 +1000,6 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     env.DB.prepare(
       "SELECT id, actor, type, description, timestamp FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
     ).bind(taskId).all(),
-    env.DB.prepare(
-      'SELECT id, title, completed FROM task_subtasks WHERE task_id = ? ORDER BY sort_order ASC, created_at ASC'
-    ).bind(taskId).all().catch(() => ({ results: [] as Array<Record<string, unknown>> })),
     // "blocks" = other tasks whose blocked_by lists this id; the same predicate
     // as GET /api/tasks/:id/blocking, so the drawer and the panel agree.
     env.DB.prepare(
@@ -1047,7 +1044,6 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   return json({
     data: {
       updates,
-      subtasks: subtasksRes.results ?? [],
       blocks: blocksRes.results ?? [],
       steps: stepsRes.results ?? [],
       packet,
