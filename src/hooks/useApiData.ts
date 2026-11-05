@@ -984,34 +984,9 @@ export function useCalendarEvents(params?: { start?: string; end?: string }) {
   })
 }
 
-// ── Subtasks ────────────────────────────────────────────────
-
-export interface SubtaskRow {
-  id: string
-  task_id: string
-  title: string
-  completed: number
-  completed_at: string | null
-  completed_by: string | null
-  sort_order: number
-  created_at: string
-}
-
-export function useSubtasks(taskId: string) {
-  return useQuery({
-    queryKey: ['subtasks', taskId],
-    queryFn: async () => {
-      const data = await fetchJson<{ data?: SubtaskRow[] }>(`/api/tasks/${taskId}/subtasks`)
-      return data.data || []
-    },
-    staleTime: 30 * 1000,
-    enabled: !!taskId,
-  })
-}
-
 // ── Task detail (drawer fan-out) ─────────────────────────────
 // Backed by GET /api/tasks/:id/detail. Single round-trip for the
-// TodayPage / UnifiedMyTasks task drawer (why / updates / subtasks /
+// TodayPage / UnifiedMyTasks task drawer (why / updates /
 // blocks). See api/routes/tasks.ts:handleGetTaskDetail.
 
 export interface TaskDetailUpdate { id: string; when: string; who: string; text: string; kind: 'note' | 'event' }

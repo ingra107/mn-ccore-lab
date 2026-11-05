@@ -118,8 +118,6 @@ describe('meeting prep', () => {
     // NON_LITERAL with every value it can take, so a new one fails here until
     // someone looks at it.
     const NON_LITERAL: Record<string, string[]> = {
-      // subtasks.ts: `subtask_${action}`, action is 'completed' | 'uncompleted'
-      'subtasks.ts subtask_': ['subtask_completed', 'subtask_uncompleted'],
       // mutations.ts: applyDelete logs the table name ("Deleted links record
       // link_01M..."); those types are in no list on purpose, so no feed shows them
       'mutations.ts mut.table': [],
@@ -150,7 +148,7 @@ describe('meeting prep', () => {
     expect(unnamed).toEqual([])
     expect([...nonLiteralSeen].sort()).toEqual(Object.keys(NON_LITERAL).sort()) // no stale entry
     expect(types.size).toBeGreaterThan(20) // the scan is reading the writers
-    for (const t of ['inbox_event', 'subtask_completed', 'idea']) expect(types).toContain(t)
+    for (const t of ['inbox_event', 'idea']) expect(types).toContain(t)
     const known = new Set([...PREP_ACTIVITY_TYPES, ...PREP_ACTIVITY_EXCLUDED])
     expect([...types].filter((t) => !known.has(t)).sort()).toEqual([])
     expect(PREP_ACTIVITY_TYPES.filter((t) => PREP_ACTIVITY_EXCLUDED.includes(t))).toEqual([])

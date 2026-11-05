@@ -271,39 +271,6 @@ test.describe('TASK — Detail panel full interaction', () => {
   })
 })
 
-test.describe('TASK — Subtask interaction', () => {
-  test('Expand subtasks → see subtask list → add input visible → collapse', async ({ page }) => {
-    await go(page, P.myTasks)
-
-    // Focus first task
-    await page.keyboard.press('j')
-    await page.waitForTimeout(200)
-
-    // → to expand
-    await page.keyboard.press('ArrowRight')
-    await page.waitForTimeout(500)
-
-    // Look for subtask content
-    const subtaskArea = page.locator('[class*="subtask"], [class*="sub-task"]').first()
-    const addInput = page.locator('input[placeholder*="subtask"], input[placeholder*="Add"]').first()
-    const expanded = (await subtaskArea.isVisible().catch(() => false)) || (await addInput.isVisible().catch(() => false))
-    console.log(`Subtask area expanded: ${expanded}`)
-    await page.screenshot({ path: 'review/daily-subtask-expanded.png' })
-
-    // If expanded, try typing a subtask
-    if (await addInput.isVisible().catch(() => false)) {
-      await addInput.click()
-      await addInput.fill('Test subtask item')
-      await page.screenshot({ path: 'review/daily-subtask-typing.png' })
-      // Don't submit
-    }
-
-    // ← to collapse
-    await page.keyboard.press('ArrowLeft')
-    await page.waitForTimeout(300)
-  })
-})
-
 test.describe('TASK — Keyboard-driven workflow', () => {
   test('J/K navigate → S cycles status → Z snoozes → B blocks → X selects', async ({ page }) => {
     await go(page, P.myTasks)
@@ -456,7 +423,7 @@ test.describe('TASK — Filter and sort', () => {
 })
 
 test.describe('TASK — Right-click context menu', () => {
-  test('Right-click task → see Open, Status, Snooze, Archive → Escape closes', async ({ page }) => {
+  test('Right-click task → see Open, Status, Snooze → Escape closes', async ({ page }) => {
     await go(page, P.myTasks)
     const row = page.locator('[class*="row"], tr').filter({ hasText: /\w{5,}/ }).first()
     if (await row.isVisible().catch(() => false)) {
@@ -465,7 +432,7 @@ test.describe('TASK — Right-click context menu', () => {
       await page.screenshot({ path: 'review/daily-context-menu.png' })
 
       // Check for menu items
-      for (const item of ['Open', 'Status', 'Snooze', 'Archive']) {
+      for (const item of ['Open', 'Status', 'Snooze']) {
         const found = await vis(page, `text=${item}`, 500)
         console.log(`Context menu "${item}": ${found}`)
       }
@@ -1060,26 +1027,6 @@ test.describe('GAPS — Previously untested workflows', () => {
     } else {
       console.log('Density toggle not found on settings page')
     }
-  })
-
-  // 5. Subtask: expand → check off → progress bar updates
-  test('Subtask: expand → check off subtask → progress updates', async ({ page }) => {
-    await go(page, P.myTasks)
-    await page.keyboard.press('j')
-    await page.waitForTimeout(200)
-    await page.keyboard.press('ArrowRight')
-    await page.waitForTimeout(500)
-    // Look for subtask checkboxes
-    const checkbox = page.locator('input[type="checkbox"], [role="checkbox"]').first()
-    if (await checkbox.isVisible().catch(() => false)) {
-      await checkbox.click()
-      await page.waitForTimeout(500)
-      await page.screenshot({ path: 'review/gap-subtask-check.png' })
-      // Look for progress bar
-      const progress = page.locator('[class*="progress"], [role="progressbar"]').first()
-      console.log(`Subtask progress bar: ${await progress.isVisible().catch(() => false)}`)
-    }
-    await page.keyboard.press('ArrowLeft')
   })
 
   // 6. Right-click → snooze → verify due date changed

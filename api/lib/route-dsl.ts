@@ -47,7 +47,6 @@ export type EntityName =
   | 'team'
   | 'comments'
   | 'reactions'
-  | 'subtasks'
   | 'activity'
   | 'calendar'
   | 'calendar-feeds'
