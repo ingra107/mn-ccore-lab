@@ -1794,7 +1794,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
                  changing layout. The offsets are min(0, (100% - 44px) / 2), so a
                  control already 44px or larger gets no extension and a small one
                  gets exactly enough. Put it on any small button, link or trigger.
-                 position is :where() so a class or inline style that makes the
+                 position is :where() in @layer base, so a utility, class or inline style making the
                  control absolute/fixed still wins. The overlay paints above
                  non-positioned neighbours and takes their taps, so it must only
                  reach dead space. Inside a row that is itself a tap target,
@@ -1822,6 +1822,9 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   @layer base {
     :where(.btn-icon) { --btn-hit: 44px; }
     :where(.btn-icon-box) { min-width: 44px; min-height: 44px; }
+    /* In the layer so a utility or site class that positions the control wins:
+       unlayered, this beat Tailwind's .absolute at any specificity (H1). */
+    :where(.hit-area) { position: relative; }
   }
   .touch-tall,
   a.inline-link,
@@ -1829,7 +1832,6 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     min-height: 44px;
   }
   .touch-cue { pointer-events: none; }
-  :where(.hit-area) { position: relative; }
   .hit-area::before {
     content: '';
     position: absolute;
