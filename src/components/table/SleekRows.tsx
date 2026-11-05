@@ -149,25 +149,27 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
           </div>
         )}
         {header && narrow && sortable.length > 0 && onSort && (
-          <div className="sr-sorter">
-            <label>
-              Sort
-              <select
-                aria-label="Sort by"
-                value={sort ? `${sort.key}:${sort.dir}` : ''}
-                onChange={(e) => {
-                  const [key, dir] = e.target.value.split(':')
-                  onSort(key ? { key, dir: dir === 'desc' ? 'desc' : 'asc' } : null)
-                }}
-              >
-                <option value="">{defaultSortLabel}</option>
-                {sortable.flatMap((c) => [
-                  <option key={`${c.key}:asc`} value={`${c.key}:asc`}>{c.label} ▴</option>,
-                  <option key={`${c.key}:desc`} value={`${c.key}:desc`}>{c.label} ▾</option>,
-                ])}
-              </select>
-            </label>
-          </div>
+          <SleekControlRow>
+            <div className="sr-sorter">
+              <label>
+                Sort
+                <select
+                  aria-label="Sort by"
+                  value={sort ? `${sort.key}:${sort.dir}` : ''}
+                  onChange={(e) => {
+                    const [key, dir] = e.target.value.split(':')
+                    onSort(key ? { key, dir: dir === 'desc' ? 'desc' : 'asc' } : null)
+                  }}
+                >
+                  <option value="">{defaultSortLabel}</option>
+                  {sortable.flatMap((c) => [
+                    <option key={`${c.key}:asc`} value={`${c.key}:asc`}>{c.label} ▴</option>,
+                    <option key={`${c.key}:desc`} value={`${c.key}:desc`}>{c.label} ▾</option>,
+                  ])}
+                </select>
+              </label>
+            </div>
+          </SleekControlRow>
         )}
         {children}
       </div>
@@ -265,6 +267,12 @@ export function SleekRow<T>({ row, cursor = false, selected = false, urgent = fa
       {children}
     </div>
   )
+}
+
+/** A control that sits among a table's rows (a group head, Show all): a table may
+ *  own only rows, so it gets a row and a cell that take no box of their own. */
+export function SleekControlRow({ children }: { children: ReactNode }) {
+  return <div role="row" style={{ display: 'contents' }}><div role="cell" style={{ display: 'contents' }}>{children}</div></div>
 }
 
 /** The quiet overdue line: a red dot, "N overdue", then a muted note. */

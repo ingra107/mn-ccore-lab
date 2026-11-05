@@ -10,7 +10,7 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
 import { useEffect, useMemo, useState } from 'react'
-import { SleekTable, SleekRow, SleekOverdueLine, type SleekColumn } from '../../../components/table/SleekRows'
+import { SleekTable, SleekRow, SleekOverdueLine, SleekControlRow, type SleekColumn } from '../../../components/table/SleekRows'
 import { TaskTitleCell, TaskCheckCell, TaskDueCell } from '../../../components/tasks/taskSleekCells'
 import { CardProjectLine } from '../../../components/tasks/TaskCardRow'
 import { Face } from '../../../components/today/skin'
@@ -127,7 +127,7 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
             </button>
             {!isCollapsed && (
               <SleekTable columns={columns} header={false} className="sr-panel">
-                {visible.length === 0 && <LaneEmpty />}
+                {visible.length === 0 && <SleekControlRow><LaneEmpty /></SleekControlRow>}
                 {visible.map((t) => (
                   <SleekRow
                     key={t.id}
@@ -157,9 +157,11 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
                   </SleekRow>
                 ))}
                 {(hidden > 0 || (isPeek && tasks.length > kept.length)) && (
-                  <button type="button" className="sr-more" onClick={() => toggleP(gkey)}>
-                    {isPeek ? 'Show less' : `Show ${hidden} more`}
-                  </button>
+                  <SleekControlRow>
+                    <button type="button" className="sr-more" onClick={() => toggleP(gkey)}>
+                      {isPeek ? 'Show less' : `Show ${hidden} more`}
+                    </button>
+                  </SleekControlRow>
                 )}
               </SleekTable>
             )}

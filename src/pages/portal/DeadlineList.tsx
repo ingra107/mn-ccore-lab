@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { SleekTable, SleekRow, type SleekColumn, type SleekSort } from '../../components/table/SleekRows'
+import { SleekTable, SleekRow, SleekControlRow, type SleekColumn, type SleekSort } from '../../components/table/SleekRows'
 import { TaskTitleCell, TaskCheckCell, TaskDueCell, TaskStatusPill, MilestoneDueCell, taskHasDuePill } from '../../components/tasks/taskSleekCells'
 import { CardProjectLine } from '../../components/tasks/TaskCardRow'
 import { Face } from '../../components/today/skin'
@@ -270,16 +270,20 @@ export function DeadlineList({ groups, projects, selected, toggleSelect, selectR
           const isCollapsed = collapsed.has(g.title)
           return (
             <div key={g.title} role="rowgroup" aria-label={g.title} className="dl-group">
-              <button type="button" className="sr-grp-h" aria-expanded={!isCollapsed} onClick={() => setCollapsed((s) => flip(s, g.title))}>
-                <span className="sr-chev" aria-hidden="true" style={{ transform: isCollapsed ? 'rotate(-90deg)' : undefined }}>▾</span>
-                <h3>{g.title}</h3>
-                <span className="sr-n">{g.count}</span>
-              </button>
+              <SleekControlRow>
+                <button type="button" className="sr-grp-h" aria-expanded={!isCollapsed} onClick={() => setCollapsed((s) => flip(s, g.title))}>
+                  <span className="sr-chev" aria-hidden="true" style={{ transform: isCollapsed ? 'rotate(-90deg)' : undefined }}>▾</span>
+                  <h3>{g.title}</h3>
+                  <span className="sr-n">{g.count}</span>
+                </button>
+              </SleekControlRow>
               {!isCollapsed && <GroupRows items={g.visible} cursorId={cursorId} renderRow={renderRow} />}
               {!isCollapsed && g.capped && (
-                <button type="button" className="sr-more" onClick={() => setShowAll((s) => flip(s, g.title))}>
-                  {showAll.has(g.title) ? 'Show fewer' : `Show all ${g.count}`}
-                </button>
+                <SleekControlRow>
+                  <button type="button" className="sr-more" onClick={() => setShowAll((s) => flip(s, g.title))}>
+                    {showAll.has(g.title) ? 'Show fewer' : `Show all ${g.count}`}
+                  </button>
+                </SleekControlRow>
               )}
             </div>
           )
