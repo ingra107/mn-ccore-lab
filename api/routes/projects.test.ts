@@ -148,6 +148,23 @@ describe('handleGetProjects — membership is the only rule', () => {
 // ── Tests: PROJECT_CATEGORY_VALUES enum guard ────────────────────────────────
 // Tested via handleUpdateProject, the path that runs PROJECT_ENUM_GUARDS.
 
+describe('nullable project text can be cleared (fable-audit-2 G13)', () => {
+  it.each(['description', 'short_name', 'strategic_context'])('a null %s lands on the real schema', async (field) => {
+    seed([{ id: 'proj_abc', slug: 'test-proj', title: 'Test' }]);
+    db.prepare(`UPDATE projects SET ${field} = 'Old words' WHERE id = 'proj_abc'`).run();
+    const req = new Request('https://example.com/api/projects/proj_abc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: null }),
+    });
+    const e = env();
+    const res = await handleUpdateProject('proj_abc', req, NICK_USER, e, slugClaimCheck(e.DB));
+    expect(res.status).toBe(200);
+    const row = db.prepare(`SELECT ${field} AS v FROM projects WHERE id = 'proj_abc'`).get() as { v: string | null };
+    expect(row.v).toBeNull();
+  });
+});
+
 describe('PROJECT_CATEGORY_VALUES — three-bucket allowlist enforcement', () => {
   const categoryOf = () => (db.prepare("SELECT category FROM projects WHERE id = 'proj_abc'").get() as { category: string }).category;
 

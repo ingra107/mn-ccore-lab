@@ -166,7 +166,8 @@ export function useUpdateProject(projectId: string) {
   const inline = useUpdateProjectFields()
   return {
     ...inline,
-    mutate: (fields: Partial<Project>) => inline.mutate({ slug: projectId, fields }),
+    // null clears a nullable column; an undefined key would drop out of the body.
+    mutate: (fields: { [K in keyof Project]?: Project[K] | null }) => inline.mutate({ slug: projectId, fields }),
   }
 }
 

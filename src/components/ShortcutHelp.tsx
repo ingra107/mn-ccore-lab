@@ -41,8 +41,6 @@ const shortcuts = [
       { keys: 'D', action: 'Set due date' },
       { keys: 'Z', action: 'Snooze task (+1 day)' },
       { keys: 'B', action: 'Add blocker' },
-      { keys: '→', action: 'Expand subtasks' },
-      { keys: '←', action: 'Collapse subtasks' },
       { keys: 'Esc', action: 'Close panel' },
     ],
   },

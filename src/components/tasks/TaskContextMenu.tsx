@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react
 import { createPortal } from 'react-dom'
 import {
   Circle, CheckCircle2, Clock, Ban, ChevronRight,
-  Check, Copy, Link, Archive, Eye, ArrowRight, AlarmClock, ExternalLink,
+  Check, Copy, Link, Eye, ArrowRight, AlarmClock, ExternalLink,
 } from 'lucide-react'
 import type { TaskRow } from '../../lib/api'
 import type { ContextMenuState } from '../../hooks/useContextMenu'
@@ -47,7 +47,6 @@ interface TaskContextMenuProps {
   onFieldChange?: (id: string, field: string, value: unknown) => void
   onOpenDetail?: (task: TaskRow) => void
   onPeek?: (task: TaskRow) => void
-  onArchive?: (task: TaskRow) => void
 }
 
 // ── Styles ─────────────────────────────────────────────────────
@@ -215,7 +214,6 @@ export default function TaskContextMenu({
   onFieldChange,
   onOpenDetail,
   onPeek,
-  onArchive,
 }: TaskContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [adjustedPos, setAdjustedPos] = useState(state.position)
@@ -451,22 +449,6 @@ export default function TaskContextMenu({
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <Link {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
           Copy link
-        </span>
-      </MenuItem>
-
-      <div style={dividerStyles} />
-
-      {/* Archive */}
-      <MenuItem onClick={() => handleAction(() => {
-        if (onArchive) {
-          onArchive(task)
-        } else {
-          onStatusChange(task.id, 'done')
-        }
-      })}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Archive {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
-          Archive
         </span>
       </MenuItem>
     </div>
