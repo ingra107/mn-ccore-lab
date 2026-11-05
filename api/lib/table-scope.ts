@@ -62,7 +62,7 @@ export const HUB_TABLES = [
   'task_files', 'task_handoffs', 'task_packet_actions', 'task_packet_versions', 'task_packets', 'task_sort_events', 'task_subtasks', 'tasks',
   'team_members', 'trainee_milestones',
   'user_calendar_events', 'user_calendar_feeds', 'user_prefs', 'watch_alarms', 'watch_run_threads', 'watch_runs', 'watch_threads',
-  'watchlist', 'work_kinds', 'workflow_templates',
+  'watchlist', 'work_kinds',
 ] as const
 
 export type HubTable = (typeof HUB_TABLES)[number]
@@ -585,7 +585,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   product_event_roles: LAB, product_kinds: LAB, product_stages: LAB, project_home_seed: LAB, publications: LAB,
   pubmed_sync_log: LAB, research_digest: LAB, research_narratives: LAB, schema_migrations: LAB,
   sessions: LAB, team_members: LAB, trainee_milestones: LAB, user_calendar_events: LAB,
-  user_calendar_feeds: LAB, work_kinds: LAB, workflow_templates: LAB,
+  user_calendar_feeds: LAB, work_kinds: LAB,
 }
 
 // ── views ────────────────────────────────────────────────────────────────────

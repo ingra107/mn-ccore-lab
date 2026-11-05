@@ -67,7 +67,7 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | task_comments | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | task_updates | DROPPED 2026-06-10 | schema-v78; the GET /api/tasks/:id/updates projection was removed 2026-10-09 (POST stays); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | lab_settings | 11 on prod 2026-11-05 | Key-value settings store (`pi_emails` JSON, the `hub_*` flags, `workflow_stages`, the legacy `lab_*` keys). Read in the Worker; no route serves or writes it since 2026-11-05 |
-| workflow_templates | 3 on prod 2026-11-05 | No reader or writer since the Settings Templates tab and its routes were removed 2026-11-05; drop waits for Nick |
+| workflow_templates | DROPPED by schema-v159 | Applied after the deploy that stopped listing it; backup first |
 | email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
