@@ -22,7 +22,9 @@ import { nowInstant, parseDbUtc } from '../lib/time'
 const PLAN_KEY = ['launch-log', 'plan'] as const
 const POLL_MS = 30_000
 
-export function usePlanControl() {
+/** `weekPlanned`: the week a press would plan already has a plan, so the button
+ *  reads Replan rather than Plan week (lib/planLaunch.ts). */
+export function usePlanControl({ weekPlanned = false }: { weekPlanned?: boolean } = {}) {
   const { isPi, piResolved } = useAuth().user
   const active = isPi && piResolved
   const qc = useQueryClient()
@@ -55,7 +57,7 @@ export function usePlanControl() {
 
   if (!active) return { buttonEl: null, noteEl: null }
 
-  const state = planButtonState(row, now)
+  const state = planButtonState(row, now, weekPlanned)
   // isLoadingError: the read failed and there is no row in hand, so a queued
   // launch could be hiding behind it. A failed background refetch with a row
   // already read keeps that row (isError would drop it).
@@ -77,7 +79,7 @@ export function usePlanControl() {
       data-testid="plan-button"
       data-state={unreadable ? 'unreadable' : state.kind}
       disabled={!enabled}
-      data-tip={state.note || unreadable ? undefined : 'Plan the week with Claude, live'}
+      data-tip={state.note || unreadable ? undefined : `${weekPlanned ? 'Replan' : 'Plan'} the week with Claude, live`}
       onClick={(e) => { e.stopPropagation(); void press() }}
       style={{ marginLeft: 'auto' }}
     >

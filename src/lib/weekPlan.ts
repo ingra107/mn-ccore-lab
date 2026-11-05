@@ -71,6 +71,20 @@ function weekIsPlanned(tasks: readonly TaskRow[], week: string): boolean {
   })
 }
 
+/** The week a session started at this instant would plan (PB
+ *  week_plan.week_start_for): this Monday, or on any Sunday the next one. */
+export function sessionWeekStart(nowIso: string): string {
+  const day = civilFromInstant(nowIso, NUDGE_ZONE)
+  const { weekday } = zoneWeekdayHour(nowIso, NUDGE_ZONE)
+  return civilPlusDays(day, weekday === 0 ? 1 : 1 - weekday)
+}
+
+/** That week already has a plan, so the button offers Replan, not Plan week. Same
+ *  reading of a stored plan as the gold row (weekIsPlanned), and the same list. */
+export function sessionWeekPlanned(tasks: readonly TaskRow[], nowIso: string = nowInstant()): boolean {
+  return weekIsPlanned(tasks, sessionWeekStart(nowIso))
+}
+
 /**
  * The week_start that needs a plan, or null. Computed on read, with no job and
  * no row behind it, so a row missing from `tasks` reads as "not planned": hand
