@@ -45,7 +45,7 @@ import {
   type KindFilter, type TaskDoc,
 } from '../lib/projectLinkLibrary'
 import { formatDbLocal } from '../lib/time'
-import { stripLinkKindSuffix } from '../lib/linkIcon'
+import { resolveLinkType, stripLinkKindSuffix } from '../lib/linkIcon'
 import { ICON_PROPS } from '../lib/iconProps'
 import type { LinkKind, StoredLink } from '../hooks/useApiData'
 
@@ -94,7 +94,12 @@ function LinkRow({
   const archived = link.role === 'archive'
   const label = archived ? 'Restore link' : 'Archive link'
   const name = link.short_title || link.canonical_url
-  const chip = <StoredLinkChip link={{ ...link, short_title: link.short_title ? stripLinkKindSuffix(link.short_title) : link.short_title }} />
+  // The type is read here, while the title still says "(Gmail draft)": the chip gets it stripped.
+  const chip = <StoredLinkChip link={{
+    ...link,
+    type: resolveLinkType(link.canonical_url, link.short_title, link.type) ?? link.type,
+    short_title: link.short_title ? stripLinkKindSuffix(link.short_title) : link.short_title,
+  }} />
   // The tiers' rows carry a kind picker and maybe a source line on top of the
   // date and buttons. That does not fit beside a chip in the ~270px rail: the
   // chip ran under "Unfiled" (#161). So the chip takes its own line and the rest

@@ -8,7 +8,7 @@
 
 import { INK_MUTED } from './constants'
 import { classifyUrl } from '../../lib/urlClassify'
-import { iconForType, linkTintForType, linkTypeFor } from '../../lib/linkIcon'
+import { iconForType, linkTintForType, resolveLinkType } from '../../lib/linkIcon'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
 
@@ -53,8 +53,7 @@ export function LinkRow({ links, slot = false }: { links: TaskLink[]; slot?: boo
         // it. Otherwise prefer stored type; then canonical normalizer (15-type icons
         // from URL); finally classifyUrl's coarse 5-bucket fallback.
         const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
-        const fromLink = linkTypeFor(l.url, l.desc)
-        const resolvedType = fromLink === 'gmail_draft' ? fromLink : l.type || fromLink
+        const resolvedType = resolveLinkType(l.url, l.desc, l.type)
         const stored = resolvedType ? iconForType(resolvedType) : null
         const Icon = stored ? stored.Icon : FallbackIcon
         const color = stored ? stored.tint : INK_MUTED

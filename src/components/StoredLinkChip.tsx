@@ -15,7 +15,7 @@
  */
 
 import React from 'react'
-import { iconForType } from '../lib/linkIcon'
+import { iconForType, resolveLinkType } from '../lib/linkIcon'
 import { classifyUrl } from '../lib/urlClassify'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import type { StoredLink } from '../hooks/useApiData'
@@ -26,15 +26,16 @@ interface Props {
 
 export default function StoredLinkChip({ link }: Props) {
   const { launch } = useProtocolLaunch()
-  const { Icon, tint } = iconForType(link.type)
   const url = link.canonical_url
+  const type = resolveLinkType(url, link.short_title, link.type)
+  const { Icon, tint } = iconForType(type)
   // Route through classifyUrl so [[wikilink]] canonical_urls become the correct
   // mnccore://obsidian/<target> launch URI rather than a raw [[…]] that the
   // browser treats as a relative URL navigation (broken no-op). isHttp is
   // authoritative here — it matches classifyUrl's resolved href, not the raw url.
   const { href: launchUri, isHttp } = classifyUrl(url)
   const displayLabel = link.short_title || link.canonical_url
-  const tooltip = `${link.type} · ${displayLabel}`
+  const tooltip = `${type} · ${displayLabel}`
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation()
@@ -42,7 +43,7 @@ export default function StoredLinkChip({ link }: Props) {
       e.preventDefault()
       // launchUri is the resolved mnccore:// (or other non-http) URI; url is the
       // raw canonical_url kept as clipboard fallback (e.g. the [[wikilink]] text).
-      void launch(launchUri, { copyText: url, successMessage: `Opening ${link.type}… (path copied as backup)` })
+      void launch(launchUri, { copyText: url, successMessage: `Opening ${type}… (path copied as backup)` })
     }
   }
 
