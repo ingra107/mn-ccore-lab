@@ -68,6 +68,7 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './ke
 import { mirrorArtifactLink } from './artifact-link-mirror';
 import { receiptStatements, originOf } from './receipts';
 import { nowInstant } from './time';
+import { notifyWatchersOfEntry } from './task-watchers';
 
 export type EntityType = 'task' | 'project' | 'artifact' | 'day' | 'meeting';
 
@@ -696,6 +697,11 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       } catch (e) {
         console.error('postActivityEntry: owner notification failed:', e);
       }
+      await notifyWatchersOfEntry(env, {
+        taskId: entityId, kind, body,
+        actor: { slug: actorSlug, name: user.name, email: user.email },
+        mentioned: mentions,
+      });
     }
 
     // Hermes: @hermes|@claude fires the existing ai_requests insert + a

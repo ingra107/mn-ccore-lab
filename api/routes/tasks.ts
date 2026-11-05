@@ -16,6 +16,7 @@ import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 import { parseWatchers, serializeWatchers } from '../../shared/watchers';
+import { WATCHED_TASK_FIELDS, notifyWatchersAdded, notifyWatchersChanged, watchedFieldsChanged } from '../lib/task-watchers';
 import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, notApprovalSql, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
 import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
@@ -249,7 +250,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
     return error('status must be one of: todo, in_progress, done, blocked, waiting_external', 400);
   }
 
-  const item = await env.DB.prepare('SELECT title, description, assigned_by FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assigned_by: string | null }>();
+  const item = await env.DB.prepare('SELECT title, description, assigned_by, status, watchers FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assigned_by: string | null; status: string; watchers: string | null }>();
   if (!item) return error('Task not found', 404);
 
   const completed = body.status === 'done' ? 1 : 0;
@@ -284,6 +285,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
       ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), taskLinkFor(id)).run();
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
+  if (item.status !== body.status) await notifyWatchersChanged(env, [{ id, title: item.title || item.description, watchers: item.watchers }], user);
 
   const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   return json({ data: updated });
@@ -510,6 +512,11 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     cas = { base_seq: Number(row.seq ?? 0), base_row_hash: await hashTouched(row, Object.keys(patchRecord)) };
   }
 
+  // What the watchers' notes compare against. Read before the write lands.
+  const prior = await env.DB.prepare(
+    `SELECT watchers, ${WATCHED_TASK_FIELDS.join(', ')} FROM tasks WHERE id = ?`
+  ).bind(id).first<Record<string, unknown>>();
+
   const updateMutResult = await applyMutation(env, {
     table: 'tasks',
     record_id: id,
@@ -539,6 +546,15 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
   // D22: emit typed event only when assignee genuinely changed.
   if (prevAssignee !== null && body.assignee !== prevAssignee.assignee) {
     await logActivity(env, 'assignee_change', `Assignee: ${prevAssignee.assignee ?? '—'} → ${body.assignee as string}`, user.email, id, 'task');
+  }
+
+  if (prior) {
+    const nextTitle = (typeof patchRecord.title === 'string' ? patchRecord.title : prior.title) as string | null;
+    const nextWatchers = watchers === undefined ? prior.watchers : watchers;
+    const justAdded = watchers === undefined ? [] : await notifyWatchersAdded(env, { id, title: nextTitle }, prior.watchers, watchers, user);
+    if (watchedFieldsChanged(prior, patchRecord).length > 0) {
+      await notifyWatchersChanged(env, [{ id, title: nextTitle, watchers: nextWatchers }], user, justAdded);
+    }
   }
 
   const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
@@ -1326,6 +1342,15 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
   }
 
   await logActivity(env, 'task', `Bulk ${body.action}: ${body.ids.length} tasks`, user.email, null, null)
+
+  // Bulk edits tell a task's watchers too. A deleted task's notes were just
+  // cleaned above, so a delete tells no one.
+  if (body.action !== 'delete' && applied.length > 0) {
+    const marks = applied.map(() => '?').join(',')
+    const rows = await env.DB.prepare(`SELECT id, title, watchers FROM tasks WHERE watchers IS NOT NULL AND id IN (${marks})`)
+      .bind(...applied).all<{ id: string; title: string | null; watchers: string | null }>()
+    await notifyWatchersChanged(env, rows.results ?? [], user)
+  }
 
   return json({ data: { ok: failed.length === 0, count: applied.length, applied, failed } })
 }
