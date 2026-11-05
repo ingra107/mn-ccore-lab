@@ -341,9 +341,10 @@ export default function MeetingDetail() {
               // users reach, shown on hover and always on touch (.reveal-on-hover).
               <div className="reveal-host" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h1
+                  className="tk-h1"
                   onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
                   title="Click to edit title"
-                  style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer' }}
+                  style={{ color: 'var(--sk-t1)', cursor: 'pointer' }}
                 >
                   {emDashifyTitle(meeting.title)}
                 </h1>

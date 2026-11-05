@@ -12,9 +12,10 @@ const MeetingNotesPage = lazyRoute(() => import('../MeetingNotesPage'))
 export default function MeetingsHost() {
   return (
     <PageTabs
-      ariaLabel="Meetings"
+      title="Meetings"
+      ariaLabel="Meetings views"
       tabs={[
-        { key: 'meetings', label: 'Meetings', render: () => <Suspense fallback={<TabFallback />}><Meetings /></Suspense> },
+        { key: 'meetings', label: 'All', render: () => <Suspense fallback={<TabFallback />}><Meetings /></Suspense> },
         { key: 'transcripts', label: 'Transcripts', render: () => <Suspense fallback={<TabFallback />}><MeetingNotesPage /></Suspense> },
       ]}
     />

@@ -945,7 +945,7 @@ export default function Digest() {
       {/* Header — compact PageHeader replaces oversized hero (H-02, H-03) */}
       <section className="content-container">
         <PageHeader
-          title="Research Digest"
+          title="Library"
           subtitle="Daily PubMed papers relevant to MNCCORE research"
           // The digest's one telling number is what is new (color-back pick 2).
           // The total still reads in the All tab and the progress line below.

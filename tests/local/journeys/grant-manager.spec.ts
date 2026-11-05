@@ -2,7 +2,7 @@
  * Journey 3: Grant Manager
  * Persona: Nick managing grant portfolio — status updates, deadlines, milestones.
  *
- * Grants page h1 = "Grants & Funding". Deadlines h1 = "Deadlines & Milestones".
+ * Grants page h1 = "Grants". Deadlines h1 = "Deadlines".
  */
 import { test, expect, go, vis, waitForToast } from './fixtures'
 import { P } from '../../helpers/paths'

@@ -58,8 +58,11 @@ interface DataPageProps {
   /** Hide the controls row entirely (page renders only header + body). */
   hideControls?: boolean
 
+  /** Beside the tab tray on its row (Projects' view switch on a phone). */
+  besideTabs?: ReactNode
+
   /** A switcher that changes WHAT the page lists (Manuscripts' product kind
-   *  tabs). It rides in the header under the controls row. */
+   *  tabs). It rides in the header, right below the title and above the controls row. */
   headControls?: ReactNode
 
   // ── Content between the controls row and the body (e.g. attention
@@ -109,6 +112,7 @@ export default function DataPage({
   controlsCount,
   controlsCountLabel,
   hideControls,
+  besideTabs,
   headControls,
   beforeBody,
   wideBody,
@@ -145,7 +149,8 @@ export default function DataPage({
   )
 
   const headerEl = (
-    <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions}>
+    <PageHeader title={title} count={count} hero={hero} subtitle={subtitle} actions={actions} besideTabs={besideTabs}>
+      {headControls}
       {showControls && (
         <TableControls
           views={views}
@@ -157,7 +162,6 @@ export default function DataPage({
           countLabel={controlsCountLabel}
         />
       )}
-      {headControls}
     </PageHeader>
   )
 

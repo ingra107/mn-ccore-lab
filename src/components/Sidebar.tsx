@@ -235,7 +235,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         },
         badgeAction: {
           navigateTo: `${PATHS.myTasks}?filter=new`,
-          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Tasks`,
+          ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open Tasks`,
         },
       }
     if (item.to === PATHS.meetings) {

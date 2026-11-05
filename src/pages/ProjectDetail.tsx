@@ -1875,7 +1875,7 @@ isAuthenticated && (project.slug ?? project.id) && (
           className="pj-title-input"
         />
       ) : (
-        <h1 className="pj-h1">
+        <h1 className="pj-h1 tk-h1">
           <button
             type="button"
             className="pj-edit-btn"
@@ -2028,19 +2028,31 @@ const PJ_CSS = `
 .pj-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .pj-metarow { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
 .pj-title { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
-.pj-h1 { margin: 0; min-width: 0; font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); line-height: 1.2; color: var(--ink); }
+.pj-h1 { min-width: 0; color: var(--sk-t1); }
 .pj-edit-btn { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .pj-edit-btn:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 2px; border-radius: var(--radius-sm); }
 .pj-short { flex: none; font-size: var(--value-size); color: var(--sk-t3); white-space: nowrap; }
 .pj-short-empty { background: none; border: 0; padding: 0; font-size: 11px; color: var(--sk-t3); cursor: pointer; white-space: nowrap; }
 .pj-short-empty:hover { color: var(--sk-t1); }
 .pj-title-input {
-  font-weight: 700; font-size: clamp(1.25rem, 2.6vw, 1.6rem); color: var(--ink); background: none; border: 0;
-  border-bottom: 2px solid var(--job-accent); outline: none; padding: 2px 0; width: 100%; font-family: inherit; line-height: 1.2;
+  font: 600 28px var(--font-display); letter-spacing: -.02em; color: var(--sk-t1); background: none; border: 0;
+  border-bottom: 2px solid var(--job-accent); outline: none; padding: 2px 0; width: 100%; line-height: 1.15;
 }
 .pj-short-input {
   font-size: var(--value-size); color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--job-accent);
   outline: none; padding: 2px 0; max-width: 240px; font-family: inherit;
+}
+/* Phone: the title takes the whole width and the two icons join the meta row, so a
+   28px title is not squeezed into what the icons leave (Nick's mock, 2026-11-05). A
+   very long one stops at three lines; a tap opens it in full to edit. */
+@media (max-width: 767px) {
+  .pj-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; }
+  .pj-headrow { display: contents; }
+  .pj-title { grid-column: 1 / -1; }
+  .pj-headrow > :last-child { grid-column: 2; grid-row: 2; }
+  .pj-metarow { grid-column: 1; grid-row: 2; }
+  .pj-head .pg-hb { grid-column: 1 / -1; }
+  .pj-h1 .pj-edit-btn { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 }
 .pj-sec { margin-bottom: 22px; }
 .pwr-rail .pj-sec { margin-bottom: 0; }

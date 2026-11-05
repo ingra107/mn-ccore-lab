@@ -17,7 +17,7 @@ export interface NavChord {
 
 export const NAV_CHORDS: readonly NavChord[] = [
   { key: 'd', path: PATHS.dashboard, label: 'Go to Today' },
-  { key: 't', path: PATHS.myTasks, label: 'Go to My Tasks' },
+  { key: 't', path: PATHS.myTasks, label: 'Go to Tasks' },
   { key: 'p', path: PATHS.projects, label: 'Go to Projects' },
   { key: 'm', path: PATHS.meetings, label: 'Go to Meetings' },
   { key: 'e', path: PATHS.deadlines, label: 'Go to Deadlines' },
@@ -28,7 +28,7 @@ export const NAV_CHORDS: readonly NavChord[] = [
   { key: 'r', path: PATHS.digestTab, label: 'Go to Research Digest' },
   { key: 'g', path: PATHS.grants, label: 'Go to Grants' },
   { key: 'a', path: PATHS.activity, label: 'Go to Activity' },
-  { key: 'y', path: PATHS.myTasks, label: 'Go to My Tasks', alias: true },
+  { key: 'y', path: PATHS.myTasks, label: 'Go to Tasks', alias: true },
   { key: 'l', path: PATHS.digestTab, label: 'Go to Research Digest', alias: true },
   { key: 'k', path: PATHS.deadlines, label: 'Go to Deadlines', alias: true },
 ]

@@ -833,7 +833,7 @@ export default function DecisionsPage() {
   return (
     <div className="content-container">
       <PageHeader
-        title="Decision Log"
+        title="Decisions"
         subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
         count={filteredDecisions.length}
         actions={

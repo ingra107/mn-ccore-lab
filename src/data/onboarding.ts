@@ -93,7 +93,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'idea',
     day: 7,
     title: 'Submit a research idea',
-    description: 'Share an idea -- big or small. The Ideas Board is for everyone.',
+    description: 'Share an idea -- big or small. Ideas are for everyone.',
     action: 'Visit Ideas',
     link: '/ideas',
     category: 'contribute',
