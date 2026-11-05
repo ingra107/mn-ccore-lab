@@ -55,6 +55,11 @@ export default function Layout() {
   const location = useLocation()
   const hub = memberHubTarget({ isLoading: authLoading, isAuthenticated, isMember: user?.isMember ?? false })
   const hubActive = location.pathname === PUBLIC_PATHS.join
+  // Already on the landing page the route does not change, so nothing else
+  // would move a reader who has scrolled down: the click looked dead.
+  const backToTopOnHome = () => {
+    if (location.pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Close menus on route change, adjusted during render (React's "adjusting
   // state when a prop changes" pattern) rather than an effect.
@@ -123,6 +128,8 @@ export default function Layout() {
         <div className="content-container flex items-center justify-between">
           <Link
             to="/"
+            onClick={backToTopOnHome}
+            aria-label="MN-CCORE home"
             className="flex items-center gap-3 cursor-pointer"
             style={{ textDecoration: 'none' }}
           >
@@ -150,6 +157,7 @@ export default function Layout() {
             {/* Home */}
             <Link
               to="/"
+              onClick={backToTopOnHome}
               className="cursor-pointer py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap"
               style={{
                 color: location.pathname === '/' ? barBrand : barFg,

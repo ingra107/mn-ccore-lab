@@ -30,7 +30,7 @@ export default function JoinPage() {
             {isMember
               ? <> You are already a member.</>
               : isAuthenticated && email
-                ? <> You are signed in as <strong style={{ color: 'var(--sk-t1)', fontWeight: 500 }}>{email}</strong>, which is not on a lab project yet. Here is how to join.</>
+                ? <> You are signed in as <strong style={{ color: 'var(--sk-t1)', fontWeight: 500 }}>{email}</strong>, which does not have Member Hub access yet. Here is how to join.</>
                 : <> Here is how to join.</>}
           </>
         }

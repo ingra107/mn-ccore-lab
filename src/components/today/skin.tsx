@@ -5,6 +5,7 @@
 
 import { initialsFor, firstNameFor, firstOf, initialsOfName, fullNameReadable, photoFor, slugForName } from '../../lib/personLabel'
 import { fullNameForSlug } from '../../lib/nameUtils'
+import { photoFrameStyle } from '../../lib/photoFrame'
 import HermesMark from '../HermesMark'
 import { useState } from 'react'
 import type React from 'react'
@@ -43,7 +44,7 @@ export function FaceDisc({ initials, photo, label, title, lg = false, sm = false
     <span className={cls} style={style} title={title ?? label} {...a11y}>
       {hermes
         ? <HermesMark variant="icon" size={px ? Math.round(px * 0.7) : 14} pulse />
-        : showPhoto ? <img src={photo} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} /> : initials}
+        : showPhoto ? <img src={photo} alt="" loading="lazy" decoding="async" style={photoFrameStyle(photo)} onError={() => setBroken(true)} /> : initials}
     </span>
   )
 }

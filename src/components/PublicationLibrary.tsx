@@ -72,7 +72,12 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
           >
             {pubs.map((pub) => {
               const accent = getJournalAccent(pub.journal)
-              const link = pub.doi ? `https://doi.org/${pub.doi}` : pub.pubmed ? `https://pubmed.ncbi.nlm.nih.gov/${pub.pubmed}` : null
+              // Stored DOIs and PubMed links are usually full URLs already.
+              const link = pub.doi
+                ? (pub.doi.startsWith('http') ? pub.doi : `https://doi.org/${pub.doi}`)
+                : pub.pubmed
+                  ? (pub.pubmed.startsWith('http') ? pub.pubmed : `https://pubmed.ncbi.nlm.nih.gov/${pub.pubmed}`)
+                  : null
 
               return (
                 <a

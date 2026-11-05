@@ -25,7 +25,11 @@ export const KEY_JOURNALS = [
   'JAMA Network Open',
   'Annals of Surgery',
   'Critical Care Medicine',
+  'American Journal of Respiratory and Critical Care Medicine',
 ]
+
+const journalKey = (j: string) => j.trim().toLowerCase().replace(/\s+/g, ' ')
+const KEY_JOURNAL_SET = new Set(KEY_JOURNALS.map(journalKey))
 
 export const FEATURED_COUNT = 10
 export const RECENT_COUNT = 10
@@ -82,7 +86,9 @@ export function planPublicationsPage(
   const published = publications.filter(isPublished)
   const featured = [...published].filter((p) => p.featured).sort(byYearDesc).slice(0, FEATURED_COUNT)
   const shown = new Set(featured.map((p) => p.id))
-  const key = published.filter((p) => !shown.has(p.id) && KEY_JOURNALS.some((j) => p.journal.includes(j)))
+  // The whole name, ignoring case: a substring match let "Journal of Intensive
+  // Care Medicine" and "Pediatric Critical Care Medicine" through.
+  const key = published.filter((p) => !shown.has(p.id) && KEY_JOURNAL_SET.has(journalKey(p.journal)))
   key.forEach((p) => shown.add(p.id))
   const recent = [...filtered].filter((p) => !shown.has(p.id)).sort(byYearDesc).slice(0, RECENT_COUNT)
 

@@ -9,8 +9,6 @@ import PublicationLibrary from '../components/PublicationLibrary'
 import { PublicHead, SecHead } from '../components/public/PublicParts'
 import { areaById } from '../lib/researchAreas'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { getAllMembers } from '../data/team'
-import { resolveBylineAuthors } from '../lib/authorAvatars'
 import { countPublications } from '../lib/publicationCounts'
 import { planPublicationsPage, RECENT_COUNT } from '../lib/publicationsPage'
 
@@ -144,12 +142,7 @@ export default function Publications() {
 
   const counts = useMemo(() => countPublications(publications), [publications])
   const pipelineCount = counts.inReview + counts.inPreparation
-  const labMembers = useMemo(() => getAllMembers(), [])
 
-  const journalCount = new Set(filtered.map((p) => p.journal).filter(Boolean)).size
-  // Lab-wide: a paper counts when its first author resolves to ANY lab member
-  // (same byline match the author column uses).
-  const firstAuthorCount = filtered.filter((p) => !!resolveBylineAuthors(p, labMembers)[0]?.member).length
   const thisYear = new Date().getFullYear()
   const thisYearCount = filtered.filter((p) => p.year === thisYear).length
   const KEY_SHOWN = 8
@@ -176,7 +169,7 @@ export default function Publications() {
       <PublicHead
         kicker="Publications"
         title={<>The <em>published</em> work.</>}
-        lede={`Papers from MN-CCORE lab members${pipelineCount > 0 ? `, with ${pipelineCount} more in review or in preparation` : ''}. Open any paper for its abstract and links.`}
+        lede={`Papers by MN-CCORE lab members across their careers${pipelineCount > 0 ? `, with ${pipelineCount} more in review or in preparation` : ''}. Open any paper for its abstract and links.`}
         small
       />
 
@@ -197,8 +190,6 @@ export default function Publications() {
       {filtered.length > 0 && (
         <div className="pub-stats">
           <span><b>{filtered.length}</b> papers</span>
-          <span><b>{journalCount}</b> journals</span>
-          <span><b>{firstAuthorCount}</b> with a lab first author</span>
           <span><b>{thisYearCount}</b> in {thisYear}</span>
           <button
             type="button"

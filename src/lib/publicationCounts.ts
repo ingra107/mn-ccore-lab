@@ -178,7 +178,7 @@ export function isMemberPublication(
 }
 
 /** A consortium or study-group byline entry, whose members are not listed. */
-const GROUP_AUTHOR = /\b(study team|study group|consortium|investigators|collaborative|network|working group)\b/i
+export const GROUP_AUTHOR = /\b(study team|study group|consortium|investigators|collaborative|network|working group)\b/i
 
 /** True when the byline carries the surname of `authorName` as whole words. */
 function bylineHasSurname(authors: string, authorName: string): boolean {

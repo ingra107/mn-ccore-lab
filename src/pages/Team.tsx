@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { FaceDisc } from '../components/today/skin'
@@ -10,12 +10,21 @@ import type { ExpertiseTag } from '../hooks/useApiData'
 import { displayName } from '../lib/nameUtils'
 import { memberPublications, isPublished } from '../lib/publicationCounts'
 import { ROSTER, rosterCount } from '../lib/roster'
+import { menteesForDirector } from '../data/mentees'
 import AddMemberPanel from '../components/AddMemberPanel'
 import { useAuth } from '../hooks/useAuth'
 
 /** "2 grants, 71 papers": a zero is left out, never printed. */
 function statLine(parts: [number, string, string][]): string {
   return parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many}`).join(' · ')
+}
+
+/** Columns that divide a group evenly, so its last row ends flush: 2 people get
+ *  2, 9 get 3, 4 get 4. A size nothing divides (5, 7) uses 3 and leaves a gap.
+ *  `--cols-sm` is the tablet width, 2 when the group is even. */
+function cardColumns(n: number): CSSProperties {
+  const cols = [4, 3, 2].find((c) => n >= c && n % c === 0) ?? Math.min(n, 3)
+  return { '--cols': cols, '--cols-sm': n % 2 === 0 ? 2 : Math.min(n, 3) } as CSSProperties
 }
 
 export default function Team() {
@@ -53,8 +62,6 @@ export default function Team() {
     `Meet the ${rosterCount} people of MN-CCORE: co-directors Nick Ingraham and Nathan Mesfin, senior mentors, faculty collaborators, fellows, students and research staff.`
   )
 
-  // Trainees are the roster's own group (fellows and students), never the mentee list.
-  const traineeCount = ROSTER.find((g) => g.id === 'trainees')?.members.length ?? 0
   const nameOf = (m: TeamMember) => (m.slug ? displayName(m.slug, 'formal') : m.name)
 
   return (
@@ -95,7 +102,8 @@ export default function Team() {
                   const tags = expertiseByMember.get(slug) ?? []
                   const stats = statLine([
                     [memberPublications(publications, m).filter(isPublished).length, 'paper', 'papers'],
-                    [traineeCount, 'trainee', 'trainees'],
+                    // The same list the member page shows, so the two never disagree.
+                    [menteesForDirector(slug).length, 'trainee', 'trainees'],
                   ])
                   return (
                     <Link key={slug} to={`/team/${slug}`} className="pub-card pub-hov pub-dir">
@@ -128,7 +136,7 @@ export default function Team() {
         return (
           <section key={group.id} aria-label={group.label}>
             <SecHead title={group.label} count={members.length} />
-            <div className="pub-cards">
+            <div className="pub-cards" style={cardColumns(members.length)}>
               {members.map((m) => {
                 const tags = (m.slug ? expertiseByMember.get(m.slug) : undefined) ?? []
                 const name = nameOf(m)
@@ -137,10 +145,12 @@ export default function Team() {
                   && !(group.id === 'mentors' && /^senior mentor$/i.test(m.role))
                 const inner = (
                   <>
-                    <FaceDisc initials={m.initials} photo={m.photoUrl} label={name} px={76} pxSm={64} variant="brand" decorative />
-                    <span className="pub-pn" style={{ marginTop: 10 }}>{name}</span>
-                    {showRole && <span className="pub-pr">{m.role}</span>}
-                    {tags.length > 0 && <span className="pub-pr" style={{ marginTop: 6, fontStyle: 'italic' }}>{tags.slice(0, 2).map((t) => t.tag).join(' · ')}</span>}
+                    <FaceDisc initials={m.initials} photo={m.photoUrl} label={name} px={64} pxSm={56} variant="brand" decorative />
+                    <span style={{ minWidth: 0 }}>
+                      <span className="pub-pn">{name}</span>
+                      {showRole && <span className="pub-pr">{m.role}</span>}
+                      {tags.length > 0 && <span className="pub-pr" style={{ marginTop: 4, fontStyle: 'italic' }}>{tags.slice(0, 2).map((t) => t.tag).join(' · ')}</span>}
+                    </span>
                   </>
                 )
                 return m.slug

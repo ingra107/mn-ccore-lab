@@ -14,6 +14,7 @@ import PubRow from '../components/public/PubRow'
 // Selected work (fresh-eyes critique 7) and the full list is one click away.
 const SELECTED = 3
 const PEOPLE = 5
+const BAR_MAX_PX = 64
 const dash = '—'
 
 export default function Home() {
@@ -62,7 +63,7 @@ export default function Home() {
       <PublicHead
         kicker="MN-CCORE · University of Minnesota"
         title={<>We study how intensive care is <em>delivered</em>, measured and improved.</>}
-        lede={`MN-CCORE is a research group in the University of Minnesota Department of Medicine. Our physicians and scientists study how clinicians' decisions shape ICU outcomes, and build open data tools with ${facts.sites} hospitals to measure it.`}
+        lede={`MN-CCORE, the Minnesota Critical Care Outcomes & Research Effort, is a research group in the University of Minnesota Department of Medicine. Our physicians and scientists study how clinicians' decisions shape ICU outcomes, and build open data tools with ${facts.sites} institutions to measure it.`}
       >
         <div className="pub-acts">
           <Link to="/publications" className="pub-btn pub-gold">Read the work</Link>
@@ -72,22 +73,22 @@ export default function Home() {
 
       {/* The proof: live counts, fixed dark in both themes */}
       <section className="pub-band" aria-label="The lab in numbers">
-        <div className="pub-band-papers">
-          <b>{facts.papersShown ?? dash}</b>
-          <small>Published papers, {firstYear.year} to {thisYear.year}</small>
-          <div className="pub-bars" role="img" aria-label={`Papers per year: ${facts.byYear.map((y) => `${y.year} ${y.n}`).join(', ')}`}>
-            {facts.byYear.map((y, i) => (
-              <div key={y.year} className={i === facts.byYear.length - 1 ? 'pub-cur' : undefined} title={`${y.year}: ${y.n} papers${i === facts.byYear.length - 1 ? ' so far' : ''}`}>
-                <span className="pub-bar-n">{y.n}</span>
-                <i style={{ height: `${Math.max(4, (y.n / maxYear) * 100)}%` }} />
-                <span className="pub-bar-y">{String(y.year).slice(2)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div><b>{facts.papersShown ?? dash}</b><small>Papers by lab members, {firstYear.year} to {thisYear.year}</small></div>
         <div><b>{facts.activeProjects ?? dash}</b><small>Active projects</small></div>
-        <div><b>{facts.sites}</b><small>Hospitals sharing ICU data</small></div>
+        <div><b>{facts.sites}</b><small>Institutions sharing ICU data</small></div>
         <div><b>{facts.people}</b><small>People on the team</small></div>
+        {/* Bar heights are pixels, not percent of the row: the year and count
+            labels share that row, so a percent height got squeezed and a 29 drew
+            nearly as tall as a 42. */}
+        <div className="pub-bars" role="img" aria-label={`Papers per year: ${facts.byYear.map((y) => `${y.year} ${y.n}`).join(', ')}`}>
+          {facts.byYear.map((y, i) => (
+            <div key={y.year} className={i === facts.byYear.length - 1 ? 'pub-cur' : undefined} title={`${y.year}: ${y.n} papers${i === facts.byYear.length - 1 ? ' so far' : ''}`}>
+              <span className="pub-bar-n">{y.n}</span>
+              <i style={{ height: y.n === 0 ? 0 : Math.max(3, (y.n / maxYear) * BAR_MAX_PX) }} />
+              <span className="pub-bar-y">{String(y.year).slice(2)}</span>
+            </div>
+          ))}
+        </div>
         <p className="pub-band-note" style={{ margin: 0 }}>
           {facts.activeGrants
             ? <>Funded by {facts.funders.join(' and ')} through {facts.activeGrants} active {facts.activeGrants === 1 ? 'grant' : 'grants'}{facts.mechanisms.length > 0 ? ` (${facts.mechanisms.join(', ')})` : ''}. </>
@@ -100,14 +101,14 @@ export default function Home() {
       <div className="pub-areas">
         {facts.areas.map(({ area, papers }) => (
           <Link key={area.id} to={areaHref(area)} className="pub-area">
-            {papers != null && <span className="pub-n">{papers} {papers === 1 ? 'paper' : 'papers'}</span>}
+            <span className="pub-n">{papers} {papers === 1 ? 'paper' : 'papers'}</span>
             <span className="pub-rt" style={{ margin: '4px 0 0' }}>{area.label}</span>
             <p>{area.blurb}</p>
           </Link>
         ))}
       </div>
 
-      <SecHead title="Selected work" right={<Link to="/publications">{facts.papersShown ? `All ${facts.papersShown} papers` : 'All publications'}</Link>} />
+      <SecHead title="Selected work" right={<Link to="/publications">All publications</Link>} />
       <div className="pub-card" style={{ padding: 8, marginTop: 12 }}>
         {selected.map((p) => <PubRow key={p.id} pub={p} />)}
       </div>
@@ -115,7 +116,7 @@ export default function Home() {
       <SecHead title="The people" count={facts.people} right={<Link to="/team">Meet the team</Link>} />
       <div className="pub-faces">
         {people.map((m) => <PersonLink key={m.slug ?? m.name} m={m} />)}
-        {morePeople > 0 && <Link to="/team" className="pub-person" style={{ alignSelf: 'center' }}>+{morePeople} more on the team page</Link>}
+        {morePeople > 0 && <Link to="/team" className="pub-person pub-more">+{morePeople} more</Link>}
       </div>
     </div>
   )

@@ -218,7 +218,7 @@ export default function NetworkFilters({
           className="inline-block w-2 h-2 rounded-full"
           style={{ background: filters.mnccoreOnly ? '#0f1923' : 'var(--job-brand)' }}
         />
-        MNCCORE Only
+        Lab and CLIF only
       </motion.button>
 
       {/* Clear button */}

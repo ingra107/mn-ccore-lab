@@ -25,7 +25,7 @@
  */
 
 import type { Publication, TeamMember } from '../data/types'
-import { segmentNamesAuthor } from './publicationCounts'
+import { GROUP_AUTHOR, isMemberPublication, segmentNamesAuthor } from './publicationCounts'
 
 export interface ResolvedAuthorAvatar {
   slug: string
@@ -90,4 +90,37 @@ export function resolveBylineAuthors(
     claimed.add(match.slug as string)
     return { name: seg, member: toAvatar(match) }
   })
+}
+
+export interface LabAuthor extends ResolvedAuthorAvatar {
+  /** The study group that credits this member, when the printed byline does
+   *  not name them: "COVID-OUT Study Team". */
+  viaGroup?: string
+}
+
+/**
+ * The faces a public paper shows: every lab member the site credits with it.
+ * Named authors come first in byline order, then anyone else
+ * `isMemberPublication` credits. That rule still checks a stored slug against
+ * the byline, so it cannot bring back the non-authors G12-5 removed. Its two
+ * extra cases are a byline the name matcher cannot parse ("Ingraham N",
+ * "Safadi, S.") and a study-group author. COVID-OUT in Lancet Infectious
+ * Diseases names 31 authors plus the COVID-OUT Study Team, and PubMed lists
+ * Ingraham NE among that team's investigators: the paper counted on his page
+ * and showed no face (Nick, 2026-11-04).
+ */
+export function labAuthorsOn(
+  pub: Pick<Publication, 'authors' | 'authorSlugs'>,
+  members: TeamMember[],
+): LabAuthor[] {
+  const named: LabAuthor[] = resolveBylineAuthors(pub, members).flatMap((a) => (a.member ? [a.member] : []))
+  const seen = new Set(named.map((a) => a.slug))
+  const segments = splitAuthorSegments(pub.authors)
+  const group = segments.find((s) => GROUP_AUTHOR.test(s))
+  const surnameOf = (m: TeamMember) => (m.authorName ?? '').split(' ').slice(0, -1).join(' ').toLowerCase()
+  const others = members.filter((m) => m.slug && !seen.has(m.slug) && isMemberPublication(pub, m)).map((m) => {
+    const printed = surnameOf(m) !== '' && segments.some((s) => s.toLowerCase().includes(surnameOf(m)))
+    return { ...toAvatar(m), viaGroup: printed ? undefined : group }
+  })
+  return [...named, ...others]
 }

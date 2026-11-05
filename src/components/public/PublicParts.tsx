@@ -45,7 +45,9 @@ export function PersonLink({ m, px = 44 }: { m: TeamMember; px?: number }) {
   const text = (
     <span style={{ minWidth: 0 }}>
       <span className="pub-pn">{name}</span>
-      <span className="pub-pr">{m.role}</span>
+      {/* Already on the lab's own site: "Co-Director" says it, and "MN-CCORE"
+          broke across two lines at its hyphen. */}
+      <span className="pub-pr">{m.role.replace(/, MN-CCORE$/, '')}</span>
     </span>
   )
   return slug

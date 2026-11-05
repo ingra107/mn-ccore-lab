@@ -92,7 +92,7 @@ export default function Network() {
       <PublicHead
         kicker="The network"
         title={<>Who we write <em>with</em>.</>}
-        lede="Each dot is an author and each line a paper two authors share. The lab sits at the center of the CLIF Consortium's co-authorship."
+        lede="A selected view of who the lab writes with. Each dot is a frequent co-author, and each line joins two authors who share papers."
         small
       />
 

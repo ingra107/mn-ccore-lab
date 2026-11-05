@@ -479,7 +479,7 @@ describe('Public home short lists', () => {
     expect(host.textContent).not.toContain('newest of')
     const faces = host.querySelectorAll('.pub-faces .pub-person')
     expect(faces.length).toBeLessThanOrEqual(6)
-    expect([...faces].some((f) => /more on the team page/.test(f.textContent ?? ''))).toBe(true)
+    expect([...faces].some((f) => /^\+\d+ more$/.test(f.textContent ?? ''))).toBe(true)
     await shoot('public-home-laptop', host)
   })
 

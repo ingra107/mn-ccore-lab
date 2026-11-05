@@ -37,7 +37,7 @@ export default function NotFound() {
           <Button
             as={Link}
             to="/"
-            variant="primary"
+            variant="gold"
             style={{ padding: '8px 14px', fontSize: '0.875rem', fontWeight: 500, borderRadius: 'var(--radius-lg)', textDecoration: 'none' }}
           >
             Go to the home page

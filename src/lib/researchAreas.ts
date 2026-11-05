@@ -11,7 +11,7 @@
  * area, in s68. A bare `lung`, `respiratory` or `ards` is NOT a term: they match
  * lung-cancer papers and the "ards" in "Towards" and "Reviews". An area whose
  * work has no honest title term yet (clinical decision-making: the lab's papers
- * there are new) has no `terms`, so it shows no number and links by raw topic tag.
+ * there are new) has no `terms`, so it counts and links by its raw topic tag.
  */
 import type { Publication } from '../data/types'
 import { isPublished } from './publicationCounts'
@@ -89,15 +89,18 @@ export function areaHref(area: ResearchArea): string {
 
 export interface AreaCount {
   area: ResearchArea
-  /** null when the area has no honest title term: show no number. */
-  papers: number | null
+  /** Title matches, or for an area with no honest title term the papers carrying
+   *  its topic tag: the same list its card links to. */
+  papers: number
 }
 
 /** Published papers per area, in RESEARCH_AREAS order. */
-export function areaCounts(pubs: ReadonlyArray<Pick<Publication, 'title' | 'status'>>): AreaCount[] {
+export function areaCounts(pubs: ReadonlyArray<Pick<Publication, 'title' | 'status' | 'topics'>>): AreaCount[] {
   const published = pubs.filter(isPublished)
   return RESEARCH_AREAS.map((area) => ({
     area,
-    papers: area.terms ? published.filter((p) => inArea(p, area)).length : null,
+    papers: area.terms
+      ? published.filter((p) => inArea(p, area)).length
+      : published.filter((p) => !!area.topic && !!p.topics?.includes(area.topic)).length,
   }))
 }

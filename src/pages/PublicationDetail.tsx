@@ -6,7 +6,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { FaceDisc } from '../components/today/skin'
 import { getAllMembers } from '../data/team'
-import { resolveBylineAuthors } from '../lib/authorAvatars'
+import { labAuthorsOn } from '../lib/authorAvatars'
 import { SkeletonBar } from '../components/LoadingSkeleton'
 import { PATHS } from '../constants/paths'
 import { QueryErrorNote } from '../components/QueryErrorNote'
@@ -55,11 +55,11 @@ export default function PublicationDetail() {
     )
   }
 
-  // Faces come from the byline (Rule 89), never from stored author_slugs:
-  // those credited non-authors and capped real ones at six (G12-5).
-  const authorAvatars = resolveBylineAuthors(pub, labMembers)
-    .map((a) => a.member)
-    .filter((m): m is NonNullable<typeof m> => !!m)
+  // The same faces as the paper's row. A bare stored slug never earns one: see
+  // labAuthorsOn. A member credited through a study group gets a line saying so,
+  // because the byline above does not print their name.
+  const authorAvatars = labAuthorsOn(pub, labMembers)
+  const viaGroup = authorAvatars.filter((a) => a.viaGroup)
 
   return (
     <div className="content-container pub-foot" style={{ maxWidth: 880 }}>
@@ -79,6 +79,11 @@ export default function PublicationDetail() {
               </Link>
             ))}
           </div>
+        )}
+        {viaGroup.length > 0 && (
+          <p className="pub-meta" style={{ marginTop: 8 }}>
+            {viaGroup.map((a) => a.name).join(', ')}: investigator, {viaGroup[0].viaGroup}.
+          </p>
         )}
         {pub.journal && <p className="pub-rj" style={{ fontSize: 16, marginTop: 14 }}>{pub.journal}</p>}
       </header>

@@ -1,3 +1,12 @@
+/** How a portrait sits in the face circle (lib/photoFrame). `y` is the vertical
+ *  object-position in percent; `zoom` and `dy` (percent of the circle) are for a
+ *  photo whose head is too small or too high for `y` alone. */
+export interface PhotoFrame {
+  y: number
+  zoom?: number
+  dy?: number
+}
+
 export interface Director {
   name: string
   credentials: string
@@ -9,6 +18,7 @@ export interface Director {
   fullBio?: string // the longer bio the member page shows; the card keeps `bio`
   links?: { label: string; href: string }[] // ORCID, GitHub, UMN Bio; Scholar comes from scholarId
   photoUrl?: string
+  photoFrame?: PhotoFrame
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD, e.g. "0000-0002-1825-0097" — primary publications source (#357)
   openalexId?: string // OpenAlex author id, e.g. "A5048294211" — fullest publications source (#905)
@@ -23,6 +33,7 @@ export interface TeamMember {
   credentials?: string
   slug?: string
   photoUrl?: string
+  photoFrame?: PhotoFrame
   authorName?: string // PubMed-style name for matching in author strings, e.g. "Chipman JG"
   bio?: string
   fullBio?: string // longer bio for the member page; falls back to `bio`

@@ -45,7 +45,7 @@ export default function Contact() {
           <div className="pub-map">
             <iframe
               title="MN-CCORE Lab Location - Mayo Memorial Building, University of Minnesota"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.764!2d-93.2315!3d44.9720!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b32d600f4e4541%3A0x6c4e4e1e4e4e4e4e!2sMayo+Memorial+Building%2C+University+of+Minnesota!5e0!3m2!1sen!2sus!4v1"
+              src="https://www.google.com/maps?q=Mayo+Memorial+Building,+420+Delaware+St+SE,+Minneapolis,+MN+55455&z=16&output=embed"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen

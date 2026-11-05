@@ -75,9 +75,13 @@ describe('researchAreas: tight terms (s68 cold review)', () => {
     expect(inArea({ title: 'Heart rate variability and quality of care' }, area('variation'))).toBe(false)
     expect(inArea({ title: 'Hospital variation in ICU risk-adjusted mortality' }, area('variation'))).toBe(true)
   })
-  it('has no number for decision-making: it links by raw topic tag instead', () => {
-    const counts = areaCounts([{ title: 'Patient decision aids for prostate cancer', status: 'Published' }])
-    expect(counts.find((c) => c.area.id === 'decisions')?.papers).toBeNull()
+  it('counts decision-making by the topic tag its card links to, never by title', () => {
+    const counts = areaCounts([
+      { title: 'Patient decision aids for prostate cancer', status: 'Published' },
+      { title: 'Cognitive style and ventilator use', status: 'Published', topics: ['decision-making'] },
+      { title: 'A tagged draft', status: 'In Review', topics: ['decision-making'] },
+    ])
+    expect(counts.find((c) => c.area.id === 'decisions')?.papers).toBe(1)
     expect(areaHref(area('decisions'))).toBe('/publications?topic=decision-making')
     expect(areaHref(area('covid'))).toBe('/publications?area=covid')
   })

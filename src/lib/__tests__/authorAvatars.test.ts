@@ -1,7 +1,36 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBylineAuthors } from '../authorAvatars'
+import { labAuthorsOn, resolveBylineAuthors } from '../authorAvatars'
 import { segmentNamesAuthor } from '../publicationCounts'
 import type { TeamMember } from '../../data/types'
+
+describe('labAuthorsOn', () => {
+  const nick: TeamMember = { name: 'Nick Ingraham', initials: 'NI', role: 'Co-Director', slug: 'nick-ingraham', authorName: 'Ingraham NE' }
+  const safadi: TeamMember = { name: 'Sami Safadi', initials: 'SS', role: 'Faculty', slug: 'sami-safadi', authorName: 'Safadi S' }
+  const lab = [nick, safadi]
+
+  it('gives a study-group investigator a face and names the group (COVID-OUT, Lancet ID)', () => {
+    const [a, ...rest] = labAuthorsOn({ authors: 'Bramante CT, Boulware DR, COVID-OUT Study Team.', authorSlugs: ['nick-ingraham'] }, lab)
+    expect(rest).toEqual([])
+    expect(a.slug).toBe('nick-ingraham')
+    expect(a.viaGroup).toBe('COVID-OUT Study Team')
+  })
+
+  it('credits bylines the name matcher cannot parse, without calling them group credit', () => {
+    const short = labAuthorsOn({ authors: 'Melton GB, Ingraham N, Tignanelli CJ.', authorSlugs: ['nick-ingraham'] }, lab)
+    expect(short.map((a) => [a.slug, a.viaGroup])).toEqual([['nick-ingraham', undefined]])
+    const comma = labAuthorsOn({ authors: 'Safadi, S., Saad, A., Nasr, S.H.', authorSlugs: ['sami-safadi'] }, lab)
+    expect(comma.map((a) => [a.slug, a.viaGroup])).toEqual([['sami-safadi', undefined]])
+  })
+
+  it('still refuses a stored slug the byline does not support (G12-5)', () => {
+    expect(labAuthorsOn({ authors: 'Smith J, Jones K.', authorSlugs: ['nick-ingraham'] }, lab)).toEqual([])
+  })
+
+  it('keeps named authors first, in byline order, and shows nobody twice', () => {
+    const faces = labAuthorsOn({ authors: 'Safadi S, Ingraham NE.', authorSlugs: ['nick-ingraham', 'sami-safadi'] }, lab)
+    expect(faces.map((a) => a.slug)).toEqual(['sami-safadi', 'nick-ingraham'])
+  })
+})
 
 const dudley: TeamMember = { name: 'Adams Dudley', initials: 'AD', role: 'Senior Mentor', slug: 'adams-dudley', authorName: 'Dudley RA', photoUrl: 'https://example.com/dudley.png' }
 const chipman: TeamMember = { name: 'Jeff Chipman', initials: 'JC', role: 'Senior Mentor', slug: 'jeff-chipman', authorName: 'Chipman JG' }
