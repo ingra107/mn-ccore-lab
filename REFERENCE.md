@@ -61,7 +61,8 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | tasks | 601 | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37; composite index `(completed, due_date, created_at DESC)` v46). |
 | work_kinds | 4 | Lookup for the Today sections (schema-v157): review, writing, analysis, admin; labels mirrored in `src/lib/taskSections.ts` (no read route) |
 | task_sort_events | dynamic | Log of every hand sort / unsort / reset from `POST /api/tasks/:id/sort` (schema-v157) |
-| ideas | dynamic | Research ideas board with voting |
+| ideas | dynamic | Research ideas board. `votes` is a frozen column since schema-v158: read the count from idea_votes |
+| idea_votes | dynamic | One row per person per idea (schema-v158); a count is its rows. `legacy-vote-<n>` slugs hold the votes from before voters were kept: they count and draw no face |
 | activity_entries | dynamic | **v77 unified timeline (2026-06-10)** — ALL task/project human messages + completions/system events; ONE write path `postActivityEntry()` (CLAUDE.md Rule 70) |
 | task_comments | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | task_updates | DROPPED 2026-06-10 | schema-v78; the GET /api/tasks/:id/updates projection was removed 2026-10-09 (POST stays); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |

@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "259d9e00e3f63baf6a4fd10bb2657b89bca4dc67f8d86cf2796a5ea645149250",
-  "file_count": 161,
+  "hash": "541324505f800bea8226a561e76772fbd37e8641c7d3c0215975775db71a2f3e",
+  "file_count": 162,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -163,11 +163,12 @@
     "schema-v154-receipts.sql",
     "schema-v155-tasks-run-skill.sql",
     "schema-v156-checkin-title-from-kind.sql",
-    "schema-v157-tasks-work-kind.sql"
+    "schema-v157-tasks-work-kind.sql",
+    "schema-v158-idea-votes.sql"
   ],
   "version_range": [
     2,
-    157
+    158
   ],
   "gaps": [
     35,

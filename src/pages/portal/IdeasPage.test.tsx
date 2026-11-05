@@ -18,7 +18,7 @@ const USER: AuthUser = {
 }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const idea = (id: string, extra: Record<string, unknown> = {}) => ({
-  id, title: `Idea ${id}`, description: null, submitted_by: 'dan-shyu', status: 'new', votes: 0, research_area: null, created_at: '2026-10-06 10:00:00', ...extra,
+  id, title: `Idea ${id}`, description: null, submitted_by: 'dan-shyu', status: 'new', votes: 0, voters: [] as string[], research_area: null, created_at: '2026-10-06 10:00:00', ...extra,
 })
 
 let mounted: { host: HTMLElement; root: Root }[] = []
@@ -140,3 +140,42 @@ describe('IdeasPage', () => {
     expect(document.body.textContent).not.toContain('Idea →')
   })
 })
+
+describe('votes: one per person, with faces', () => {
+  const voteButton = (host: HTMLElement) => host.querySelector<HTMLButtonElement>('[data-testid="idea-vote"]')!
+  const faces = (host: HTMLElement) => host.querySelector('[data-testid="idea-vote-faces"]')
+
+  it('a Board card has the vote control, and it asks for the opposite of what it shows', async () => {
+    const host = await mount()
+    await expect.poll(() => host.textContent).toContain('Idea a')
+    expect(voteButton(host).getAttribute('aria-pressed')).toBe('false')
+    await act(async () => { voteButton(host).click() })
+    expect(posts.find((p) => p.url === '/api/ideas/a/vote')?.body).toEqual({ voted: true })
+  })
+
+  it('my own vote reads pressed, and pressing it takes it back', async () => {
+    ideas = [idea('a', { votes: 1, voters: ['dan-shyu'] })]
+    const host = await mount()
+    await expect.poll(() => host.textContent).toContain('Idea a')
+    expect(voteButton(host).getAttribute('aria-pressed')).toBe('true')
+    expect(voteButton(host).getAttribute('aria-label')).toMatch(/Remove your vote/)
+    await act(async () => { voteButton(host).click() })
+    expect(posts.find((p) => p.url === '/api/ideas/a/vote')?.body).toEqual({ voted: false })
+  })
+
+  it('shows no faces with no votes', async () => {
+    const host = await mount()
+    await expect.poll(() => host.textContent).toContain('Idea a')
+    expect(faces(host)).toBeNull()
+  })
+
+  it('shows the voters beside the count, and an old vote with no name as +N', async () => {
+    ideas = [idea('a', { votes: 3, voters: ['casey-eddington'] })]
+    const host = await mount()
+    await expect.poll(() => host.textContent).toContain('Idea a')
+    expect(voteButton(host).textContent).toBe('3')
+    expect(faces(host)!.getAttribute('aria-label')).toMatch(/^Voted: Casey.*2 earlier votes with no name$/)
+    expect(faces(host)!.textContent).toContain('+2')
+  })
+})
+

@@ -48,15 +48,17 @@ export function useVoteIdea() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => voteIdea(id),
+    mutationFn: ({ id, voted }: { id: string; voted: boolean; slug: string }) => voteIdea(id, voted),
 
-    onMutate: async (id) => {
+    onMutate: async ({ id, voted, slug }) => {
       await queryClient.cancelQueries({ queryKey: ['ideas'] })
       const queries = queryClient.getQueriesData<IdeaRow[]>({ queryKey: ['ideas'] })
       const snapshots = queries.map(([key, data]) => ({ key, data }))
       for (const [key, data] of queries) {
         if (data) {
-          queryClient.setQueryData(key, data.map((i) => i.id === id ? { ...i, votes: i.votes + 1 } : i))
+          queryClient.setQueryData(key, data.map((i) => i.id === id
+            ? { ...i, votes: i.votes + (voted ? 1 : -1), voters: voted ? [...(i.voters ?? []), slug] : (i.voters ?? []).filter((s) => s !== slug) }
+            : i))
         }
       }
       return { snapshots }
