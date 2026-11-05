@@ -196,7 +196,7 @@ export default function IdeasPage() {
 
   const handleIdeaStatusChange = (id: string, status: string, prevStatus: string) => {
     updateIdea.mutate({ id, fields: { status } })
-    showUndo(`Idea \u2192 ${status.replace('_', ' ')}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
+    showUndo(`Moved to ${IDEA_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}`, () => updateIdea.mutate({ id, fields: { status: prevStatus } }))
   }
 
   const handleVote = (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
@@ -222,25 +222,33 @@ export default function IdeasPage() {
 
   // S15: promote an approved idea into a project. CreateProjectModal is
   // prefilled; on create we fire the project mutation (it toasts "Open →" via
-  // useCreateProject) then archive the source idea so the board doesn't keep a
-  // duplicate. The new project's title carries the idea text forward as the link.
+  // useCreateProject), and once the project exists archive the source idea so the
+  // board doesn't keep a duplicate. A refused create leaves the idea untouched.
+  // The new project's title carries the idea text forward as the link.
   const handlePromoteCreate = (idea: IdeaRow) => (project: {
     title: string; category?: string; kind?: string; stage?: string; description?: string; pi?: string
   }) => {
-    createProject.mutate(project)
-    // Archive the source idea, noting the promotion in its description.
-    const note = `Promoted to project "${project.title}".`
-    updateIdea.mutate({
-      id: idea.id,
-      fields: {
-        status: 'archived',
-        description: idea.description ? `${idea.description}\n\n${note}` : note,
+    createProject.mutate(project, {
+      onSuccess: () => {
+        // Archive the source idea, noting the promotion in its description.
+        const note = `Promoted to project "${project.title}".`
+        updateIdea.mutate({
+          id: idea.id,
+          fields: {
+            status: 'archived',
+            description: idea.description ? `${idea.description}\n\n${note}` : note,
+          },
+        })
       },
     })
   }
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
-  const isEmpty = !isLoading && sortedIdeas.length === 0
+  const noRows = !isLoading && sortedIdeas.length === 0
+  // No ideas at all is the invitation. No ideas under a filter keeps the filter,
+  // or there would be no way back from it.
+  const isEmpty = noRows && !filterStatus
+  const filterLabel = IDEA_STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label ?? filterStatus
 
   return (
     <div className="content-container flex flex-col gap-4">
@@ -254,7 +262,7 @@ export default function IdeasPage() {
           </Button>
         }
       >
-        {/* Controls - hidden when empty per M-04 */}
+        {/* Controls - hidden on an empty board per M-04 */}
         {!isEmpty && (
           <div className="flex items-center gap-3 flex-wrap">
             <InlineSelect
@@ -295,6 +303,13 @@ export default function IdeasPage() {
             title="The board is open"
             subtitle="Press N or use the form above to capture the first idea. Half-formed thoughts welcome — the team will sharpen them."
             action={{ label: 'Submit an idea', onClick: () => setShowCreate(true) }}
+          />
+        ) : noRows ? (
+          <EmptyState
+            icon={<Lightbulb size={40} />}
+            title={`No ${filterLabel.toLowerCase()} ideas`}
+            subtitle="Nothing on the board has this status."
+            action={{ label: 'Clear filter', onClick: () => setFilterStatus('') }}
           />
         ) : viewMode === 'kanban' ? (
           /* P2-10: kanban-first board view */
