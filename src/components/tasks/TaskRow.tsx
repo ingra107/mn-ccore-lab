@@ -346,6 +346,12 @@ export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 
   /** The complete box is not offered: a parent cannot close while a step is
    *  open (the Hub refuses it). Text is the tooltip. */
   doneLocked?: string
+  /** A tag right after the title (the Plan section's Today). */
+  titleTag?: ReactNode
+  /** Replaces the card's own packet tags; null shows none. Absent keeps them. */
+  packetTag?: ReactNode
+  /** The top-right corner, in the owner face's place (the Plan section's x). */
+  cornerSlot?: ReactNode
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.

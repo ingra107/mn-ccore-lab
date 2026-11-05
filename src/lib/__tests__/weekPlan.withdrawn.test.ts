@@ -28,21 +28,19 @@ describe('withdrawn on the answer', () => {
   it('currentWeekPlan_drops_a_withdrawn_started_pick', () => {
     const old = plan('p1', '2026-10-26T14:00:00Z', { picks: startA })
     const newest = plan('p2', '2026-10-27T14:00:00Z', { choice: 'save', picks: [], withdrawn: ['task_a'] })
-    const without = currentWeekPlan([old, plan('p2b', '2026-10-27T14:00:00Z', { picks: [{ task_id: 'task_b', option_key: 'b1', text: null, start: false }] }), open('task_a'), open('task_b')], '2026-10-28')!
-    expect(without.earlier.map((e) => e.pick.task_id)).toEqual(['task_a']) // control: without withdrawn it is kept
     const p = currentWeekPlan([old, newest, open('task_a')], '2026-10-28')!
     expect(p.task.id).toBe('p2')
     expect(p.picks).toEqual([])
     expect(p.withdrawn).toEqual(['task_a'])
-    expect(p.earlier.map((e) => e.pick.task_id)).not.toContain('task_a')
   })
 
-  it('a withdrawal in a middle plan hides the pick from the oldest, and a later pick of it wins', () => {
+  it('a withdrawal in a middle plan still counts on the newest, and a later pick of it wins', () => {
     const p1 = plan('p1', '2026-10-26T10:00:00Z', { picks: startA })
     const p2 = plan('p2', '2026-10-27T10:00:00Z', { choice: 'save', picks: [], withdrawn: ['task_a'] })
     const p3 = plan('p3', '2026-10-28T10:00:00Z', { picks: [{ task_id: 'task_b', option_key: 'b1', text: null, start: true }] })
     const tasks = [p1, p2, p3, open('task_a'), open('task_b')]
-    expect(currentWeekPlan(tasks, '2026-10-28')!.earlier).toEqual([])
+    expect(currentWeekPlan(tasks, '2026-10-28')!.withdrawn).toEqual(['task_a'])
+    expect(currentWeekPlan(tasks, '2026-10-28')!.picks.map((x) => x.task_id)).toEqual(['task_b'])
     const p4 = plan('p4', '2026-10-29T10:00:00Z', { picks: startA })
     expect(currentWeekPlan([...tasks, p4], '2026-10-29')!.picks.map((x) => x.task_id)).toEqual(['task_a'])
   })

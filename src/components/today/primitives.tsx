@@ -19,7 +19,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 export interface TaskLink { url: string; desc?: string | null; type?: string | null }
 
 /** The task's key_link_1..3 slots as TaskLinks, in slot order. The one place a
- *  row turns those columns into LinkRow input (Planned, This week, Today card). */
+ *  row turns those columns into LinkRow input (the schedule row, the Today card). */
 // eslint-disable-next-line react-refresh/only-export-components -- a pure helper that feeds LinkRow, kept beside it
 export function taskKeyLinks(task: {
   key_link_1?: string | null; key_link_1_desc?: string | null

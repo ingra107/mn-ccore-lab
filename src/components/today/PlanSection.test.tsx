@@ -1,6 +1,7 @@
-// This week on Today, and the gold "Plan your week" row in Needs you. The This
-// week and earlier-plan tests moved here unchanged from PlanConversation.test.tsx
-// when the pick page retired (2026-11-04).
+// The Plan section's cards, and the gold "Plan your week" row in Needs you. This
+// week's tests moved here when it became the Plan section (#169 round 2): what
+// still holds holds on the new cards. The real-page tests (each task once) are
+// src/__tests__/today-plan-section.test.tsx.
 //
 // Runs in real Chromium (vitest.config.ts browser mode), mounted with
 // react-dom directly like QuestionsCard.test.tsx. fetch is stubbed, so the
@@ -13,9 +14,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { UndoToastProvider } from '../UndoToast'
 import { AuthContext, type AuthUser } from '../../hooks/useAuth'
 import { QuestionsCard } from '../tasks/QuestionsCard'
-import { ThisWeekSection } from './ThisWeekSection'
-import { PlannedTodaySection } from './PlannedTodaySection'
-import { currentWeekPlan, pickTag } from '../../lib/weekPlan'
+import { PlanSection } from './PlanSection'
+import { currentWeekPlan, pickTag, type AcceptedWeekPlan } from '../../lib/weekPlan'
+import { planSectionModel } from '../../lib/planSection'
 import { cardQuestionCount, isQuestionOnCard } from '../../lib/taskGrouping'
 import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
 import type { TaskRow } from '../../lib/api'
@@ -289,16 +290,22 @@ describe('isQuestionOnCard keeps every live week_plan row, for the nudge', () =>
   })
 })
 
-describe('This week', () => {
-  const state = (planned: Record<string, { slot: string }>): TodayStateApi => ({
-    planned, done: {}, plannedIds: () => Object.keys(planned),
-    markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {},
-  } as unknown as TodayStateApi)
+const DAY = '2026-10-28'
+const state = (planned: Record<string, { slot: string }>, extra: Partial<TodayStateApi> = {}): TodayStateApi => ({
+  planned, done: {}, plannedIds: () => Object.keys(planned),
+  markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {}, ...extra,
+} as unknown as TodayStateApi)
+const section = (plan: AcceptedWeekPlan | null, rows: TaskRow[], st: TodayStateApi = state({})) => (
+  <PlanSection plan={plan} model={planSectionModel(plan, rows, st.planned, DAY, st.done)} state={st} projectsByPid={new Map()} viewerSlug="" />
+)
+const cards = (h: ParentNode) => [...h.querySelectorAll('[data-testid="plan-card"]')]
+const stored = () => currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], DAY)!
 
+describe('The Plan section cards', () => {
   it('currentWeekPlan: the newest answered plan whose week holds today', () => {
     const older = answered([{ task_id: 'task_a', option_key: 'a1', text: null, start: true }], '2026-10-26T14:00:00Z', 'p1')
     const newer = answered([{ task_id: 'task_b', option_key: 'b2', text: null, start: true }], '2026-10-27T14:00:00Z', 'p2')
-    expect(currentWeekPlan([older, newer, row({ id: 'waiting' })], '2026-10-28')?.task.id).toBe('p2')
+    expect(currentWeekPlan([older, newer, row({ id: 'waiting' })], DAY)?.task.id).toBe('p2')
     expect(currentWeekPlan([older], '2026-11-01')?.task.id).toBe('p1') // Sunday is the week's last day
     expect(currentWeekPlan([older], '2026-11-02')).toBeNull()
     // The offer lands Sunday evening for the week starting Monday: an answer
@@ -307,132 +314,140 @@ describe('This week', () => {
     expect(currentWeekPlan([older], '2026-10-24')).toBeNull()
   })
 
-  it('a Saved pick has Start: it posts the stored answer with that pick flipped, nothing else changed', async () => {
+  it('a card is the same card as the sections below: the shared .tk-card, not a thinner row', async () => {
+    stubFetch({ used: 0, cap: 10 })
+    const host = await mount(section(stored(), [task('task_a')]))
+    expect(cards(host)[0].querySelector('.tk-card.tk-tc')).not.toBeNull()
+  })
+
+  it('a Saved pick has Prep: it posts the stored answer with that pick flipped, nothing else changed', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
-    const stored = answered([
+    const answer = answered([
       { task_id: 'task_a', option_key: 'a2', text: null, start: true },
       { task_id: 'task_b', option_key: null, text: 'Ask Casey first', start: false },
     ])
-    const plan = currentWeekPlan([stored], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={[task('task_a'), task('task_b')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />,
-    )
+    const host = await mount(section(currentWeekPlan([answer], DAY), [task('task_a'), task('task_b')]))
     const buttons = host.querySelectorAll('[data-testid="pick-start"]')
     expect(buttons).toHaveLength(1) // only the saved pick
     await click(buttons[0])
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the flip POST')
     const sent = (calls.find((c) => c.url === '/api/tasks/task_plan')!.body as { question_answer_json: Record<string, unknown> }).question_answer_json
-    const before = JSON.parse(stored.question_answer_json!)
+    const before = JSON.parse(answer.question_answer_json!)
     expect(sent).toEqual({ ...before, choice: 'start', picks: [before.picks[0], { ...before.picks[1], start: true }] })
   })
 
-  it('a pick not planned today opens its task drawer from the title and from the Ready tag, and the tag explains itself', async () => {
+  it('a kept pick not started shows Prep, and its flip is a real start', async () => {
+    const calls = stubFetch({ used: 0, cap: 3 })
+    const answer = row({ question_answer_json: JSON.stringify({
+      v: 1, choice: 'save', via: 'hub', at: '2026-10-26T14:00:00Z', kept: ['task_b'],
+      picks: [{ task_id: 'task_b', option_key: 'b1', text: null, start: false }],
+    }) })
+    const host = await mount(section(currentWeekPlan([answer], DAY), [task('task_b')]))
+    await click(host.querySelector('[data-testid="pick-start"]'))
+    await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the flip POST')
+  })
+
+  it('a refused Prep says the daily cap, in the section', async () => {
+    stubFetch({ used: 0, cap: 3 }, () => new Response(JSON.stringify({ code: 'daily_cap', used: 3, cap: 3, error: 'cap' }), { status: 429 }))
+    const answer = answered([{ task_id: 'task_b', option_key: 'b1', text: null, start: false }])
+    const host = await mount(section(currentWeekPlan([answer], DAY), [task('task_b')]))
+    await click(host.querySelector('[data-testid="pick-start"]'))
+    await until(() => !!host.querySelector('.tk-plan-err'), 'the refusal')
+    expect(host.querySelector('.tk-plan-err')?.textContent).toContain("Today's 3 prepared first steps")
+  })
+
+  it('a card opens its drawer from the body and from the Ready tag, and the tag explains itself', async () => {
     stubFetch({ used: 0, cap: 10 })
-    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={[task('task_a', { packet_state: 'ready' })]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />,
-    )
+    const host = await mount(section(stored(), [task('task_a', { packet_state: 'ready' })]))
     const tag = host.querySelector('[data-testid="pick-packet-tag"]') as HTMLButtonElement
     expect(tag.textContent).toBe('Ready')
     expect(tag.title).toBe('A first step is prepared: open the task to see it')
-    const rowKids = () => host.querySelector('[data-testid="this-week-pick"]')!.children.length
-    expect(rowKids()).toBe(1) // the pick line (check, title, direction, links): no drawer yet
-    const title = host.querySelector('[data-testid="pick-open"]') as HTMLButtonElement
-    expect(title.getAttribute('aria-expanded')).toBe('false')
-    await click(title)
-    expect(title.getAttribute('aria-expanded')).toBe('true')
-    expect(rowKids()).toBe(2) // the drawer mounted
-    await click(title)
-    expect(title.getAttribute('aria-expanded')).toBe('false')
+    // The one packet tag: the card's own Ready does not repeat it.
+    expect([...cards(host)[0].querySelectorAll('.tk-tag')].filter((t) => t.textContent === 'Ready')).toHaveLength(1)
+    const body = host.querySelector('.tk-tch') as HTMLElement
+    expect(body.getAttribute('aria-expanded')).toBe('false')
+    await click(body)
+    expect(body.getAttribute('aria-expanded')).toBe('true')
+    await click(body)
+    expect(body.getAttribute('aria-expanded')).toBe('false')
     await click(tag) // the Ready tag opens it too
-    expect(title.getAttribute('aria-expanded')).toBe('true')
+    expect(body.getAttribute('aria-expanded')).toBe('true')
   })
 
-  it('a pick not planned today carries a check and its key links, labelled by their descriptions', async () => {
+  it('a card carries a check and its key links, labelled by their descriptions', async () => {
     stubFetch({ used: 0, cap: 10 })
     const marked: string[] = []
-    const st = { ...state({}), markDone: (id: string) => { marked.push(id) } } as unknown as TodayStateApi
-    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection
-        plan={plan}
-        allTasks={[task('task_a', {
-          key_link_1: 'https://mail.google.com/mail/u/1/#drafts/abc', key_link_1_desc: 'Gmail Draft',
-          key_link_2: 'https://docs.google.com/document/d/xyz/edit', key_link_2_desc: 'Draft interview questions',
-        })]}
-        stripTasks={[]} state={st} projectsByPid={new Map()}
-      />,
-    )
-    const pick = host.querySelector('[data-testid="this-week-pick"]')!
-    const links = [...pick.querySelectorAll('[data-testid="pick-links"] a')]
+    const st = state({}, { markDone: (id: string) => { marked.push(id) } })
+    const host = await mount(section(stored(), [task('task_a', {
+      key_link_1: 'https://mail.google.com/mail/u/1/#drafts/abc', key_link_1_desc: 'Gmail Draft',
+      key_link_2: 'https://docs.google.com/document/d/xyz/edit', key_link_2_desc: 'Draft interview questions',
+    })], st))
+    const links = [...cards(host)[0].querySelectorAll('.tk-lks a')]
     expect(links.map((a) => a.getAttribute('aria-label'))).toEqual(['Gmail Draft', 'Draft interview questions'])
     // Even the Gmail icon (no custom tip) says which draft it opens.
     expect((links[0] as HTMLElement).title).toBe('Gmail Draft')
-    await click(pick.querySelector('button[aria-label="Mark done"]'))
+    await click(cards(host)[0].querySelector('button[aria-label="Mark done"]'))
     expect(marked).toEqual(['task_a'])
   })
 
-  it('a done pick not planned today shows checked and struck through, and the check reopens it', async () => {
+  it('a done pick sinks to Done, checked, with no step or Prep, and the check reopens it', async () => {
     stubFetch({ used: 0, cap: 10 })
     const reopened: string[] = []
-    const st = { ...state({}), done: { task_a: true }, uncheck: (id: string) => { reopened.push(id) } } as unknown as TodayStateApi
-    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={[task('task_a')]} stripTasks={[]} state={st} projectsByPid={new Map()} />,
-    )
-    const pick = host.querySelector('[data-testid="this-week-pick"]')!
-    expect((pick.querySelector('.tk-plan-t') as HTMLElement).style.textDecoration).toBe('line-through')
-    await click(pick.querySelector('button[aria-label="Mark not done"]'))
+    const st = state({}, { done: { task_a: true }, uncheck: (id: string) => { reopened.push(id) } })
+    const host = await mount(section(stored(), [task('task_a')], st))
+    const done = host.querySelector('[data-testid="plan-done"]')!
+    expect(done.querySelector('.tk-card.tk-done')).not.toBeNull()
+    expect(done.querySelector('[data-testid="pick-step"]')).toBeNull()
+    expect(done.querySelector('[data-testid="pick-packet-tag"]')).toBeNull()
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('1 of 1')
+    await click(done.querySelector('button[aria-label="Mark not done"]'))
     expect(reopened).toEqual(['task_a'])
   })
 
-  it('the Start button names the shared daily cap', async () => {
+  it('the Prep button names the shared daily cap', async () => {
     stubFetch({ used: 0, cap: 10 })
-    const plan = currentWeekPlan([answered([{ task_id: 'task_b', option_key: null, text: 'Ask Casey first', start: false }])], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={[task('task_b')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />,
-    )
+    const plan = currentWeekPlan([answered([{ task_id: 'task_b', option_key: null, text: 'Ask Casey first', start: false }])], DAY)!
+    const host = await mount(section(plan, [task('task_b')]))
     expect((host.querySelector('[data-testid="pick-start"]') as HTMLButtonElement).title).toContain("today's 10")
   })
 
-  it('a pick planned today is a full planned row (finish and unplan) carrying its tag and direction', async () => {
+  it('a pick planned today carries the Today tag, an x that takes it off today, its packet tag and step', async () => {
     stubFetch({ used: 0, cap: 3 })
-    const plan = currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={[task('task_a', { packet_state: 'ready' })]} stripTasks={[]} state={state({ task_a: { slot: 'strip' } })} projectsByPid={new Map()} />,
-    )
-    const pick = host.querySelector('[data-testid="this-week-pick"]')!
-    expect(pick.querySelector('.tk-prow')).not.toBeNull()
-    expect(pick.querySelector('[aria-label="Remove from plan"]')).not.toBeNull()
-    expect(pick.textContent).toContain('Ready')
-    expect(pick.textContent).toContain('Direction a2')
+    const unplanned: string[] = []
+    const st = state({ task_a: { slot: 'strip' } }, { unplan: (id: string) => { unplanned.push(id) } })
+    const host = await mount(section(stored(), [task('task_a', { packet_state: 'ready', planned_for: DAY })], st))
+    const card = cards(host)[0]
+    expect(card.querySelector('[data-testid="pick-today"]')?.textContent).toBe('Today')
+    expect(card.querySelector('[aria-label="Unplan task"]')).toBeNull() // no planned pill beside the tag
+    expect(card.textContent).not.toContain('Planned')
+    expect(card.textContent).toContain('Ready')
+    expect(card.textContent).toContain('Direction a2')
+    await click(card.querySelector('button[aria-label="Remove from today"]'))
+    expect(unplanned).toEqual(['task_a'])
   })
 
-  it('lists picks with direction, packet state and a Today mark, then the strip tasks that are not picks', async () => {
+  it('lists today first, then the plan order, with the non-pick tagged Today and its x saying plan', async () => {
     stubFetch({ used: 0, cap: 3 })
     const plan = currentWeekPlan([answered([
       { task_id: 'task_a', option_key: 'a2', text: null, start: true },
       { task_id: 'task_b', option_key: null, text: 'Ask Casey first', start: false },
       { task_id: 'task_c', option_key: 'c1', text: null, start: true },
-    ])], '2026-10-28')!
-    const all = [task('task_a', { packet_state: 'ready' }), task('task_b'), task('task_c', { packet_state: 'changed' }), task('task_x')]
-    const host = await mount(
-      <ThisWeekSection plan={plan} allTasks={all} stripTasks={[all[0], all[3]]} state={state({ task_a: { slot: 'strip' }, task_x: { slot: 'strip' } })} projectsByPid={new Map()} />,
-    )
-    const picks = [...host.querySelectorAll('[data-testid="this-week-pick"]')]
-    expect(picks.map((p) => p.textContent)).toEqual([
-      expect.stringContaining('Ready'),
-      expect.stringContaining('Saved'),
-      expect.stringContaining('Changed'),
-    ])
-    expect(picks[0].textContent).toContain('Direction a2')
-    expect(picks[1].textContent).toContain('Ask Casey first')
-    expect(picks[0].querySelector('[data-testid="pick-today"]')).not.toBeNull()
-    expect(picks[2].querySelector('[data-testid="pick-today"]')).toBeNull()
-    // task_a is a pick, so it is not repeated; task_x is planned and stays.
-    const extra = host.querySelector('[data-testid="this-week-planned"]')!
-    expect(extra.textContent).toContain('Task task_x')
-    expect(extra.textContent).not.toContain('Task task_a')
+    ])], DAY)!
+    const all = [task('task_a', { packet_state: 'ready', planned_for: DAY, plan_rank: 2 }), task('task_b'), task('task_c', { packet_state: 'changed' }), task('task_x', { planned_for: DAY, plan_rank: 1 })]
+    const host = await mount(section(plan, all, state({ task_a: { slot: 'strip' }, task_x: { slot: 'strip' } })))
+    const list = cards(host)
+    expect(list.map((c) => c.querySelector('[data-task-id]')?.getAttribute('data-task-id'))).toEqual(['task_x', 'task_a', 'task_b', 'task_c'])
+    expect(list[1].textContent).toContain('Ready')
+    expect(list[1].textContent).toContain('Direction a2')
+    expect(list[2].textContent).toContain('Saved')
+    expect(list[2].textContent).toContain('Ask Casey first')
+    expect(list[3].textContent).toContain('Changed')
+    expect(list[1].querySelector('[data-testid="pick-today"]')).not.toBeNull()
+    expect(list[3].querySelector('[data-testid="pick-today"]')).toBeNull()
+    expect(list[0].querySelector('[data-testid="pick-today"]')).not.toBeNull()
+    expect(list[0].querySelector('button[aria-label="Remove from plan"]')).not.toBeNull()
+    expect(list[0].querySelector('[data-testid="pick-step"]')).toBeNull() // no pick, no step
+    expect(list[3].querySelector('[aria-label^="Remove from"]')).toBeNull() // leaving the plan is the next Plan's job
   })
 
   it('pickTag: Preparing for a started pick with no packet yet; Done wins', () => {
@@ -440,20 +455,21 @@ describe('This week', () => {
     expect(pickTag(undefined, false)?.label).toBe('Saved')
     expect(pickTag(task('a', { status: 'done', completed: 1, packet_state: 'ready' }), true)?.label).toBe('Done')
   })
+
+  it('a task absent from the list renders nothing', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(section(stored(), []))
+    expect(cards(host)).toEqual([])
+    expect(host.querySelector('[data-testid="plan-empty"]')).not.toBeNull()
+  })
 })
 
-describe('The Plan button, and earlier plans', () => {
-  const state = (planned: Record<string, { slot: string }>): TodayStateApi => ({
-    planned, done: {}, plannedIds: () => Object.keys(planned),
-    markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {},
-  } as unknown as TodayStateApi)
-  const stored = () => currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], '2026-10-28')!
-
-  it('This week and Planned today carry the Plan button for the PI, and no Re-plan control or request', async () => {
+describe('The Plan button and the empty line', () => {
+  it('the section carries the Plan button for the PI, with or without a plan, and no Re-plan control or request', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
-    const week = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const planned = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    for (const host of [week, planned]) {
+    const week = await mount(section(stored(), [task('task_a')]))
+    const none = await mount(section(null, []))
+    for (const host of [week, none]) {
       await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
       const btn = host.querySelector('[data-testid="plan-button"]') as HTMLButtonElement
       expect(btn.textContent).toBe('Plan')
@@ -464,64 +480,48 @@ describe('The Plan button, and earlier plans', () => {
     expect(calls.some((c) => c.url.startsWith('/api/week-plan/replan'))).toBe(false)
   })
 
-  it('a member sees no Plan button in either section, and nothing is requested', async () => {
+  it('a member sees no Plan button, with or without a plan, and nothing is requested', async () => {
     const calls = stubFetch({ used: 0, cap: 3 })
-    const week = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />, 'member')
-    const planned = await mount(<PlannedTodaySection stripTasks={[]} state={state({})} projectsByPid={new Map()} />, 'member')
+    const week = await mount(section(stored(), [task('task_a')]), 'member')
+    const none = await mount(section(null, []), 'member')
     await tick(); await tick()
-    for (const host of [week, planned]) {
+    for (const host of [week, none]) {
       expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
       expect(host.querySelector('[data-testid="plan-note"]')).toBeNull()
     }
+    expect(none.querySelector('[data-testid="plan-empty"]')?.textContent).not.toContain('Press Plan')
     expect(calls.some((c) => c.url.startsWith('/api/launch-log'))).toBe(false)
   })
 
-  it('an answer that withdraws every pick shows one empty line, not "This week 0" over a blank list', async () => {
+  it('an answer that withdraws every pick shows one empty line, and no count', async () => {
     stubFetch({ used: 0, cap: 3 })
     const withdrawnAll = row({
       question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', picks: [], withdrawn: ['task_a'] }),
     })
-    const plan = currentWeekPlan([withdrawnAll], '2026-10-28')!
+    const plan = currentWeekPlan([withdrawnAll], DAY)!
     expect(plan.picks).toEqual([])
-    expect(plan.earlier).toEqual([])
-    const host = await mount(<ThisWeekSection plan={plan} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    expect(host.querySelector('[data-testid="this-week-empty"]')?.textContent).toBe('Nothing planned this week.')
-    expect(host.querySelector('.tk-cnt')?.textContent).toBe('0')
+    const host = await mount(section(plan, [task('task_a')]))
+    expect(host.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned this week.')
+    expect(host.querySelector('.tk-cnt')).toBeNull()
     // With a pick the line is gone.
-    const host2 = await mount(<ThisWeekSection plan={stored()} allTasks={[task('task_a')]} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    expect(host2.querySelector('[data-testid="this-week-empty"]')).toBeNull()
+    const host2 = await mount(section(stored(), [task('task_a')]))
+    expect(host2.querySelector('[data-testid="plan-empty"]')).toBeNull()
   })
 
-  it('currentWeekPlan carries earlier started picks still open, read-only, tagged; done ones drop off (#167)', async () => {
-    const SPEC2 = { ...SPEC, candidates: [...SPEC.candidates, { task_id: 'task_d', title: 'Old done', why: '', evidence: [], options: [opt('d1', true), opt('d2')] }] }
-    const older = row({
-      id: 'p_old', question_spec_json: JSON.stringify(SPEC2),
-      question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', picks: [
-        { task_id: 'task_a', option_key: 'a1', text: null, start: true }, // started: carried
-        { task_id: 'task_c', option_key: 'c1', text: null, start: false }, // saved, not done: re-offered, not carried
-        { task_id: 'task_d', option_key: 'd1', text: null, start: true }, // started and done: dropped off
-        { task_id: 'task_b', option_key: 'b1', text: null, start: true }, // the newer plan picks it: not carried
-      ] }),
-    })
-    const otherWeek = row({
-      id: 'p_prev', question_spec_json: JSON.stringify({ ...SPEC, week_start: '2026-10-19' }),
-      question_answer_json: JSON.stringify({ v: 1, choice: 'start', via: 'hub', at: '2026-10-20T14:00:00Z', picks: [{ task_id: 'task_c', option_key: 'c2', text: null, start: true }] }),
-    })
+  it('a pick done before the newest plan is not in that plan: it drops off (#167), and an older started pick is not carried', async () => {
+    const older = answered([
+      { task_id: 'task_a', option_key: 'a1', text: null, start: true }, // started, still open: its section has it
+      { task_id: 'task_c', option_key: 'c1', text: null, start: true }, // started and done: dropped off
+    ], '2026-10-26T14:00:00Z', 'p_old')
     const newer = answered([{ task_id: 'task_b', option_key: 'b2', text: null, start: false }], '2026-10-28T15:00:00Z', 'p_new')
-    const all = [older, otherWeek, newer, task('task_a'), task('task_b'), task('task_c'), task('task_d', { status: 'done', completed: 1 })]
-    const plan = currentWeekPlan(all, '2026-10-28')!
+    const rows = [older, newer, task('task_a'), task('task_b'), task('task_c', { status: 'done', completed: 1 })]
+    const plan = currentWeekPlan(rows, DAY)!
     expect(plan.task.id).toBe('p_new')
-    expect(plan.earlier.map((e) => [e.pick.task_id, e.task.id])).toEqual([['task_a', 'p_old']]) // task_d is done, so it dropped off (#167)
-
     stubFetch({ used: 0, cap: 3 })
-    const host = await mount(<ThisWeekSection plan={plan} allTasks={all} stripTasks={[]} state={state({})} projectsByPid={new Map()} />)
-    const rows = [...host.querySelectorAll('[data-testid="this-week-earlier"]')]
-    expect(rows).toHaveLength(1)
-    expect(rows.every((r) => r.querySelector('[data-testid="earlier-tag"]')?.textContent === 'earlier plan')).toBe(true)
-    expect(rows.every((r) => r.querySelector('[data-testid="pick-start"]') === null)).toBe(true)
-    expect(rows[0].textContent).toContain('Direction a1') // its own plan's direction
-    // The newer plan's saved pick still has Start, against the NEWER plan.
+    const host = await mount(section(plan, rows))
+    expect(cards(host).map((c) => c.querySelector('[data-task-id]')?.getAttribute('data-task-id'))).toEqual(['task_b'])
+    // The newer plan's saved pick has Prep, against the NEWER plan.
     expect(host.querySelectorAll('[data-testid="pick-start"]')).toHaveLength(1)
-    expect(host.querySelector('.tk-cnt')?.textContent).toBe('2')
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('0 of 1')
   })
 })

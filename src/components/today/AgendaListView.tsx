@@ -115,9 +115,6 @@ export interface AgendaListViewProps {
   // does not reset dismissed meetings).
   dismissedIds: Record<string, boolean>
   onDismiss: (id: string) => void
-  /** True while This week (ThisWeekSection) is shown: it lists the no-time
-   *  planned tasks itself, so the agenda's trailing strip would repeat them. */
-  hideStrip?: boolean
   // `now` is NO LONGER a prop (#168 — was computed once at render in TodayPage,
   // freezing the now-marker. AgendaListView now calls useNowMinutes() itself
   // for a live 60s ticker, same as Timeline.
@@ -132,7 +129,6 @@ export function AgendaListView({
   projectsByPid,
   dismissedIds,
   onDismiss,
-  hideStrip = false,
 }: AgendaListViewProps) {
   // Live 60s ticker — fixes #168 (stale now-marker in Agenda mode).
   const now = useNowMinutes()
@@ -225,11 +221,11 @@ export function AgendaListView({
   // Trailing now-marker if not yet inserted.
   if (!nowInserted) rows.push({ type: 'now' })
 
-  // Trailing tasks in 'strip' slot (strip planned tasks not in any calendar gap).
-  // These live outside the model units — render them after the interleaved section.
-  const stripTasks = plannedTasksBySlot.get('strip') ?? []
+  // Tasks in the 'strip' slot have no place in the schedule: the Plan section
+  // above lists them, once. Only the tasks in a gap count here.
+  const scheduledCount = plannedIds.filter((id) => state.planned[id]?.slot !== 'strip').length
 
-  const hasTodayContent = units.length > 0 || plannedIds.length > 0
+  const hasTodayContent = units.length > 0 || scheduledCount > 0
 
   // Coral means "you are IN something right now" (Rule 59). This used to go
   // coral whenever the day contained any meeting at all, so it was coral all
@@ -349,24 +345,6 @@ export function AgendaListView({
             </div>
           )
         })}
-
-        {/* Strip tasks: planned tasks not in any gap slot */}
-        {!hideStrip && stripTasks.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-            {stripTasks.map((task) => (
-              <PlannedTaskRow
-                key={task.id}
-                task={task}
-                project={task.project_id ? projectsByPid.get(task.project_id) ?? null : null}
-                state={state}
-                small
-                onExpand={onExpand}
-                expandedId={expandedId}
-                projectsByPid={projectsByPid}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Tomorrow section */}
@@ -393,9 +371,9 @@ export function AgendaListView({
       )}
 
       {/* Empty state */}
-      {visibleEvents.length === 0 && plannedIds.length === 0 && (
+      {visibleEvents.length === 0 && scheduledCount === 0 && (
         <div className="tk-empty">
-          No meetings or planned tasks today
+          No meetings or scheduled tasks today
         </div>
       )}
     </div>

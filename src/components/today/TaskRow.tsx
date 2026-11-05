@@ -28,11 +28,12 @@ import { Who } from './skin'
 import { isFromMeeting, meetingLabelFor } from '../../lib/meetingOrigin'
 import WorkOnActions from '../WorkOnActions'
 import RunSkillAction from '../RunSkillAction'
+import { Button } from '../ui/Button'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import type { ReactNode } from 'react'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps }: {
+export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps, planToday, packetTag, firstStep, firstStepActions }: {
   task: TaskRowData
   project: { name: string; slug: string; primary_folder?: string | null } | null
   state: TodayStateApi
@@ -59,6 +60,15 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   /** The parent's open steps, in next-step order (lib/taskSteps). Only a parent
    *  (step_total > 0) reads it; it gets the steps block and a locked box. */
   openSteps?: TaskRowData[]
+  /** Plan section: planned for today. The Today tag and an x that clears it (the
+   *  label says what the x does) stand in for the planned pill and the pin. */
+  planToday?: { clearLabel: string }
+  /** Plan section: the pick's packet tag, in place of the card's own. Null shows none. */
+  packetTag?: ReactNode
+  /** Plan section: the pick's first step, a line under the context line. */
+  firstStep?: ReactNode
+  /** Plan section: Prep and Prep & start, on the first step's line. */
+  firstStepActions?: ReactNode
 }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id] || done
@@ -152,6 +162,17 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   const pbBadge = !isDone && isPbTask(task, projectsByPid) ? <span className="tk-pill" title="Peripheral Brain">PB</span> : null
   const belowTitle = pbBadge || extraPills ? <>{pbBadge}{extraPills}</> : undefined
 
+  const showToday = !!planToday && !isDone
+  const firstStepLine = firstStep || firstStepActions ? (
+    <div className="tk-first" data-testid="pick-step">
+      {firstStep && <span className="tk-first-t">{firstStep}</span>}
+      {firstStepActions && <span className="tk-first-acts">{firstStepActions}</span>}
+    </div>
+  ) : null
+  const stepsBlock = isParent(task) ? (
+    <StepsNext parent={task} openSteps={openSteps ?? []} state={state} onSeeAll={() => { if (onOpen) onOpen(); else onExpand(task.id) }} />
+  ) : null
+
   return (
     // dnd-kit wrapper: setNodeRef + listeners activate the PointerSensor when the
     // user grabs the row (specifically the grip icon inside SharedTaskRow).
@@ -207,7 +228,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
       isExpanded={expanded}
       onToggleExpand={() => { if (onOpen) onOpen(); else if (!isDone) onExpand(task.id) }}
-      isPlanned={!!planned}
+      isPlanned={!!planned && !planToday}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
       showSortedByHand
       // draggable gates ONLY SharedTaskRow's DragHandle render (the visual ⋮⋮
@@ -222,16 +243,27 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       draggable={!isDone && !noDrag}
       onOpenEditor={onOpenEditor}
       onDragStart={onDragStart}
-      onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
+      onTogglePlan={planToday ? undefined : () => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       card
+      titleTag={showToday ? <span className="tk-tag" data-testid="pick-today">Today</span> : undefined}
+      packetTag={packetTag}
+      cornerSlot={showToday ? (
+        <Button
+          size="icon"
+          type="button"
+          className="tk-x tk-plan-x"
+          aria-label={planToday.clearLabel}
+          title={planToday.clearLabel}
+          onClick={(e) => { e.stopPropagation(); state.unplan(task.id) }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >×</Button>
+      ) : undefined}
       footPills={workflowPills}
       belowTitle={belowTitle}
       linksSlot={linkMeta}
       meetingSlot={meetingMeta}
       workSlot={workOnMeta}
-      stepsSlot={isParent(task) ? (
-        <StepsNext parent={task} openSteps={openSteps ?? []} state={state} onSeeAll={() => { if (onOpen) onOpen(); else onExpand(task.id) }} />
-      ) : undefined}
+      stepsSlot={firstStepLine || stepsBlock ? <>{firstStepLine}{stepsBlock}</> : undefined}
       doneLocked={isParent(task) && (task.step_done ?? 0) < (task.step_total ?? 0) ? 'Complete the steps first' : undefined}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />

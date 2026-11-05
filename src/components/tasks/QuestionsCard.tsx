@@ -35,7 +35,7 @@
 // no count. Its Plan button starts a live session (hooks/usePlanControl.tsx).
 // Opt-in (planNudge): no plan row in a list means "not planned" only in the
 // owner's own full list, so the page says when it has read that.
-// week_plan question rows never show here: answered, they are This week on Today.
+// week_plan question rows never show here: answered, they are the Plan section on Today.
 //
 // Renders null when tasks is empty (no card appears when nothing is waiting).
 //

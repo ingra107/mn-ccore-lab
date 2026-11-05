@@ -113,7 +113,7 @@ interface TimelineProps {
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   // expandedId/onExpand removed: Timeline owns its own expand state so that
   // clicking a timeline block only expands the timeline instance, not list rows
-  // that render the same task in PlannedTodaySection / TaskGroup (Item 2 fix).
+  // that render the same task in PlanSection / TaskGroup (Item 2 fix).
   // View toggle (Phase 2). When provided, renders the Timeline⇄Agenda toggle
   // in the section header. activeView tells the toggle which button is active.
   activeView?: 'timeline' | 'agenda'
@@ -251,8 +251,8 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
         </>
       )}
 
-      {/* Strip-slot planned tasks (no specific time) now live in
-          PlannedTodaySection below the timeline — see TodayPage.tsx. */}
+      {/* Strip-slot planned tasks (no specific time) live in PlanSection,
+          above the timeline — see TodayPage.tsx. */}
     </section>
   )
 }

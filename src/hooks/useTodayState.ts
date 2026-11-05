@@ -90,18 +90,16 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
   const plannedIds = useCallback(() => Object.keys(planned).filter((id) => !done[id]), [planned, done])
 
   const markDone = useCallback((id: string) => {
-    // Capture prior plan state so Undo can restore it (design principle #8 —
-    // optimistic UI + a 5s undo on every state change).
-    const wasPlanned = !!planned[id]
-    const prevSlot = planned[id]?.slot
     // Undo restores the status the task had, not a blanket 'todo' (an in_progress
     // or waiting task used to come back as To Do).
     const priorStatus = statusToRestore(tasks.find((t) => t.id === id)?.status)
 
     setDone((p) => ({ ...p, [id]: true }))
-    // Unplan on completion (mark-done unplans + sinks — Rule 61). The status
-    // write below makes the completion durable.
-    if (wasPlanned) plan.unplanTask(id)
+    // The plan columns stay on a finished task: they are how the Plan section
+    // keeps a planned task in Done until its day ends (lib/planSection), and how
+    // a reopen puts it back. `planned` reads open rows only, so it leaves the
+    // timeline and the planned count all the same. The status write below makes
+    // the completion durable.
 
     // Persist completion to D1 so /tasks reflects it. On write failure, roll back
     // the optimistic done flag (the cache rollback in useUpdateTaskStatus.onError
@@ -110,12 +108,11 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = NO
       onError: () => setDone((p) => { const n = { ...p }; delete n[id]; return n }),
     })
     undoToast.showUndo('Task completed', () => {
-      // Undo: re-open the task and restore its prior planned slot.
+      // Undo: re-open the task. Its plan columns never left.
       setDone((p) => { const n = { ...p }; delete n[id]; return n })
-      if (wasPlanned) plan.planTask(id, prevSlot ?? 'strip', tasks)
       updateStatus.mutate({ id, status: priorStatus })
     })
-  }, [updateStatus, undoToast, plan, planned, tasks])
+  }, [updateStatus, undoToast, tasks])
 
   // Reopen gets the same 5s undo as completing (principle #8: an undo on every
   // state change). It had none, so a mis-click on a done box was a silent

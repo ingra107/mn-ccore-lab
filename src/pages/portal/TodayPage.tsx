@@ -46,9 +46,9 @@ import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
 import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
-import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
-import { ThisWeekSection } from '../../components/today/ThisWeekSection'
+import { PlanSection } from '../../components/today/PlanSection'
 import { currentWeekPlan } from '../../lib/weekPlan'
+import { planSectionModel } from '../../lib/planSection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { PastThoughts } from '../../components/today/PastThoughts'
@@ -152,8 +152,7 @@ export default function TodayPage() {
     () => (tasksQuery.data ?? []).filter((t) => isQuestionOnCard(t, questionDay)),
     [tasksQuery.data, questionDay],
   )
-  // This week (planning conversation): the answered week plan covering today,
-  // or null. When set it takes Planned today's place in both view modes.
+  // The answered week plan covering today, or null: the Plan section's picks.
   const weekPlan = useMemo(
     () => currentWeekPlan(tasksQuery.data ?? [], questionDay),
     [tasksQuery.data, questionDay],
@@ -241,7 +240,7 @@ export default function TodayPage() {
     return Object.keys(state.done).filter((id) => state.done[id] && !confirmed.has(id) && !open.has(id))
   }, [state.done, completedTodayIds, allTaskIds])
   // expandedId/onExpand removed from TodayPage (Item 2 fix, 2026-06-22):
-  // each surface (Timeline, PlannedTodaySection, AgendaListView, TaskGroup)
+  // each surface (Timeline, PlanSection, AgendaListView, TaskGroup)
   // now owns its own expand state so clicking one instance never expands the
   // same task rendered on a different surface.
 
@@ -265,7 +264,7 @@ export default function TodayPage() {
   // (lib/taskSections isAlwaysVisible) decides which rows start folded.
   //
   // ⚠️ `listedTasks` is deliberately a SEPARATE array from `tasks`, and only the
-  // sections consume it. `useTodayState`, Timeline, Agenda, PlannedTodaySection
+  // sections consume it. `useTodayState`, Timeline, Agenda
   // and the overdue rail keep receiving the FULL own open set (Rule 63b: the day
   // plan is synced task state derived from those rows).
   // Milestones on/off (Nick 2026-09-17: "we need a filter to turn off
@@ -327,14 +326,27 @@ export default function TodayPage() {
   }, [])
   const cardRowIds = useMemo(() => new Set(Object.values(cardRows).flat()), [cardRows])
 
+  // The Plan section: each task in it leaves the sections below and Completed
+  // today, so it shows once among the lists. The timeline and a meeting card are
+  // not lists and keep their copy; the stat line's counts read the full sets.
+  // otherTasks too: a pick that sits with someone else is still a pick.
+  const planModel = useMemo(
+    () => planSectionModel(weekPlan, [...(tasksQuery.data ?? []), ...otherTasks], state.planned, questionDay, state.done),
+    [weekPlan, tasksQuery.data, otherTasks, state.planned, questionDay, state.done],
+  )
+  const completedListed = useMemo(() => doneTodayDetail.filter((t) => !planModel.ids.has(t.id)), [doneTodayDetail, planModel])
+  const localCompletedListed = useMemo(() => localDoneIds.filter((id) => !planModel.ids.has(id)), [localDoneIds, planModel])
+
   // Section bucketing: the ONE resolver shared with My Tasks (lib/taskSections).
   const grouped = useMemo(() => {
     // A step shows on its parent's card (Nick 2026-10-30), not as a row of its
     // own -- but only when that parent is in these lists. A step whose parent
-    // is filtered out or not Today's keeps its row.
+    // is filtered out or not Today's keeps its row. A parent in the Plan section
+    // is still present: its card there carries the step, so that filter runs after.
     const listed = visibleTasks.filter((t) => !cardRowIds.has(t.id))
-    return bucketBySection(hideStepsOfPresentParents(listed), { viewerSlug: userSlug, projectsBySlug: projectsByPid })
-  }, [visibleTasks, projectsByPid, cardRowIds, userSlug])
+    const rows = hideStepsOfPresentParents(listed).filter((t) => !planModel.ids.has(t.id))
+    return bucketBySection(rows, { viewerSlug: userSlug, projectsBySlug: projectsByPid })
+  }, [visibleTasks, projectsByPid, cardRowIds, planModel, userSlug])
   // The open steps of each parent, for the "Next:" row on its card. From the
   // full open set, so any step is the parent's next, folded or not.
   const stepsByParent = useMemo(() => openStepsByParent(tasks), [tasks])
@@ -478,13 +490,6 @@ export default function TodayPage() {
       .map((e) => projectCalendarEventToDay(e, tomorrowKey))
       .filter((e): e is TodayEvent => e !== null)
   }, [calendarEventsQuery.data])
-
-  // Strip tasks: planned with slot==='strip'. Between-N tasks stay inside the
-  // Timeline drop zones where they render contextually.
-  const stripTasks = state.plannedIds()
-    .filter((id) => state.planned[id]?.slot === 'strip')
-    .map((id) => tasks.find((t) => t.id === id))
-    .filter((t): t is TaskRow => !!t)
 
   // Pill counts. Cache-confirmed completions + deduped local-only completions.
   const doneTodayCount = doneTodayDetail.length + localDoneIds.length
@@ -757,43 +762,21 @@ export default function TodayPage() {
         )}
 
         {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)
-            + PlannedTodaySection + TaskGroup (draggables = task rows).
+            + PlanSection + TaskGroup (draggables = task rows).
             GH#150: replaces both HTML5 DnD (list→gap) and raw pointer events (block move). */}
         <MeetingCardRowsContext.Provider value={registerCardRows}>
         <TodayDndContext state={state} tasks={tasks}>
 
-        {/* Planned-for-today sits ABOVE the day view (Nick 2026-08-03).
-            It used to render between the timeline and the task groups, i.e.
-            immediately adjacent to the unplanned pool it was drawn from — so on
-            a light day the same two or three tasks appeared twice, inches apart.
-            The render in the task groups below is deliberate and stays: it is
-            the reliable place to UNPLAN a task and bring it back. Separating the
-            two by the whole day view tests whether proximity, not duplication,
-            was the actual problem.
-
-            TIMELINE MODE ONLY. AgendaListView derives its own strip tasks and
-            renders them with PlannedTaskRow — including the × unplan button — so
-            mounting this in Agenda mode put a strip task on screen THREE times
-            (here, in the agenda body, and in the task pool). */}
-        {/* This week replaces it, in BOTH modes, while an answered week plan
-            covers today (Nick's pick, 2026-10-30). It lists the strip tasks
-            that are not picks itself, and the agenda hides its strip tail, so
-            each still shows once. */}
-        {weekPlan ? (
-          <ThisWeekSection
-            plan={weekPlan}
-            allTasks={tasksQuery.data ?? []}
-            stripTasks={stripTasks}
-            state={state}
-            projectsByPid={projectsByPid}
-          />
-        ) : todayView === 'timeline' && (
-          <PlannedTodaySection
-            stripTasks={stripTasks}
-            state={state}
-            projectsByPid={projectsByPid}
-          />
-        )}
+        {/* The plan sits above the day view, in both modes (#169 round 2). */}
+        <PlanSection
+          plan={weekPlan}
+          model={planModel}
+          state={state}
+          projectsByPid={projectsByPid}
+          stepsByParent={stepsByParent}
+          viewerSlug={userSlug}
+          loading={tasksQuery.isPending}
+        />
 
         {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).
             The toggle lives in the Timeline section header; AgendaListView
@@ -834,7 +817,6 @@ export default function TodayPage() {
                 projectsByPid={projectsByPid}
                 dismissedIds={dismissedEventIds}
                 onDismiss={onDismissEvent}
-                hideStrip={weekPlan !== null}
               />
             )}
           </section>
@@ -884,18 +866,18 @@ export default function TodayPage() {
             <div className="tk-ctog">
               <CollapseChevron open={completedOpen} />
               <h3>Completed today</h3>
-              <span className="tk-cnt">{doneTodayDetail.length + localDoneIds.length}</span>
+              <span className="tk-cnt">{completedListed.length + localCompletedListed.length}</span>
             </div>
           </div>
           {completedOpen && (
             <div>
-              {doneTodayDetail.map((t) => (
+              {completedListed.map((t) => (
                 <div key={t.id} className="tk-crow">
                   <CardCheck done onToggle={() => state.uncheck(t.id)} taskId={ringsInGroup.has(t.id) ? undefined : t.id} />
                   <span>{taskShortLabel(t)}</span>
                 </div>
               ))}
-              {localDoneIds.map((id) => {
+              {localCompletedListed.map((id) => {
                 const t = (tasksQuery.data ?? []).find((x) => x.id === id)
                 if (!t) return null
                 return (

@@ -1,5 +1,5 @@
 // CollapseChevron — shared ▸/▾ glyph for Today page section headers
-// (Timeline/Agenda, Planned today, TaskGroup, rail cards). Matches the
+// (Timeline/Agenda, Plan, TaskGroup, rail cards). Matches the
 // existing "Completed today" affordance (TodayPage.tsx). Purely
 // presentational — each caller owns its own open/close useState. Session-only
 // by design (no storageKey/localStorage): Nick wants every section to start
