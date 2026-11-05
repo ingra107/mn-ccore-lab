@@ -55,6 +55,24 @@ describe('task card on a phone', () => {
     expect(pill.getBoundingClientRect().right).toBeLessThanOrEqual(card.right)
   })
 
+  it('wraps a busy card instead of cutting the project and the waiting pill', async () => {
+    await page.viewport(390, 844)
+    const host = await mount(
+      wrap(<CardRow {...props} task={task('a', 'Draft methods section', { assigned_by: 'nate-mesfin', watchers: '["casey-eddington"]' })} project={{ name: 'ARDS Biomarker Pilot', slug: 'p' }}
+        footPills={<span className="tk-pill">Waiting on Biostatistics core</span>} linksSlot={<i style={{ display: 'inline-block', width: 72, height: 20 }} />} />),
+      { ready: (h) => h.querySelector('.tk-tch'), label: 'card' },
+    )
+    const name = host.querySelector<HTMLElement>('.tk-cs a')!
+    expect(name.scrollWidth).toBeLessThanOrEqual(name.clientWidth)
+    const pill = [...host.querySelectorAll<HTMLElement>('.tk-pill')].find((p) => p.textContent?.startsWith('Waiting'))!
+    expect(pill.scrollWidth).toBeLessThanOrEqual(pill.clientWidth)
+    const card = host.querySelector<HTMLElement>('.tk-tc')!.getBoundingClientRect()
+    const slots = host.querySelector<HTMLElement>('.tk-slots')!.getBoundingClientRect()
+    expect(slots.right).toBeLessThanOrEqual(card.right)
+    // The slots stay flush right on their line.
+    expect(card.right - slots.right).toBeLessThan(24)
+  })
+
   it('reserves no room for empty slots on the context line', async () => {
     await page.viewport(390, 844)
     const host = await mount(

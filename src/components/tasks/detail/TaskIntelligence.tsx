@@ -25,7 +25,7 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
 
   if (task.priority === 'urgent') {
     score += 25
-    reasons.push('urgent priority')
+    reasons.push('urgent')
   } else if (task.priority === 'high') {
     score += 15
     reasons.push('high priority')
@@ -38,7 +38,7 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
 
   if (task.status === 'waiting_external') {
     score += 5
-    reasons.push('waiting on external')
+    reasons.push('waiting on someone outside the lab')
   }
 
   const updated = task.updated_at ? parseDateOnlyOrTimestamp(task.updated_at) : null
@@ -46,7 +46,7 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
     const ageDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24)
     if (ageDays > 7 && task.status !== 'done') {
       score += 10
-      reasons.push(`${Math.floor(ageDays)}d since last update`)
+      reasons.push(`no update in ${Math.floor(ageDays)} days`)
     } else if (ageDays < 1) {
       score -= 10
     }
@@ -54,16 +54,14 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
 
   if (task.acknowledged_at == null && task.assignee && task.status !== 'done') {
     score += 5
-    reasons.push('unacknowledged')
+    reasons.push('not opened yet')
   }
 
   score = Math.max(0, Math.min(100, score))
 
   const rationale = reasons.length === 0
-    ? 'Steady — no urgency signals.'
-    : reasons.length === 1
-      ? `Surfaced because ${reasons[0]}.`
-      : `Surfaced because ${reasons.slice(0, 2).join(' + ')}.`
+    ? 'Nothing urgent about this one.'
+    : `${reasons.slice(0, 2).join(', ').replace(/^./, (c) => c.toUpperCase())}.`
 
   return { score, rationale }
 }
@@ -141,7 +139,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
         <ScoreRing value={score} color={ringColor} />
         <div className="flex-1 min-w-0">
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sk-t2)' }}>
-            Relevance score
+            Out of 100
           </div>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ink)', lineHeight: 1.4 }}>
             {rationale}
@@ -159,7 +157,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
                 {totalUpdates}
               </span>
               <span style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>
-                updates / 8 wk
+                project updates, last 8 weeks
               </span>
             </div>
             <div
@@ -173,13 +171,13 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
                 fontWeight: 500,
               }}
             >
-              {delta > 0 ? '▲' : delta < 0 ? '▼' : '·'} {Math.abs(delta)} vs last wk
+              {delta > 0 ? '▲' : delta < 0 ? '▼' : '·'} {Math.abs(delta)} vs last week
             </div>
           </div>
         </div>
       ) : (
         <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75, margin: 0 }}>
-          No project linked — velocity only renders for project-bound tasks.
+          This task has no project, so there is no project activity to show.
         </p>
       )}
 
