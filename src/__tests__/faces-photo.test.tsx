@@ -48,6 +48,19 @@ describe('Today faces', () => {
     expect(face.getAttribute('aria-label')).toBe('Nick Ingraham')
   })
 
+  it('a 2:3 portrait fills the circle exactly: no oval, and no disc showing round it', async () => {
+    const portrait = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750"><rect width="500" height="750"/></svg>')
+    const host = await mount(tk(<FaceDisc initials="ZZ" photo={portrait} label="Zed Zed" px={80} />), {
+      ready: (h) => { const i = h.querySelector<HTMLImageElement>('.tk-face img'); return i?.complete && i.naturalHeight ? i : null },
+      label: 'portrait',
+    })
+    const face = host.querySelector('.tk-face')!.getBoundingClientRect()
+    const img = host.querySelector('.tk-face img')!.getBoundingClientRect()
+    expect([img.width, img.height]).toEqual([face.width, face.height])
+    expect(face.width).toBe(80)
+    expect(face.height).toBe(80)
+  })
+
   it('a photo that fails to load falls back to the initials, not a blank disc', async () => {
     const host = await mount(tk(<FaceDisc initials="ZZ" photo="/does-not-exist.jpg" label="Zed Zed" />), {
       ready: (h) => h.querySelector('.tk-face') && !h.querySelector('.tk-face img') ? h.querySelector('.tk-face') : null,

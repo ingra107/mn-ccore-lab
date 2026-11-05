@@ -4,7 +4,7 @@
  * Most roster photos are 2:3 portraits, and a head sits high and at a different
  * height in each. A plain center crop left some faces riding up the circle and
  * cut the top off others (Nick, 2026-11-04: "some of the faces are not
- * necessarily centered"). The photos are hosted elsewhere, so the crop lives
+ * necessarily centered"). The photo files stay as published, so the crop lives
  * here as data: one optional field on the member, read in one place (FaceDisc),
  * so every face on every surface gets the same framing.
  */

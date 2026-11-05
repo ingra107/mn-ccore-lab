@@ -13,6 +13,8 @@ Two smaller flakes from the same runs: `SmartCompose` moved the caret to the end
 
 **Importer** (`scripts/fetch-publications.ts`). Bylines use the name as printed, never the member's name as a stand-in; a work with no byline asks Crossref, then is refused. Bylines keep up to 100 names. New rows get `Abstract` or `Preprint` by the test matching Nick's 2026-11-04 rulings. `firstPaperYear` (Dudley 1993, Chipman 1991, MacDonald 2012) refuses older strangers in a name cluster. OpenAlex now answers a second `cursor=` page with 401 without a key, and the old "never abort" fence turned that into a skip and overwrote the file, dropping all of Dudley's rows: it pages by number now, and any member's failure exits 1 and writes nothing. Nothing new was inserted into prod: 65 generated rows await Nick's list (PB `Scratch/public-site-audit-2026-11-04/import-candidates.json`).
 
+**Faces (Nick: "skinny ovals trying to fit into a circle... a halo").** Since 2026-10-10 a 2:3 photo grew `.tk-face`'s grid row, so the image was 80x120 in an 80px circle: a rounded oval with the cream disc showing round it, on every surface. The row is now fixed and the image is square-cropped. `object-position` had done nothing on those photos, so the 2026-11-04 crops were redone by eye for all 13. `faces-photo.test.tsx` now uses a real 2:3 image and fails on the old CSS; its 1x1 test image could never have seen this.
+
 **Photos.** The 13 hotlinked team photos now live in `public/team/` (372 KB as JPEG, was about 2.5 MB), so they no longer depend on med.umn.edu or va.gov. `team_members.photo_url` updated in prod, with `photos-rollback.sql` in the same PB folder.
 
 ## 2026-11-05 — Whole-Hub sweep

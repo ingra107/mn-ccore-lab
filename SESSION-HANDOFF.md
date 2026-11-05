@@ -3,13 +3,13 @@
 ## Do first
 - **Nick's decisions:** https://claude.ai/artifact/So7PyUCJZied34W1LZkZM9 (slug `d0e49f24-bc46-44a5-8fd4-26843bea9a28`, collection `answers`). Read them with `db_list`, then do what he picked.
 - Held commits, on branches: `held/watchers` (1281dc69, server side of watchers, touches `mutations.ts`) and `held/urgent-chip` (9c5e3580, removes the Urgent chip).
-- Leftover processes from overnight agents: PIDs 1056 and 32436. The classifier denied `taskkill`, so Nick runs `! taskkill /PID 1056 /PID 32436 /T /F`, then remove `mn-ccore-lab-wt/sweep-f` and `sweep-h`.
 - #169 stays open until a real plan reaches the Hub. See the entry below for what it must confirm.
 
 ## Shipped
 - About 60 fixes from Fable, Codex, a browser walk and a real-viewport audit; list in CHANGELOG 2026-11-05 "Whole-Hub sweep". Reports were in `.superpowers/sweep/` (gitignored): `fable-audit.md`, `fable-audit-2.md`, `codex-last.md`, `visual-audit.md`, `fix-*-report.md`, `wave*-review.md`.
 
 ## Landmines added
+- A green test on a face proves little if the test image is square: the oval bug lived a month behind a 1x1 test image, and my own screenshot passed it. Look at avatars at high zoom.
 - `scripts/check-raw-fetch-writes` ratchets raw-`fetch` writes: 41 baseline sites. A new one fails the gate, so use `useMutation` or shrink the list.
 - `/api/settings`, `/api/workflow-templates` and the `/subtasks` and `task_files` routes are gone; the tables remain (no DDL). The route pin moved.
 - Uploads: `/api/files/:key/raw` serves images, PDF and plain text inline, and everything else as attachment.
