@@ -39,12 +39,12 @@ const task = (id: string, extra: Row = {}): Row => ({
   status: 'todo', completed: 0, completed_at: null, project_id: null, kind: 'task', acknowledged_at: '2026-01-01',
   created_at: '2026-11-01 15:00:00', updated_at: '2026-11-01 15:00:00', ...extra,
 })
-const opt = (key: string) => ({ key, label: key, direction: `Step ${key}`, deliverable_kind: 'answer', recommended: true })
-const plan = (id: string, at: string, picks: string[]): Row => task(id, {
+const opt = (key: string, owner?: string) => ({ key, label: key, direction: `Step ${key}`, deliverable_kind: 'answer', recommended: true, ...(owner ? { owner } : {}) })
+const plan = (id: string, at: string, picks: string[], owners: Record<string, string> = {}): Row => task(id, {
   title: 'Plan your week', source: 'week_plan', kind: 'question', created_at: at,
   question_spec_json: JSON.stringify({
     v: 1, kind: 'week_plan', week_start: WEEK, tz: 'America/Chicago', prompt: 'Plan', expires_at: null,
-    candidates: picks.map((p) => ({ task_id: p, title: p, why: '', evidence: [], options: [opt(p)] })),
+    candidates: picks.map((p) => ({ task_id: p, title: p, why: '', evidence: [], options: [opt(p, owners[p])] })),
   }),
   question_answer_json: JSON.stringify({ v: 1, choice: 'save', via: 'hub', at, picks: picks.map((p) => ({ task_id: p, option_key: p, text: null, start: false })) }),
   question_consumed_json: null,
@@ -280,6 +280,53 @@ describe('The Plan section on Today', () => {
     expect(h.querySelectorAll('[data-testid="plan-button"]')).toHaveLength(1)
     expect(section(h)!.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned. Drag a task here to plan it for today.')
     expect(section(h)!.querySelector('.tk-tc')).toBeNull()
+  })
+})
+
+describe('Who does the step, on the Plan card', () => {
+  const card = (h: ParentNode, id: string) => section(h)!.querySelector(`[data-task-id="${id}"]`) as HTMLElement
+  const cardText = (h: ParentNode, id: string) => card(h, id).textContent ?? ''
+  const hasBtn = (h: ParentNode, id: string, label: string) => [...card(h, id).querySelectorAll('button')].some((b) => b.textContent?.trim() === label)
+
+  it('a step that is yours says Yours and offers no Prep', async () => {
+    stubHub([plan('p', AT1, ['a'], { a: 'nick' }), task('a')])
+    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
+    await waitFor(() => inSection(h, 'a'), 'the pick')
+    expect(cardText(h, 'a')).toContain('Yours')
+    expect(hasBtn(h, 'a', 'Prep')).toBe(false)
+    expect(cardText(h, 'a')).not.toContain('Prep & start')
+  })
+
+  it('a step with Claude and no packet says With Claude and keeps Prep', async () => {
+    stubHub([plan('p', AT1, ['a'], { a: 'claude' }), task('a')])
+    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
+    await waitFor(() => inSection(h, 'a'), 'the pick')
+    expect(cardText(h, 'a')).toContain('With Claude')
+    expect(hasBtn(h, 'a', 'Prep')).toBe(true)
+  })
+
+  it('a ready packet beats the owner tag', async () => {
+    stubHub([plan('p', AT1, ['a'], { a: 'claude' }), task('a', { packet_state: 'ready' })])
+    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
+    await waitFor(() => inSection(h, 'a'), 'the pick')
+    expect(cardText(h, 'a')).toContain('Ready')
+    expect(cardText(h, 'a')).not.toContain('With Claude')
+  })
+
+  it('a plan with no owner shows Saved, as before', async () => {
+    stubHub([plan('p', AT1, ['a']), task('a')])
+    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
+    await waitFor(() => inSection(h, 'a'), 'the pick')
+    expect(cardText(h, 'a')).toContain('Saved')
+    expect(cardText(h, 'a')).not.toMatch(/Yours|With Claude/)
+  })
+
+  it('a task on an old and a newer plan follows the newest', async () => {
+    stubHub([plan('p1', AT1, ['a'], { a: 'claude' }), plan('p2', AT2, ['a'], { a: 'nick' }), task('a')])
+    const h = await mount(page(), { ready: loaded('a'), label: 'today' })
+    await waitFor(() => inSection(h, 'a'), 'the pick')
+    expect(cardText(h, 'a')).toContain('Yours')
+    expect(cardText(h, 'a')).not.toContain('With Claude')
   })
 })
 

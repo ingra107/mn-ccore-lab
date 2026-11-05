@@ -173,6 +173,14 @@ describe('the week_plan question contract (task-question.ts)', () => {
     ])))).toBeNull()
   })
 
+  it('owner: a bad option or pick owner is refused at the chokepoint, an absent one is fine', () => {
+    const withOwner = (owner: unknown) => ({ ...SPEC, candidates: [{ ...SPEC.candidates[0], options: [{ ...opt('a1', true), owner }, opt('a2')] }, ...SPEC.candidates.slice(1)] })
+    expect(questionRowError(row(withOwner('bob')))).toMatch(/^question_spec_invalid: .*owner/)
+    expect(questionRowError(row(withOwner('nick')))).toBeNull()
+    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'a1', text: null, start: false, owner: 'bob' }])))).toMatch(/^question_answer_invalid: .*owner/)
+    expect(questionRowError(row(SPEC, answer([{ task_id: 'task_a', option_key: 'a1', text: null, start: false, owner: 'claude' }])))).toBeNull()
+  })
+
   it('other questions are unchanged; picks there are shape-judged only when present', () => {
     const mm = { v: 1, kind: 'meeting_match', prompt: 'Which?', choices: [{ key: 'c1', label: 'x' }], rec: 'c1', allow_text: true }
     expect(questionRowError(row(mm, { v: 1, choice: 'c1', via: 'hub', at: 'x' }, 'meeting_match'))).toBeNull()

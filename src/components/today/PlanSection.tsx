@@ -34,7 +34,7 @@ import { buildPrepStartUri } from '../../lib/urlClassify'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { pickTag, postWeekPlanAnswer, startFlipAnswer, weekRangeLabel, type AcceptedWeekPlan } from '../../lib/weekPlan'
 import type { PlanSectionModel } from '../../lib/planSection'
-import { pickDirection, PACKET_DAILY_CAP } from '../../../shared/weekPlan'
+import { pickDirection, pickOwner, PACKET_DAILY_CAP } from '../../../shared/weekPlan'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
@@ -44,6 +44,8 @@ const TAG_HELP: Record<string, string> = {
   Changed: 'The task changed since its first step was prepared: open the task to check it',
   'Check it': 'A first step is prepared but could not be verified: open the task to check it',
   Preparing: 'The first step is being prepared in the background. It shows here when ready',
+  Yours: 'This step is yours: Claude has nothing to prepare for it',
+  'With Claude': 'Claude can take this step: press Prep to have it prepared in the background, or Prep & start to do it with Claude now',
   Saved: 'Saved, not prepped: press Prep to have the first step prepared in the background, or Prep & start to do it with Claude now',
 }
 const OPENS_DRAWER = new Set(['Ready', 'Changed', 'Check it'])
@@ -112,8 +114,10 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
     const pick = picks.get(t.id)
     const done = isTaskDone(t) || t.completed === 1
     // A done card shows no step or Prep (the card hides that line); no tag either.
-    const tag = pick && where !== 'done' ? pickTag(t, pick.start, !!plan?.kept.includes(t.id) && !flipped.has(t.id)) : null
-    const prepBtn = pick && !pick.start ? (
+    const owner = pick && plan ? pickOwner(pick, plan.spec) : null
+    const tag = pick && where !== 'done' ? pickTag(t, pick.start, !!plan?.kept.includes(t.id) && !flipped.has(t.id), owner) : null
+    // Nick's own step has nothing for Claude to prepare: no Prep, no Prep & start.
+    const prepBtn = pick && !pick.start && owner !== 'nick' ? (
       <button
         type="button"
         className="tk-btn tk-sm"
@@ -125,7 +129,7 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
         {starting === t.id ? 'Prepping...' : 'Prep'}
       </button>
     ) : null
-    const sessionBtn = pick && prepStartAllowed && buildPrepStartUri(t.id) !== null ? (
+    const sessionBtn = pick && owner !== 'nick' && prepStartAllowed && buildPrepStartUri(t.id) !== null ? (
       <PrepStartAction taskId={t.id} ready={!!tag && OPENS_DRAWER.has(tag.label)} variant="primary" />
     ) : null
     return (

@@ -9,7 +9,7 @@ import { isTaskDone, questionCardState } from './taskGrouping'
 import { civilFromInstant, nowInstant, zoneWeekdayHour } from './time'
 import {
   WEEK_PLAN_SOURCE, PACKET_DAILY_CAP, WEEK_PLAN_CHOICE_START, civilPlusDays, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanEnd, weekPlanKept, weekPlanWithdrawn,
-  type WeekPlanPick, type WeekPlanSpec,
+  type StepOwner, type WeekPlanPick, type WeekPlanSpec,
 } from '../../shared/weekPlan'
 
 export function isWeekPlan(t: { source?: string | null; kind?: string | null }): boolean {
@@ -176,11 +176,13 @@ export async function postWeekPlanAnswer(taskId: string, answer: Record<string, 
 
 /** The tag a pick shows for its packet. `carried`: a start this plan only kept, which
  *  queued nothing, so with no live packet there is no background work to claim. */
-export function pickTag(task: TaskRow | undefined, started: boolean, carried = false): { label: string; cls: string } | null {
+export function pickTag(task: TaskRow | undefined, started: boolean, carried = false, owner: StepOwner | null = null): { label: string; cls: string } | null {
   if (task && isTaskDone(task)) return { label: 'Done', cls: 'tk-n' }
   if (task?.packet_state === 'ready') return { label: 'Ready', cls: 'tk-ac' }
   if (task?.packet_state === 'changed') return { label: 'Changed', cls: 'tk-stale' }
   if (task?.packet_state === 'unverified') return { label: 'Check it', cls: 'tk-stale' }
+  if (owner === 'nick') return { label: 'Yours', cls: 'tk-ac' }
+  if (owner === 'claude') return { label: 'With Claude', cls: 'tk-n' }
   if (started && carried) return null
   return started ? { label: 'Preparing', cls: 'tk-n' } : { label: 'Saved', cls: 'tk-n' }
 }

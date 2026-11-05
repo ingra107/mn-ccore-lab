@@ -61,12 +61,19 @@ export const WEEK_PLAN_CHOICE_SAVE = 'save'
 
 export interface WeekPlanEvidence { kind: string; ref: string; observed_at: string }
 
+/** Who does a step: Claude (a packet it prepares) or Nick (his own move). */
+export type StepOwner = 'claude' | 'nick'
+export const STEP_OWNERS: readonly StepOwner[] = ['claude', 'nick']
+const isStepOwner = (v: unknown): v is StepOwner => (STEP_OWNERS as readonly unknown[]).includes(v)
+
 export interface WeekPlanOption {
   key: string
   label: string
   direction: string
   deliverable_kind: DeliverableKind
   recommended: boolean
+  /** Who does this step. Absent on a plan made before owners existed. */
+  owner?: StepOwner
 }
 
 export interface WeekPlanCandidate {
@@ -94,6 +101,8 @@ export interface WeekPlanPick {
   option_key: string | null
   text: string | null
   start: boolean
+  /** Who does a typed pick (an option pick takes its option's owner). */
+  owner?: StepOwner
 }
 
 /** The payload of one packet_prepare ai_request, carried as JSON in
@@ -167,7 +176,8 @@ function loads(raw: unknown): { ok: true; value: unknown } | { ok: false } {
  *   present, is a string; evidence, when present, is an array; options is an
  *   array of 1 to 4, each with a non-empty key (unique in its candidate),
  *   label and direction, a deliverable_kind from DELIVERABLE_KINDS and a
- *   boolean recommended; exactly one option per candidate is recommended.
+ *   boolean recommended and, when present, an owner of 'claude' or 'nick';
+ *   exactly one option per candidate is recommended.
  *   tz and expires_at are not judged.
  */
 export function weekPlanSpecError(raw: unknown): string | null {
@@ -205,6 +215,7 @@ export function weekPlanSpecError(raw: unknown): string | null {
         return `${at}.deliverable_kind must be one of ${DELIVERABLE_KINDS.join('/')}`
       }
       if (typeof o.recommended !== 'boolean') return `${at}.recommended must be a boolean`
+      if (o.owner !== undefined && !isStepOwner(o.owner)) return `${at}.owner must be one of ${STEP_OWNERS.join('/')}`
       if (o.recommended) recommended++
     }
     if (recommended !== 1) return `candidates[${i}] must mark exactly one option recommended (found ${recommended})`
@@ -224,6 +235,7 @@ export function parseWeekPlanSpec(raw: unknown): WeekPlanSpec | null {
     options: (c.options as Record<string, unknown>[]).map((o) => ({
       key: o.key as string, label: o.label as string, direction: o.direction as string,
       deliverable_kind: o.deliverable_kind as DeliverableKind, recommended: o.recommended as boolean,
+      ...(isStepOwner(o.owner) ? { owner: o.owner } : {}),
     })),
   }))
   return {
@@ -335,7 +347,7 @@ export function weekPlanAllowsEmptyPicks(answer: unknown): boolean {
  *   picks is a non-empty array, unless `allowEmpty` (true only when the answer has
  *   a non-empty `withdrawn` or `cleared`: then picks may be empty or absent); each pick is an object with a non-empty
  *   task_id (unique across picks), option_key a non-empty string or null,
- *   text a non-empty string or null, start a boolean; at least one of
+ *   text a non-empty string or null, start a boolean, owner (when present) 'claude' or 'nick'; at least one of
  *   option_key / text is non-null (both is an option plus Nick's note). With a spec: task_id names one of its
  *   candidates, and option_key one of that candidate's option keys.
  * `spec` null = judge the shape only.
@@ -355,6 +367,7 @@ export function weekPlanPicksError(
     if (p.text !== null && !nonEmpty(p.text)) return `picks[${i}].text must be a non-empty string or null`
     if (p.option_key === null && p.text === null) return `picks[${i}] needs option_key or text (or both)`
     if (typeof p.start !== 'boolean') return `picks[${i}].start must be a boolean`
+    if (p.owner !== undefined && !isStepOwner(p.owner)) return `picks[${i}].owner must be one of ${STEP_OWNERS.join('/')}`
     if (spec) {
       const c = spec.candidates.find((x) => x.task_id === p.task_id)
       if (!c) return `picks[${i}].task_id ${p.task_id} is not one of the offer's candidates`
@@ -392,7 +405,16 @@ export function parseWeekPlanPicks(answer: unknown, spec: WeekPlanSpec | null): 
     option_key: (p.option_key as string | null),
     text: (p.text as string | null),
     start: p.start as boolean,
+    ...(isStepOwner(p.owner) ? { owner: p.owner } : {}),
   }))
+}
+
+/** Who does a pick's step: its option's owner, else the pick's own (a typed
+ *  pick), else null (a plan made before owners existed). */
+export function pickOwner(pick: WeekPlanPick, spec: WeekPlanSpec): StepOwner | null {
+  const c = spec.candidates.find((x) => x.task_id === pick.task_id)
+  const o = pick.option_key === null ? undefined : c?.options.find((x) => x.key === pick.option_key)
+  return o?.owner ?? pick.owner ?? null
 }
 
 /** The last day of an offer's week (week_start + 6), YYYY-MM-DD. */
@@ -435,7 +457,7 @@ export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlan
   let flipped = 0
   for (const [i, p] of before.entries()) {
     const q = after[i]
-    if (q.task_id !== p.task_id || q.option_key !== p.option_key || q.text !== p.text) return `picks[${i}] may only change start`
+    if (q.task_id !== p.task_id || q.option_key !== p.option_key || q.text !== p.text || q.owner !== p.owner) return `picks[${i}] may only change start`
     if (p.start && !q.start) return `picks[${i}] was started and cannot be unstarted`
     if (!p.start && q.start) flipped++
   }
