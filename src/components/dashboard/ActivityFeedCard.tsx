@@ -11,6 +11,7 @@ import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { CollapsibleBody } from '../activity/CollapsibleBody'
+import { verbAfterName } from '../../lib/verbAfterName'
 
 interface FeedItem {
   id: string
@@ -63,7 +64,7 @@ export function FeedEntryText({ actorName, actorInitials, description }: Pick<Fe
           </>
         ) : null}
         {actorName ? ' ' : ''}
-        {description}
+        {actorName ? verbAfterName(description) : description}
       </p>
     </CollapsibleBody>
   )
@@ -104,9 +105,10 @@ function ActivityFeedCard() {
             (G8-13, 2026-10-14). */}
         <div
           className="flex-1 -mx-1 px-1"
+          data-testid="activity-feed-list"
           role="region"
           aria-label="Activity feed"
-          style={{ minHeight: '72px' }}
+          style={{ minHeight: '72px', overflow: 'hidden' }}
         >
           <div className="relative">
             {/* Vertical line: only beside entries, never on the empty state */}
@@ -191,6 +193,7 @@ function ActivityFeedCard() {
             color: 'var(--slate)',
             textDecoration: 'none',
             borderTop: '1px solid var(--border-subtle)',
+            flexShrink: 0,
             transition: 'opacity 0.2s ease',
           }}
         >

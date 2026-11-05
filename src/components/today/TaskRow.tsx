@@ -33,7 +33,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import type { ReactNode } from 'react'
 
-export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps, planToday, packetTag, firstStep, firstStepActions }: {
+export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid, milestoneRole, done = false, noDrag = false, onOpenEditor, onOpen, extraPills, openSteps, planToday, packetTag, firstStep, firstStepActions, inProject }: {
   task: TaskRowData
   project: { name: string; slug: string; primary_folder?: string | null } | null
   state: TodayStateApi
@@ -69,6 +69,8 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   firstStep?: ReactNode
   /** Plan section: Prep and Prep & start, on the first step's line. */
   firstStepActions?: ReactNode
+  /** On the project's own page: the context line drops the project's name. */
+  inProject?: boolean
 }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id] || done
@@ -258,6 +260,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
           onMouseDown={(e) => e.stopPropagation()}
         >×</Button>
       ) : undefined}
+      inProject={inProject}
       footPills={workflowPills}
       belowTitle={belowTitle}
       linksSlot={linkMeta}

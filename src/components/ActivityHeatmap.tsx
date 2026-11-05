@@ -12,6 +12,9 @@ const DAY_SIZE = 12
 const DAY_GAP = 2
 const CELL = DAY_SIZE + DAY_GAP
 
+/** On a narrow screen the scroller opens on the newest weeks, not the oldest. */
+const scrollToNewest = (el: HTMLDivElement | null) => { if (el) el.scrollLeft = el.scrollWidth }
+
 export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProps) {
   const { data: heatmapData = {} } = useQuery({
     queryKey: ['activity-heatmap', slug, days],
@@ -109,7 +112,8 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
       </div>
 
       {/* Heatmap SVG */}
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
+      {/* Opens on the newest weeks; tabIndex lets a keyboard scroll it (axe scrollable-region-focusable). */}
+      <div ref={scrollToNewest} tabIndex={0} role="group" aria-label="Activity by week" className="overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {/* Month labels */}
           {monthLabels.map((m, i) => (
