@@ -3,7 +3,7 @@ import type { Publication } from '../data/types'
 import { areaCounts, areaById, areaHref, inArea, RESEARCH_AREAS } from './researchAreas'
 import { isPlaceholderPublication, dedupePublications } from './publicationCounts'
 
-const p = (title: string, status: Publication['status'] = 'Published') => ({ title, status })
+const p = (title: string, status: Publication['status'] = 'Published') => ({ title, status, topics: [] })
 
 describe('researchAreas', () => {
   it('counts published papers per area from the title; one paper can sit in two areas', () => {
@@ -77,7 +77,7 @@ describe('researchAreas: tight terms (s68 cold review)', () => {
   })
   it('counts decision-making by the topic tag its card links to, never by title', () => {
     const counts = areaCounts([
-      { title: 'Patient decision aids for prostate cancer', status: 'Published' },
+      { title: 'Patient decision aids for prostate cancer', status: 'Published', topics: [] },
       { title: 'Cognitive style and ventilator use', status: 'Published', topics: ['decision-making'] },
       { title: 'A tagged draft', status: 'In Review', topics: ['decision-making'] },
     ])
