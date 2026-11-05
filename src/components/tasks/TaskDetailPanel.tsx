@@ -494,8 +494,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       >
         {/* Inner scroll container — carries overflow-y-auto so sticky header
             sticks within the rounded card and content clips to the border-radius.
-            Mobile uses the root motion.div overflow directly (no wrapping needed). */}
-        <div style={isMobilePanel ? {} : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+            Mobile uses the root motion.div overflow directly, and this column
+            fills the sheet: the Complete bar is sticky inside it, so in a column
+            as short as its tab the bar rode up the screen. */}
+        <div style={isMobilePanel ? { display: 'flex', flexDirection: 'column', minHeight: '100%' } : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Header — flat: same surface as panel, single hairline bottom only */}
         <div className="task-detail-sticky task-detail-header sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--sk-line2)' }}>
           <div className="flex items-center gap-2">
@@ -571,23 +573,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               placeholder={taskShortLabel(task) || 'Add a title'}
               onSave={(v) => handleFieldUpdate('title', v)}
             />
-            {/* Short title — concise row label (Rule 68). Editable inline,
-                mirrors ProjectDetail's short_name affordance. */}
-            <div className="flex items-center" style={{ gap: 'var(--sp-xs)', marginTop: 'var(--sp-xs)', minWidth: 0 }}>
-              <label
-                className="flex items-center flex-shrink-0"
-                style={{ gap: 'var(--sp-xs)', fontSize: 12, color: 'var(--sk-t2)', fontWeight: 500 }}
-              >
-                Short title
-              </label>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <EditableShortTitle
-                  value={task.short_title || ''}
-                  onSave={(v) => handleFieldUpdate('short_title', v || null)}
-                />
-              </div>
-            </div>
-            {/* Task age + acknowledged + source — descriptive metadata, snug
+            {/* Task age + acknowledged — descriptive metadata, snug
                 under the title group (Nick 2026-06-11: it belongs WITH the
                 title, not floating between the control sections). */}
             <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6, fontSize: 11, color: 'var(--muted)' }}>
@@ -604,14 +590,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                     <Clock size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
                     Acknowledged {formatRelativeTime(task.acknowledged_at)}
                     {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
-                  </span>
-                </span>
-              )}
-              {task.source && (
-                <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
-                  <span aria-hidden="true">·</span>
-                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--sk-t1) 5%, transparent)', color: 'var(--sk-t2)', opacity: 1 }}>
-                    {task.source}
                   </span>
                 </span>
               )}
@@ -699,6 +677,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 done={isTaskDone(task)}
               />
             )}
+            <CompactAssigneeRow
+              value={task.assignee}
+              onChange={(v) => handleFieldUpdate('assignee', v)}
+            />
             <button
               type="button"
               data-testid="delete-task"
@@ -771,37 +753,28 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onViewAll={() => setActiveTab('activity')}
             />
 
-            {/* Compact assignee row — small avatar + name inline with ▾ affordance.
-                Same visual weight as the Status/Priority/Project/Due selects above.
-                Project actions (WorkOnActions / Open) follow on the same row. */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <CompactAssigneeRow
-                value={task.assignee}
-                onChange={(v) => handleFieldUpdate('assignee', v)}
-              />
-              {(taskProject?.primary_folder || task.project_id) && (
-                <div className="flex items-center gap-2 ml-auto">
-                  {taskProject?.primary_folder && (
-                    <WorkOnActions
-                      primaryFolder={taskProject.primary_folder}
-                      projectLabel={taskProject.title}
-                      variant="compact"
-                    />
-                  )}
-                  {task.project_id && (
-                    <button
-                      type="button"
-                      onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
-                      aria-label="Open project"
-                      className="link-affordance"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
-                    >
-                      Open <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Project actions: work on it here, or go to its page. */}
+            {(taskProject?.primary_folder || task.project_id) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {taskProject?.primary_folder && (
+                  <WorkOnActions
+                    primaryFolder={taskProject.primary_folder}
+                    projectLabel={taskProject.title}
+                    variant="compact"
+                  />
+                )}
+                {task.project_id && (
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
+                    className="link-affordance"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--job-accent)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
+                  >
+                    Open project <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* The teal Run button (schema v155): PB set tasks.run_skill, so this
                 task is done by running that skill in a Claude session on Nick's
@@ -892,6 +865,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                     { value: 'monthly', label: 'Monthly' },
                   ]}
                   onChange={(v) => handleFieldUpdate('recurrence', v === 'none' ? null : v)}
+                  alwaysShowChevron
                 />
               </FieldBlock>
               <div>
@@ -906,6 +880,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Dependencies — S14: clicking a blocker/blocked task swaps the
                 panel to it instead of dead-ending on a no-op handler. */}
             <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={(t) => setSwapTask(t)} />
+
+            {/* Short title: the concise row label (Rule 68). Its own field here, not
+                on the first screen, where an empty one sat on every task. */}
+            <FieldBlock label="Short title" noContainer>
+              <EditableShortTitle
+                value={task.short_title || ''}
+                onSave={(v) => handleFieldUpdate('short_title', v || null)}
+              />
+            </FieldBlock>
 
             {/* Handoffs */}
             <CollapsibleSection
@@ -936,7 +919,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               ) : (
                 task.source && <span>Source: {task.source}</span>
               )}
-              {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
               {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
             </div>
           </div>

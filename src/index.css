@@ -2384,6 +2384,7 @@ button[aria-label="Deselect task"]::before {
     gap: 8px;
     position: sticky;
     bottom: 0;
+    margin-top: auto; /* the bottom of the sheet, however short the tab */
     padding: 12px;
     background: color-mix(in oklch, var(--cream) 95%, transparent);
     backdrop-filter: blur(8px);
@@ -3009,6 +3010,14 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
      links hold something, so the icons still line up down the list. */
   .tk .tk-lks{min-width:0}
   .tk .tk-slots:has(.tk-lks:empty):has(.tk-mks:empty){display:none}
+  /* A busy card (a waiting-on pill plus faces or links) cannot fit one 300px
+     line: the project shrank to "ARD..." and the pill to "Wa". It takes a second
+     line instead, faces and slots on it, slots still flush right. A plain card
+     keeps the one line above (visual audit 2, H7). */
+  .tk .tk-ctx:has(>.tk-pill:not(.tk-duepill):not(.planned-chip)):has(>.tk-faces,>.tk-slots .tk-lks:not(:empty)){flex-wrap:wrap}
+  .tk .tk-ctx:has(>.tk-pill:not(.tk-duepill):not(.planned-chip)):has(>.tk-faces,>.tk-slots .tk-lks:not(:empty))>.tk-sp{display:none}
+  .tk .tk-ctx:has(>.tk-pill:not(.tk-duepill):not(.planned-chip)):has(>.tk-faces,>.tk-slots .tk-lks:not(:empty))>.tk-slots{margin-left:auto}
+  .tk .tk-ctx:has(>.tk-pill:not(.tk-duepill):not(.planned-chip)):has(>.tk-faces,>.tk-slots .tk-lks:not(:empty))>.tk-pill{flex-shrink:0;max-width:100%}
   /* The context line runs under the face, as on the Board: box | title | face,
      then the line spans title and face. Folder + Work on end that line, with a
      spacer reserving their room. An empty face keeps its column, so the title
