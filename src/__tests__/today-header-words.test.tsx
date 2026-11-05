@@ -16,7 +16,7 @@ describe('TodayHeader', () => {
         </div>,
         { ready: (h) => h.querySelector('h2'), label: 'header' },
       )
-      expect(host.querySelector('h2')?.textContent).toBe('Timeline')
+      expect(host.querySelector('h2')?.textContent).toBe('Day')
       expect(host.querySelector('.tk-ctog')?.getAttribute('aria-label')).not.toContain('Today')
       expect([...host.querySelectorAll('.tk-seg button')].map((b) => b.textContent)).toEqual(['Timeline', 'Agenda'])
     }

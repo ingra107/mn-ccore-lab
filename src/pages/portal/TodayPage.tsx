@@ -64,6 +64,7 @@ import { OvernightCard } from '../../components/today/rail/OvernightCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QuestionsCard } from '../../components/tasks/QuestionsCard'
 import { useNeedsYouCollapsed } from '../../hooks/useNeedsYouCollapsed'
+import { usePlanRowWeek } from '../../hooks/usePlanNudgeWeek'
 import { JoinRequestsCard } from '../../components/tasks/JoinRequestsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
@@ -161,6 +162,7 @@ export default function TodayPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const weekPlanned = useMemo(() => sessionWeekPlanned(tasksQuery.data ?? []), [tasksQuery.data, questionDay])
   // The whole card can be folded into the stat line ("N needs you").
+  const planRowWeek = usePlanRowWeek(questionTasks, !!tasksQuery.data)
   const { folded: needsYouFolded, count: needsYouCount, collapse: collapseNeedsYou, restore: restoreNeedsYou } = useNeedsYouCollapsed(questionTasks)
   // Snoozed questions (due_date after today) are off the card; the card
   // says how many and when the next one is back.
@@ -782,6 +784,7 @@ export default function TodayPage() {
           stepsByParent={stepsByParent}
           viewerSlug={userSlug}
           loading={tasksQuery.isPending}
+          planRowAbove={!needsYouFolded && planRowWeek !== null}
         />
 
         {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).

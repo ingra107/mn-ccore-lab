@@ -302,6 +302,29 @@ const section = (plan: AcceptedWeekPlan | null, rows: TaskRow[], st: TodayStateA
 const cards = (h: ParentNode) => [...h.querySelectorAll('[data-testid="plan-card"]')]
 const stored = () => currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], DAY)!
 
+describe('One Plan week button on the screen', () => {
+  const quiet = (above: boolean) => (
+    <PlanSection plan={null} planRowAbove={above} model={planSectionModel(null, [], state({}).planned, DAY, state({}).done)} state={state({})} projectsByPid={new Map()} viewerSlug="" />
+  )
+
+  it('the empty section offers no button and no plan words while the gold row shows', async () => {
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(quiet(true))
+    await tick()
+    expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
+    expect(host.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned. Drag a task here to plan it for today.')
+  })
+
+  it('the section keeps its button when the gold row is not there (folded, or a Sunday)', async () => {
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(quiet(false))
+    await until(() => host.querySelector('[data-testid="plan-button"]')?.textContent === 'Plan week', 'the button')
+    expect(host.querySelector('[data-testid="plan-empty"]')?.textContent).toContain('Plan the week')
+  })
+})
+
 describe('The Plan section cards', () => {
   it('currentWeekPlan: the newest answered plan whose week holds today', () => {
     const older = answered([{ task_id: 'task_a', option_key: 'a1', text: null, start: true }], '2026-10-26T14:00:00Z', 'p1')

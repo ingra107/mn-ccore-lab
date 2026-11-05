@@ -273,11 +273,12 @@ describe('The Plan section on Today', () => {
     await waitFor(() => section(h)!.querySelector('[data-testid="plan-empty"]'), 'the empty line after the read')
   })
 
-  it('the empty section has the Plan button and one line', async () => {
+  it('the empty section has one line, and the screen one Plan button: the gold row\'s', async () => {
     stubHub([task('other')])
     const h = await mount(page(), { ready: loaded('other'), label: 'today' })
-    await waitFor(() => section(h)?.querySelector('[data-testid="plan-button"]'), 'the Plan button')
-    expect(section(h)!.querySelector('[data-testid="plan-empty"]')).not.toBeNull()
+    await waitFor(() => h.querySelector('[data-testid="q-week-plan"] [data-testid="plan-button"]'), 'the Plan button')
+    expect(h.querySelectorAll('[data-testid="plan-button"]')).toHaveLength(1)
+    expect(section(h)!.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned. Drag a task here to plan it for today.')
     expect(section(h)!.querySelector('.tk-tc')).toBeNull()
   })
 })
