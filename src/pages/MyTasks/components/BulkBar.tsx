@@ -1,5 +1,5 @@
 // BulkBar — appears when ≥1 row is selected. Plan today / Due / Status /
-// Reassign / Priority / Complete / Archive / Deselect. Picker popover for
+// Reassign / Priority / Complete / Delete / Deselect. Picker popover for
 // multi-option actions (status, reassign, priority).
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
@@ -23,7 +23,7 @@ interface BulkBarProps {
   commonDue: string | null
   onSetDue: (date: string | null) => void
   onComplete: () => void
-  onArchive: () => void
+  onDelete: () => void
   onReassign: (slug: string) => void
   onPriority: (priority: string) => void
   onStatus: (status: string) => void
@@ -32,7 +32,7 @@ interface BulkBarProps {
 
 type BulkPicker = 'reassign' | 'priority' | 'status' | null
 
-export function BulkBar({ count, onClear, onPlanToday, commonDue, onSetDue, onComplete, onArchive, onReassign, onPriority, onStatus, assigneeOptions }: BulkBarProps) {
+export function BulkBar({ count, onClear, onPlanToday, commonDue, onSetDue, onComplete, onDelete, onReassign, onPriority, onStatus, assigneeOptions }: BulkBarProps) {
   const [picker, setPicker] = useState<BulkPicker>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   // Close on outside click
@@ -94,7 +94,7 @@ export function BulkBar({ count, onClear, onPlanToday, commonDue, onSetDue, onCo
         {btn('Reassign', () => setPicker(picker === 'reassign' ? null : 'reassign'), undefined, picker === 'reassign')}
         {btn('Priority', () => setPicker(picker === 'priority' ? null : 'priority'), undefined, picker === 'priority')}
         {btn('✓ Complete', onComplete, JOB_ACCENT)}
-        {btn('Archive', onArchive)}
+        {btn('Delete', onDelete)}
         <div style={{ flex: 1 }} />
         <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
        </div>
