@@ -38,6 +38,16 @@ describe('journalDisplayName', () => {
     'npj Digital Medicine', 'mBio', 'eLife',
   ])('leaves %s as it is', (name) => expect(journalDisplayName(name)).toBe(name))
 
+  // Review, 2026-11-05: one word in capitals is usually an acronym we have not listed.
+  it.each(['JAMIA', 'MMWR', 'AJRCCM', 'NPJ', 'AACN', 'NEJM'])('leaves the one-word name %s as it is', (name) => {
+    expect(journalDisplayName(name)).toBe(name)
+  })
+
+  it('still fixes the one plain word on the card, and a no-vowel word stays in a long name', () => {
+    expect(journalDisplayName('PEDIATRICS')).toBe('Pediatrics')
+    expect(journalDisplayName('NPJ DIGITAL MEDICINE')).toBe('NPJ Digital Medicine')
+  })
+
   it('prints nothing for no journal', () => {
     expect(journalDisplayName(null)).toBe('')
     expect(journalDisplayName(undefined)).toBe('')
