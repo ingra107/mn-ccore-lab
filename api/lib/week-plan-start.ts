@@ -10,7 +10,8 @@
 //
 // Only Start creates work. The answer to a source='week_plan' question carries
 // typed picks (shared/weekPlan.ts); the write that stores it also inserts one
-// ai_requests row per pick with start:true, in the SAME D1 batch, each INSERT
+// ai_requests row per pick with start:true, except a kept pick (the answer's
+// `kept`, a pick carried from the plan before), in the SAME D1 batch, each INSERT
 // guarded on the row write having landed (mutations.ts commitRowWrite
 // `dependents`). So an answer never lands without its requests, and a request
 // never exists for an answer that did not land. The rows go through the one
@@ -36,7 +37,7 @@ import { prepareActivityEntry } from './activity-entry';
 import { aiRequestInsert, type AIRequestInsertRow } from '../routes/ai-requests';
 import {
   PACKET_DAILY_CAP, PACKET_PREPARE_SOURCE_TYPE, WEEK_PLAN_SOURCE,
-  parseWeekPlanSpec, parseWeekPlanPicks, pickDirection, isCivilDate, civilPlusDays, weekPlanNewlyStarted,
+  parseWeekPlanSpec, parseWeekPlanPicks, pickDirection, isCivilDate, civilPlusDays, weekPlanKept, weekPlanNewlyStarted,
   type PacketPreparePayload,
 } from '../../shared/weekPlan';
 
@@ -179,8 +180,9 @@ export type WeekPlanStart =
  * code and this sees only answers that will be stored.
  *
  * Starts: on the first answer, every pick with start:true; on a start flip
- * (shared/weekPlan.ts weekPlanFlipError), the flipped picks. Nothing else
- * starts anything; a stored answer cannot otherwise change.
+ * (shared/weekPlan.ts weekPlanFlipError), the flipped picks. A kept pick is
+ * neither (weekPlanNewlyStarted): no request, no cap. Nothing else starts
+ * anything; a stored answer cannot otherwise change.
  *
  * Only the packet owner may start work (the requests read as private and use
  * Nick's cap); anyone else's starting answer is refused (`forbidden`).
@@ -296,7 +298,8 @@ export const WEEK_PLAN_NOTE_SOURCE_TABLE = 'week_plan_note';
 /**
  * The notes a week plan answer carries, as task comments (2026-11-02: Nick's
  * typed notes on Save went nowhere). On the FIRST answer to a week_plan
- * question, every pick with text becomes one comment on its task, through the
+ * question, every pick with text, except a kept one (its note was posted by the
+ * plan that first picked it), becomes one comment on its task, through the
  * same activity_entries row every task comment is (prepareActivityEntry, the
  * decision half of postActivityEntry), inside the answer's own batch and gated
  * on the answer row having landed. A start flip never changes text
@@ -319,7 +322,8 @@ export async function weekPlanNotes(
   const spec = parseWeekPlanSpec(current.question_spec_json);
   if (!spec) return null;
   const picks = parseWeekPlanPicks(answer, spec);
-  const noted = (picks ?? []).filter((p) => p.text !== null && p.text.trim() !== '');
+  const kept = new Set(weekPlanKept(answer));
+  const noted = (picks ?? []).filter((p) => p.text !== null && p.text.trim() !== '' && !kept.has(p.task_id));
   if (noted.length === 0) return null;
   const actor = await resolveActor(env, user, undefined, { allowImpersonation: false });
   if ('error' in actor) return null;

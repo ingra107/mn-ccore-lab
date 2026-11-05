@@ -28,7 +28,8 @@
 //   week_plan a source='week_plan' question's spec follows shared/weekPlan.ts
 //             weekPlanSpecError -> question_spec_invalid; its answer carries a
 //             typed `picks` array that weekPlanPicksError accepts against that
-//             spec -> question_answer_invalid. On any other question an answer
+//             spec, and an optional `kept` naming some of those picks
+//             (weekPlanKeptError) -> question_answer_invalid. On any other question an answer
 //             MAY carry `picks`; when it does, the shape rules apply (no spec).
 //             (PB decision 2026-10-30-planning-conversation.md, v1 contract.)
 //   telegram  a non-null handle must parse to an object -> question_telegram_invalid
@@ -48,7 +49,7 @@
 // would manufacture a false conflict on the next PB update.
 
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
-import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanSpecError, weekPlanWithdrawn, weekPlanWithdrawnError } from '../../shared/weekPlan';
+import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanKeptError, weekPlanSpecError, weekPlanWithdrawn, weekPlanWithdrawnError } from '../../shared/weekPlan';
 import { nowInstant } from './time';
 
 /**
@@ -190,7 +191,9 @@ export function questionRowError(effective: Record<string, unknown>): QuestionEr
     if (isWeekPlan) {
       // withdrawn (2026-11-04): empty picks pass only beside a non-empty withdrawn.
       const why = weekPlanWithdrawnError(parsed.value)
-        ?? weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec), { allowEmpty: weekPlanWithdrawn(parsed.value).length > 0 });
+        ?? weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec), { allowEmpty: weekPlanWithdrawn(parsed.value).length > 0 })
+        // kept (2026-11-04): each id is a pick of this answer.
+        ?? weekPlanKeptError(parsed.value, parsed.value.picks);
       if (why) return `question_answer_invalid: ${why}`;
     } else if (parsed.value.picks !== undefined) {
       const why = weekPlanPicksError(parsed.value.picks, null);
