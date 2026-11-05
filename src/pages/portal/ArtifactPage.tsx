@@ -19,6 +19,8 @@ import PageContainer from '../../components/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
+import QueryState from '../../components/QueryState'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 import MarkdownView from '../../components/MarkdownView'
 import DeskBrokerFrame from '../../components/DeskBrokerFrame'
 import HermesMark from '../../components/HermesMark'
@@ -97,11 +99,13 @@ export default function ArtifactPage() {
     setTagInput('')
   }
 
-  const { data: artifact, isLoading } = useQuery<Artifact | null>({
+  const { data: artifact, isLoading, isLoadingError: artifactFailed, error: artifactError } = useQuery<Artifact | null>({
     queryKey: ['artifact', id],
     queryFn: async () => {
       const res = await fetch(`/api/artifacts/${id}`)
-      if (!res.ok) return null
+      // Only a 404 means it is gone. Anything else is a failed read (R15).
+      if (res.status === 404) return null
+      if (!res.ok) throw Object.assign(new Error(`artifact fetch failed: ${res.status}`), { status: res.status })
       const data = await res.json() as { data?: Artifact }
       return data.data ?? null
     },
@@ -118,11 +122,12 @@ export default function ArtifactPage() {
   // v102: "Show hidden" reveals dismissed threads (refetch with include_hidden).
   const [showHidden, setShowHidden] = useState(false)
   const dismissThread = useDismissThread()
-  const { data: activityData } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
+  const { data: activityData, isLoadingError: discussionFailed, refetch: refetchDiscussion } = useQuery<{ entries: ActivityEntryItemRow[]; hiddenCount: number }>({
     queryKey: ['artifact-activity', id, showHidden],
     queryFn: async () => {
       const res = await fetch(`/api/artifacts/${id}/activity${showHidden ? '?include_hidden=1' : ''}`)
-      if (!res.ok) return { entries: [], hiddenCount: 0 }
+      // R15: a failed read must not read as "No discussion yet".
+      if (!res.ok) throw new Error(`artifact activity fetch failed: ${res.status}`)
       const data = await res.json() as { data?: ActivityEntryItemRow[]; hidden_count?: number }
       return { entries: data.data || [], hiddenCount: data.hidden_count || 0 }
     },
@@ -179,6 +184,16 @@ export default function ArtifactPage() {
         <div style={{ paddingTop: '1.5rem' }}>
           <TextSkeleton lines={8} />
         </div>
+      </PageContainer>
+    )
+  }
+
+  if (artifactFailed) {
+    return (
+      <PageContainer>
+        <QueryState isLoading={false} isError errorStatus={(artifactError as (Error & { status?: number }) | null)?.status}>
+          {null}
+        </QueryState>
       </PageContainer>
     )
   }
@@ -495,8 +510,10 @@ export default function ArtifactPage() {
           )}
         </div>
 
-        {/* Stream */}
-        {activity.length === 0 ? (
+        {/* Stream. The empty state waits for a read that succeeded. */}
+        {discussionFailed ? (
+          <QueryErrorNote label="discussion" onRetry={() => refetchDiscussion()} />
+        ) : !activityData ? null : activity.length === 0 ? (
           <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)' }}>
             <EmptyState
               icon={<FileText size={24} />}
