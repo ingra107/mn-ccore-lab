@@ -30,8 +30,8 @@ import { applyMutation } from './mutations'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests, _resetValidationFlagsCache } from '../helpers'
 import { questionRowError } from '../lib/task-question'
-import { ctDayBounds, dailyPacketCount } from '../lib/week-plan-start'
-import { weekPlanSpecError, weekPlanPicksError, pickDirection, parseWeekPlanSpec, PACKET_DAILY_CAP as CAP } from '../../shared/weekPlan'
+import { ctDayBounds, dailyPacketCount, weekPlanClearCheck } from '../lib/week-plan-start'
+import { weekPlanSpecError, weekPlanPicksError, pickDirection, parseWeekPlanPicks, parseWeekPlanSpec, weekPlanCleared, PACKET_DAILY_CAP as CAP } from '../../shared/weekPlan'
 
 const CTX = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext
 const TEST_KEY = 'local-test-key-do-not-use-in-prod'
@@ -833,3 +833,119 @@ describe('week plan: delete', () => {
     expect(alive()).toMatchObject({ status: 'todo', deleted_at: null })
   })
 })
+
+// ── a plan with no picks clears Done (Nick, 2026-11-05: "whenever I replan that
+// section all the done things go") ─────────────────────────────────────────────
+
+describe('an empty answer that clears finished picks', () => {
+  const OLD = 'task_plan_old'
+  const cleared = (ids: string[], extra: Record<string, unknown> = {}) => answer([], { choice: 'save', cleared: ids, ...extra })
+  const stored = () => one('SELECT question_answer_json AS a FROM tasks WHERE id = ?', PLAN)?.a
+  const post = (body: unknown) => call('POST', `/api/tasks/${PLAN}`, { pb: true }, { question_answer_json: body })
+  /** task_a, task_b and task_c are seeded open; this moves one. */
+  const seedTask = (id: string, over: Record<string, unknown> = {}) => {
+    const cols = Object.keys(over)
+    if (cols.length > 0) db.prepare(`UPDATE tasks SET ${cols.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`).run(...Object.values(over), id)
+  }
+  const done = { status: 'done', completed: 1, completed_at: '2026-10-28 12:00:00' }
+  /** The plan standing: answered, older than the offer this answer goes on. */
+  function standingPlan(picks: string[], extra: Record<string, unknown> = {}, week: unknown = SPEC) {
+    db.prepare('UPDATE tasks SET created_at = ? WHERE id = ?').run('2026-10-28 15:00:00', PLAN)
+    insertRow(db, 'tasks', {
+      id: OLD, title: 'Plan your week (older)', kind: 'question', status: 'todo', priority: 'medium',
+      assignee: 'nick-ingraham', source: 'week_plan', project_id: null, created_at: '2026-10-27 15:00:00',
+      question_spec_json: JSON.stringify(week),
+      question_answer_json: JSON.stringify(answer(picks.map((t) => ({ task_id: t, option_key: `${t.slice(-1)}1`, text: null, start: false })), extra)),
+    })
+  }
+
+  it('stores when every pick of the plan it replaces is finished, and makes no request, no note, no cap use', async () => {
+    seedTask('task_a', done)
+    seedTask('task_b', done)
+    standingPlan(['task_a', 'task_b'])
+    const r = await post(cleared(['task_a', 'task_b']))
+    expect(r.status).toBe(200)
+    expect(JSON.parse(String(stored())).cleared).toEqual(['task_a', 'task_b'])
+    expect(requests()).toHaveLength(0)
+    expect(all("SELECT 1 FROM activity_entries WHERE source_table = 'week_plan_note'")).toHaveLength(0)
+    const count = await call('GET', '/api/packets/daily-count?date=2026-10-28', { pb: true })
+    expect(count.body.used).toBe(0)
+  })
+
+  it('a deleted pick is neither finished nor live, and does not stop it', async () => {
+    seedTask('task_a', done)
+    seedTask('task_b', { status: 'deleted', deleted_at: '2026-10-28 10:00:00' })
+    standingPlan(['task_a', 'task_b'])
+    expect((await post(cleared(['task_a']))).status).toBe(200)
+  })
+
+  it('a pick the standing plan already withdrew does not count as live', async () => {
+    seedTask('task_a', done)
+    seedTask('task_b')
+    standingPlan(['task_a', 'task_b'], { withdrawn: ['task_b'] })
+    expect((await post(cleared(['task_a']))).status).toBe(200)
+  })
+
+  it.each([
+    ['an open pick beside a finished one', () => { seedTask('task_a', done); seedTask('task_b'); standingPlan(['task_a', 'task_b']) }, ['task_a']],
+    ['no finished pick at all', () => { seedTask('task_a'); standingPlan(['task_a']) }, ['task_a']],
+    ['no plan standing', () => { seedTask('task_a', done) }, ['task_a']],
+    ['naming a finished task the plan does not hold', () => { seedTask('task_a', done); seedTask('task_b', done); standingPlan(['task_a']) }, ['task_b']],
+    ['a plan of another week only', () => { seedTask('task_a', done); standingPlan(['task_a'], {}, { ...SPEC, week_start: '2026-10-19' }) }, ['task_a']],
+    ['a pick row that cannot be read', () => { db.prepare("DELETE FROM tasks WHERE id = 'task_a'").run(); seedTask('task_b', done); standingPlan(['task_a', 'task_b']) }, ['task_b']],
+  ])('refuses %s, and stores nothing', async (_label, arrange, ids) => {
+    arrange()
+    const r = await post(cleared(ids as string[]))
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toMatch(/question_answer_invalid/)
+    expect(stored()).toBeNull()
+  })
+
+  it.each([
+    ['no marker', answer([])],
+    ['an empty marker', answer([], { cleared: [] })],
+    ['a malformed marker', answer([], { cleared: [7] })],
+    ['a marker beside picks', answer([{ task_id: 'task_a', option_key: 'a1', text: null, start: false }], { cleared: ['task_b'] })],
+    ['a marker beside a withdrawal', answer([], { withdrawn: ['task_a'], cleared: ['task_b'] })],
+  ])('the shape refuses %s, even with a plan to clear', async (_label, body) => {
+    seedTask('task_a', done)
+    seedTask('task_b', done)
+    standingPlan(['task_a', 'task_b'])
+    const r = await post(body)
+    expect(r.status).toBe(409)
+    expect(String(r.body.error)).toMatch(/question_answer_invalid/)
+    expect(stored()).toBeNull()
+  })
+
+  it('a pick reopened between the read and the write is refused by the write itself', async () => {
+    seedTask('task_a', done)
+    standingPlan(['task_a'])
+    const check = await weekPlanClearCheck(env, {
+      table: 'tasks', record_id: PLAN, patch: { question_answer_json: cleared(['task_a']) },
+    }, one('SELECT * FROM tasks WHERE id = ?', PLAN) as Record<string, unknown>)
+    if (!check || !('where' in check)) throw new Error('expected a where term')
+    const term = `UPDATE tasks SET title = 'written' WHERE id = '${PLAN}'${check.where}`
+    db.prepare("UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL WHERE id = 'task_a'").run()
+    expect(db.prepare(term).run().changes).toBe(0)
+    db.prepare("UPDATE tasks SET status = 'done', completed = 1, completed_at = '2026-10-28 12:00:00' WHERE id = 'task_a'").run()
+    expect(db.prepare(term).run().changes).toBe(1)
+  })
+
+  it('a stored clear cannot be changed, and an answer that holds it reads as a plan with no picks', async () => {
+    seedTask('task_a', done)
+    standingPlan(['task_a'])
+    await post(cleared(['task_a']))
+    const again = await post(cleared(['task_b']))
+    expect(again.status).toBe(409)
+    expect(String(again.body.error)).toMatch(/question_answer_frozen/)
+    const spec = parseWeekPlanSpec(SPEC)
+    expect(parseWeekPlanPicks(stored(), spec)).toEqual([])
+    expect(weekPlanCleared(stored())).toEqual(['task_a'])
+  })
+
+  it('another question may not carry it', () => {
+    const q = { kind: 'question', source: 'telegram', question_spec_json: JSON.stringify({ v: 1, choices: [{ key: 'yes', label: 'Yes' }] }), question_answer_json: JSON.stringify({ v: 1, choice: 'yes', via: 'hub', at: 't', cleared: ['a'] }) }
+    expect(questionRowError(q)).toMatch(/question_answer_invalid/)
+  })
+})
+

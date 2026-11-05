@@ -294,9 +294,46 @@ export function weekPlanKept(answer: unknown): string[] {
 }
 
 /**
+ * The cleared rules (the answer's optional `cleared`, 2026-11-05): the finished
+ * picks of the plan this answer replaces. Nick: "whenever I replan that section
+ * all the done things go". It is the other thing that lets an answer carry no
+ * picks, and it rides only such an answer: no picks and nothing withdrawn. Absent
+ * is fine. Present, it is an array of distinct non-empty strings. These rules read
+ * the answer alone; api/lib/week-plan-start.ts weekPlanClearCheck holds it against
+ * the stored plan, so a stray empty answer cannot wipe a live one. It starts nothing.
+ * PB's twin is scripts/questions/state.py Answer.cleared.
+ */
+export function weekPlanClearedError(answer: unknown): string | null {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value)) return null // the answer's own shape is judged elsewhere
+  const c = l.value.cleared
+  if (c === undefined) return null
+  if (!Array.isArray(c) || !c.every(nonEmpty)) return 'cleared must be an array of non-empty task id strings'
+  if (new Set(c).size !== c.length) return 'cleared names a task twice'
+  const picks = l.value.picks
+  if (c.length > 0 && ((Array.isArray(picks) && picks.length > 0) || weekPlanWithdrawn(l.value).length > 0)) {
+    return 'cleared rides only an answer with no picks and nothing withdrawn'
+  }
+  return null
+}
+
+/** The task ids the answer clears: [] when absent or malformed (a malformed one
+ *  is refused by weekPlanClearedError, so none is stored). */
+export function weekPlanCleared(answer: unknown): string[] {
+  const l = loads(answer)
+  if (!l.ok || !isObj(l.value) || weekPlanClearedError(l.value) !== null) return []
+  return Array.isArray(l.value.cleared) ? [...(l.value.cleared as string[])] : []
+}
+
+/** Whether this answer may hold no picks: it withdraws or clears something. */
+export function weekPlanAllowsEmptyPicks(answer: unknown): boolean {
+  return weekPlanWithdrawn(answer).length > 0 || weekPlanCleared(answer).length > 0
+}
+
+/**
  * The picks rules (the answer's `picks`):
- *   picks is a non-empty array, unless `allowEmpty` (true only when the answer
- *   has a non-empty `withdrawn`: then picks may be empty or absent); each pick is an object with a non-empty
+ *   picks is a non-empty array, unless `allowEmpty` (true only when the answer has
+ *   a non-empty `withdrawn` or `cleared`: then picks may be empty or absent); each pick is an object with a non-empty
  *   task_id (unique across picks), option_key a non-empty string or null,
  *   text a non-empty string or null, start a boolean; at least one of
  *   option_key / text is non-null (both is an option plus Nick's note). With a spec: task_id names one of its
@@ -340,16 +377,16 @@ export function pickDirection(pick: WeekPlanPick, spec: WeekPlanSpec): string {
 }
 
 /** The answer's picks, or null when they break weekPlanPicksError's rules
- *  (or withdrawn breaks weekPlanWithdrawnError's, or kept weekPlanKeptError's).
- *  [] for a withdrawal-only answer. */
+ *  (or withdrawn breaks weekPlanWithdrawnError's, kept weekPlanKeptError's or
+ *  cleared weekPlanClearedError's). [] for a withdrawal-only or clearing answer. */
 export function parseWeekPlanPicks(answer: unknown, spec: WeekPlanSpec | null): WeekPlanPick[] | null {
   const l = loads(answer)
   if (!l.ok || !isObj(l.value)) return null
   const picks = l.value.picks
-  if (weekPlanWithdrawnError(l.value) !== null) return null
-  if (weekPlanPicksError(picks, spec, { allowEmpty: weekPlanWithdrawn(l.value).length > 0 }) !== null) return null
+  if (weekPlanWithdrawnError(l.value) !== null || weekPlanClearedError(l.value) !== null) return null
+  if (weekPlanPicksError(picks, spec, { allowEmpty: weekPlanAllowsEmptyPicks(l.value) }) !== null) return null
   if (weekPlanKeptError(l.value, picks) !== null) return null
-  if (!Array.isArray(picks)) return [] // absent picks beside a withdrawal
+  if (!Array.isArray(picks)) return [] // absent picks beside a withdrawal or a clear
   return (picks as Record<string, unknown>[]).map((p) => ({
     task_id: p.task_id as string,
     option_key: (p.option_key as string | null),
@@ -378,7 +415,7 @@ export function civilPlusDays(civil: string, n: number): string {
  * (2026-10-31, cold review: "Save without starting" was a one-way door): the
  * same answer with one or more picks flipped start false -> true, and
  * `choice` set to 'start'. Nothing else may change: v, via, at, text, withdrawn,
- * kept, every pick's task_id / option_key / text and order, and no pick may go
+ * kept, cleared, every pick's task_id / option_key / text and order, and no pick may go
  * back to start:false. Returns the reason it is not such a flip, or null when it is.
  */
 export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlanSpec): string | null {
