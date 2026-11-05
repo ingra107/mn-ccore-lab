@@ -1,6 +1,7 @@
 import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
 import { parseWatchers, serializeWatchers } from '../../../shared/watchers'
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ComponentProps } from 'react'
+import { useTaskDraft, patchTaskDraft, clearSentDraft } from '../../lib/taskDrafts'
 import BodyText from '../BodyText'
 import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
 import {
@@ -214,6 +215,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     : undefined
   const viewerSlugs = usePresence('task', task?.id)
   const [quickAddHasContent, setQuickAddHasContent] = useState(false)
+  // The panel swapped tasks: nobody is commenting on the new one yet.
+  useEffect(() => { setQuickAddHasContent(false) }, [task?.id])
   const taskSelfIntent: Intent = quickAddHasContent ? 'commenting' : 'viewing'
   const taskPeerIntents = useIntentBroadcast('task', task?.id, taskSelfIntent)
   // Slack-style seen: opening the panel acknowledges the assignment silently
@@ -1565,7 +1568,15 @@ function DetailKeyLinks({
 //   right: Post button
 //
 // Mobile: whole component sticks to the panel's scroll-container bottom.
-export function OverviewQuickAdd({
+//
+// Keyed by task: the panel swaps tasks in place, and nothing in-flight on one task
+// (a preview, an upload queue, a focus state) may carry onto the next. The draft
+// itself lives in lib/taskDrafts, so it waits for the person to come back.
+export function OverviewQuickAdd(props: ComponentProps<typeof OverviewQuickAddBody>) {
+  return <OverviewQuickAddBody key={props.taskId} {...props} />
+}
+
+function OverviewQuickAddBody({
   taskId,
   projectSlug,
   primaryFolder,
@@ -1578,10 +1589,10 @@ export function OverviewQuickAdd({
   onJumpToTab: (tab: Tab) => void
   onContentChange?: (hasContent: boolean) => void
 }) {
-  const [mode, setMode] = useState<'note' | 'comment'>('comment')
-  const [text, setText] = useState('')
+  const [{ text, mode, meOnly }, patchDraft] = useTaskDraft(taskId)
+  const setText = (next: string | ((prev: string) => string)) =>
+    patchDraft((d) => ({ text: typeof next === 'function' ? next(d.text) : next }))
   const [focused, setFocused] = useState(false)
-  const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   // Instant optimistic preview while the real R2 upload runs in the
   // background (mirrors BugReportModal's screenshot-preview UX — the base64
@@ -1627,7 +1638,8 @@ export function OverviewQuickAdd({
       const { url: link } = await uploadFileToR2(file, { type: 'task', id: taskId })
       queryClient.invalidateQueries({ queryKey: ['attachments', 'task', taskId] })
       const md = isImage ? `![${file.name}](${link})` : `[${file.name}](${link})`
-      setText((prev) => (prev ? `${prev}\n${md}` : md))
+      // Into the draft of the task this upload started on, wherever the panel is now.
+      patchTaskDraft(taskId, (d) => ({ text: d.text ? `${d.text}\n${md}` : md }))
       showSuccess(`Attached ${file.name}`)
     } catch (err) {
       console.error('compose upload failed', err)
@@ -1647,19 +1659,17 @@ export function OverviewQuickAdd({
         comment: '@mention a teammate or @hermes for AI help',
       }
   const TOOLTIPS = {
-    note: 'Informal progress log — visible to the team',
+    note: `Informal progress log — ${meOnly ? 'only you will see it' : 'visible to the team'}`,
     comment: 'Talk to teammates — @mention works',
-  }
-
-  function reset() {
-    setText('')
-    setMeOnly(false)
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const v = text.trim()
     if (!v) return
+    // Every send below clears through this: only the text it sent, on the task it
+    // sent from, however long the send takes and wherever the panel has gone since.
+    const reset = () => clearSentDraft(taskId, text)
     // ── @workon/@quickchat: seeded launches (shared routing) ─────────────────
     // CRITICAL SEED ISOLATION: must run before submitComment — the seed
     // persists to launch_log ONLY, never /api/tasks/:id/comments or
@@ -1709,17 +1719,17 @@ export function OverviewQuickAdd({
         })
       return
     }
+    // A failure reaches the person through the failed-write floor (UndoToast.tsx),
+    // and the text stays so they can retry. mutateAsync, not mutate: mutate's own
+    // callbacks are dropped if the panel moves to another task before the answer,
+    // which would leave a posted draft sitting in its box to be posted again.
+    const landed = (message: string) => () => { showSuccess(message); reset() }
+    const stays = () => {}
     if (mode === 'note') {
-      postUpdate.mutate(
-        { content: v, update_type: 'progress' },
-        { onSuccess: () => { showSuccess('Note added'); reset() } },
-      )
+      postUpdate.mutateAsync({ content: v, update_type: 'progress', ...(meOnly ? { visibility: 'author' as const } : {}) })
+        .then(landed('Note added'), stays)
     } else {
-      // A failure reaches the person through the failed-write floor
-      // (UndoToast.tsx), and the text stays so they can retry.
-      postComment.mutate(meOnly ? `@me ${v}` : v, {
-        onSuccess: () => { showSuccess('Comment posted'); reset() },
-      })
+      postComment.mutateAsync(meOnly ? `@me ${v}` : v).then(landed('Comment posted'), stays)
     }
   }
 
@@ -1770,7 +1780,7 @@ export function OverviewQuickAdd({
               { value: 'note', label: 'Note', title: TOOLTIPS.note },
             ]}
             value={mode}
-            onChange={setMode}
+            onChange={(next) => patchDraft({ mode: next })}
           />
 
           {/* Full-width input — no icons left of it */}
@@ -1907,7 +1917,7 @@ export function OverviewQuickAdd({
             {/* @me lock — ROW 81: shared MeLockToggle (unified with SmartCompose) */}
             <MeLockToggle
               locked={meOnly}
-              onToggle={() => setMeOnly((v) => !v)}
+              onToggle={() => patchDraft((d) => ({ meOnly: !d.meOnly }))}
             />
 
             {/* Spacer pushes Post + See-all to the right */}
