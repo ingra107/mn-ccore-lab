@@ -36,9 +36,33 @@ export type ViewMode = typeof VIEW_MODES[number]
 export function parseViewMode(raw: string | null | undefined): ViewMode {
   return (VIEW_MODES as readonly string[]).includes(raw ?? '') ? raw as ViewMode : 'list'
 }
-export type QuickViewKey = 'all' | 'new' | 'today' | 'planned' | 'done-today' | 'overdue' | 'waiting' | 'stale' | 'declined'
+export const QUICK_VIEW_KEYS = ['all', 'new', 'today', 'planned', 'done-today', 'overdue', 'waiting', 'stale', 'declined'] as const
+export type QuickViewKey = typeof QUICK_VIEW_KEYS[number]
 
-export interface FilterState { priority: string | null; project: string | null; mentee: string | null; group: SectionKey | null; hideCompleted: boolean }
+/** The one reader of a `?filter=` value (cold load AND saved-view restore), the
+ *  same shape as parseViewMode. An unknown value (a mistyped link, an old
+ *  saved view) reads as All instead of an active filter no tab shows. */
+export function parseQuickView(raw: string | null | undefined): QuickViewKey {
+  return (QUICK_VIEW_KEYS as readonly string[]).includes(raw ?? '') ? raw as QuickViewKey : 'all'
+}
+
+export const STATUS_FILTER_KEYS = ['todo', 'in_progress', 'waiting_external', 'blocked', 'done'] as const
+export type StatusFilterKey = typeof STATUS_FILTER_KEYS[number]
+
+/** The one reader of a `?status=` value (the command palette links here). */
+export function parseStatusParam(raw: string | null | undefined): StatusFilterKey | null {
+  return (STATUS_FILTER_KEYS as readonly string[]).includes(raw ?? '') ? raw as StatusFilterKey : null
+}
+
+/** Does a task pass the status filter? `done` means completed, however the
+ *  status column reads. */
+export function matchesStatusFilter(t: { status: string; completed?: number | null }, status: StatusFilterKey | null): boolean {
+  if (!status) return true
+  if (status === 'done') return t.completed === 1 || t.status === 'done'
+  return t.status === status
+}
+
+export interface FilterState { priority: string | null; status: StatusFilterKey | null; project: string | null; mentee: string | null; group: SectionKey | null; hideCompleted: boolean }
 
 export interface FilterOption { v: string | null; l: string }
 

@@ -96,7 +96,7 @@ describe('My Tasks top bar on a phone', () => {
     await mount(tree(
       <TopBar
         view="list" setView={() => {}} search="" setSearch={() => {}}
-        filter={{ priority: null, project: null, mentee: null, group: null, hideCompleted: true }} setFilter={() => {}}
+        filter={{ priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: true }} setFilter={() => {}}
         quickView="all" setQuickView={() => {}} taskCount={3} projectOptions={[]}
         currentQuery="" onApplyView={() => {}} onCreateTask={onCreate}
       />,

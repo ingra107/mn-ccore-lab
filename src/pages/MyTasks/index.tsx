@@ -38,7 +38,7 @@ import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useFitViewportHeight } from '../../hooks/useFitViewportHeight'
 import {
-  readPlannedToday, isTaskDone, parseViewMode,
+  readPlannedToday, isTaskDone, parseViewMode, parseQuickView, parseStatusParam,
   type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { isSectionKey, type SectionKey } from '../../lib/taskSections'
@@ -95,6 +95,7 @@ export default function UnifiedMyTasks() {
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
     priority: searchParams.get('priority'),
+    status: parseStatusParam(searchParams.get('status')),
     project: searchParams.get('project'),
     // MT-15 — restore mentee from URL like every other filter so saved
     // views with a mentee param survive a reload. Was hardcoded to null.
@@ -102,9 +103,7 @@ export default function UnifiedMyTasks() {
     group: parseGroupParam(searchParams.get('group')),
     hideCompleted: searchParams.get('hideCompleted') !== '0',
   })
-  const [quickView, setQuickView] = useState<QuickViewKey>(
-    (searchParams.get('filter') as QuickViewKey | null) ?? 'all'
-  )
+  const [quickView, setQuickView] = useState<QuickViewKey>(parseQuickView(searchParams.get('filter')))
   const { selected, setSelected, toggleSelect, selectRange, anchorId, clearSelection } = useSelection()
   const [drawer, setDrawer] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -117,6 +116,7 @@ export default function UnifiedMyTasks() {
     if (quickView !== 'all') next.set('filter', quickView)
     if (view !== 'list') next.set('view', view)
     if (filter.priority) next.set('priority', filter.priority)
+    if (filter.status) next.set('status', filter.status)
     if (filter.project) next.set('project', filter.project)
     if (filter.mentee) next.set('mentee', filter.mentee)
     if (filter.group) next.set('group', filter.group)
@@ -152,10 +152,11 @@ export default function UnifiedMyTasks() {
   const applyView = useCallback((q: string) => {
     const p = new URLSearchParams(q)
     setSearch(p.get('q') ?? '')
-    setQuickView((p.get('filter') as QuickViewKey | null) ?? 'all')
+    setQuickView(parseQuickView(p.get('filter')))
     setView(parseViewMode(p.get('view')))
     setFilter({
       priority: p.get('priority'),
+      status: parseStatusParam(p.get('status')),
       project: p.get('project'),
       mentee: p.get('mentee'),
       group: parseGroupParam(p.get('group')),

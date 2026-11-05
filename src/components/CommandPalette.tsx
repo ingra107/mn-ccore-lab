@@ -12,7 +12,6 @@ import {
   Activity, BarChart3, Settings, Bug, Library, ListChecks, ExternalLink, X,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
-import { localDateKey, isOverdue } from '../lib/dateUtils'
 import { isTaskDone } from '../lib/taskGrouping'
 import { useRecentTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
@@ -21,12 +20,15 @@ import { useToast } from '../hooks/useToast'
 import { detectOrigin } from '../lib/launchOrigin'
 import { currentPageRoute } from '../lib/launchCommands'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
+import { chordLabelFor } from '../constants/chords'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { compactStageLabel } from '../lib/projectStage'
 import { projectShortLabel } from '../lib/displayNames'
 import { Button } from './ui/Button'
+import { taskLinkFor } from '../lib/taskLink'
+import { taskQuickFilters, type QuickFilterIcon } from '../lib/taskQuickFilters'
 
 interface CommandItem {
   id: string
@@ -60,6 +62,9 @@ const RECENT_MAX = 5
 const CATEGORY_RANK: Record<string, number> = {
   recent: 0, context: 1, action: 2, filter: 3, navigation: 4,
   task: 5, project: 6, person: 7, meeting: 8,
+}
+const QUICK_FILTER_ICON: Record<QuickFilterIcon, typeof Search> = {
+  done: CheckCircle2, active: CircleDot, high: Flag, urgent: Flag, today: Clock, overdue: AlertTriangle, blocked: AlertTriangle,
 }
 const categoryRank = (c: string): number => CATEGORY_RANK[c] ?? 9
 
@@ -184,21 +189,20 @@ export default function CommandPalette() {
     // piOnly: the sidebar shows these only to a PI (Sidebar.tsx Lab Overview
     // tabs and the avatar menu's PI tools); a member reaching them here landed
     // on a PI-only page.
-    const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string; piOnly?: boolean }[] = [
-      { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard, shortcut: 'G D' },
+    const navItems: { path: string; label: string; icon: typeof Search; piOnly?: boolean }[] = [
+      { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard },
       { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
-      { path: PATHS.tasks, label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
-      { path: PATHS.myTasks, label: 'My Tasks', icon: SquareCheck, shortcut: 'G Y' },
-      { path: PATHS.calendar, label: 'Calendar', icon: Calendar, shortcut: 'G C' },
-      { path: PATHS.deadlines, label: 'Deadlines', icon: Clock, shortcut: 'G K' },
+      { path: PATHS.myTasks, label: 'My Tasks', icon: SquareCheck },
+      { path: PATHS.calendar, label: 'Calendar', icon: Calendar },
+      { path: PATHS.deadlines, label: 'Deadlines', icon: Clock },
       { path: PATHS.labCascadeTab, label: 'Deadline Cascade', icon: GitBranch },
-      { path: PATHS.projects, label: 'Projects', icon: FolderKanban, shortcut: 'G P' },
+      { path: PATHS.projects, label: 'Projects', icon: FolderKanban },
       { path: PATHS.manuscripts, label: 'Manuscripts', icon: FileText },
       { path: PATHS.ideasTab, label: 'Ideas', icon: Lightbulb },
       { path: PATHS.decisions, label: 'Decisions', icon: Scale },
-      { path: PATHS.digestTab, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
+      { path: PATHS.digestTab, label: 'Research Digest', icon: BookOpen },
       { path: PATHS.grants, label: 'Grants', icon: DollarSign },
-      { path: PATHS.meetings, label: 'Meetings', icon: Users, shortcut: 'G M' },
+      { path: PATHS.meetings, label: 'Meetings', icon: Users },
       { path: PATHS.library, label: 'Library', icon: Library },
       { path: `${PATHS.library}?tab=artifacts`, label: 'Artifacts', icon: Library },
       { path: PATHS.activity, label: 'Activity', icon: Activity },
@@ -210,14 +214,14 @@ export default function CommandPalette() {
       { path: PATHS.profile, label: 'My Profile', icon: User },
       { path: PATHS.settings, label: 'Settings', icon: Settings },
       { path: PATHS.team, label: 'Team', icon: Users },
-      { path: PATHS.search, label: 'Search', icon: Search, shortcut: 'G S' },
+      { path: PATHS.search, label: 'Search', icon: Search },
       { path: PATHS.sessions, label: 'Session History', icon: Clock, piOnly: true },
       { path: PATHS.launches, label: 'My Launches', icon: Clock, piOnly: true },
       { path: PATHS.narratives, label: 'Narratives', icon: BookOpen },
       { path: PATHS.transcriptsTab, label: 'Transcripts', icon: FileText },
       // G H has always gone to the public site (useKeyboardShortcuts); the
       // palette used to label it My Hub.
-      { path: '/', label: 'Back to website', icon: ExternalLink, shortcut: 'G H' },
+      { path: '/', label: 'Back to website', icon: ExternalLink },
     ]
     for (const nav of navItems) {
       if (nav.piOnly && !user?.isPi) continue
@@ -228,7 +232,7 @@ export default function CommandPalette() {
         icon: nav.icon,
         action: () => { navigate(nav.path); setOpen(false) },
         category: 'navigation',
-        shortcut: nav.shortcut,
+        shortcut: chordLabelFor(nav.path),
       })
     }
 
@@ -252,7 +256,7 @@ export default function CommandPalette() {
       // palette should leave you exactly where you were.
       action: () => { setOpen(false); openGlobalQuickAdd() },
       category: 'action',
-      shortcut: 'C',
+      shortcut: 'Q',
     })
     items.push({
       id: 'action-create-idea',
@@ -362,47 +366,20 @@ export default function CommandPalette() {
       })
     }
 
-    // Quick Filters
-    items.push({
-      id: 'filter-completed',
-      label: 'Completed Tasks',
-      sublabel: `${tasks.filter(t => isTaskDone(t)).length} recently done`,
-      icon: CheckCircle2,
-      action: () => { navigate(`${PATHS.myTasks}?status=done`); setOpen(false) },
-      category: 'filter',
-    })
-    items.push({
-      id: 'filter-in-progress',
-      label: 'In Progress Tasks',
-      sublabel: `${tasks.filter(t => t.status === 'in_progress').length} tasks active`,
-      icon: CircleDot,
-      action: () => { navigate(`${PATHS.myTasks}?status=in_progress`); setOpen(false) },
-      category: 'filter',
-    })
-    items.push({
-      id: 'filter-high-priority',
-      label: 'High Priority',
-      sublabel: `${tasks.filter(t => !isTaskDone(t) && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
-      icon: Flag,
-      action: () => { navigate(`${PATHS.myTasks}?priority=high`); setOpen(false) },
-      category: 'filter',
-    })
-    items.push({
-      id: 'filter-due-today',
-      label: 'Due Today',
-      sublabel: `${tasks.filter(t => !isTaskDone(t) && t.due_date === localDateKey()).length} tasks due today`,
-      icon: Clock,
-      action: () => { navigate(PATHS.myTasks); setOpen(false) },
-      category: 'filter',
-    })
-    items.push({
-      id: 'filter-overdue',
-      label: 'Overdue Tasks',
-      sublabel: `${tasks.filter(t => isOverdue(t.due_date, t.status)).length} tasks past due`,
-      icon: AlertTriangle,
-      action: () => { navigate(`${PATHS.myTasks}?status=todo`); setOpen(false) },
-      category: 'filter',
-    })
+    // Quick Filters: links My Tasks reads, counted over the viewer's own
+    // tasks (lib/taskQuickFilters.ts).
+    const quick = taskQuickFilters(tasks, currentUserSlug)
+    for (const q of quick) {
+      if (q.id === 'ctx-tasks-blocked') continue
+      items.push({
+        id: q.id,
+        label: q.label,
+        sublabel: q.sublabel,
+        icon: QUICK_FILTER_ICON[q.icon],
+        action: () => { navigate(q.href); setOpen(false) },
+        category: 'filter',
+      })
+    }
 
     // Contextual actions based on current page
     const currentPath = location.pathname
@@ -415,12 +392,13 @@ export default function CommandPalette() {
         action: () => { navigate(`${PATHS.myTasks}?assignee=${currentUserSlug}`); setOpen(false) },
         category: 'context',
       })
-      items.push({
-        id: 'ctx-tasks-blocked',
-        label: 'Show Blocked Tasks',
-        sublabel: `${tasks.filter(t => t.status === 'blocked').length} tasks blocked`,
+      const blocked = quick.find((q) => q.id === 'ctx-tasks-blocked')
+      if (blocked) items.push({
+        id: blocked.id,
+        label: blocked.label,
+        sublabel: blocked.sublabel,
         icon: AlertTriangle,
-        action: () => { navigate(`${PATHS.myTasks}?status=blocked`); setOpen(false) },
+        action: () => { navigate(blocked.href); setOpen(false) },
         category: 'context',
       })
     }
@@ -488,7 +466,7 @@ export default function CommandPalette() {
         label: task.title || task.description,
         sublabel: bits.join(' · ') || task.status,
         icon: SquareCheck,
-        action: () => { navigate(`${PATHS.myTasks}?open=${task.id}`); setOpen(false) },
+        action: () => { navigate(taskLinkFor(task.id)); setOpen(false) },
         category: 'task',
       })
     }

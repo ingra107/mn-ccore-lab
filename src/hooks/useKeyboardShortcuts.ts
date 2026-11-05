@@ -2,22 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../constants/paths'
 import { isEditableTarget } from '../lib/editableTarget'
+import { chordTarget } from '../constants/chords'
+import { openGlobalQuickAdd } from '../components/GlobalQuickAddModal'
 
 /**
  * Global keyboard shortcuts for the portal.
  *
  * Navigation chords (Linear-style, 1s window):
- *   G D = Dashboard      G T = My Tasks       G P = Projects
- *   G M = Meetings       G E = Deadlines      G I = Ideas
- *   G S = Settings       G C = Calendar       G H = Home
- *   G R = Research Digest
- *
- * Legacy chord aliases (preserved for muscle memory):
- *   G Y = My Tasks       G L = Digest         G K = Deadlines
- *   G A = Activity       G G = Grants
+ *   The table is constants/chords.ts (primary chords plus hidden aliases).
  *
  * Actions:
- *   C = Create task
+ *   C = Quick add (same as q)
  *   ? = Show shortcut help
  *   / = Focus search (Cmd+K)
  *   F = Toggle filters / focus mode
@@ -68,28 +63,9 @@ export function useKeyboardShortcuts() {
         setGPending(false)
         if (gTimerRef.current !== null) { clearTimeout(gTimerRef.current); gTimerRef.current = null }
 
-        // Spec chords (F-07) + preserved legacy aliases
-        const navMap: Record<string, string> = {
-          // F-07 spec
-          d: PATHS.dashboard,
-          t: PATHS.myTasks,
-          p: PATHS.projects,
-          m: PATHS.meetings,
-          e: PATHS.deadlines,
-          i: PATHS.ideasTab,
-          s: PATHS.settings,
-          c: PATHS.calendar,
-          h: '/',
-          r: PATHS.digestTab,
-          // Legacy aliases (backward compat)
-          y: PATHS.myTasks,
-          l: PATHS.digestTab,
-          g: PATHS.grants,
-          k: PATHS.deadlines,
-          a: PATHS.activity,
-        }
-
-        const path = navMap[e.key.toLowerCase()]
+        // One chord map (constants/chords.ts) feeds this hook, the help panel
+        // and the palette.
+        const path = chordTarget(e.key)
         if (path) {
           e.preventDefault()
           navigate(path)
@@ -110,16 +86,10 @@ export function useKeyboardShortcuts() {
           break
 
         case 'c':
+          // Same capture as q and the + button, in place (Rule 63d). N is not
+          // bound here: Ideas and Decisions own their local n.
           e.preventDefault()
-          navigate(`${PATHS.myTasks}?create=true`)
-          break
-
-        case 'n':
-          // Only fire globally on my-tasks — Ideas/Decisions pages have their own local n handlers
-          if (window.location.pathname.startsWith(PATHS.myTasks)) {
-            e.preventDefault()
-            navigate(`${PATHS.myTasks}?create=true`)
-          }
+          openGlobalQuickAdd()
           break
 
         case 'f':
