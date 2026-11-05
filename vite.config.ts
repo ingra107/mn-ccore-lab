@@ -31,6 +31,9 @@ function memberLauncherZips(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Per checkout: worktrees share node_modules through a junction, and two dev
+  // servers would delete each other's optimized deps (see vitest.config.ts).
+  cacheDir: '.vite-cache',
   plugins: [react(), tailwindcss(), memberLauncherZips()],
   build: {
     // On since 2026-10-14. It was turned off on 2026-04-11 (e8846979, "fix cold

@@ -26,6 +26,7 @@ dist-ssr
 test-results/
 playwright-report/
 .vitest-attachments/
+.vite-cache/
 .claude/
 
 # Generated SQL (contains brain.db data, regenerated on demand)

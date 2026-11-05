@@ -11,13 +11,39 @@ import tailwindcss from '@tailwindcss/vite'
 // (useMeetingNotesSeen.logic.test.ts's own exclude entry retired with the
 // hook it tested — T12, 2026-07-07 — server-backed seen tracking replaced it.)
 export default defineConfig({
+  // Each checkout gets its own cache. Worktrees share node_modules through a
+  // junction, and Vite's optimized-deps hash includes the root, so a run started
+  // in another checkout deleted the deps this run was serving ("Failed to fetch
+  // dynamically imported module"). Reproduced 2026-11-05; pinned by
+  // src/lib/__tests__/vitestConfig.test.ts.
+  cacheDir: '.vite-cache',
+  // Every browser-imported dependency, named. The dep scan fails on one unparsable
+  // file (a test being edited when a run starts), Vite then finds these at runtime,
+  // re-bundles mid-run and reloads, and the page holds two Reacts: "Cannot read
+  // properties of null (reading 'useState')" across many files. Listed, they are
+  // bundled once up front whether the scan works or not. The same test pins the list.
+  optimizeDeps: {
+    include: [
+      '@dnd-kit/core', '@dnd-kit/modifiers', '@dnd-kit/sortable', '@dnd-kit/utilities',
+      '@formkit/auto-animate/react',
+      '@tanstack/react-query', '@tanstack/react-virtual',
+      'framer-motion', 'lucide-react', 'partysocket',
+      'react', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-dom', 'react-dom/client',
+      'react-grid-layout', 'react-router-dom', 'recharts',
+    ],
+  },
   // tailwindcss(): a browser test that imports src/index.css gets the real
   // layer cascade (button-icon-touch.test.tsx), not a hand-sliced copy of it.
   plugins: [react(), tailwindcss()],
   test: {
     browser: {
       enabled: true,
-      provider: playwright(),
+      // No test reaches the public internet. Team photos live on med.umn.edu, which
+      // refuses this browser within ~40ms, so a test could pass or fail on whether
+      // its assertion beat that reply (faces-photo, 2026-11-05).
+      provider: playwright({
+        launchOptions: { args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1'] },
+      }),
       instances: [
         { browser: 'chromium' },
       ],
