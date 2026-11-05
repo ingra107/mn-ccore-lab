@@ -157,3 +157,37 @@ describe('currentWeekPlan after earlier', () => {
     expect(model(rows).ids.has('a')).toBe(false) // back in its section
   })
 })
+
+describe('a new plan clears Done', () => {
+  const clearing = (id: string, at: string, cleared: string[]): TaskRow => ({
+    ...answer(id, WEEK, at, cleared),
+    question_answer_json: JSON.stringify({ v: 1, choice: 'save', via: 'hub', at, picks: [], cleared }),
+  } as TaskRow)
+
+  it('an answer holding no picks and naming the finished ones is read, and empties Done', () => {
+    const rows = [answer('p1', WEEK, '2026-11-03T14:00:00Z', ['a', 'b']), finished('a'), finished('b')]
+    expect(ids(model(rows).done)).toEqual(['a', 'b'])
+    const m = model([...rows, clearing('p2', '2026-11-04T16:00:00Z', ['a', 'b'])])
+    expect(m.done).toEqual([])
+    expect(m.picks).toEqual([])
+  })
+
+  it('a pick planned for today and finished before the replan goes too', () => {
+    const a = finished('a', { planned_for: DAY })
+    const rows = [answer('p1', WEEK, '2026-11-03T14:00:00Z', ['a']), a]
+    expect(ids(model(rows).done)).toEqual(['a'])
+    expect(model([...rows, clearing('p2', '2026-11-04T16:00:00Z', ['a'])]).done).toEqual([])
+  })
+
+  it('work finished after the replan still shows', () => {
+    const later = finished('x', { planned_for: DAY, completed_at: '2026-11-04 17:00:00' })
+    const rows = [answer('p1', WEEK, '2026-11-03T14:00:00Z', ['a']), finished('a'), clearing('p2', '2026-11-04T16:00:00Z', ['a']), later]
+    expect(ids(model(rows).done)).toEqual(['x'])
+  })
+
+  it('with no plan at all, today\'s finished work still shows', () => {
+    const a = finished('a', { planned_for: DAY })
+    expect(ids(model([a]).done)).toEqual(['a'])
+  })
+})
+

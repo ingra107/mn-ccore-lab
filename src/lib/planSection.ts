@@ -13,6 +13,7 @@
 // a finished non-pick is known to be today's and how a reopen puts it back. A
 // row the page does not have renders nothing.
 
+import { parseDbUtc } from './time'
 import type { TaskRow } from './api'
 import type { AcceptedWeekPlan } from './weekPlan'
 import { isApprovalPending, isApprovalTriaged, isQuestionTask, isTaskDone } from './taskGrouping'
@@ -54,8 +55,13 @@ export function planSectionModel(
     .sort(byRank)
   const todayIds = new Set(todayRows.map((t) => t.id))
 
+  // A new plan clears Done (Nick, 2026-11-05: "whenever I replan that section all the
+  // done things go"), so what was finished before it was answered is gone from here.
+  const planAt = plan?.at ? Date.parse(plan.at) : NaN
+  const beforePlan = (t: TaskRow) => !isNaN(planAt) && !!t.completed_at && parseDbUtc(t.completed_at).getTime() <= planAt
+
   const finishedToday = tasks
-    .filter((t) => !pickIds.has(t.id) && isDone(t) && t.planned_for?.slice(0, 10) === today
+    .filter((t) => !pickIds.has(t.id) && isDone(t) && !beforePlan(t) && t.planned_for?.slice(0, 10) === today
       && !isMilestone(t) && !isQuestionTask(t) && !isApprovalPending(t) && !isApprovalTriaged(t))
     .sort(byRank)
 

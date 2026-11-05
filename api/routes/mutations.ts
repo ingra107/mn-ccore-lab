@@ -32,7 +32,7 @@ import { TASK_TITLE_DEDUP_SELECT, taskKindKey, taskOwnerKey } from '../lib/task-
 import { touchesKeyLinkSlots, slotLinkStatements, touchedLinksRead } from '../lib/key-link';
 import { creatorMembershipStatement } from '../lib/project-membership';
 import { normalizeQuestionJsonFields, questionRefusalCode, questionRowError, questionPatchError, questionConsumedError, questionAnswerFrozenError, weekPlanInsertError, weekPlanDeleteError } from '../lib/task-question';
-import { weekPlanStart, weekPlanSupersededCheck, weekPlanNotes } from '../lib/week-plan-start';
+import { weekPlanStart, weekPlanSupersededCheck, weekPlanClearCheck, weekPlanNotes } from '../lib/week-plan-start';
 import { runSkillError } from '../lib/task-run-skill';
 import {
   WORK_KIND_COL, WORK_KIND_SET_COL, sortTarget, unknownWorkKind, workKindPatchRefusal,
@@ -1332,6 +1332,12 @@ async function decideAndCommitUpdate(
   if (superseded && 'refusal' in superseded) {
     return mutErr(mut.mutation_id, 'question_rule', superseded.refusal);
   }
+  // An empty answer clears finished picks only while the plan it replaces holds a
+  // finished pick and no open one; its term keeps that true at the write.
+  const clearCheck = await weekPlanClearCheck(env, mut, current);
+  if (clearCheck && 'refusal' in clearCheck) {
+    return mutErr(mut.mutation_id, 'question_rule', clearCheck.refusal);
+  }
   // A week plan answer (or start flip) starts its picked work: one
   // ai_requests row per newly started pick, in this batch, and the row write
   // carries the cap term so the cap holds inside the transaction
@@ -1352,7 +1358,7 @@ async function decideAndCommitUpdate(
   // Typed per-pick notes land as task comments in the same batch (start or save).
   const planNotes = await weekPlanNotes(env, mut, current, user);
   if (planNotes) dependents.push(planNotes);
-  const extraWhere = `${planStart ? planStart.capWhere : ''}${superseded ? superseded.where : ''}`;
+  const extraWhere = `${planStart ? planStart.capWhere : ''}${superseded ? superseded.where : ''}${clearCheck ? clearCheck.where : ''}`;
   // Advance a PROJECT's own last_meaningful_movement on its own content
   // edits, inside this batch (no-op for task mutations).
   const ownMovement = projectOwnMovementDependents(env, mut, current);

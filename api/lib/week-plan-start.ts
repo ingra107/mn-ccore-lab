@@ -37,7 +37,8 @@ import { prepareActivityEntry } from './activity-entry';
 import { aiRequestInsert, type AIRequestInsertRow } from '../routes/ai-requests';
 import {
   PACKET_DAILY_CAP, PACKET_PREPARE_SOURCE_TYPE, WEEK_PLAN_SOURCE,
-  parseWeekPlanSpec, parseWeekPlanPicks, pickDirection, isCivilDate, civilPlusDays, weekPlanKept, weekPlanNewlyStarted,
+  parseWeekPlanSpec, parseWeekPlanPicks, pickDirection, isCivilDate, civilPlusDays, weekPlanCleared, weekPlanKept, weekPlanNewlyStarted,
+  weekPlanOfferNewer, weekPlanSpecWeek, weekPlanWithdrawn,
   type PacketPreparePayload,
 } from '../../shared/weekPlan';
 
@@ -163,6 +164,68 @@ export async function weekPlanSupersededCheck(
   ).bind(mut.record_id).first();
   if (newer) return { refusal: WEEK_PLAN_SUPERSEDED };
   return { where: ` AND NOT ${NEWER_OFFER_EXISTS_SQL}` };
+}
+
+const CLEAR_REFUSED = 'question_answer_invalid: an empty week plan answer clears finished picks, and';
+
+/**
+ * A FIRST answer that names `cleared` (2026-11-05, shared/weekPlan.ts): it holds no
+ * picks, so it replaces the week's plan with an empty one. It lands only when the plan
+ * it replaces (the newest answered offer of the week) holds a finished pick and no
+ * open one, and every id it names is a finished pick of that plan. A pick that plan
+ * already withdrew is off it; a deleted one is neither finished nor live; a pick this
+ * handle cannot read proves nothing and refuses. Null when the write names none; else
+ * the refusal, or the term the row write carries so a pick reopened after this read
+ * makes the write miss.
+ */
+export async function weekPlanClearCheck(
+  env: Env,
+  mut: { table: string; record_id: string; patch?: Record<string, unknown> },
+  current: Record<string, unknown>,
+): Promise<null | { refusal: string } | { where: string }> {
+  if (mut.table !== 'tasks' || !mut.patch) return null;
+  if (current.source !== WEEK_PLAN_SOURCE || (current.kind ?? 'task') !== 'question') return null;
+  if (current.question_answer_json !== null && current.question_answer_json !== undefined) return null;
+  const patch = normalizeQuestionJsonFields(mut.patch);
+  const cleared = weekPlanCleared(patch.question_answer_json);
+  if (cleared.length === 0) return null;
+
+  const week = weekPlanSpecWeek(current.question_spec_json as string | null);
+  const answered = await env.DB.prepare(
+    `SELECT id, created_at, question_spec_json, question_answer_json FROM tasks
+      WHERE source = ? AND kind = 'question' AND question_answer_json IS NOT NULL
+        AND deleted_at IS NULL AND COALESCE(status, '') != 'deleted' AND id != ?`,
+  ).bind(WEEK_PLAN_SOURCE, mut.record_id).all<{ id: string; created_at: string | null; question_spec_json: string | null; question_answer_json: string }>();
+  const ofWeek = (answered.results ?? []).filter((r) => week !== null && weekPlanSpecWeek(r.question_spec_json) === week);
+  const standing = ofWeek.reduce<(typeof ofWeek)[number] | null>((a, b) => (!a || weekPlanOfferNewer(b, a) ? b : a), null);
+  if (!standing) return { refusal: `${CLEAR_REFUSED} this week has no plan to replace` };
+
+  const picks = parseWeekPlanPicks(standing.question_answer_json, parseWeekPlanSpec(standing.question_spec_json));
+  if (!picks) return { refusal: `${CLEAR_REFUSED} the plan it replaces does not parse` };
+  const off = new Set(weekPlanWithdrawn(standing.question_answer_json));
+  const ids = picks.map((p) => p.task_id).filter((id) => !off.has(id));
+  if (ids.length === 0) return { refusal: `${CLEAR_REFUSED} the plan it replaces holds no finished pick` };
+
+  const read = await env.DB.prepare(
+    `SELECT id, status, completed, deleted_at FROM tasks WHERE id IN (${ids.map(() => '?').join(', ')})`,
+  ).bind(...ids).all<{ id: string; status: string | null; completed: number | null; deleted_at: string | null }>();
+  const byId = new Map((read.results ?? []).map((r) => [r.id, r]));
+  const finished = new Set<string>();
+  for (const id of ids) {
+    const row = byId.get(id);
+    if (!row) return { refusal: `${CLEAR_REFUSED} pick ${id} cannot be read` };
+    if (row.deleted_at !== null || row.status === 'deleted') continue;
+    if (row.completed !== 1 && row.status !== 'done') return { refusal: `${CLEAR_REFUSED} pick ${id} is still open` };
+    finished.add(id);
+  }
+  const stranger = cleared.find((id) => !finished.has(id));
+  if (stranger) return { refusal: `${CLEAR_REFUSED} ${stranger} is not a finished pick of the plan it replaces` };
+
+  const list = ids.map((id) => `'${id.replace(/'/g, "''")}'`).join(', ');
+  return {
+    where: ` AND NOT EXISTS (SELECT 1 FROM tasks p WHERE p.id IN (${list}) AND p.deleted_at IS NULL
+      AND COALESCE(p.status, '') NOT IN ('deleted', 'done') AND COALESCE(p.completed, 0) != 1)`,
+  };
 }
 
 /** What a week plan's answer write does beyond the row: nothing, a refusal,
