@@ -750,11 +750,12 @@ export function useBlockingTasks(taskId: string) {
 }
 
 /** Exactly these tasks (a task's blockers). Not deduped: each id is its own row. */
-export function useTasksByIds(ids: string[]) {
+export function useTasksByIds(ids: string[], options: { includeQuestions?: boolean } = {}) {
   const key = [...ids].sort().join(',')
+  const includeQuestions = options.includeQuestions ?? false
   return useQuery({
-    queryKey: ['tasks', 'by-ids', key],
-    queryFn: async () => (await fetchTasks({ ids })).data as TaskRow[],
+    queryKey: ['tasks', 'by-ids', key, includeQuestions],
+    queryFn: async () => (await fetchTasks({ ids, includeQuestions })).data as TaskRow[],
     staleTime: 60 * 1000,
     enabled: ids.length > 0,
   })

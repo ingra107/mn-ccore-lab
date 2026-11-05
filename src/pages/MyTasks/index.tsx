@@ -12,7 +12,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react'
 import { lazyRoute } from '../../lib/lazyRoute'
 import { useSearchParams } from 'react-router-dom'
-import { useTasks, useProjects } from '../../hooks/useApiData'
+import { useTasks, useTasksByIds, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { researchTeam, getPersonInfo } from '../../data/team'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -127,6 +127,8 @@ export default function UnifiedMyTasks() {
     // on first render before the consumer fires.
     const openParam = searchParams.get('open')
     if (openParam) next.set('open', openParam)
+    const openTaskParam = searchParams.get('openTask')
+    if (openTaskParam) next.set('openTask', openTaskParam)
     // Same carry-through for the `create=true` deep-link (⌘K "Create Task",
     // Today/My-Hub quick actions, the `c` shortcut). Without it this state→URL
     // sync strips `create` before the consumer below opens the modal — the
@@ -230,7 +232,17 @@ export default function UnifiedMyTasks() {
   // is caught up, not filtered out; Show completed still lists them.
   const isEmpty = !nonPendingTasks.some((t) => !isTaskDone(t))
 
-  const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
+  // The list holds one person's tasks, and a link can name anyone's (Meeting Prep,
+  // an assigner's notification). A task off the list is looked up by id, through
+  // the server's read rule: it comes back if the viewer may read it. useOpenParam
+  // has stripped the link by now, so a miss must say so here.
+  const drawerInList = drawer ? allTasks.find((t) => t.id === drawer) : undefined
+  const drawerLookup = useTasksByIds(drawer && !drawerInList && !tasksQuery.isLoading ? [drawer] : [], { includeQuestions: true })
+  const drawerTask = drawerInList ?? drawerLookup.data?.find((t) => t.id === drawer) ?? null
+  const drawerMiss = !drawer || drawerTask ? null
+    : drawerLookup.isError ? "That task didn't load. Reload the link to try again."
+    : drawerLookup.isSuccess ? "That task can't be opened. It may have been deleted, or it may be on a project you're not on."
+    : null
 
   // Prev/next navigation across the filtered list (Alt+Up/Down inside the
   // panel). Closes MT-26.
@@ -395,6 +407,18 @@ export default function UnifiedMyTasks() {
             style={{ fontSize: 12, color: 'var(--job-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             Show mine
+          </button>
+        </div>
+      )}
+      {drawerMiss && (
+        <div data-testid="task-open-miss" role="status" className="mt-band" style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--sk-t2)' }}>{drawerMiss}</span>
+          <button
+            type="button"
+            onClick={() => setDrawer(null)}
+            style={{ fontSize: 12, color: 'var(--job-accent)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Dismiss
           </button>
         </div>
       )}
