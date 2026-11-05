@@ -73,7 +73,8 @@ Nick chose a full rebuild on every press over refreshing only what changed: *"Re
 - **Unsent answers win:** if the desk holds answers not yet sent, Plan keeps those cards' ids and keys and updates what's around them, as resume does today. He presses Start over to discard them. This is what keeps the anti-goal.
 - **Fresh card ids per round:** a card id carries the round (`t-<task id>-r<n>`), so an old answer can't come back on a new card (desk card rule 11). This replaces "steps saved stand" in the skill.
 - **Unfinished picks stay unless removed:** each open pick's card says "In your plan: <current step>", beside any fresh steps and Not this week. A card he leaves alone stays in the plan with that step. This needs no kit change: `capture` reads a current pick's card with no answer as Keep. It is the one exception to the desk's "cards you left alone change nothing", and the list he approves shows it as "Stays: ...". Silence still approves nothing: the approval is the live question on that list.
-- **How a kept pick publishes:** the new offer carries the current step as that candidate's option under its old key, or the old free text when it had no key. A pick already started keeps `start:true`, and no new prep request goes out for it.
+- **How a kept pick publishes:** the new offer carries the current step as that candidate's option under the key `keep`, or the old free text when it had no key. A pick already started keeps `start:true`.
+- **The answer gains `kept: string[]`:** today every `start:true` on a first answer makes a prep request and counts toward the cap (`week-plan-start.ts:219`), and every pick's text posts a comment (`week-plan-start.ts:322`). Without this field, each re-plan would re-prepare and re-post every kept pick. `kept` picks make no request, use no cap and post no note. Parsers change in lockstep, as `withdrawn` did.
 - **Recommendations are still never preselected.**
 - A pick that's neither kept nor withdrawn can't happen: every open pick has a card.
 - **`earlier` goes away:** with every open pick carried on a card, `currentWeekPlan`'s `earlier` list has no job. Withdrawn stays, so a Not this week task isn't offered again that week.
@@ -123,7 +124,7 @@ Nick chose this over adding them to the approved list. It is the one named excep
 
 ## Rollout
 
-Ship when tests pass, no waiting schedule. PB ships the validator and skill first, then the Hub. Lowering the option minimum only loosens the rule, so existing rows and desks stay valid. Nick's real plan on the current version can happen any time; its timings and rough edges feed this build. Rollback is reverting the commits.
+Ship when tests pass, no waiting schedule. The Hub ships first: PB's one-option offers and `kept` answers would be refused by the current Worker. PB follows straight after. Lowering the option minimum only loosens the rule, so existing rows and desks stay valid. Nick's real plan on the current version can happen any time; its timings and rough edges feed this build. Rollback is reverting the commits.
 
 ## Calls made here, for Nick to check
 
