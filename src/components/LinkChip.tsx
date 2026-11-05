@@ -15,8 +15,7 @@
 
 import React from 'react'
 import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
-import { normalizeLink } from '../lib/pbLinks.generated'
-import { iconForType } from '../lib/linkIcon'
+import { iconForType, resolveLinkType } from '../lib/linkIcon'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
@@ -47,9 +46,9 @@ export default function LinkChip({
   stopPropagation = false,
 }: Props) {
   const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
-  // Prefer explicit stored type; then canonical normalizer (15-type icons from URL);
-  // finally classifyUrl's coarse 5-bucket fallback.
-  const resolvedType = type || normalizeLink(url)?.type
+  // A label reading as a Gmail draft wins; then explicit stored type; then canonical
+  // normalizer (15-type icons from URL); finally classifyUrl's coarse 5-bucket fallback.
+  const resolvedType = resolveLinkType(url, label, type)
   const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
   // A typed link: the glyph carries the (dimmed) brand color and the label

@@ -132,6 +132,17 @@ export function linkTypeFor(url: string, desc?: string | null): string | null {
 }
 
 /**
+ * The type to draw for a link that may carry a stored type: a link that reads as
+ * a Gmail draft is one, whatever was stored with it. Otherwise the stored type
+ * wins, then linkTypeFor. For a row from `links`, `desc` is its short_title,
+ * which holds the slot's description (api/lib/key-link.ts).
+ */
+export function resolveLinkType(url: string, desc?: string | null, stored?: string | null): string | null {
+  const read = linkTypeFor(url, desc)
+  return read === 'gmail_draft' ? read : stored || read
+}
+
+/**
  * Muted-tint family for the Today skin's link icons and link cards (Nick
  * 2026-10-09: "still leveraged, but more subtle"). This maps the stored/
  * normalized link `type` (the output of the canonical classifier,

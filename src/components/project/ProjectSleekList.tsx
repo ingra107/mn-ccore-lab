@@ -36,7 +36,7 @@ import { normalizeProjectStatus, isProjectFinished } from '../../lib/taskConstan
 import { STATUS_LIST_OPTIONS, LIST_T2, isPoorHealth, cleanProjectTitle, projectRowName, type ProjectHealth } from '../../lib/projectListOptions'
 import { isGrantProjectType } from '../../lib/textUtils'
 import { projectShortLabel } from '../../lib/displayNames'
-import { linkTintForType, iconForType } from '../../lib/linkIcon'
+import { linkTintForType, iconForType, resolveLinkType } from '../../lib/linkIcon'
 import { classifyUrl } from '../../lib/urlClassify'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
@@ -83,7 +83,7 @@ function PublishedChip({ project, links, onOpen }: { project: Project; links: Pr
 const LINKS_SHOWN = 4
 const SLOT = 24
 const WORK_ON_SLOT = 48
-function ProjectLinksCell({ links: all, primaryFolder, shown = LINKS_SHOWN, width }: { links: StoredLink[]; primaryFolder?: string | null; shown?: number; width?: number }) {
+export function ProjectLinksCell({ links: all, primaryFolder, shown = LINKS_SHOWN, width }: { links: StoredLink[]; primaryFolder?: string | null; shown?: number; width?: number }) {
   const { launch } = useProtocolLaunch()
   const norm = (p: string) => p.split(String.fromCharCode(92)).join('/').split('/').filter(Boolean).join('/').toLowerCase()
   const links = primaryFolder ? all.filter((l) => !(l.type === 'local_folder' && norm(l.canonical_url) === norm(primaryFolder))) : all
@@ -94,9 +94,10 @@ function ProjectLinksCell({ links: all, primaryFolder, shown = LINKS_SHOWN, widt
   return (
     <span className="pj-lks" style={width !== undefined ? { width } : undefined}>
       {visible.map((link) => {
-        const { Icon } = iconForType(link.type)
+        const type = resolveLinkType(link.canonical_url, link.short_title, link.type)
+        const { Icon } = iconForType(type)
         const { href: launchUri, isHttp } = classifyUrl(link.canonical_url)
-        const tooltip = `${link.type} · ${link.short_title || link.canonical_url}`
+        const tooltip = `${type} · ${link.short_title || link.canonical_url}`
         return (
           <a
             key={link.id}
@@ -106,11 +107,11 @@ function ProjectLinksCell({ links: all, primaryFolder, shown = LINKS_SHOWN, widt
             title={tooltip}
             aria-label={tooltip}
             className="tk-lkicon pj-lk"
-            data-lk={linkTintForType(link.type) ?? undefined}
+            data-lk={linkTintForType(type) ?? undefined}
             onClick={(e) => {
               if (!isHttp) {
                 e.preventDefault()
-                void launch(launchUri, { copyText: link.canonical_url, successMessage: `Opening ${link.type}… (path copied as backup)` })
+                void launch(launchUri, { copyText: link.canonical_url, successMessage: `Opening ${type}… (path copied as backup)` })
               }
             }}
           >

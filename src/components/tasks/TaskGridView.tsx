@@ -16,8 +16,7 @@ import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { classifyUrl } from '../../lib/urlClassify'
-import { normalizeLink } from '../../lib/pbLinks.generated'
-import { iconForType } from '../../lib/linkIcon'
+import { iconForType, linkTypeFor } from '../../lib/linkIcon'
 import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
@@ -1572,11 +1571,11 @@ function TaskGridRow({
 
 // ── Key Link Icons ──────────────────────────────────────────
 
-function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
+export function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const { launch } = useProtocolLaunch()
 
   const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
-  const resolvedType = normalizeLink(url)?.type
+  const resolvedType = linkTypeFor(url, label)
   const iconSpec = resolvedType ? iconForType(resolvedType) : null
   const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
   const iconColor = iconSpec ? iconSpec.tint : 'var(--job-accent)'

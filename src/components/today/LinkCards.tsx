@@ -7,7 +7,7 @@
 // useProtocolLaunch with the path copied as a backup.
 
 import type { MouseEvent } from 'react'
-import { iconForType, linkTintForType, stripLinkKindSuffix } from '../../lib/linkIcon'
+import { iconForType, linkTintForType, resolveLinkType, stripLinkKindSuffix } from '../../lib/linkIcon'
 import { classifyUrl } from '../../lib/urlClassify'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -15,19 +15,20 @@ import type { StoredLink } from '../../hooks/useApiData'
 
 function LinkCard({ link }: { link: StoredLink }) {
   const { launch } = useProtocolLaunch()
-  const { Icon } = iconForType(link.type)
   const url = link.canonical_url
+  const type = resolveLinkType(url, link.short_title, link.type)
+  const { Icon } = iconForType(type)
   // classifyUrl turns [[wikilinks]] into the mnccore://obsidian launch URI and
   // is authoritative for isHttp (same contract as StoredLinkChip).
   const { href: launchUri, isHttp } = classifyUrl(url)
   const label = stripLinkKindSuffix(link.short_title || url)
-  const tint = linkTintForType(link.type)
+  const tint = linkTintForType(type)
 
   const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation()
     if (!isHttp) {
       e.preventDefault()
-      void launch(launchUri, { copyText: url, successMessage: `Opening ${link.type || 'link'}… (path copied as backup)` })
+      void launch(launchUri, { copyText: url, successMessage: `Opening ${type || 'link'}… (path copied as backup)` })
     }
   }
 
@@ -37,7 +38,7 @@ function LinkCard({ link }: { link: StoredLink }) {
       target={isHttp ? '_blank' : undefined}
       rel={isHttp ? 'noopener noreferrer' : undefined}
       onClick={onClick}
-      title={`${link.type || 'link'} · ${link.short_title || url}`}
+      title={`${type || 'link'} · ${link.short_title || url}`}
       className="tk-lkc"
       data-lk={tint ?? undefined}
     >

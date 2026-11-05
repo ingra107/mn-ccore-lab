@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link2, Pin, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
-import { normalizeLink } from '../lib/pbLinks.generated'
-import { iconForType, stripLinkKindSuffix } from '../lib/linkIcon'
+import { iconForType, resolveLinkType, stripLinkKindSuffix } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
@@ -50,9 +49,9 @@ function LinkRow({
 }) {
   const url = link.url || ''
   const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
-  // Prefer stored type; then canonical normalizer (15-type icons from URL);
-  // finally classifyUrl's coarse 5-bucket fallback.
-  const resolvedType = link.type || normalizeLink(url)?.type
+  // A description reading as a Gmail draft wins; then stored type; then canonical
+  // normalizer (15-type icons from URL); finally classifyUrl's coarse 5-bucket fallback.
+  const resolvedType = resolveLinkType(url, link.desc, link.type)
   const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
   // Mode-A: brand-color glyph on neutral ice/slate pill (Nick 2026-06-17).
