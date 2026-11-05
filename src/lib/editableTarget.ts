@@ -30,3 +30,16 @@ export function isActivatableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   return target.closest(ACTIVATABLE) !== null
 }
+
+/**
+ * Should a page-wide key handler (Calendar's arrows and t) stand down? Yes when
+ * a modifier is held (Alt+Left is Back), when the key lands in an editable
+ * field, inside an open menu / list / dialog, or while any modal layer is open
+ * (the command palette is one). Page keys that pass this are the page's own.
+ */
+export function shouldIgnorePageKey(e: KeyboardEvent): boolean {
+  if (e.metaKey || e.ctrlKey || e.altKey) return true
+  if (isEditableTarget(e.target)) return true
+  if (e.target instanceof Element && e.target.closest('[role="menu"],[role="listbox"],[role="dialog"]')) return true
+  return document.querySelector('[aria-modal="true"]') !== null
+}

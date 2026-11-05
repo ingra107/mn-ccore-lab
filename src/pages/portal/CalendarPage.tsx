@@ -19,6 +19,8 @@ import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
 import { agendaEmptyTitle, agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
 import { Button } from '../../components/ui/Button'
+import { taskLinkFor } from '../../lib/taskLink'
+import { shouldIgnorePageKey } from '../../lib/editableTarget'
 
 
 // Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
@@ -55,7 +57,7 @@ function eventFullTitleHint(e: CalendarEvent): string | undefined {
 // (deadlines) land on the Deadlines page.
 function eventLinkTo(e: CalendarEvent): string | null {
   if (e.type === 'meeting') return PATHS.meeting(e.id)
-  if (e.type === 'task') return `${PATHS.myTasks}?open=${e.id}`
+  if (e.type === 'task') return taskLinkFor(e.id)
   if (e.type === 'milestone') return PATHS.deadlines
   return null
 }
@@ -143,11 +145,10 @@ export default function CalendarPage() {
   // Keyboard navigation: arrow keys for prev/next, T for today
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (shouldIgnorePageKey(e)) return
       if (e.key === 'ArrowLeft') { e.preventDefault(); goToPrev() }
       if (e.key === 'ArrowRight') { e.preventDefault(); goToNext() }
-      if (e.key === 't' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); goToToday() }
+      if (e.key === 't') { e.preventDefault(); goToToday() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)

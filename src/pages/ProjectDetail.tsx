@@ -482,7 +482,10 @@ function ProjectDetailInner({ project }: InnerProps) {
       const t = projectTasks.find((pt) => pt.id === id)
       if (t) setSelectedTask(t)
     },
-    { ready: projectTasks.length > 0 },
+    // Ready when the tasks query has ANSWERED, not when it has rows: a project
+    // whose task was deleted or re-homed answers with none, and the param must
+    // still be consumed and stripped (a miss is a no-op above).
+    { ready: !tasksPending },
   )
 
   // #111 — a task named in the activity feed opens HERE, in the panel this page
