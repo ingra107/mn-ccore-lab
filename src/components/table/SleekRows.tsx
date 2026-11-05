@@ -37,6 +37,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef,
 import { nextSleekSort, type SleekSort } from './sleekSort'
 import { useLongPress } from '../../hooks/useLongPress'
 import { LONG_PRESS_MS } from '../../lib/uiTiming'
+import { Caret } from '../ui/Caret'
 
 export type { SleekSort }
 
@@ -169,6 +170,7 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
                     <option key={`${c.key}:desc`} value={`${c.key}:desc`}>{c.label} ▾</option>,
                   ])}
                 </select>
+                <Caret />
               </label>
             </div>
           </SleekControlRow>

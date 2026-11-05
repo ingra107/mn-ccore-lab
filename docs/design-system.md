@@ -42,7 +42,9 @@ One component per job, no second variant. The old forms are deleted, not depreca
 
 | Job | Use | Gone |
 |-----|-----|------|
-| Page title | `PageHeader`: 28px/600 display title (`.tk-h1`), muted count or note beside it (`.tk-date`), no icon, no count pill | the `icon` prop |
+| Page title | `PageHeader`: 28px/600 display title (`.tk-h1`) on every page, list or detail, in the nav's word; muted count or note beside it (`.tk-date`), no icon, no count pill. A tab host (`PageTabs`) hands its tray to the tab's `PageHeader`, so tabs sit under the title and the title stays put when the tab changes | the `icon` prop; tabs above the title |
+| Caret | `ui/Caret`: one typed triangle at 11px on every picker, fold and sort mark. Lucide chevrons are for verbs that move something (previous task, move up) | the lucide up/down chevron on a picker |
+| Phone filters | `ui/FiltersSheet`: a Filters button that counts what is on, and a bottom sheet on the shared `Modal`. Every filter that moves off the phone header stays reachable in it. A row that still scrolls sideways fades its edge (`useEdgeFade`) | an unfaded cut-off row |
 | View switch (2-5 options) | `ui/SegmentedToggle`: Today's tray (`.tk-seg`) | the bordered-pill skins (`accent`, `size`, `uppercase`, `tall`, `skin`) |
 | Filter row | `ui/FilterLinks`: sentence-case links, active = ink + teal underline (`.tk-flt`); dropdown triggers `.tk-fsel` | per-page bordered `rounded-full` pills |
 | Small action button | `.tk-btn` (`.tk-sm`, `.tk-sel`) | inline-styled pill buttons |
