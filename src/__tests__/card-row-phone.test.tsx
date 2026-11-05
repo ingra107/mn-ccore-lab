@@ -6,7 +6,7 @@
 //   Planned pill is never cut.
 // - the plan pin and grip sit in one fixed place on every card, whatever the
 //   title's length and whichever chips it carries.
-// - urgency is the rail. The word stays for screen readers, not as a second tag.
+// - the rail shows urgency, and the Urgent tag still shows beside the title.
 // - the row's select control is not a second square beside the complete box.
 
 import '../index.css'
