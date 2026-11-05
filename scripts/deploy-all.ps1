@@ -29,7 +29,7 @@ Write-Host '=== Hub deploy script ===' -ForegroundColor Cyan
 Write-Host ''
 
 # 0-1b. Deploy gate: the same `gate:deploy` that deploy:pages:gated and
-#     deploy:worker run (identity, lint:activity-reads, typecheck:api, build,
+#     deploy:worker run (identity, lint:activity-reads, lint:raw-fetch-writes, typecheck:api, build,
 #     member page sweep). With -SkipBuild the build step is left out and the
 #     sweep serves the existing dist/, so it sweeps what step 2 deploys.
 Write-Host '[0-1/3] Deploy gate...' -ForegroundColor Yellow
@@ -40,7 +40,7 @@ if (-not $SkipBuild) {
         exit 1
     }
 } else {
-    foreach ($step in @('predeploy:identity', 'lint:activity-reads', 'typecheck:api', 'test:journeys:sweep:gate')) {
+    foreach ($step in @('predeploy:identity', 'lint:activity-reads', 'lint:raw-fetch-writes', 'typecheck:api', 'test:journeys:sweep:gate')) {
         npm run $step
         if ($LASTEXITCODE -ne 0) {
             Write-Host "DEPLOY GATE FAILED at $step - aborting deploy." -ForegroundColor Red
