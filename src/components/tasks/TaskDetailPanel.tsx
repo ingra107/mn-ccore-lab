@@ -1,17 +1,18 @@
 import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared/taskKinds'
+import { parseWatchers, serializeWatchers } from '../../../shared/watchers'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import BodyText from '../BodyText'
 import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
 import {
-  X, Clock, User, Scale, Upload, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
+  X, Clock, User, Scale, Trash2, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Loader2,
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import { useQuery, useMutation, useMutationState, useQueryClient } from '@tanstack/react-query'
+import { useMutationState, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
-import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, usePostTaskComment, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
 import { QueryErrorNote } from '../QueryErrorNote'
@@ -61,6 +62,7 @@ import { askHermesOnTask, activityQueryKey, hermesOutcomeToast } from '../../lib
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { taskShortLabel } from '../../lib/displayNames'
+import { activityLossPhrase, type ActivityLossEntry } from '../../lib/activityLoss'
 import { Button } from '../ui/Button'
 import { taskLinkFor } from '../../lib/taskLink'
 
@@ -401,7 +403,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       bulkUpdate.mutate({ ids: [id], action: 'delete' })
     }, 5000)
 
-    showUndo(`Deleted "${label}"`, () => {
+    // The delete hard-removes the task's activity, and this toast is the only
+    // moment to say so. Read from the feed the panel already loaded.
+    const feed = qc.getQueryData<{ entries: ActivityLossEntry[] }>([...activityQueryKey('task', id), false])
+    showUndo(`Deleted "${label}"${activityLossPhrase(feed?.entries)}`, () => {
       if (committed) return
       clearTimeout(commitTimer)
       snapshots.forEach(([key, data]) => { if (data) qc.setQueryData(key, data) })
@@ -559,8 +564,11 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         {/* Always visible: Title + Status */}
         <div className="px-5 pt-5 pb-3 flex flex-col gap-4" style={{ minWidth: 0 }}>
           <div id="task-detail-title" tabIndex={-1} style={{ outline: 'none', minWidth: 0, overflowWrap: 'anywhere' }}>
+            {/* An untitled task's editor starts empty: the description is only a
+                placeholder, so one keystroke cannot save it as the title. */}
             <EditableTitle
-              value={task.title || task.description}
+              value={task.title ?? ''}
+              placeholder={taskShortLabel(task) || 'Add a title'}
               onSave={(v) => handleFieldUpdate('title', v)}
             />
             {/* Short title — concise row label (Rule 68). Editable inline,
@@ -582,7 +590,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Task age + acknowledged + source — descriptive metadata, snug
                 under the title group (Nick 2026-06-11: it belongs WITH the
                 title, not floating between the control sections). */}
-            <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6, fontSize: 10, color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+            <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6, fontSize: 11, color: 'var(--muted)' }}>
               {task.created_at && (
                 <span>Created {formatRelativeTime(task.created_at)}</span>
               )}
@@ -861,24 +869,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             style={{ display: activeTab === 'details' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
           >
 
-            {/* Row: Watchers + Reminder */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Watchers" noContainer>
-                <WatchersPicker value={task.watchers || ''} onChange={(v) => handleFieldUpdate('watchers', v || null)} />
-              </FieldBlock>
-              <FieldBlock label="Reminder">
-                <input
-                  type="number"
-                  min={0}
-                  max={30}
-                  value={task.reminder_days ?? ''}
-                  placeholder="e.g. 2"
-                  onChange={(e) => handleFieldUpdate('reminder_days', e.target.value ? Number(e.target.value) : null)}
-                  className="w-full bg-transparent outline-none"
-                  style={{ color: 'var(--ink)', fontSize: 'var(--value-size)' }}
-                />
-              </FieldBlock>
-            </div>
+            {/* Being listed here is a read grant: taskRule (api/lib/table-scope.ts)
+                lets a watcher see the task even when they are off its project. */}
+            <FieldBlock label="Watchers" noContainer>
+              <WatchersPicker value={task.watchers} onChange={(v) => handleFieldUpdate('watchers', v)} />
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--muted)' }}>
+                Each person here can see this task, even if they are not on the project.
+              </p>
+            </FieldBlock>
 
             {/* Row: Recurrence (single field) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
@@ -937,18 +935,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 <ProjectDecisionsSection projectSlug={task.project_id} />
               </CollapsibleSection>
             )}
-
-            {/* Files */}
-            <CollapsibleSection
-              title="Files"
-              defaultOpen={false}
-              storageKey={`task-files-${task.id}`}
-            >
-              <FileUpload entityType="task" entityId={task.id} />
-              <div style={{ marginTop: 'var(--sp-md)' }}>
-                <TaskFilesSection taskId={task.id} />
-              </div>
-            </CollapsibleSection>
 
             {/* Meta info. #108: meeting origin is stated in words, not as the raw
                 `meeting_extraction` enum, and links to the meeting when — and only
@@ -1279,22 +1265,22 @@ export function DescriptionField({
 }
 
 // ── Watchers Picker ──────────────────────────────────────
-function WatchersPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function WatchersPicker({ value, onChange }: { value: string | null | undefined; onChange: (v: string | null) => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const slugs = value ? value.split(',').map(s => s.trim()).filter(Boolean) : []
+  const slugs = parseWatchers(value)
 
   const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
   const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
   const available = uniquePeople.filter(p => !slugs.includes(p.slug!))
 
   const addWatcher = (slug: string) => {
-    onChange([...slugs, slug].join(','))
+    onChange(serializeWatchers([...slugs, slug]))
     setOpen(false)
   }
 
   const removeWatcher = (slug: string) => {
-    onChange(slugs.filter(s => s !== slug).join(','))
+    onChange(serializeWatchers(slugs.filter(s => s !== slug)))
   }
 
   // Close dropdown on outside click
@@ -1595,137 +1581,6 @@ function DetailKeyLinks({
   )
 }
 
-// ── Task Files Section ──────────────────────────────────
-interface TaskFile { id: string; task_id: string; filename: string; url: string; file_type: string; uploaded_by: string | null; created_at: string }
-
-function TaskFilesSection({ taskId }: { taskId: string }) {
-  const queryClient = useQueryClient()
-  const [showAdd, setShowAdd] = useState(false)
-  const [filename, setFilename] = useState('')
-  const [url, setUrl] = useState('')
-
-  const { data: files = [] } = useQuery<TaskFile[]>({
-    queryKey: ['task-files', taskId],
-    queryFn: async () => {
-      const res = await fetch(`/api/tasks/${taskId}/files`)
-      const json = await res.json() as { data: TaskFile[] }
-      return json.data
-    },
-    staleTime: 30_000,
-  })
-
-  const addFile = useMutation({
-    mutationFn: async (input: { filename: string; url: string }) => {
-      const res = await fetch(`/api/tasks/${taskId}/files`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      })
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
-      setShowAdd(false)
-      setFilename('')
-      setUrl('')
-    },
-  })
-
-  const deleteFile = useMutation({
-    mutationFn: async (fileId: string) => {
-      await fetch(`/api/task-files/${fileId}/delete`, { method: 'POST' })
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['task-files', taskId] }),
-  })
-
-  return (
-    <div>
-      <SectionHead
-        as="h3"
-        title="Attachments"
-        count={files.length}
-        right={
-          <button onClick={() => setShowAdd(true)} className="tk-btn tk-sm">
-            <Plus size={11} strokeWidth={1.5} absoluteStrokeWidth />
-            Add link
-          </button>
-        }
-      />
-
-      {showAdd && (
-        <div className="flex flex-col gap-2 mb-3">
-          <input
-            autoFocus
-            value={filename}
-            onChange={e => setFilename(e.target.value)}
-            placeholder="File name (e.g. Protocol v2.docx)"
-            className="field-container text-xs px-2 py-1.5 bg-transparent"
-            style={{ color: 'var(--ink)' }}
-          />
-          <input
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            placeholder="URL (paste link to document)"
-            className="field-container text-xs px-2 py-1.5 bg-transparent"
-            style={{ color: 'var(--ink)' }}
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={() => { if (filename && url) addFile.mutate({ filename, url }) }}
-              disabled={!filename || !url}
-              className="text-[11px] px-3 py-1 rounded-lg font-medium"
-              style={{ backgroundColor: 'var(--job-accent-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer', opacity: filename && url ? 1 : 0.85 }}
-            >
-              Add
-            </button>
-            <button
-              onClick={() => { setShowAdd(false); setFilename(''); setUrl('') }}
-              className="tk-btn tk-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {files.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          {files.map(f => (
-            <div key={f.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
-              <Link2 size={13} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--sk-t2)', flexShrink: 0 }} />
-              <a
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 text-xs truncate"
-                style={{ color: 'var(--ink)', textDecoration: 'none' }}
-              >
-                {f.filename}
-              </a>
-              <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-                <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
-              </a>
-              <Button size="icon" aria-label="Delete file"
-                onClick={() => deleteFile.mutate(f.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75, padding: '2px' }}
-              >
-                <Trash2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
-              </Button>
-            </div>
-          ))}
-        </div>
-      ) : !showAdd ? (
-        <div style={{ textAlign: 'center', padding: 'var(--sp-xl) var(--sp-lg)' }}>
-          <Upload size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', margin: 0 }}>
-            No attachments yet. Click "Add Link" to attach a document.
-          </p>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 // ── Overview Quick Add ──────────────────────────────────────
 //
 // Single compact row at idle: [COMMENT|NOTE pills] [full-width input].
@@ -1769,6 +1624,7 @@ export function OverviewQuickAdd({
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
+  const postComment = usePostTaskComment(taskId)
   const { showSuccess, showError, showInfo } = useToast()
   const { tryLaunchCommand } = useLaunchCommands()
   const queryClient = useQueryClient()
@@ -1797,7 +1653,6 @@ export function OverviewQuickAdd({
       // two composers can't drift on this again.
       const { url: link } = await uploadFileToR2(file, { type: 'task', id: taskId })
       queryClient.invalidateQueries({ queryKey: ['attachments', 'task', taskId] })
-      queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
       const md = isImage ? `![${file.name}](${link})` : `[${file.name}](${link})`
       setText((prev) => (prev ? `${prev}\n${md}` : md))
       showSuccess(`Attached ${file.name}`)
@@ -1826,19 +1681,6 @@ export function OverviewQuickAdd({
   function reset() {
     setText('')
     setMeOnly(false)
-  }
-
-  async function submitComment(content: string) {
-    const body = meOnly ? `@me ${content}` : content
-    const res = await fetch(`/api/tasks/${taskId}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: body }),
-    })
-    if (!res.ok) throw new Error('comment failed')
-    queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
-    queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
-    queryClient.invalidateQueries({ queryKey: ['activity'] })
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -1900,9 +1742,11 @@ export function OverviewQuickAdd({
         { onSuccess: () => { showSuccess('Note added'); reset() } },
       )
     } else {
-      submitComment(v)
-        .then(() => { showSuccess('Comment posted'); reset() })
-        .catch(() => { /* leave text so user can retry */ })
+      // A failure reaches the person through the failed-write floor
+      // (UndoToast.tsx), and the text stays so they can retry.
+      postComment.mutate(meOnly ? `@me ${v}` : v, {
+        onSuccess: () => { showSuccess('Comment posted'); reset() },
+      })
     }
   }
 
@@ -2102,9 +1946,8 @@ export function OverviewQuickAdd({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onJumpToTab('activity')}
               style={{
-                fontSize: '10px',
-                color: 'var(--slate)',
-                opacity: 0.55,
+                fontSize: '11px',
+                color: 'var(--muted)',
                 background: 'none',
                 border: 'none',
                 padding: '0 4px',
@@ -2238,17 +2081,6 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
             minWidth: 180,
           }}
         >
-          <button
-            role="option"
-            aria-selected={!value ? "true" : "false"}
-            onClick={() => { onChange(''); setOpen(false) }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px]"
-            style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.85 }}
-            onMouseOver={e => (e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--job-accent) 6%, transparent)')}
-            onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-          >
-            Unassigned
-          </button>
           {uniquePeople.map(p => {
             const info = getPersonInfo(p.slug!)
             return (
