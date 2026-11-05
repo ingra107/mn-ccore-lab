@@ -33,7 +33,7 @@ export async function memberContributionEvents(env: Env, slug: string, since: st
     // Credit the assignee as well as whoever clicked done: a PI ticking off a
     // trainee's task does not make it the PI's contribution alone.
     env.DB.prepare(
-      "SELECT completed_at AS at FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL AND completed_at > ? AND (assignee = ? OR instr(lower(completed_by), lower(?)) > 0)"
+      "SELECT completed_at AS at FROM tasks WHERE completed = 1 AND deleted_at IS NULL AND completed_at IS NOT NULL AND completed_at > ? AND (assignee = ? OR instr(lower(completed_by), lower(?)) > 0)"
     ).bind(since, slug, like).all(),
 
     // project updates -> activity_entries kind='update', entity_type='project'

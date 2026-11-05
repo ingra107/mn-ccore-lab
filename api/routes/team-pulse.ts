@@ -22,7 +22,7 @@ export async function handleTeamPulse(url: URL, env: Env, scope: PulseScope = { 
 
     // Task completions by person
     env.DB.prepare(
-      'SELECT completed_by as slug, COUNT(*) as count FROM tasks WHERE completed = 1 AND completed_at > ? AND completed_by IS NOT NULL GROUP BY completed_by'
+      'SELECT completed_by as slug, COUNT(*) as count FROM tasks WHERE completed = 1 AND deleted_at IS NULL AND completed_at > ? AND completed_by IS NOT NULL GROUP BY completed_by'
     ).bind(cutoff).all<{ slug: string; count: number }>(),
 
     // Distinct active members (any activity_log entry, or a comment or note posted)

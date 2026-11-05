@@ -310,7 +310,7 @@ export async function handleActivityHeatmap(url: URL, env: Env, viewer: Viewer, 
   }
 
   const taskResult = await env.DB.prepare(
-    "SELECT DATE(completed_at) as date, COUNT(*) as count FROM tasks WHERE completed_at IS NOT NULL AND completed_at >= ? GROUP BY DATE(completed_at)"
+    "SELECT DATE(completed_at) as date, COUNT(*) as count FROM tasks WHERE deleted_at IS NULL AND completed_at IS NOT NULL AND completed_at >= ? GROUP BY DATE(completed_at)"
   ).bind(since).all();
   for (const row of (taskResult.results || []) as { date: string; count: number }[]) {
     data[row.date] = (data[row.date] || 0) + row.count;

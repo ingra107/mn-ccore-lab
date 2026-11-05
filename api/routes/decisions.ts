@@ -108,6 +108,11 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
     ? body.outcome_sentiment
     : 'neutral';
 
+  // Read through the viewer's handle first: the UPDATE alone writes nothing on a
+  // hidden row, but the activity line below would still land.
+  const parent = await env.DB.prepare('SELECT id FROM hub_decisions WHERE id = ?').bind(id).first();
+  if (!parent) return error('Decision not found', 404);
+
   await env.DB.prepare(
     "UPDATE hub_decisions SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
   ).bind(body.outcome, body.outcome_status, sentiment, id).run();
