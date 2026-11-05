@@ -47,7 +47,7 @@ import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { MeetingCardRowsContext } from '../../components/today/meetingCardRows'
 import { PlanSection } from '../../components/today/PlanSection'
-import { currentWeekPlan } from '../../lib/weekPlan'
+import { currentWeekPlan, sessionWeekPlanned } from '../../lib/weekPlan'
 import { planSectionModel } from '../../lib/planSection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
@@ -157,6 +157,9 @@ export default function TodayPage() {
     () => currentWeekPlan(tasksQuery.data ?? [], questionDay),
     [tasksQuery.data, questionDay],
   )
+  // questionDay is the dep that re-reads the clock when the day turns.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const weekPlanned = useMemo(() => sessionWeekPlanned(tasksQuery.data ?? []), [tasksQuery.data, questionDay])
   // The whole card can be folded into the stat line ("N needs you").
   const { folded: needsYouFolded, count: needsYouCount, collapse: collapseNeedsYou, restore: restoreNeedsYou } = useNeedsYouCollapsed(questionTasks)
   // Snoozed questions (due_date after today) are off the card; the card
@@ -513,7 +516,7 @@ export default function TodayPage() {
   const [completedOpen, setCompletedOpen] = useState(false)
   // Section collapse state — session-only (no localStorage), every section
   // starts expanded on every load per Nick's ask. timelineOpen is shared by
-  // both the Timeline and Agenda-mode headers so the "Today" section stays
+  // both the Timeline and Agenda-mode headers so the Timeline section stays
   // rolled up (or open) across a view-toggle switch.
   const [timelineOpen, setTimelineOpen] = useState(true)
   // S20: the how-to micro-copy under the H1 is now a one-time dismissible hint
@@ -772,6 +775,7 @@ export default function TodayPage() {
         {/* The plan sits above the day view, in both modes (#169 round 2). */}
         <PlanSection
           plan={weekPlan}
+          weekPlanned={weekPlanned}
           model={planModel}
           state={state}
           projectsByPid={projectsByPid}

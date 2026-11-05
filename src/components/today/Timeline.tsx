@@ -123,7 +123,7 @@ interface TimelineProps {
   dismissedIds: Record<string, boolean>
   onDismiss: (id: string) => void
   onRestoreDismissed: () => void
-  // Collapse state lifted to TodayPage so the "Today" section stays rolled
+  // Collapse state lifted to TodayPage so the Timeline section stays rolled
   // up (or open) across a Timeline⇄Agenda view switch.
   open: boolean
   onToggleOpen: () => void

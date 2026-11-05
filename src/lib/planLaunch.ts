@@ -42,17 +42,19 @@ export function newestPlanRow(rows: readonly LaunchRow[]): LaunchRow | null {
   return best
 }
 
-const READY: PlanButtonState = { kind: 'ready', label: 'Plan', note: null }
-
-/** `now` is an ISO instant (time.ts nowInstant). */
-export function planButtonState(row: LaunchRow | null, now: string): PlanButtonState {
+/** `now` is an ISO instant (time.ts nowInstant). `weekPlanned`: the week a press
+ *  would plan already has a plan. Nick: "the first time that we do it is plan week
+ *  and then it's a replan after that". Only the ready word turns on it: a failed,
+ *  expired or queued request reads the same either way. */
+export function planButtonState(row: LaunchRow | null, now: string, weekPlanned = false): PlanButtonState {
+  const READY: PlanButtonState = { kind: 'ready', label: weekPlanned ? 'Replan' : 'Plan week', note: null }
   if (row === null) return READY
   const t = new Date(now).getTime()
   const mobile = row.origin === 'mobile'
   if (row.status === 'failed') {
     // A failure from days ago is not news.
     if (t - parseDbUtc(row.created_at).getTime() > DAY_MS) return READY
-    return { kind: 'failed', label: 'Plan again', note: 'The last plan session failed to start. Press Plan to try again.' }
+    return { kind: 'failed', label: 'Plan again', note: 'The last plan session failed to start. Press Plan again to retry.' }
   }
   if (row.status === 'expired') {
     if (t - parseDbUtc(row.created_at).getTime() > DAY_MS) return READY
@@ -78,7 +80,7 @@ function expired(mobile: boolean): PlanButtonState {
     kind: 'expired',
     label: 'Plan again',
     note: mobile
-      ? 'The last request expired before your home laptop picked it up. Press Plan to try again.'
-      : 'The last request expired before it started. Press Plan to try again.',
+      ? 'The last request expired before your home laptop picked it up. Press Plan again to retry.'
+      : 'The last request expired before it started. Press Plan again to retry.',
   }
 }

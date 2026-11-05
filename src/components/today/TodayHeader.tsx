@@ -1,7 +1,9 @@
-// TodayHeader — the "Today" day-view section header, shared by Timeline and the
+// TodayHeader — the "Timeline" day-view section header, shared by Timeline and the
 // Agenda branch of TodayPage (they used to carry two copies of the same markup).
+// Named so the section does not share a name with the page it sits on (Nick,
+// 2026-11-05), in both views: the toggle says which one is showing.
 //
-// A chevron + sentence-case "Today" + a count, the Timeline/Agenda toggle, a
+// A chevron + sentence-case "Timeline" + a count, the Timeline/Agenda toggle, a
 // hint, and "Restore N hidden" when meetings were hidden. Only the
 // chevron+title+count are the collapse-click target; the toggle, hint and
 // restore button are siblings, so their clicks never reach the collapse
@@ -23,12 +25,12 @@ export function TodayHeader({
 }) {
   return (
     <div className="tk-ph">
-      <div {...collapseToggleProps(open, onToggleOpen, 'Today section')} className="tk-ctog">
+      <div {...collapseToggleProps(open, onToggleOpen, 'Timeline section')} className="tk-ctog">
         <CollapseChevron open={open} />
-        <h2>Today</h2>
+        <h2>Timeline</h2>
         <span className="tk-cnt">{eventCount}</span>
       </div>
-      <div role="group" aria-label="Today view" className="tk-seg">
+      <div role="group" aria-label="Day view" className="tk-seg">
         {(['timeline', 'agenda'] as const).map((v) => (
           <button
             key={v}

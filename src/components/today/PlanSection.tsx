@@ -50,6 +50,10 @@ const OPENS_DRAWER = new Set(['Ready', 'Changed', 'Check it'])
 
 interface PlanSectionProps {
   plan: AcceptedWeekPlan | null
+  /** The week a press of the button would plan already has a plan: it reads Replan,
+   *  else Plan week. Differs from `plan` on a Sunday, when the plan on show is the
+   *  ending week's and a press plans the next (lib/weekPlan.ts sessionWeekPlanned). */
+  weekPlanned?: boolean
   model: PlanSectionModel
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
@@ -59,7 +63,7 @@ interface PlanSectionProps {
   loading?: boolean
 }
 
-export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, viewerSlug, loading = false }: PlanSectionProps) {
+export function PlanSection({ plan, weekPlanned = !!plan, model, state, projectsByPid, stepsByParent, viewerSlug, loading = false }: PlanSectionProps) {
   const qc = useQueryClient()
   // Per-surface expand state: a task on the timeline too does not open here.
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -73,7 +77,7 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
   const [flipped, setFlipped] = useState<ReadonlySet<string>>(new Set())
   const [err, setErr] = useState<string | null>(null)
   const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
-  const planCtl = usePlanControl()
+  const planCtl = usePlanControl({ weekPlanned })
   const prepStartAllowed = usePrepStartAllowed()
 
   const start = async (taskId: string) => {
@@ -147,7 +151,7 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
   const emptyLine = plan
     ? 'Nothing planned this week.'
     : planCtl.buttonEl
-      ? 'Nothing planned yet. Press Plan, or drag a task here to plan it for today.'
+      ? 'Nothing planned yet. Plan the week, or drag a task here to plan it for today.'
       : 'Nothing planned. Drag a task here to plan it for today.'
 
   return (
@@ -160,10 +164,11 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Plan</h3>
-          {total > 0 && <span className="tk-cnt" title={`${model.done.length} of ${total} done`}>{model.done.length} of {total}</span>}
+          {total > 0 && <span className="tk-cnt">{model.done.length} of {total} done</span>}
         </div>
         {plan && <span className="tk-hintx">{weekRangeLabel(plan.spec.week_start)}</span>}
-        {planCtl.buttonEl}
+        {/* Not while the task read is out: the word would claim the week has no plan. */}
+        {!loading && planCtl.buttonEl}
       </div>
 
       {open && (

@@ -15,8 +15,9 @@ const row = (o: Partial<LaunchRow> = {}): LaunchRow => ({
 })
 
 describe('planButtonState', () => {
-  it('no row reads ready, with no note', () => {
-    expect(planButtonState(null, NOW)).toEqual({ kind: 'ready', label: 'Plan', note: null })
+  it('no row reads ready, with no note: Plan week before the week has a plan, Replan after', () => {
+    expect(planButtonState(null, NOW)).toEqual({ kind: 'ready', label: 'Plan week', note: null })
+    expect(planButtonState(null, NOW, true)).toEqual({ kind: 'ready', label: 'Replan', note: null })
   })
 
   it('queued_mobile_row_reads_queued, and says where', () => {
@@ -47,8 +48,21 @@ describe('planButtonState', () => {
   it('launched and completed rows read ready, on either origin', () => {
     for (const status of ['launched', 'completed']) {
       for (const origin of ['computer', 'mobile']) {
-        expect(planButtonState(row({ status, origin }), NOW)).toEqual({ kind: 'ready', label: 'Plan', note: null })
+        expect(planButtonState(row({ status, origin }), NOW)).toEqual({ kind: 'ready', label: 'Plan week', note: null })
+        expect(planButtonState(row({ status, origin }), NOW, true)).toEqual({ kind: 'ready', label: 'Replan', note: null })
       }
+    }
+  })
+
+  it('failed, expired and queued mean the same whether or not the week has a plan, and name the button they show', () => {
+    for (const hasPlan of [false, true]) {
+      const failed = planButtonState(row({ status: 'failed' }), NOW, hasPlan)
+      expect(failed.label).toBe('Plan again')
+      expect(failed.note).toContain('Press Plan again')
+      const expired = planButtonState(row({ expires_at: '2026-11-04 17:59:59' }), NOW, hasPlan)
+      expect(expired.label).toBe('Plan again')
+      expect(expired.note).toContain('Press Plan again')
+      expect(planButtonState(row(), NOW, hasPlan).label).toBe('Queued')
     }
   })
 
@@ -60,6 +74,7 @@ describe('planButtonState', () => {
     const s = planButtonState(row({ status: 'failed', created_at: '2026-11-03 17:59:59' }), NOW)
     expect(s.kind).toBe('ready')
     expect(s.note).toBeNull()
+    expect(planButtonState(row({ status: 'failed', created_at: '2026-11-03 17:59:59' }), NOW, true).label).toBe('Replan')
   })
 
   it('an unreadable expires_at on a pending row reads expired, never stuck queued', () => {
