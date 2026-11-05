@@ -290,8 +290,7 @@ function buildDigestHtml(data: DigestData): string {
 
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
-      MN-CCORE Lab Hub &middot; University of Minnesota<br>
-      <a href="${HUB_URL}/portal/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
+      MN-CCORE Lab Hub &middot; University of Minnesota
     </div>
 
   </div>
@@ -562,8 +561,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     </div>
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
-      MN-CCORE Lab Hub &middot; University of Minnesota<br>
-      <a href="${HUB_URL}/portal/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
+      MN-CCORE Lab Hub &middot; University of Minnesota
     </div>
   </div>
 </body>
