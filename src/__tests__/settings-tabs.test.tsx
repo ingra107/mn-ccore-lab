@@ -10,6 +10,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SettingsPage from '../pages/portal/SettingsPage'
 import { enableUserPrefSync, _resetUserPrefsForTests } from '../hooks/useUserPref'
+import { AuthContext } from '../hooks/useAuth'
 import { mount, waitFor, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -24,7 +25,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-async function open(hash: string) {
+const someone = (over: Record<string, unknown>) => ({
+  email: 'casey@umn.edu', slug: 'casey-eddington', isAuthenticated: true, isPi: false, isMember: true,
+  canShowAllProjects: false, piResolved: true, getsDigestEmail: true, ...over,
+})
+
+async function open(hash: string, user = someone({})) {
   fetched.length = 0
   writes.length = 0
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -37,7 +43,9 @@ async function open(hash: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return mount(
     <QueryClientProvider client={qc}>
-      <MemoryRouter><SettingsPage /></MemoryRouter>
+      <AuthContext.Provider value={{ user, isAuthenticated: true, isLoading: false } as never}>
+        <MemoryRouter><SettingsPage /></MemoryRouter>
+      </AuthContext.Provider>
     </QueryClientProvider>,
     { ready: (h) => h.querySelector('[role="tablist"] button.tk-on'), label: 'SettingsPage tab strip' },
   )
@@ -71,6 +79,20 @@ describe('Settings tabs', () => {
     expect(sw.getAttribute('role')).toBe('switch')
     expect(sw.getAttribute('aria-checked')).toBe('true')
     expect(host.textContent).toMatch(/Daily digest email/)
+  })
+
+  it('someone the digest does not reach gets no switch, and is told why', async () => {
+    const host = await open('#notifications', someone({ getsDigestEmail: false }))
+    await waitFor(() => /does not send you/.test(host.textContent ?? ''), 'the plain answer')
+    expect(host.querySelector('[data-testid="digest-email-switch"]')).toBeNull()
+    expect(host.textContent).toMatch(/directors and coordinators/)
+  })
+
+  it('until the Hub has answered who this is, it claims neither', async () => {
+    const host = await open('#notifications', someone({ getsDigestEmail: false, piResolved: false }))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(host.querySelector('[data-testid="digest-email-switch"]')).toBeNull()
+    expect(host.textContent).not.toMatch(/does not send you/)
   })
 
   it('turning it off saves to the server for this person', async () => {

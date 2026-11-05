@@ -11,6 +11,7 @@ import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useUserPref } from '../../hooks/useUserPref'
 import { DIGEST_EMAIL_PREF } from '../../../shared/userPrefKeys'
+import { useAuth } from '../../hooks/useAuth'
 import { resetDashboardPrefs } from '../../lib/dashboardLayout'
 import LauncherSettingsPanel from '../../components/LauncherSettingsPanel'
 import RangeSlider from '../../components/RangeSlider'
@@ -72,6 +73,20 @@ function TodayDefaultViewControl() {
 // The daily digest email, on or off, per person on the server. The Worker skips a
 // saved false (handleSendDailyDigests); the email's Manage notifications link lands here.
 const isOn = (stored: unknown) => stored !== false
+function DigestEmailSetting() {
+  const { user } = useAuth()
+  // Not known yet: claim neither that the email comes nor that it does not.
+  if (!user?.piResolved) return null
+  if (!user.getsDigestEmail) {
+    return (
+      <p data-testid="digest-email-none" className="text-sm" style={{ color: 'var(--muted)' }}>
+        The daily digest email goes to lab directors and coordinators on its send list, so the Hub does not send you one. There is nothing here to turn off.
+      </p>
+    )
+  }
+  return <DigestEmailSwitch />
+}
+
 function DigestEmailSwitch() {
   const [on, setOn] = useUserPref<boolean>(DIGEST_EMAIL_PREF, true, isOn)
   return (
@@ -197,7 +212,7 @@ export default function SettingsPage() {
 
         {activeTab === 'notifications' && (
         <SettingsSection title="Notifications" subtitle="What the Hub emails you">
-          <DigestEmailSwitch />
+          <DigestEmailSetting />
         </SettingsSection>
         )}
 

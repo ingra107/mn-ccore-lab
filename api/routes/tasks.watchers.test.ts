@@ -48,7 +48,28 @@ describe('handleUpdateTask stores watchers as a JSON array', () => {
     expect(await caseySeesIt()).toBe(true)
   })
 
+  it('a slug on no team member is refused, as an assignee is (Rule 20), and nothing is stored', async () => {
+    const res = await handleUpdateTask('t_w', post({ watchers: '["casey-eddington","nobody-here"]' }), user, env)
+    expect(res.status).toBe(400)
+    expect(await res.text()).toContain('nobody-here')
+    expect(stored()).toBeNull()
+  })
+
+  it('a watcher already on the task may stay, so one stale name cannot block every later edit', async () => {
+    db.prepare("UPDATE tasks SET watchers = '[\"left-the-lab\"]' WHERE id = 't_w'").run()
+    const res = await handleUpdateTask('t_w', post({ watchers: '["left-the-lab","casey-eddington"]' }), user, env)
+    expect(res.status).toBe(200)
+    expect(stored()).toBe('["left-the-lab","casey-eddington"]')
+  })
+
+  it('clearing the list needs no check', async () => {
+    db.prepare("UPDATE tasks SET watchers = '[\"left-the-lab\"]' WHERE id = 't_w'").run()
+    expect((await handleUpdateTask('t_w', post({ watchers: null }), user, env)).status).toBe(200)
+    expect(stored()).toBeNull()
+  })
+
   it('a comma list is canonicalized, so an old client still grants the read', async () => {
+    insertRow(db, 'team_members', { id: 'tm-dan', name: 'Dan', slug: 'dan-shyu', email: 'shyu@umn.edu' })
     await handleUpdateTask('t_w', post({ watchers: 'casey-eddington, dan-shyu,casey-eddington' }), user, env)
     expect(stored()).toBe('["casey-eddington","dan-shyu"]')
     expect(await caseySeesIt()).toBe(true)

@@ -95,7 +95,7 @@ import { handleGetExpiringItems, handleUpdateRegulatoryItem, handleRegulatoryIcs
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
-import { handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
+import { getsDigestEmail, handleDigestPreview, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
 import { withErrorLedger, logServerError } from './lib/error-ledger';
 import { testDbRequested } from './lib/test-mode';
@@ -590,7 +590,11 @@ defineRoute({
   // #145 Lane B: the Projects page shows its "show all projects" switch only
   // when this is true; the server ignores the switch's header for anyone else.
   const canShowAllProjects = isSiteAdmin({ slug: user.slug, pi: isPi });
-  return json({ authenticated: true, isMember: true, isPi, canShowAllProjects, ...user, directory: dir.results ?? [] });
+  // Settings shows the digest switch only to someone the digest would reach.
+  const row = await env.DB.prepare('SELECT slug, member_type, email FROM team_members WHERE slug = ?')
+    .bind(user.slug).first<{ slug: string; member_type: string | null; email: string | null }>();
+  const digest = row ? getsDigestEmail(row, env) : false;
+  return json({ authenticated: true, isMember: true, isPi, canShowAllProjects, getsDigestEmail: digest, ...user, directory: dir.results ?? [] });
 },
 });
 

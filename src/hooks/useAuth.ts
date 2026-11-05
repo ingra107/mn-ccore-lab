@@ -23,6 +23,10 @@ export interface AuthUser {
    *  this only decides whether to draw the switch. False until /api/auth/me
    *  says otherwise, so the cookie first paint never shows it. */
   canShowAllProjects: boolean
+  /** True when the Worker says the daily digest email would reach this person
+   *  (Settings shows its switch only then). False until /api/auth/me answers;
+   *  read it with piResolved, which says whether it has. */
+  getsDigestEmail?: boolean
   /** True only when isPi came from /api/auth/me. False on the cookie first
    *  paint, while the API has not answered, and when it failed (the fallback
    *  is the cookie user, whose isPi is false by construction). So
@@ -39,6 +43,7 @@ const defaultUser: AuthUser = {
   isPi: false,
   isMember: false,
   canShowAllProjects: false,
+  getsDigestEmail: false,
   piResolved: false,
 }
 
@@ -140,6 +145,7 @@ function getAuthFromCookie(): AuthUser {
     isPi: false,
     isMember: true,
     canShowAllProjects: false,
+    getsDigestEmail: false,
     piResolved: false,
   }
 }
@@ -168,7 +174,7 @@ function nameFromEmail(knownSlug: string, email: string): string {
  */
 export function authUserFromMe(data: {
   authenticated?: boolean; email?: string; name?: string; isPi?: boolean
-  isMember?: boolean; slug?: string; directory?: unknown; canShowAllProjects?: boolean
+  isMember?: boolean; slug?: string; directory?: unknown; canShowAllProjects?: boolean; getsDigestEmail?: boolean
 } | null | undefined): AuthUser | null {
   if (!data?.authenticated) {
     // Signed out: no cached slug may outlive the session it described.
@@ -197,7 +203,7 @@ export function authUserFromMe(data: {
   // A Worker older than this field sends none: treat the session as a member,
   // as before. The API, not this flag, decides access.
   return { email, slug, name: data.name || '', isAuthenticated: true, isPi: Boolean(data.isPi), isMember: true,
-    canShowAllProjects: data.canShowAllProjects === true, piResolved: true }
+    canShowAllProjects: data.canShowAllProjects === true, getsDigestEmail: data.getsDigestEmail === true, piResolved: true }
 }
 
 // Also support fetching auth status from the API for more reliable detection

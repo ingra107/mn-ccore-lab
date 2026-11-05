@@ -170,11 +170,15 @@ export default function ArtifactPage() {
     postComment.mutate({ payload: { content, visibility: authorOnly ? 'author' : undefined }, sent: comment })
   }
 
-  const copyMarkdown = async () => {
+  const exportAs = artifact?.content_type === 'html'
+    ? { noun: 'HTML', copyLabel: 'Copy HTML', mime: 'text/html', ext: 'html' }
+    : { noun: 'Markdown', copyLabel: 'Copy markdown', mime: 'text/markdown', ext: 'md' }
+
+  const copyBody = async () => {
     if (!artifact) return
     try {
       await navigator.clipboard.writeText(artifact.body_md)
-      showSuccess('Markdown copied to clipboard')
+      showSuccess(`${exportAs.noun} copied to clipboard`)
     } catch {
       showError('Could not copy to clipboard')
     }
@@ -327,31 +331,31 @@ export default function ArtifactPage() {
             </Link>
           )}
 
-          {/* Copy markdown */}
+          {/* Copy the source, named for what it is */}
           <button
             type="button"
-            onClick={copyMarkdown}
+            onClick={copyBody}
             className="tk-btn tk-sm"
             style={{ marginLeft: 'auto' }}
           >
-            <Copy {...ICON_PROPS} size={11} /> Copy markdown
+            <Copy {...ICON_PROPS} size={11} /> {exportAs.copyLabel}
           </button>
-          {/* N3b — one-way export: download the .md (Google-Doc conversion
+          {/* N3b — one-way export: download the source (Google-Doc conversion
               rides PB's md_to_docx/Workspace tooling on the vault copy the
               collection script lands in Context/Artifacts/). */}
           <button
             type="button"
             onClick={() => {
-              const blob = new Blob([artifact.body_md], { type: 'text/markdown' })
+              const blob = new Blob([artifact.body_md], { type: exportAs.mime })
               const a = document.createElement('a')
               a.href = URL.createObjectURL(blob)
-              a.download = `${artifact.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || artifact.id}.md`
+              a.download = `${artifact.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || artifact.id}.${exportAs.ext}`
               a.click()
               URL.revokeObjectURL(a.href)
             }}
             className="tk-btn tk-sm"
           >
-            <Send {...ICON_PROPS} size={11} /> Download .md
+            <Send {...ICON_PROPS} size={11} /> Download .{exportAs.ext}
           </button>
         </div>
 

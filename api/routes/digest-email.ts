@@ -367,6 +367,7 @@ interface CoordinatorMember {
   slug: string;
   name: string;
   email: string | null;
+  member_type: string | null;
 }
 
 interface RegulatoryItem {
@@ -594,6 +595,17 @@ export type DailyDigestTrigger =
  * Can be triggered by cron (via scheduled handler) or manually via POST.
  * Requires RESEND_API_KEY.
  */
+/** Who the daily digest reaches: a director or coordinator on the recipient list. The
+ *  send and Settings' switch both ask this, so the switch cannot offer an email that
+ *  never comes. A saved opt-out is separate: that person keeps the switch. */
+export function getsDigestEmail(
+  member: { slug: string; member_type?: string | null; email?: string | null },
+  env: Parameters<typeof isEmailRecipient>[1],
+): boolean {
+  return (member.member_type === 'director' || member.member_type === 'coordinator')
+    && isEmailRecipient(member.email || `${member.slug}@umn.edu`, env);
+}
+
 export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigger): Promise<Response> {
   // B6: the daily fan-out is PI/service-only. HTTP callers must pass the
   // PI/API-key check; the scheduled cron is the trusted service path and runs
@@ -606,7 +618,7 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
   }
 
   const membersResult = await env.DB.prepare(
-    `SELECT slug, name, email FROM team_members
+    `SELECT slug, name, email, member_type FROM team_members
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
@@ -627,7 +639,7 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
 
   // Recipient switch: Nick only until widened. sendEmail enforces it too; this
   // pre-filter just skips building emails that would be blocked.
-  const allowed = (membersResult.results ?? []).filter((m) => isEmailRecipient(m.email || `${m.slug}@umn.edu`, env));
+  const allowed = (membersResult.results ?? []).filter((m) => getsDigestEmail(m, env));
   const members = allowed.filter((m) => !optedOut.has(m.slug));
   if (members.length === 0) {
     if (allowed.length === 0) warnIfRecipientsMatchNobody(env);

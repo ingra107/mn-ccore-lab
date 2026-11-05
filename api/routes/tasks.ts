@@ -414,7 +414,17 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (v !== null && typeof v !== 'string' && !Array.isArray(v)) {
       return error('Invalid watchers: send a list of member slugs', 400);
     }
-    watchers = serializeWatchers(parseWatchers(v));
+    const slugs = parseWatchers(v);
+    // Rule 20, as for an assignee: a watcher must be a real team member. Only a name
+    // new to this task is checked, so one who has left the lab cannot block every
+    // later edit of a task they still watch.
+    const prior = await env.DB.prepare('SELECT watchers FROM tasks WHERE id = ?').bind(id).first<{ watchers: string | null }>();
+    const already = new Set(parseWatchers(prior?.watchers));
+    for (const slug of slugs.filter((s) => !already.has(s))) {
+      const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(slug).first();
+      if (!member) return error(`Unknown watcher "${slug}". Must match team_members.slug.`, 400);
+    }
+    watchers = serializeWatchers(slugs);
   }
 
   const updates: string[] = [];
