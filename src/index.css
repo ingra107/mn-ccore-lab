@@ -2520,7 +2520,7 @@ button[aria-label="Deselect task"]::before {
 .tk .tk-attn-fold{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin-top:-6px;margin-right:-6px;background:none;border:0;border-radius:6px;color:var(--job-wants);cursor:pointer;touch-action:manipulation}
 .tk .tk-attn-fold:hover{background:color-mix(in srgb,var(--job-wants) 14%,transparent)}
 .tk a.tk-st:focus-visible,.tk button:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px}
-.tk .tk-st.tk-zero .tk-v{opacity:.45;color:var(--sk-t3)} .tk .tk-st.tk-zero .tk-l{color:var(--sk-t3);opacity:.8}
+.tk .tk-st.tk-zero .tk-v{opacity:.45;color:var(--sk-t3)} .tk .tk-st.tk-zero .tk-l{color:var(--sk-t3)}
 .tk .tk-hint{display:flex;gap:8px;font-size:12px;color:var(--sk-t3);margin:0 0 14px;align-items:flex-start}
 .tk .tk-hint span{flex:1;min-width:0}
 .tk .tk-hint button{font-size:15px;line-height:1;padding:5px 8px;color:var(--sk-t3)}
@@ -3270,7 +3270,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
    second raised row beside the hovered one (prod check 2026-10-11). An
    expanded row keeps the tint; hovering either still lifts it like any row. */
 .sr .sr-row.sr-exp{background:var(--sr-hov)}
-.sr .sr-row.sr-urg{box-shadow:inset 2px 0 0 var(--job-stale)}
+.sr .sr-row.sr-urg::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;border-radius:1px;background:var(--job-stale)}
 .sr .sr-row.sr-urg.sr-exp{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 1px var(--sk-line2)}
 .sr .sr-row.sr-urg.sr-cur{box-shadow:inset 2px 0 0 var(--job-stale),inset 0 0 0 2px color-mix(in srgb,var(--job-accent) 80%,transparent)}
 .sr .sr-row.sr-sel{background:color-mix(in srgb, var(--job-accent) 10%, transparent);box-shadow:inset 2px 0 0 var(--job-accent)}

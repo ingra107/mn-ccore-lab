@@ -31,6 +31,7 @@ import { compactStageLabel } from '../lib/projectStage'
 import { useShowMore } from '../hooks/useShowMore'
 import { ShowMoreButton } from '../components/ui/ShowMore'
 import { PhotoOrInitials } from '../components/PhotoOrInitials'
+import { formatBrandName } from '../components/BrandName'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -729,7 +730,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                       opacity: 0.75,
                     }}
                   >
-                    {project.category}
+                    {formatBrandName(project.category)}
                   </span>
                 )}
               </div>
@@ -1326,13 +1327,7 @@ export default function TrajectoryPage() {
   ]
 
   return (
-    <div
-      style={{
-        maxWidth: '64rem',
-        margin: '0 auto',
-        padding: '2rem 1.5rem 4rem',
-      }}
-    >
+    <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
       {/* Back link */}
       <Link
         to={`${teamBase}/${slug}`}

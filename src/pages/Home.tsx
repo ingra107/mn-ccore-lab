@@ -93,7 +93,7 @@ export default function Home() {
           {facts.activeGrants
             ? <>Funded by {facts.funders.join(' and ')} through {facts.activeGrants} active {facts.activeGrants === 1 ? 'grant' : 'grants'}{facts.mechanisms.length > 0 ? ` (${facts.mechanisms.join(', ')})` : ''}. </>
             : null}
-          Co-Chair of the CLIF Consortium. <Link to="/network">See the network</Link>
+          Co-Chair of the CLIF Consortium. <Link to="/network" style={{ textDecoration: 'underline', textUnderlineOffset: 2 }}>See the network</Link>
         </p>
       </section>
 

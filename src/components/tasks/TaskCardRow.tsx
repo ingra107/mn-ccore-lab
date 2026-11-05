@@ -124,9 +124,11 @@ export function CardDuePill({ due, status }: { due: string; status?: string }) {
 }
 
 /** The project as a muted short name that links to the project. */
-export function CardProjectLine({ project, task }: { project: { name: string; slug: string; fullTitle?: string } | null; task?: { project_id?: string | null; product_id?: string | null } }) {
+export function CardProjectLine({ project, task, inProject = false }: { project: { name: string; slug: string; fullTitle?: string } | null; task?: { project_id?: string | null; product_id?: string | null }; inProject?: boolean }) {
   // "Project ~ Product" when the project has 2+ products.
   const name = usePairName(task, project?.name ?? '')
+  // On the project's own page the project goes without saying; only the product is news.
+  if (inProject) return name.startsWith(`${project?.name} ~ `) ? <span className="tk-cs">{name.slice((project?.name.length ?? 0) + 3)}</span> : null
   if (!project) return <span className="tk-cs">No project</span>
   return (
     <span className="tk-cs">
@@ -184,7 +186,7 @@ export function CardRow(props: CardTaskRowProps) {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
     onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showSortedByHand = false,
-    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, titleTag, packetTag, cornerSlot, children,
+    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, titleTag, packetTag, cornerSlot, inProject, children,
   } = props
 
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
@@ -313,7 +315,7 @@ export function CardRow(props: CardTaskRowProps) {
             )}
           </div>
           <div className="tk-ctx">
-            <CardProjectLine project={project} task={task} />
+            <CardProjectLine project={project} task={task} inProject={inProject} />
             {task.due_date && !isDone && <CardDuePill due={task.due_date} status={task.status} />}
             {!isDone && footPills}
             {plannedPill}

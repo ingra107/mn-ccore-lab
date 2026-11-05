@@ -968,7 +968,8 @@ export default function Meetings() {
               {upcomingMeetings.length > 0 && filteredMeetings.length > 0 && <div className="tk-mup-h">Past</div>}
               {filteredMeetings.map((meeting, idx) => {
                 const isSelected = meeting.id === effectiveSelectedId
-                const isNext = isNextMeeting(meeting)
+                // The default list below the upcoming strip is "Past": nothing in it is next.
+                const isNext = !isDefaultView && isNextMeeting(meeting)
                 const { actionCount = 0, pendingCount = 0 } = actionCountsByMeetingId.get(meeting.id) ?? {}
                 const meetingSeen = unseen?.meetings.get(meeting.id)
                 const isNeverSeen = meetingSeen?.never_seen === 1

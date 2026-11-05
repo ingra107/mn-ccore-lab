@@ -710,7 +710,7 @@ export default function TodayPage() {
         {!howToDismissed && (
           <div className="tk-hint">
             <span>
-              Click a task to expand · pin or drag the grip to plan · click a meeting for notes.
+              {isPhone ? 'Tap a task to expand · pin or drag the grip to plan · tap a meeting for notes.' : 'Click a task to expand · pin or drag the grip to plan · click a meeting for notes.'}
             </span>
             <Button size="icon"
               type="button"

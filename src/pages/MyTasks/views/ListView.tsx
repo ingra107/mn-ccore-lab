@@ -183,7 +183,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
           </div>
         </div>
       </div>
-      {!pageScrollRef && <div style={{ borderTop: '1px solid var(--border-subtle)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      {!pageScrollRef && <div style={{ borderTop: '1px solid var(--border-subtle)', flexShrink: 0 }}>
         <div className="mt-band" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: 'var(--sk-t3)', display: 'flex', gap: 14 }}>
           <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
           <span style={{ flex: 1 }} />

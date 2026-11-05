@@ -145,8 +145,8 @@ export default function CalendarFeedsPanel() {
       <div className="flex items-start gap-2 px-1">
         <Info {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', marginTop: 2, flexShrink: 0 }} />
         <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
-          The URL is the secret — anyone with it can read the calendar. Hub stores it in D1
-          and never re-displays it after save (you'll see a host preview instead). Remove a feed any time above.
+          The URL is the secret: anyone with it can read the calendar. The Hub keeps it private
+          and never shows it again after you save (you'll see the host name instead). Remove a feed any time above.
         </p>
       </div>
     </div>

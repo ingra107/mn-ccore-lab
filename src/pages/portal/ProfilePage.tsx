@@ -152,7 +152,7 @@ export default function ProfilePage() {
               </span>
             )}
             {rawRow.member_type ? (
-              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--slate)' }}>
+              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'var(--sk-line)', color: 'var(--sk-t2)' }}>
                 {String(rawRow.member_type)}
               </span>
             ) : null}
@@ -236,7 +236,7 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           className="w-full rounded-md px-2 py-1.5 text-sm outline-none"
-          style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)', resize: 'vertical' }}
+          style={{ border: '1px solid var(--field-edge)', background: 'var(--cream)', color: 'var(--ink)', resize: 'vertical' }}
         />
       ) : (
         <input
@@ -246,7 +246,7 @@ function ProfileField({ label, value, onChange, onBlur, multiline }: {
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           className="w-full rounded-md px-2 py-1.5 text-sm outline-none"
-          style={{ border: '1px solid var(--field-edge)', background: 'var(--field-bg)', color: 'var(--ink)' }}
+          style={{ border: '1px solid var(--field-edge)', background: 'var(--cream)', color: 'var(--ink)' }}
         />
       )}
       </Field>

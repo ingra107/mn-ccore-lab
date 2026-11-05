@@ -741,8 +741,7 @@ export default function MemberPage() {
           style={{ color: 'var(--slate)' }}
         >
           <p className="text-sm">
-            Publications for {member.name} will appear here as they are added to
-            the database.
+            Publications for {member.name} will appear here once they are added.
           </p>
         </div>
       )}

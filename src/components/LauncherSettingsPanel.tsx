@@ -43,8 +43,8 @@ export default function LauncherSettingsPanel() {
         </a>
       </div>
       <ol style={{ ...p, paddingLeft: 18 }}>
-        <li><strong>Mac:</strong> unzip, open Terminal, type <code>bash </code> (with a space), drag <code>install.sh</code> into the window, press Return. Then restart your browser.</li>
-        <li><strong>Windows:</strong> unzip, double-click <code>Install.cmd</code>, then restart your browser.</li>
+        <li><strong>Mac:</strong> unzip, open Terminal, type <b>bash</b> and a space, drag <b>install.sh</b> into the window, press Return. Then restart your browser.</li>
+        <li><strong>Windows:</strong> unzip, double-click <b>Install.cmd</b>, then restart your browser.</li>
         <li>Work on in Claude always asks you to confirm the folder first, because any website can try to open these links.</li>
         <li>The README in the download has the details, and how to remove it.</li>
       </ol>
