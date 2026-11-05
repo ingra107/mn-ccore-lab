@@ -630,6 +630,10 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 .field-container:focus-within {
   border-color: var(--job-accent);
 }
+.field-container :is(input, textarea):focus-visible,
+.dark .field-container :is(input, textarea):focus-visible {
+  outline: none;
+}
 
 /* Softer task grid row separators — barely-there luminance shifts (Linear pattern) */
 .task-grid-row {

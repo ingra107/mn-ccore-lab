@@ -133,7 +133,7 @@ describe('ManuscriptsPage stage controls', () => {
     const h = await mount()
     await expect.poll(() => row(h)).not.toBeNull()
     await act(async () => { buttonNamed(h, /New Manuscript/)!.click() })
-    await expect.poll(() => buttonNamed(document.body, 'Create Project')).toBeTruthy()
+    await expect.poll(() => buttonNamed(document.body, 'Create Manuscript')).toBeTruthy()
     const form = document.getElementById('create-project-form')!
     expect(form.textContent).toContain('Writing')
     expect(form.textContent).not.toContain('Idea')
@@ -141,6 +141,8 @@ describe('ManuscriptsPage stage controls', () => {
     const kindTrigger = [...form.querySelectorAll('button')].find((b) => /Manuscript/.test(b.textContent ?? ''))!
     await act(async () => { kindTrigger.click() })
     await choose('Abstract')
+    // The modal's words follow the picker, so its button stays true.
+    expect(buttonNamed(document.body, 'Create Abstract')).toBeTruthy()
     const stageTrigger = [...form.querySelectorAll('button')].find((b) => /Abstract idea/.test(b.textContent ?? ''))!
     await act(async () => { stageTrigger.click() })
     expect(options()).toEqual(['Abstract idea', 'Drafting', 'Presented'])

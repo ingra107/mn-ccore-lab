@@ -1183,7 +1183,7 @@ function CreateIdeaModal({ open, onClose, areas }: { open: boolean; onClose: () 
       footer={
         <>
           {!title.trim() && (
-            <p id="idea-submit-hint" style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', marginRight: 'auto' }}>
+            <p id="idea-submit-hint" className="sr-only">
               Title is required.
             </p>
           )}
