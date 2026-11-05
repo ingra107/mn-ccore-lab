@@ -72,7 +72,7 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
   }
 
   return (
-    <ChartCard title="Stalled projects" count={rows.length > 0 ? `${rows.length} idle 14d+ · PI only` : 'PI only'}>
+    <ChartCard title="Stalled projects" count={rows.length > 0 ? `${rows.length} with no update 14d+ · PI only` : 'PI only'}>
       {rows.length === 0 ? (
         <EmptyState
           compact

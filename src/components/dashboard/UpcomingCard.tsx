@@ -4,7 +4,8 @@ import { ArrowRight } from 'lucide-react'
 import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useRecentTasks } from '../../hooks/useApiData'
 import { useGrantProducts } from '../../hooks/useGrantProducts'
 import { grantName } from '../../lib/grants'
-import { localDateKey } from '../../lib/dateUtils'
+import { civilDaysUntil, localDateKey } from '../../lib/dateUtils'
+import { countOverdue, isWorkTask } from '../../lib/taskStats'
 import { countActionsByMeetingId } from '../../lib/meetingTaskCounts'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { getPersonInfo } from '../../data/team'
@@ -38,14 +39,15 @@ function UpcomingCard() {
   // Aggregate real deadlines from open tasks (with due_date) + grant milestones.
   // Full list here; the card shows the first rows. Overdue first (most-overdue first), then ascending by days-until-due.
   const deadlines = useMemo<Deadline[]>(() => {
-    const now = new Date()
     const items: Deadline[] = []
 
-    // Open tasks with a due_date (skip completed)
+    // Open work with a due_date. Whole calendar days: the old "ceil of the hours
+    // to the end of the due date" made yesterday day 0, so a task due yesterday
+    // read as upcoming, and the card said 10 overdue under a header of 14.
     for (const t of tasks) {
-      if (!t.due_date || isTaskDone(t)) continue
+      if (!t.due_date || isTaskDone(t) || !isWorkTask(t)) continue
       const due = new Date(t.due_date + 'T23:59:59')
-      const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      const daysUntil = civilDaysUntil(t.due_date)
       items.push({
         date: formatDateShort(due),
         label: t.title || t.description || 'Untitled task',
@@ -61,7 +63,7 @@ function UpcomingCard() {
     for (const g of grants) {
       if (g.kind !== 'grant_application' || g.bucket === 'ended' || !g.deadline) continue
       const due = new Date(g.deadline + 'T23:59:59')
-      const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      const daysUntil = civilDaysUntil(g.deadline)
       items.push({
         date: formatDateShort(due),
         label: `${grantName(g)}${g.venue ? ` (${g.venue})` : ''}`,
@@ -83,7 +85,8 @@ function UpcomingCard() {
     return items
   }, [tasks, grants])
   const next7 = useMemo(() => deadlines.filter((d) => d.daysUntil >= 0 && d.daysUntil <= 7).length, [deadlines])
-  const overdueN = useMemo(() => deadlines.filter((d) => d.daysUntil < 0).length, [deadlines])
+  // The same count as the page header: tasks, by the one overdue predicate.
+  const overdueN = useMemo(() => countOverdue(tasks), [tasks])
 
   // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {

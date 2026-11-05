@@ -25,7 +25,6 @@ const DEVICE_LOCAL: Record<string, string> = {
   'components/NeedsAttentionDashboard.tsx': 'section fold state',
   'components/PageTooltip.tsx': 'tip dismissed in this browser',
   'components/PortalLayout.tsx': 'sidebar collapse follows window width',
-  'components/ReleaseRibbon.tsx': 'release ribbon dismissed in this browser',
   'components/RoundPrompt.tsx': 'prompt dismissed in this browser',
   'components/dashboard/ProjectHealthCard.tsx': 'card list/heatmap toggle (candidate to sync; ledger)',
   'components/tasks/TaskBoardView.tsx': 'board column fold state',

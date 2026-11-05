@@ -60,7 +60,7 @@ export function ThisWeekBlock({ stats, sparks, tasks, health, stalled }: {
           { label: 'Created', value: stats.created, previous: stats.createdPrior, previousLabel: 'vs last week', spark: sparks.created },
           { label: 'Overdue', value: stats.overdue, rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, previous: stats.overduePrior, previousLabel: 'vs last week', spark: sparks.overdue },
           ...(stalled
-            ? [{ label: 'Stalled projects (14d+)', value: stalled.count, rule: 'u' as const, previous: stalled.count - stalled.deltaWoW, previousLabel: 'vs last week', spark: stalled.sparkline }]
+            ? [{ label: 'No project update in 14d+', value: stalled.count, rule: 'u' as const, previous: stalled.count - stalled.deltaWoW, previousLabel: 'vs last week', spark: stalled.sparkline }]
             : []),
         ]}
       />
@@ -118,7 +118,7 @@ export function PortfolioBlock({ projects, ideas, pi, insights }: {
     <ChartCard title="Portfolio">
       <StatRow
         stats={[
-          { label: 'Active projects', value: active, sub: `${projects.length} total` },
+          { label: 'Active projects', value: active, sub: `${projects.length} total, done included` },
           { label: 'Research ideas', value: liveIdeas, sub: `${ideas.length} total` },
           ...(m ? [{
             label: 'Manuscripts in revision',

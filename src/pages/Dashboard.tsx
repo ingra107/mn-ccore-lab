@@ -14,7 +14,6 @@ import { formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
-import ReleaseRibbon from '../components/ReleaseRibbon'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import PipelineCard from '../components/dashboard/PipelineCard'
 import StatsCard from '../components/dashboard/StatsCard'
@@ -306,7 +305,7 @@ export default function Dashboard() {
         <PageHeader
           title="Lab overview"
           hero={publishedCount !== undefined
-            ? { value: publishedCount, label: 'published', to: `${PUBLIC_PATHS.publications}?status=Published`, dest: 'Publications filtered to published' }
+            ? { value: publishedCount, label: 'published · public site', to: `${PUBLIC_PATHS.publications}?status=Published`, external: true, dest: 'the public Publications page, in a new tab' }
             : undefined}
         />
         {/* DD-#3: operational status chips replace the editorial greeting. */}
@@ -401,15 +400,10 @@ export default function Dashboard() {
           )
         })()}
 
-        {/* DD-5: version-keyed release ribbon for "what shipped this week."
-            Self-dismisses 7 days after first view; bumped CURRENT_RELEASE in
-            ReleaseRibbon.tsx intentionally re-raises it. Sits above the
-            WelcomeBanner (onboarding fallback for day-1 users only). */}
-        {/* One banner at a time (Wave 3): the first one that renders wins. The
-            welcome note is first so a day-1 user sees it, then the ribbon. */}
+        {/* One banner at a time (Wave 3): the first one that renders wins. What
+            shipped lives in the What's new pill (#156), not on this page. */}
         <div className="dash-banners">
           <WelcomeBanner />
-          <ReleaseRibbon />
         </div>
 
         {/* Customize panel \u2014 R4-P3-01: pills split into Always-on vs
@@ -516,7 +510,7 @@ export default function Dashboard() {
             </Button>
             <Button
               as={Link}
-              to={PATHS.meetings}
+              to={`${PATHS.meetings}?create=true`}
               variant="secondary"
               className="transition-colors hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 500, borderRadius: 'var(--radius-lg)', textDecoration: 'none' }}

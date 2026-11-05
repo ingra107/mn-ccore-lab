@@ -12,10 +12,10 @@ import { countDoneToday, countOverdue, isWorkTask } from '../../lib/taskStats'
 // index.css, so the root carries `tk`.
 //
 // Scope: `tasks` is the WHOLE lab's task list (Dashboard asks for every
-// member's), while My Tasks lists only the viewer's. So the labels say "lab"
-// and the link titles say where they land. Overdue and done-today come from
-// lib/taskStats, the same rules Today uses. "due this week" has no My Tasks
-// view, so it is a plain number, never a link.
+// member's), while My Tasks lists only the viewer's. So the labels say "lab" and
+// the three task numbers are plain, never links: a link to My Tasks opens a list
+// that does not hold what the number counts (fable audit F05, Rule 73). Overdue
+// and done-today come from lib/taskStats, the same rules Today uses.
 
 interface StatusLineProps {
   tasks: TaskRow[]
@@ -61,10 +61,10 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     const irb = regulatory.length
 
     return [
-      { key: 'overdue', value: countOverdue(tasks), label: 'overdue · lab', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'My Tasks filtered to overdue (the number counts the whole lab)' },
+      { key: 'overdue', value: countOverdue(tasks), label: 'overdue · lab', rule: 'o' },
       { key: 'week', value: thisWeek, label: 'due this week · lab', rule: 'n' },
       { key: 'irb', value: irb, label: irb === 1 ? 'IRB renewal' : 'IRB renewals', rule: 'g', to: PATHS.deadlines, dest: 'Deadlines' },
-      { key: 'done', value: countDoneToday(tasks), label: 'done today · lab', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'My Tasks done today (the number counts the whole lab)' },
+      { key: 'done', value: countDoneToday(tasks), label: 'done today · lab', rule: 't' },
     ]
   }, [tasks, regulatory])
 
