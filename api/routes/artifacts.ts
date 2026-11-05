@@ -453,9 +453,12 @@ export async function handleCreateArtifact(
 //   { body_md, revision_note?, title?, revised_by? }
 //
 // Idempotency / provenance: the archived row is (artifact_id, CURRENT version) —
-// the PK makes a re-applied archive a no-op (INSERT OR IGNORE). version is bumped
-// from the row's own current value (read-modify-write in one logical step), so
-// concurrent revises can't both land version N (the second sees N+1).
+// the PK makes a re-applied archive a no-op (INSERT OR IGNORE).
+//
+// R07: the archive and the replace run in ONE batch, and the replace only lands
+// if the row is still at the version this request read. Of two revisions from the
+// same read, the first lands and the second gets 409 without touching the row, so
+// no body is overwritten without its predecessor reaching history.
 export async function handleReviseArtifact(
   id: string,
   request: Request,
@@ -493,28 +496,32 @@ export async function handleReviseArtifact(
     return error('Forbidden — only the artifact creator or a PI may revise it', 403);
   }
 
-  // 1. Archive the CURRENT body at its current version number.
-  await env.DB.prepare(
-    `INSERT OR IGNORE INTO artifact_versions (artifact_id, version, body_md, revised_by, revision_note, created_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))`
-  ).bind(
-    id,
-    current.version,
-    current.body_md,
-    actor.slug,
-    body.revision_note?.trim() || null,
-  ).run();
-
-  // 2. Replace body (+ optional title) and bump version off the row's own value.
+  // Replace body (+ optional title) and bump version off the row's own value.
   // #915: html revisions get the same ingest normalization as creates — a
   // doctype-less fragment body would reintroduce quirks mode on a row the
   // create path already normalized.
   const newBody = current.content_type === 'html' ? ensureDoctype(body.body_md) : body.body_md;
   const newVersion = current.version + 1;
   const newTitle = body.title?.trim() || current.title;
-  await env.DB.prepare(
-    `UPDATE artifacts SET body_md = ?, title = ?, version = ?, updated_at = datetime('now') WHERE id = ?`
-  ).bind(newBody, newTitle, newVersion, id).run();
+  const [, replaced] = await env.DB.batch([
+    // Archive the CURRENT body at its current version number.
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO artifact_versions (artifact_id, version, body_md, revised_by, revision_note, created_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`
+    ).bind(
+      id,
+      current.version,
+      current.body_md,
+      actor.slug,
+      body.revision_note?.trim() || null,
+    ),
+    env.DB.prepare(
+      `UPDATE artifacts SET body_md = ?, title = ?, version = ?, updated_at = datetime('now') WHERE id = ? AND version = ?`
+    ).bind(newBody, newTitle, newVersion, id, current.version),
+  ]);
+  if (!replaced.meta?.changes) {
+    return error('Someone else revised this artifact first. Reload it and try again.', 409);
+  }
 
   const updated = await env.DB.prepare('SELECT * FROM artifacts WHERE id = ?').bind(id).first<ArtifactRow>();
   return json({ data: updated });
@@ -531,19 +538,25 @@ export async function handleGetArtifactActivity(id: string, request: Request, en
   if (!artifact) return error('Artifact not found', 404);
   // Phase 2: ?include_hidden=1 = the "Show hidden" affordance. Default false.
   const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
-  const vis = await activityVisibilityGate(request, env);
+  // R08: the root-aware gate (Rule 77). A reply inherits author-only from its root,
+  // and Hermes's reply carries actor claude-ai, so without the root the person who
+  // asked could not read the answer. parent_id rides along for the page's dismiss rule.
+  // activity-hidden-exempt: the join reads the root only for the visibility gate; hidden is flat on ae (activityHiddenClause below).
+  const vis = await activityVisibilityGate(request, env, 'ae', 'root');
   const result = await env.DB.prepare(
-    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, hidden_at, created_at
-     FROM activity_entries
-     WHERE entity_type = 'artifact' AND entity_id = ? AND ${activityHiddenClause('', includeHidden)} AND ${vis.clause}
-     ORDER BY created_at DESC, id DESC`
+    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.parent_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.hidden_at, ae.created_at
+     FROM activity_entries ae
+     LEFT JOIN activity_entries root ON root.id = ae.parent_id
+     WHERE ae.entity_type = 'artifact' AND ae.entity_id = ? AND ${activityHiddenClause('ae', includeHidden)} AND ${vis.clause}
+     ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(id, ...vis.binds).all();
   // hidden_count: dismissed rows this viewer could reveal (see task feed).
   // activity-hidden-exempt: reveal-affordance count DELIBERATELY selects dismissed
   // rows (hidden_at IS NOT NULL); requester-gated by visibility, count only.
   const hiddenRow = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM activity_entries
-      WHERE entity_type = 'artifact' AND entity_id = ? AND hidden_at IS NOT NULL AND ${vis.clause}`
+    `SELECT COUNT(*) AS n FROM activity_entries ae
+      LEFT JOIN activity_entries root ON root.id = ae.parent_id
+      WHERE ae.entity_type = 'artifact' AND ae.entity_id = ? AND ae.hidden_at IS NOT NULL AND ${vis.clause}`
   ).bind(id, ...vis.binds).first<{ n: number }>();
   return json({ data: result.results || [], hidden_count: hiddenRow?.n ?? 0 });
 }

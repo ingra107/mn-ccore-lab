@@ -186,9 +186,16 @@ describe('resolveActor — AM-2 (SEC-T0-6)', () => {
     expect(r).toEqual({ slug: 'nick-ingraham' })
   })
 
-  it('always allows claude-ai (Hermes) regardless of impersonation flag', async () => {
-    const r = await resolveActor(env, teamUser, 'claude-ai', { allowImpersonation: false })
+  // R03: "claude-ai is always allowed" let any member sign as Hermes, and so pass
+  // an ownership check on anything Hermes created.
+  it('lets a PI or the service key act as claude-ai, which has no team_members row', async () => {
+    const r = await resolveActor(env, teamUser, 'claude-ai', { allowImpersonation: true })
     expect(r).toEqual({ slug: 'claude-ai' })
+  })
+
+  it('refuses claude-ai to an ordinary member', async () => {
+    const r = await resolveActor(env, teamUser, 'claude-ai', { allowImpersonation: false })
+    expect('error' in r && r.error).toMatch(/Not authorized to act as/)
   })
 })
 
