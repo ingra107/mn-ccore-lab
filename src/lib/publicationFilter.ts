@@ -246,8 +246,9 @@ export function bylineNameMatchesMember(rawName: string, memberNames: MemberName
 export function publicationStatus(work: CandidateWork): 'Published' | 'Abstract' | 'Preprint' {
   if (isPreprint(work)) return 'Preprint'
   const letters = work.title.replace(/[^\p{L}]/gu, '')
-  const allCaps = letters.length > 0 && letters === letters.toUpperCase()
-  if (allCaps || /^[AS]\d/i.test(work.firstPage ?? '') || /^(supplement_?\d*|\d+_suppl(ement)?)$/i.test(work.issue ?? '')) return 'Abstract'
+  // Three words at least, and a script with case: "ARDS" alone or a Chinese title is not shouting.
+  const allCaps = letters !== letters.toLowerCase() && letters === letters.toUpperCase() && work.title.trim().split(/\s+/).length >= 3
+  if (allCaps || /^[AS]\d/i.test(work.firstPage ?? '') || /suppl|^S\d+$/i.test(work.issue ?? '')) return 'Abstract'
   return 'Published'
 }
 

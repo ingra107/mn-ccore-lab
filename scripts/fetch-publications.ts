@@ -4,9 +4,9 @@
  *   ORCID public API  = PRIMARY source (used when a member has an `orcidId`).
  *   Google Scholar    = FENCED FALLBACK (used when a member has only a
  *                       `scholarId`). Scraping Scholar is fragile + ToS-gray,
- *                       so it is (a) build-time only — NEVER in the live request
- *                       path, and (b) wrapped so any failure degrades to
- *                       "no pubs for this member", never aborts the run.
+ *                       so it is build-time only — NEVER in the live request
+ *                       path. A failure stops the write like any other source's;
+ *                       PUBFETCH_NO_SCHOLAR=1 runs without it.
  *
  * Output: rewrites src/data/publications.generated.ts. Those entries only FILL
  * GAPS — mergePublications() keeps every curated pub in publications.ts
@@ -174,7 +174,7 @@ function mapOrcidWork(member: FetchMember, work?: OrcidWork): Publication | null
     title,
     journal: work['journal-title']?.value?.trim() || '',
     year,
-    status: 'Published',
+    status: publicationStatus({ title, doi }),
     doi,
     pubmed,
     topics: [],
@@ -192,8 +192,7 @@ function buildAuthors(work: OrcidWork): string {
 
 // ── Google Scholar (fenced fallback) ────────────────────────────────────────
 // No official API. Minimal parse of the citations page HTML. Best-effort:
-// Google may block or restructure at any time — that is exactly why every call
-// site is wrapped and degrades to [].
+// Google may block or restructure at any time; a failure stops the write (see main).
 async function fetchScholar(member: FetchMember): Promise<Candidate[]> {
   const url = `https://scholar.google.com/citations?user=${member.scholarId}&hl=en&cstart=0&pagesize=100`
   const res = await fetch(url, {
@@ -223,7 +222,7 @@ async function fetchScholar(member: FetchMember): Promise<Candidate[]> {
       // Strip a trailing ", 2024" / volume tail from the venue string.
       journal: venue.replace(/,?\s*\d{4}$/, '').replace(/,\s*[^,]*\d+[^,]*$/, '').trim(),
       year: year ?? 0,
-      status: 'Published',
+      status: publicationStatus({ title }),
       topics: [],
       authorSlugs: [member.slug],
     }
@@ -259,7 +258,8 @@ interface OAAuthorship {
 export function printedName(a: OAAuthorship): string {
   const raw = a.raw_author_name?.trim()
   if (!raw) return a.author?.display_name?.trim() ?? ''
-  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  // "Nicholas E. Ingraham, MD" and "Smith, John, Jr": a degree or suffix is not a name.
+  const parts = raw.split(',').map((s) => s.trim()).filter((p) => p && !/^(m\.?d\.?|ph\.?d\.?|d\.?o\.?|mph|ms|msc|mba|rn|bsn|pharmd|jr\.?|sr\.?|ii|iii|iv)$/i.test(p))
   return parts.length === 2 ? `${parts[1]} ${parts[0]}` : parts.join(' ')
 }
 
@@ -325,10 +325,8 @@ export async function attachPubmedBylines(cands: Candidate[]): Promise<void> {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `db=pubmed&retmode=xml&email=${MAILTO}&id=${chunk.join(',')}`,
     })
-    if (!res.ok) {
-      console.warn(`  [PubMed]   efetch ${res.status} for ${chunk.length} PMIDs; those works keep the OpenAlex byline only`)
-      continue
-    }
+    // Without these names a long byline's member is refused, so a failure stops the write.
+    if (!res.ok) throw new Error(`PubMed efetch ${res.status} for ${chunk.length} PMIDs`)
     for (const [pmid, names] of parsePubmedAuthors(await res.text())) {
       for (const c of byPmid.get(pmid) ?? []) c.work.byline!.pubmedNames = names
     }
@@ -341,7 +339,8 @@ export async function resolveOpenAlexAuthor(m: FetchMember): Promise<OAAuthor | 
   if (m.openalexId) ids = m.openalexId.split('|').map((s) => s.trim()).filter(Boolean)
   else if (m.orcidId) {
     const res = await fetch(`https://api.openalex.org/authors/orcid:${m.orcidId}?mailto=${MAILTO}`)
-    if (!res.ok) return undefined
+    if (res.status === 404) return undefined // no OpenAlex record: the ORCID lane takes this member
+    if (!res.ok) throw new Error(`OpenAlex author ${res.status} for ${m.orcidId}`)
     const a = (await res.json()) as { id?: string }
     if (a.id) ids = [bareOaId(a.id)]
   }
@@ -349,7 +348,7 @@ export async function resolveOpenAlexAuthor(m: FetchMember): Promise<OAAuthor | 
   const names: string[] = []
   for (const id of ids) {
     const res = await fetch(`https://api.openalex.org/authors/${id}?mailto=${MAILTO}`)
-    if (!res.ok) continue
+    if (!res.ok) throw new Error(`OpenAlex author ${res.status} for ${id}`)
     const a = (await res.json()) as { display_name?: string }
     if (a.display_name) names.push(a.display_name)
   }
@@ -414,10 +413,10 @@ export function mapOpenAlexWork(member: FetchMember, w: OAWork, author: OAAuthor
   const memberIndex = authorships.findIndex((a) => author.ids.has(bareOaId(a.author?.id)))
   // Up to the most names a byline may have and still count without a lead position.
   // A cut at 30 dropped lab members further down, and they lost their face and credit.
+  // A longer byline is accepted when the member closes it, so their own name always stays.
   const authors = authorships
     .map(printedName)
-    .filter(Boolean)
-    .slice(0, MAX_UNRANKED_AUTHORS)
+    .filter((name, i) => name && (i < MAX_UNRANKED_AUTHORS || i === memberIndex))
     .join(', ')
   const sourceName = w.primary_location?.source?.display_name?.trim() || ''
   const bareDoi = (doi ?? '').toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, '')
@@ -468,11 +467,12 @@ export async function attachMissingBylines(cands: Candidate[]): Promise<void> {
     const doi = normalizeDoi(c.pub.doi)
     if (c.pub.authors.trim() || !doi) continue
     const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}?mailto=${MAILTO}`)
+    if (!res.ok && res.status !== 404) throw new Error(`Crossref ${res.status} for ${doi}`)
     if (res.ok) {
       const { message } = (await res.json()) as { message?: { author?: Array<{ given?: string; family?: string; name?: string }> } }
       c.pub.authors = (message?.author ?? []).map((a) => a.name ?? `${a.given ?? ''} ${a.family ?? ''}`.trim()).filter(Boolean).join(', ')
     } else {
-      console.warn(`  [Crossref] ${res.status} for ${doi}; this work has no byline and will be refused`)
+      console.warn(`  [Crossref] no record for ${doi}; this work has no byline and will be refused`)
     }
     await sleep(200)
   }

@@ -1995,7 +1995,7 @@ export const generatedPublications: Publication[] = [
     "title": "How Financial and Reputational Incentives Can Be Used to Improve Medical Care",
     "journal": "Health Services Research",
     "year": 2015,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1111/1475-6773.12419",
     "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26573887/",
     "topics": [],
@@ -3250,7 +3250,7 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1017-s0266462399015287",
-    "authors": "Patricia P. Katz, Jonathan A. Showstack, John R. Lake, Jr. Robert S. Brown, R. Adams Dudley, M. Esther Colwell, Russell H. Wiesner, Rowen K. Zetterman, James Everhart",
+    "authors": "Patricia P. Katz, Jonathan A. Showstack, John R. Lake, Robert S. Brown, R. Adams Dudley, M. Esther Colwell, Russell H. Wiesner, Rowen K. Zetterman, James Everhart",
     "title": "METHODS TO ESTIMATE AND ANALYZE MEDICAL CARE RESOURCE USE",
     "journal": "International Journal of Technology Assessment in Health Care",
     "year": 1999,
@@ -3475,7 +3475,7 @@ export const generatedPublications: Publication[] = [
     "title": "152 A Prospective Controlled Trial of the Effect of Surgeon Cost Scorecards on Operating Room Surgical Cost Reduction",
     "journal": "Neurosurgery",
     "year": 2016,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1227/01.neu.0000489721.67573.c2",
     "topics": [],
     "authorSlugs": [
@@ -3502,7 +3502,7 @@ export const generatedPublications: Publication[] = [
     "title": "169 COPD Care for Patients in Rural Clinics: A Mixed Methods Evaluation",
     "journal": "Journal of Clinical and Translational Science",
     "year": 2023,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1017/cts.2023.250",
     "topics": [],
     "authorSlugs": [
@@ -3652,7 +3652,7 @@ export const generatedPublications: Publication[] = [
     "title": "Assessing the Relationship between Quality of Care and the Characteristics of Health Care Organizations",
     "journal": "Medical Care Research and Review",
     "year": 2000,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1177/1077558700573007",
     "topics": [],
     "authorSlugs": [
@@ -3945,7 +3945,7 @@ export const generatedPublications: Publication[] = [
     "title": "71016 Defining \"rurality\": Rural-urban disparities among COPD patients in national VA data",
     "journal": "Journal of Clinical and Translational Science",
     "year": 2021,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1017/cts.2021.747",
     "topics": [],
     "authorSlugs": [
@@ -6521,7 +6521,7 @@ export const generatedPublications: Publication[] = [
     "title": "A mixed–method community pilot of a digital social care referral platform for individuals with cancer",
     "journal": "Health Services Research",
     "year": 2025,
-    "status": "Published",
+    "status": "Abstract",
     "doi": "https://doi.org/10.1111/1475-6773.14531",
     "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40189310/",
     "topics": [],

@@ -384,8 +384,10 @@ fi
 # deploy at `tsc -b`, after the push (twice, 2026-11-04). The same command as the
 # deploy build, so the two cannot disagree. Test files only: it takes about 70 s even
 # with nothing changed, and running it beside vitest timed out unrelated tests
-# (measured 2026-11-05), so it runs first and alone.
-if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^src/.*[.]test[.]tsx?$'; then
+# (measured 2026-11-05), so it runs first and alone. A type change in a source file
+# that breaks a test is still caught at the deploy build, not here. The two excluded
+# directories are outside tsconfig.app.json, so tsc -b says nothing about them.
+if git diff --cached --name-only --diff-filter=ACMR | grep -E '^src/(.*[.]test[.]tsx?|__tests__/.*[.]tsx?)$' | grep -qvE '^src/(lib|hooks)/__tests__/'; then
     echo "[hub-precommit] test file staged -- running tsc -b..."
     if ! npx tsc -b; then
         echo ""

@@ -63,7 +63,7 @@ Keep #169 and `bug_mw291o484isxfj` open until a real plan reaches the Hub. Check
 - **`npm run deploy:pages:gated | tail` reports the pipe's exit 0.** A failed build looked like a finished deploy. Redirect to a file and read `$?`.
 
 ## Open
-- 5 journal fields still read "PubMed" (Dudley 4, McEachron 1). Six people have no photo; photos hotlink med.umn.edu, including Jeff Chipman's now that he has moved.
+- 5 journal fields still read "PubMed" (Dudley 4, McEachron 1). Six people have no photo.
 - Footer "Join the lab" conflicts with the site's not-recruiting purpose (`project_public-site-purpose`).
 
 ---

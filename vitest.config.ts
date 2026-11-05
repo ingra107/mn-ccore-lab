@@ -39,7 +39,7 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      // No test reaches the public internet. Team photos live on med.umn.edu, which
+      // No test reaches the public internet. Some photo URLs point off-site, which
       // refuses this browser within ~40ms, so a test could pass or fail on whether
       // its assertion beat that reply (faces-photo, 2026-11-05).
       provider: playwright({

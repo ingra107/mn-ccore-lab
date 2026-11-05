@@ -13,7 +13,7 @@ import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
 
-// Team photos live on med.umn.edu, and a photo that fails drops to initials (the
+// A photo URL can point off-site (older rows did, at med.umn.edu), and a photo that fails drops to initials (the
 // second test). The tests below are about a photo that LOADS, so each member's
 // photo is a local image here; the real one was refused ~40ms after mount, and
 // these passed only when their assertion beat that reply.

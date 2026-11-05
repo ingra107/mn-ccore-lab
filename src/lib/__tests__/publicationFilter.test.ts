@@ -289,5 +289,8 @@ describe('audit of 2026-11-04', () => {
     expect(publicationStatus({ title: 'Air pollution and respiratory failure', doi: 'https://doi.org/10.2139/ssrn.6153166' })).toBe('Preprint')
     expect(publicationStatus({ title: 'Lung-protective ventilation', firstPage: '116' })).toBe('Published')
     expect(publicationStatus({ title: 'Quality of care', issue: '2_suppl', firstPage: '116' })).toBe('Abstract')
+    for (const issue of ['Supplement 1', 'Suppl 1', 'suppl_1', '1 Suppl', 'S1']) expect(publicationStatus({ title: 'A study', issue })).toBe('Abstract')
+    expect(publicationStatus({ title: 'ARDS' })).toBe('Published')
+    expect(publicationStatus({ title: '急性呼吸窘迫综合征的治疗 研究 进展' })).toBe('Published')
   })
 })
