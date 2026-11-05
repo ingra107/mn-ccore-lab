@@ -478,6 +478,15 @@ export default function Layout() {
             >
               Built with React, Cloudflare, and Claude
             </div>
+            {/* Phones and tablets: a plain link here, not a circle over the text
+                (Nick's mock, 2026-11-05). Wide screens keep the floating button. */}
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="pub-back-top lg:hidden"
+            >
+              Back to top <span aria-hidden="true">&uarr;</span>
+            </button>
           </div>
         </div>
       </footer>
@@ -486,7 +495,7 @@ export default function Layout() {
       {showScrollTop && (
         <Button size="icon"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 p-3 rounded-full cursor-pointer transition-all duration-200 z-40"
+          className="pub-top-float hidden lg:flex fixed bottom-6 right-6 p-3 rounded-full cursor-pointer transition-all duration-200 z-40"
           style={{
             background: 'var(--job-brand)',
             color: 'var(--cream)',

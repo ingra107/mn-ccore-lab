@@ -78,7 +78,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   // Canonical 3-bucket (Stage 4 #12-followup, 2026-05-08)
   'MNCCORE': 'MN-CCORE',
   'CLIF': 'CLIF',
-  'Peripheral Brain': 'PB',
+  'Peripheral Brain': 'Peripheral Brain',
   // Legacy fallbacks for soft-deleted rows with pre-migration values
   clif: 'CLIF',
   lab: 'Lab',

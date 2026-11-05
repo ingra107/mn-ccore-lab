@@ -160,3 +160,7 @@ a.pub-card:hover, .pub-card.pub-hov:hover { border-color: var(--sk-line2); box-s
 
 /* network: the graph canvas is dark in both themes */
 .pub-net { display: flex; flex-direction: column; margin-top: 26px; height: clamp(560px, 78vh, 860px); border-radius: 14px; overflow: hidden; border: 1px solid var(--sk-line); background: linear-gradient(135deg, #0e1319 0%, #141a22 55%, #1c2733 100%); }
+
+/* Back to top, in the public footer on phones and tablets (Layout.tsx). */
+.pub-back-top{display:block;margin:20px auto 0;min-height:44px;padding:0 12px;background:none;border:none;font:inherit;font-size:14px;color:rgba(255,255,255,.75);cursor:pointer}
+.pub-back-top:hover{color:#fff}

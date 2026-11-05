@@ -54,4 +54,17 @@ describe('shell look', () => {
     expect(panel).toContain('hov-border sk-mat')
     expect(panel).not.toContain("background: 'var(--ice)'")
   })
+
+  it('the public site moves back to top into the footer below the wide layout', () => {
+    const layout = read('src/components/Layout.tsx')
+    expect(layout).toMatch(/className="pub-back-top lg:hidden"/)
+    expect(layout).toMatch(/className="pub-top-float hidden lg:flex /)
+  })
+
+  it('spells Peripheral Brain on the Manuscripts tab and the Projects line, with the brand hyphen beside it', () => {
+    const page = read('src/pages/portal/ManuscriptsPage.tsx')
+    expect(page).toContain("'Peripheral Brain': 'Peripheral Brain',")
+    expect(page).toContain("'MNCCORE': 'MN-CCORE',")
+    expect(read('src/pages/Projects.tsx')).not.toContain("['PB',")
+  })
 })

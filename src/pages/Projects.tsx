@@ -367,7 +367,7 @@ export default function Projects() {
   const categoryStrip = [
     ['MN-CCORE', filtered.filter((p) => p.category === 'MNCCORE').length],
     ['CLIF', filtered.filter((p) => p.category === 'CLIF').length],
-    ['PB', filtered.filter((p) => p.category === 'Peripheral Brain').length],
+    ['Peripheral Brain', filtered.filter((p) => p.category === 'Peripheral Brain').length],
   ].filter(([, n]) => n !== 0).map(([label, n]) => `${n} ${label}`).join(' · ')
   // No guard on activeStatus: the 'all' branch makes statusScoped === projects,
   // so the difference is already 0 there. Under 'active' the hidden rows are
