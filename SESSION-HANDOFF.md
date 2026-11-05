@@ -1,8 +1,25 @@
+# ▶▶ 2026-11-05 (work, day): NICK'S DECISIONS SHIPPED. Hub deployed, cron worker deployed, PB `3081556a2`. **Schema v159 applied to test and prod.**
+
+## Do first
+- Nick pressed Replan at 11:09 for the first real plan. When a plan reaches the Hub: check kept picks made no `packet_prepare` rows, note how long the rebuild took, then close #169 and `bug_mw291o484isxfj`.
+- Bring Nick, together: the 11 taste questions (`.superpowers/sweep/fix-k-report.md`), as mockups, and the `/api/tasks` payload call: 3.8 MB for 1,930 rows, 2.6-4.7 s by curl, about 7 s in the browser. `fix-n-report.md` has the slim-read idea. Plan rows need `question_*_json`, so a slim read can't simply drop those on Today.
+
+## Shipped
+- His picks: rail-only urgency, Plan clears Done (`cleared` on the answer), Delete replaces Archive, Instructions removed, digest switch (Settings, Notifications), one vote per person (`idea_votes`, v158), `workflow_templates` dropped (v159; backup in `.superpowers/sweep/workflow_templates-backup.json`), full-access watchers with notifications, Plan week and Replan, the Day section, solid teal primary, one PageHeader, tighter phone headers with a Filters sheet, and small visual calls.
+- Sweep: Codex's task-panel findings, including the ignored privacy lock on notes and private @mentions that sent their text in a notification. Those notifications already sent stay in D1.
+
+## Known limits
+- PB `/api/mutations` writes do not notify watchers.
+- The PB listener still prints a task's project slug in Hermes's prompt for a task on a hidden project (`hub_ai_listener.py:1698-1701, 1746`). The Hub half is closed; the PB half is not.
+- `npm run typecheck:api --update`: debt fell, floor not lowered.
+- PB decision doc and I37 matrix owed for the retired subtask and `task_files` routes, and for `cleared`.
+
+---
+
 # ▶▶ 2026-11-05 (work, overnight): WHOLE-HUB SWEEP SHIPPED. Hub `3ba1c5ea` deployed (probe PASS), cron worker deployed, PB `2daf9e2d0`+. **Schema v157.**
 
 ## Do first
 - **Nick's decisions:** https://claude.ai/artifact/So7PyUCJZied34W1LZkZM9 (slug `d0e49f24-bc46-44a5-8fd4-26843bea9a28`, collection `answers`). Read them with `db_list`, then do what he picked.
-- Held commits, on branches: `held/watchers` (1281dc69, server side of watchers, touches `mutations.ts`) and `held/urgent-chip` (9c5e3580, removes the Urgent chip).
 - #169 stays open until a real plan reaches the Hub. See the entry below for what it must confirm.
 
 ## Shipped
