@@ -16,6 +16,7 @@
 // grip = drag-to-plan, pin = plan for today, planned pill = unplan. Styles:
 // .tk-* in index.css.
 
+import { parseWatchers } from '../../../shared/watchers'
 import { Link } from 'react-router-dom'
 import { GripHorizontal, MapPin, MessageSquare, Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -193,7 +194,7 @@ export function CardRow(props: CardTaskRowProps) {
 
   const urgent = !isDone && task.priority === 'urgent'
   const displayTitle = taskShortLabel(task)
-  const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
+  const others = [task.assigned_by, ...parseWatchers(task.watchers)]
     // assigned_by is often stored as an email, assignee as a slug: compare slugs.
     .map((s) => (s && s.includes('@') ? slugForEmail(s) : s))
     .filter((s): s is string => !!s && s !== task.assignee && s !== hideFaceOf)
