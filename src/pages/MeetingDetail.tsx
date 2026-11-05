@@ -59,7 +59,8 @@ import { isTaskDone } from '../lib/taskGrouping'
 import { MeetingActionList } from '../components/meetings/MeetingActionList'
 import { prepareActionItems } from '../lib/meetingActionItems'
 import { meetingSummaryText } from '../lib/meetingSummary'
-import { grantedProjectList, meetingDefaultProjectSlug, meetingProjectPills, meetingTagList } from '../lib/projectMeetings'
+import { decisionMayStartOnProject, grantedProjectList, meetingDefaultProjectSlug, meetingProjectPills, meetingTagList } from '../lib/projectMeetings'
+import { useProjectMembers } from '../hooks/useProjectMembers'
 import { projectShortLabel } from '../lib/displayNames'
 import { firstNameFor } from '../lib/personLabel'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
@@ -138,7 +139,7 @@ export default function MeetingDetail() {
   const [showDecisionForm, setShowDecisionForm] = useState(false)
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
-  // null = the person has not chosen: the meeting's own project, when it has one.
+  // null = the person has not chosen: the meeting's own project, when everyone at the meeting is on it.
   const [decisionProject, setDecisionProject] = useState<string | null>(null)
   const decisionTitleRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -159,6 +160,19 @@ export default function MeetingDetail() {
   // first, then by due date (lib/meetingActionItems).
   const actionItems = useMemo(() => prepareActionItems(meeting?.action_items), [meeting?.action_items])
   const completedCount = useMemo(() => actionItems.filter((a) => isTaskDone(a)).length, [actionItems])
+
+  // The action items' projects stand in for "discussed" until the debrief tags it.
+  const derivedTags = [...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]
+  const knownProjects = allProjects.filter((p): p is typeof p & { id: string } => !!p.id)
+  const storedTags = meetingTagList(meeting?.tags)
+  const defaultDecisionProject = meetingDefaultProjectSlug(meetingProjectPills(
+    storedTags.length > 0 ? storedTags : derivedTags, grantedProjectList(meeting?.granted_projects), knownProjects,
+  ))
+  // Read only with the form open, and never for a lab meeting (it cannot start on a project).
+  const { data: decisionProjectMembers } = useProjectMembers(
+    showDecisionForm && meeting?.audience !== 'lab' ? defaultDecisionProject ?? undefined : undefined,
+  )
+  const decisionMayStart = !!meeting && decisionMayStartOnProject(meeting, parseJsonArray(meeting.attendees), decisionProjectMembers)
 
   // "n" still focuses the add-item compose box — independent of the removed
   // drag/focus-index nav, kept as its own small effect.
@@ -216,14 +230,7 @@ export default function MeetingDetail() {
   const loggedDecisions = meeting.logged_decisions ?? []
   const hasDecisions = decisions.length > 0 || loggedDecisions.length > 0
   const status = meetingStatus(meeting)
-  // The action items' projects stand in for "discussed" until the debrief tags it.
-  const derivedTags = [...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]
-  const knownProjects = allProjects.filter((p): p is typeof p & { id: string } => !!p.id)
-  const storedTags = meetingTagList(meeting.tags)
-  const defaultDecisionProject = meetingDefaultProjectSlug(meetingProjectPills(
-    storedTags.length > 0 ? storedTags : derivedTags, grantedProjectList(meeting.granted_projects), knownProjects,
-  ))
-  const chosenDecisionProject = decisionProject ?? defaultDecisionProject ?? ''
+  const chosenDecisionProject = decisionProject ?? (decisionMayStart ? defaultDecisionProject : null) ?? ''
   const rawTeamAgendaItems = meeting.agenda_items || []
   // S9: apply the local drag order so a reordered agenda stays put (mirrors
   // orderedPendingActions). Items with no recorded order sink to the bottom in
@@ -783,8 +790,8 @@ export default function MeetingDetail() {
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   >
-                    <option value="">No project</option>
-                    {knownProjects.map((p) => <option key={p.id} value={p.slug}>{projectShortLabel(p)}</option>)}
+                    <option value="">No project (everyone who can see this meeting)</option>
+                    {knownProjects.map((p) => <option key={p.id} value={p.slug}>{projectShortLabel(p)} (project members only)</option>)}
                   </select>
                   <div className="flex gap-2">
                     <button

@@ -153,3 +153,22 @@ export function meetingDefaultProjectSlug(pills: readonly ProjectPill[]): string
   const pick = granted.length > 0 ? granted : known
   return pick.length === 1 ? pick[0].slug : null
 }
+
+/**
+ * Whether a decision logged on this meeting may START on `candidate`. A decision
+ * naming a project is readable only by that project's members (hub_decisions in
+ * api/lib/table-scope.ts), so it starts there only when everyone at the meeting
+ * is on the project: never on a lab meeting, which reaches every member, and
+ * never when an attendee cannot be matched to a member (a guest, a bare name), or
+ * before the member list has loaded. The person can still choose the project.
+ */
+export function decisionMayStartOnProject(
+  meeting: { audience?: string | null; owner_slug?: string | null },
+  attendees: readonly string[],
+  members: ReadonlyArray<{ slug: string; email?: string | null }> | undefined,
+): boolean {
+  if (meeting.audience === 'lab' || !members || attendees.length === 0) return false
+  const onProject = new Set(members.flatMap((m) => [m.slug.toLowerCase(), ...(m.email ? [m.email.toLowerCase()] : [])]))
+  const people = meeting.owner_slug ? [...attendees, meeting.owner_slug] : attendees
+  return people.every((p) => onProject.has(p.trim().toLowerCase()))
+}
