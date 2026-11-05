@@ -25,6 +25,8 @@ export interface PortalDropdownPosition {
   left: number
   minWidth: number
   maxHeight: number
+  /** Set when the menu opens upward: the distance from the viewport bottom to the menu's bottom edge. Use it in place of `top`. */
+  bottom?: number
 }
 
 interface UsePortalDropdownArgs {

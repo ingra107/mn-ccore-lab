@@ -20,6 +20,9 @@ import { usePortalDropdown, type PortalDropdownPosition } from '../../../hooks/u
 import { viewportBottom } from '../../../lib/viewportBottom'
 import { JOB_ACCENT, INK, INK_DIM, PANEL_BG, withAlpha, type FilterOption } from '../constants'
 
+/** Less room than this below the trigger, and more above: the menu opens upward. */
+const FLIP_BELOW = 240
+
 export function FilterChip({ label, value, options, onChange }: { label: string; value: string | null; options: FilterOption[]; onChange: (v: string | null) => void }) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
@@ -32,14 +35,17 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
   // wrapper — with no portal and no viewport clamp, a trigger sitting low
   // on the page pushed the option list past the bottom of the viewport
   // with no way to scroll to the rest. Clamp maxHeight (floor 120px) rather
-  // than repositioning `top` — the menu always stays anchored directly
-  // below the trigger and becomes internally scrollable when space is tight.
-  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
-    top: rect.bottom + 4,
-    left: Math.min(rect.left, window.innerWidth - 220),
-    minWidth: rect.width,
-    maxHeight: Math.max(Math.min(320, viewportBottom() - rect.bottom - 12), 120),
-  }), [])
+  // than repositioning `top`, and internally scrollable when space is tight. At the
+  // foot of the screen (the phone Filters sheet) it opens upward instead: 120px of a
+  // 71-project list is not a list, and the floor ran it off the bottom.
+  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => {
+    const below = viewportBottom() - rect.bottom - 12
+    const above = rect.top - 12
+    const base = { top: rect.bottom + 4, left: Math.min(rect.left, window.innerWidth - 220), minWidth: rect.width }
+    return below < FLIP_BELOW && above > below
+      ? { ...base, bottom: window.innerHeight - rect.top + 4, maxHeight: Math.min(320, above) }
+      : { ...base, maxHeight: Math.max(Math.min(320, below), 120) }
+  }, [])
   const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLDivElement>({ open, onClose: closeMenu, getPosition })
 
   useEffect(() => {
@@ -85,7 +91,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
         <div
           ref={menuRef}
           role="listbox"
-          style={{ position: 'fixed', top: pos.top, left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid var(--sk-line2)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
+          style={{ position: 'fixed', ...(pos.bottom !== undefined ? { bottom: pos.bottom } : { top: pos.top }), left: pos.left, minWidth: Math.max(pos.minWidth, 200), maxHeight: pos.maxHeight, overflowY: 'auto', background: PANEL_BG, border: '1px solid var(--sk-line2)', borderRadius: 6, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
         >
           {showTypeahead && (
             <div style={{ position: 'sticky', top: 0, background: PANEL_BG, padding: '6px 8px 4px', borderBottom: '1px solid var(--border-subtle)' }}>
