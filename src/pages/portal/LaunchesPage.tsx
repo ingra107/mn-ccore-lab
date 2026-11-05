@@ -18,9 +18,9 @@ export default function LaunchesPage() {
       />
       {user?.isPi ? (
         <div className="mt-4"><LaunchLogPanel /></div>
-      ) : (
+      ) : user?.piResolved ? (
         <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)' }}>Launches are for the PI.</p>
-      )}
+      ) : null}
     </div>
   )
 }

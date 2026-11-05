@@ -8,6 +8,7 @@ import { AuthContext, type AuthUser } from '../hooks/useAuth'
 import { UndoToastProvider } from '../components/UndoToast'
 import ProfilePage from '../pages/portal/ProfilePage'
 import SessionHistory from '../pages/portal/SessionHistory'
+import LaunchesPage from '../pages/portal/LaunchesPage'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
@@ -65,6 +66,14 @@ describe('Session History', () => {
     expect(host.textContent).toContain('Session history is for the PI')
     expect(host.textContent).not.toContain('SessionEnd hook')
     expect(requests.some((r) => r.path.startsWith('/api/pb/'))).toBe(false)
+  })
+
+  it('says nothing about who it is for until the PI check has answered', async () => {
+    const unresolved = { ...pi, isPi: false, piResolved: false }
+    const session = await mount(tree(<SessionHistory />, unresolved), { ready: (h) => h.textContent?.includes('Session History'), label: 'page' })
+    expect(session.textContent).not.toContain('for the PI')
+    const launches = await mount(tree(<LaunchesPage />, unresolved), { ready: (h) => h.textContent?.includes('My Launches'), label: 'page' })
+    expect(launches.textContent).not.toContain('for the PI')
   })
 
   it('drops the commits and actions aggregates and columns: every row holds zero', async () => {

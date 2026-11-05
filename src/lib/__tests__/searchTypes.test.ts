@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { SEARCH_TYPE_ORDER, orderSearchTypes } from '../searchTypes'
+import { SEARCH_TYPE_ORDER, openSearchResult, orderSearchTypes } from '../searchTypes'
 
 const read = (p: string) => readFileSync(join(__dirname, '..', '..', '..', p), 'utf8')
 
@@ -32,5 +32,24 @@ describe('every result type the route can return has a place in the order', () =
     expect(routeKeys.length).toBeGreaterThan(10)
     expect(pageKeys.length).toBeGreaterThan(10)
     for (const k of [...routeKeys, ...pageKeys]) expect(SEARCH_TYPE_ORDER as readonly string[], k).toContain(k)
+  })
+})
+
+describe('openSearchResult', () => {
+  const fake = () => {
+    const calls: unknown[][] = []
+    return { calls, open: (...a: unknown[]) => { calls.push(a); return null }, location: { href: 'start' } }
+  }
+  it('Enter on a public-site row opens a new tab and leaves the portal tab alone', () => {
+    const w = fake()
+    openSearchResult({ url: '/publications/1', details: { external: true } }, w as never)
+    expect(w.calls).toEqual([['/publications/1', '_blank', 'noopener']])
+    expect(w.location.href).toBe('start')
+  })
+  it('Enter on any other row stays in this tab', () => {
+    const w = fake()
+    openSearchResult({ url: '/portal/projects/a', details: {} }, w as never)
+    expect(w.calls).toEqual([])
+    expect(w.location.href).toBe('/portal/projects/a')
   })
 })
