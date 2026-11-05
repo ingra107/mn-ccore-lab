@@ -659,12 +659,14 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
        ORDER BY r.expiration_date ASC
        LIMIT 10`
     ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>(),
-    // 5. Recent project updates since previous meeting (activity_entries kind='update')
+    // 5. Recent project updates since previous meeting (activity_entries kind='update').
+    // R02: team rows only, for every caller. An agenda is shared text, and the PI's
+    // or the author's own private notes do not belong in it either.
     env.DB.prepare(
       `SELECT ae.id, ae.body AS content, ae.update_type, ae.actor_slug AS author, ae.created_at, p.title as project_title
        FROM activity_entries ae
        LEFT JOIN projects p ON ae.project_id = p.id
-       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.hidden_at IS NULL AND ae.created_at > ?
+       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.visibility = 'team' AND ae.hidden_at IS NULL AND ae.created_at > ?
        ORDER BY ae.created_at DESC
        LIMIT 15`
     ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>(),
