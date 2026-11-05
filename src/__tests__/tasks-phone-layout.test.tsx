@@ -110,6 +110,10 @@ describe('My Tasks top bar on a phone', () => {
     const rs = search.getBoundingClientRect()
     expect(rs.right).toBeLessThanOrEqual(390)
     expect(rs.width).toBeGreaterThanOrEqual(80)
+    // Two lines at most for title, Create Task and search: never one line each
+    // (146px). A phone header is tall enough already (audit M19).
+    const title = create.parentElement!.querySelector('h1')!.getBoundingClientRect()
+    expect(rs.bottom - title.top).toBeLessThanOrEqual(100)
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390)
     create.click()
     expect(onCreate).toHaveBeenCalledTimes(1)

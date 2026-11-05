@@ -783,6 +783,7 @@ export default function Meetings() {
                   onToggle={() => setShowAddMeeting(true)}
                   onSubmit={handleAddMeeting}
                   onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']); setNewMeetingTags([]) }}
+                  primary
                   triggerLabel="Record Meeting"
                   submitLabel="Save Meeting"
                 >

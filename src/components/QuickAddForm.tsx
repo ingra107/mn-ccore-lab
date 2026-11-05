@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 import { withAlpha } from '../lib/taskGrouping'
 
 interface QuickAddFormProps {
@@ -13,6 +14,8 @@ interface QuickAddFormProps {
   triggerLabel?: string
   submitLabel?: string
   className?: string
+  /** The trigger is the page's one primary action. */
+  primary?: boolean
 }
 
 // The dashed-gold "+ Add …" pill. Exported so a sibling toggle in the same
@@ -23,6 +26,7 @@ export function QuickAddTrigger({
   icon,
   active = false,
   ariaExpanded,
+  primary = false,
 }: {
   label: string
   onClick: () => void
@@ -31,7 +35,17 @@ export function QuickAddTrigger({
   /** Tint the label gold while the thing it toggles is open. */
   active?: boolean
   ariaExpanded?: boolean
+  /** The page's one primary action: solid teal. */
+  primary?: boolean
 }) {
+  if (primary) {
+    return (
+      <Button variant="primary" type="button" onClick={onClick} aria-expanded={ariaExpanded} className="quick-add-trigger">
+        {icon ?? <Plus {...ICON_PROPS} size={14} />}
+        {label}
+      </Button>
+    )
+  }
   return (
     <button
       type="button"
@@ -55,6 +69,7 @@ export default function QuickAddForm({
   triggerLabel = 'Add',
   submitLabel = 'Add',
   className = '',
+  primary = false,
 }: QuickAddFormProps) {
   return (
     <div className={className}>
@@ -69,7 +84,7 @@ export default function QuickAddForm({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <QuickAddTrigger label={triggerLabel} onClick={onToggle} />
+            <QuickAddTrigger label={triggerLabel} onClick={onToggle} primary={primary} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1618,14 +1618,10 @@ isAuthenticated && (project.slug ?? project.id) && (
                   {tasksCopied ? <Check {...ICON_PROPS} size={11} /> : <FileText {...ICON_PROPS} size={11} />}
                   {tasksCopied ? 'Copied' : 'Copy'}
                 </button>
-                <button
-                  onClick={() => setShowCreateTask(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                  style={{ backgroundColor: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', cursor: 'pointer' }}
-                >
+                <Button variant="primary" size="sm" onClick={() => setShowCreateTask(true)}>
                   <Plus {...ICON_PROPS} size={13} />
                   New Task
-                </button>
+                </Button>
               </div>
             </div>
             {tasksError ? (

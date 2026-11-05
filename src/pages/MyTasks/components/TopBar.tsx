@@ -13,13 +13,13 @@ import { FilterChip } from './FilterChip'
 import FilterLinks from '../../../components/ui/FilterLinks'
 import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
-  JOB_ACCENT,
   INK,
   STATUS_LABEL, STATUS_FILTER_KEYS, parseStatusParam,
   type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
 import { SECTION_ORDER, SECTION_LABEL, type SectionKey } from '../../../lib/taskSections'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { Button } from '../../../components/ui/Button'
 import PageHeartbeat from '../../../components/moments/PageHeartbeat'
 
 interface TopBarProps {
@@ -85,20 +85,10 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             it on phones for the teal + FAB, but that FAB only shows at lg+,
             so phones were left with no create control on this page. It sits
             beside the search field, which takes the rest of the line. */}
-        <button
-          type="button"
-          onClick={onCreateTask}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
-            fontFamily: 'inherit', cursor: 'pointer', border: 'none',
-            backgroundColor: JOB_ACCENT, color: 'var(--sk-card)',
-            flexShrink: 0, whiteSpace: 'nowrap',
-          }}
-        >
+        <Button variant="primary" type="button" onClick={onCreateTask} style={{ flexShrink: 0, padding: '6px 14px', fontSize: 13, borderRadius: 6 }}>
           <Plus {...ICON_PROPS} size={15} />
           Create Task
-        </button>
+        </Button>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -110,7 +100,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           // An input must look like an input (rules-ui-design 20): the gray
           // fill read as disabled in light, so it takes the field look, a
           // well (--cream) with the --field-edge hairline, teal on focus.
-          style={{ padding: '6px 12px', background: 'var(--cream)', border: `1px solid ${searchFocused ? 'var(--job-accent)' : 'var(--field-edge)'}`, borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
+          style={{ padding: '6px 12px', background: 'var(--cream)', border: `1px solid ${searchFocused ? 'var(--job-accent)' : 'var(--field-edge)'}`, borderRadius: 6, color: INK, fontSize: 12, flex: isPhone ? '1 1 140px' : '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
       {/* N1.10 / ROW 25: swipeable-on-phones → CSS .topbar-tab-strip (@media in index.css) */}
