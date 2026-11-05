@@ -26,6 +26,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { usePortalDropdown, type PortalDropdownPosition } from '../../hooks/usePortalDropdown'
 import { dropdownTop } from '../../lib/viewportBottom'
+import { Caret } from './Caret'
 
 export interface GhostSelectOption {
   value: string
@@ -230,7 +231,7 @@ export default function GhostSelect({
         <span style={{ flex: 1, overflow: maxWidth ? 'hidden' : undefined, textOverflow: maxWidth ? 'ellipsis' : undefined, whiteSpace: 'nowrap' }}>
           {displayLabel}
         </span>
-        <span aria-hidden="true" style={{ fontSize: 9, color: 'var(--slate)', opacity: 0.70, flexShrink: 0 }}>▾</span>
+        <Caret />
       </button>
 
       {/* ── Portal menu ── */}

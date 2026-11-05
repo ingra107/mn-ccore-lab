@@ -9,8 +9,6 @@ import {
   Tag,
   List,
   GitCommitVertical,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -40,6 +38,7 @@ import CreateDecisionModal from '../../components/CreateDecisionModal'
 import { SleekTable, SleekRow, type SleekColumn, type SleekSort } from '../../components/table/SleekRows'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Caret } from '../../components/ui/Caret'
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -563,7 +562,7 @@ function DecisionsList({
       render: (d) => (
         <div className="sr-tt" title={d.rationale || d.title}>
           <span className="sr-m" aria-hidden="true" style={{ display: 'inline-flex', flexShrink: 0 }}>
-            {expandedId === d.id ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronRight {...ICON_PROPS} size={12} />}
+            <Caret dir={expandedId === d.id ? 'down' : 'right'} />
           </span>
           <span className="sr-x">{d.title}</span>
           {d.outcome_sentiment && d.outcome_sentiment !== 'pending' && (

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
+import { Plus, X, Check, AlertTriangle } from 'lucide-react'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import BodyText from '../../components/BodyText'
@@ -24,6 +24,7 @@ import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { Caret } from '../../components/ui/Caret'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -522,9 +523,9 @@ function MenteeGroup({
         }}
       >
         {expanded ? (
-          <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Caret />
         ) : (
-          <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Caret dir="right" />
         )}
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={20} />

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronDown, ChevronRight, Filter, RotateCcw } from 'lucide-react'
+import { Filter, RotateCcw } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -13,6 +13,7 @@ import { PATHS } from '../../constants/paths'
 import { useAllCascades, useDeadlineImpact } from '../../hooks/useApiData'
 import type { CascadeGraph, DeadlineNode } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Caret } from '../../components/ui/Caret'
 
 export default function DeadlineCascadePage() {
   const navigate = useNavigate()
@@ -159,7 +160,6 @@ export default function DeadlineCascadePage() {
                 counts.atRisk ? `${counts.atRisk} at risk` : null,
                 counts.onTrack ? `${counts.onTrack} on track` : null,
               ].filter(Boolean).join(' · ') || 'all done'
-              const Chev = open ? ChevronDown : ChevronRight
 
               return (
                 <motion.div
@@ -191,7 +191,7 @@ export default function DeadlineCascadePage() {
                       textAlign: 'left',
                     }}
                   >
-                    <Chev {...ICON_PROPS} size={14} aria-hidden="true" style={{ color: 'var(--sk-t3)', flexShrink: 0, marginTop: 3 }} />
+                    <Caret dir={open ? 'down' : 'right'} />
                     <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 'var(--sp-sm)', rowGap: 2, minWidth: 0, flex: 1 }}>
                       <span style={{
                         fontSize: '13px',
