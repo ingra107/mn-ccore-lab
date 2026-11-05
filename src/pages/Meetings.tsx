@@ -515,8 +515,8 @@ export default function Meetings() {
   // table — one unscoped fetch shared by the per-meeting actionItems list
   // (meetingRowToMeeting, below), the list-row counts (actionCountsByMeetingId),
   // and the page-header totals. useMeetingLinkedTasks()
-  // deliberately bypasses useTasks()'s dedupTasks() cross-source collapsing —
-  // see its doc comment in useApiData.ts — and shares its cache entry with the
+  // deliberately bypasses useTasks()'s dedupTasks() — see its doc comment in
+  // useApiData.ts — and shares its cache entry with the
   // dashboard "next meeting" widgets that need the same per-meeting counts.
   const { data: allTasksData = [] } = useMeetingLinkedTasks()
   const tasksByMeetingId = useMemo(() => {

@@ -11,6 +11,7 @@
  * into frontend types (camelCase, parsed arrays) so components don't change.
  */
 
+import { dedupTasks } from '../lib/taskDedup'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 import {
@@ -651,11 +652,8 @@ export function useMeetingDetail(id: string) {
 // useCreateActionItem hooks (see T9's meetingRowToMeeting comment in
 // Meetings.tsx for the same rationale).
 // Deliberately fetchTasks() directly, NOT useTasks() — useTasks() runs
-// dedupTasks(), which collapses same title+assignee tasks GLOBALLY, including
-// across meeting and non-meeting tasks. Filtering to meeting_id BEFORE any
-// dedup (callers do their own, scoped dedup if they need one) avoids a
-// meeting-linked item losing to an unrelated same-title task for the same
-// cache slot. No-filter calls share ONE cache entry (['tasks',
+// dedupTasks() (lib/taskDedup.ts), and callers here do their own, scoped dedup
+// if they need one. No-filter calls share ONE cache entry (['tasks',
 // 'all-for-meeting-counts']) with Meetings.tsx's per-meeting count/list joins.
 export function useMeetingLinkedTasks(filters?: { assignee?: string; project?: string }) {
   return useQuery({
@@ -669,20 +667,6 @@ export function useMeetingLinkedTasks(filters?: { assignee?: string; project?: s
 }
 
 // ── Tasks (unified task system) ──────────────────────────────
-
-// Dedup carried-forward items: normalize "[Carried forward]" prefix, keep most recent per description+assignee
-function dedupTasks(tasks: TaskRow[]): TaskRow[] {
-  const seen = new Map<string, TaskRow>()
-  for (const task of tasks) {
-    const normalized = (task.title || task.description).replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
-    const key = `${normalized}::${task.assignee}`
-    const existing = seen.get(key)
-    if (!existing || task.created_at > existing.created_at) {
-      seen.set(key, task)
-    }
-  }
-  return [...seen.values()]
-}
 
 // Backlog #1039: `options.retry` is opt-in (default unset -- every existing
 // caller keeps react-query's default retry:3 exponential backoff,
@@ -1777,7 +1761,8 @@ export function useUserCalendarEvents() {
   return useQuery({
     queryKey: ['user-calendar-events'],
     queryFn: async (): Promise<UserCalendarEvent[]> => {
-      const res = await fetch('/api/integrations/calendar/events')
+      // tz: the range is the viewer's days (R13), and the Worker cannot know their zone.
+      const res = await fetch(`/api/integrations/calendar/events?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`)
       // #495: this used to swallow failures as `return []`, which renders
       // identically to "no events today" — a real backend outage produced
       // zero signal (masked the 2026-07-06 calendar outage post-mortem).

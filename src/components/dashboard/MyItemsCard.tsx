@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { User, Circle, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useMeetingLinkedTasks } from '../../hooks/useApiData'
-import type { TaskRow } from '../../lib/api'
 import { useUnreadCount } from '../../hooks/useNotifications'
 import { getPersonInfo } from '../../data/team'
 import { isOverdue } from '../../lib/dateUtils'
@@ -13,6 +12,7 @@ import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { isTaskDone } from '../../lib/taskGrouping'
+import { dedupTasks } from '../../lib/taskDedup'
 
 function MyItemsCard() {
   const { user } = useAuth()
@@ -25,18 +25,7 @@ function MyItemsCard() {
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
 
   // Deduplicate carried-forward items
-  const items = useMemo(() => {
-    const seen = new Map<string, TaskRow>()
-    for (const item of allItems) {
-      const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
-      const key = `${normalized}::${item.assignee}`
-      const existing = seen.get(key)
-      if (!existing || item.created_at > existing.created_at) {
-        seen.set(key, item)
-      }
-    }
-    return [...seen.values()]
-  }, [allItems])
+  const items = useMemo(() => dedupTasks(allItems), [allItems])
 
   const pending = items.filter((i) => !isTaskDone(i))
   const overdueCount = pending.filter((i) => isOverdue(i.due_date)).length

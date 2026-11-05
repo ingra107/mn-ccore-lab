@@ -41,7 +41,7 @@ const task = (id: string, extra: Row = {}): Row => ({
 })
 const opt = (key: string) => ({ key, label: key, direction: `Step ${key}`, deliverable_kind: 'answer', recommended: true })
 const plan = (id: string, at: string, picks: string[]): Row => task(id, {
-  title: 'Plan your week', source: 'week_plan', kind: 'question', created_at: at, // the task read keeps the newest row of a title (dedupTasks)
+  title: 'Plan your week', source: 'week_plan', kind: 'question', created_at: at,
   question_spec_json: JSON.stringify({
     v: 1, kind: 'week_plan', week_start: WEEK, tz: 'America/Chicago', prompt: 'Plan', expires_at: null,
     candidates: picks.map((p) => ({ task_id: p, title: p, why: '', evidence: [], options: [opt(p)] })),
