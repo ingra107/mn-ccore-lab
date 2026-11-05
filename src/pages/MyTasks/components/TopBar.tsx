@@ -47,7 +47,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   const isPhone = useIsMobile(768)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
-  const activeFilterCount = [filter.group, filter.priority, filter.status, filter.project, filter.mentee, quickView !== 'all', !filter.hideCompleted].filter(Boolean).length
+  const activeFilterCount = [filter.group, filter.priority, filter.status, filter.project, filter.mentee, quickView !== 'all'].filter(Boolean).length
   // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
   // sidebar badge count + the gold NEW chip on rows). Drains on open.
   const tabs: { value: QuickViewKey; label: string; tone?: 'overdue' }[] = [
@@ -62,6 +62,13 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     { value: 'declined', label: 'Declined' },
   ]
   const hasFilters = filter.priority || filter.status || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
+  // One Clear all on both widths: the chips, the quick view and the search. Show
+  // completed is a view of the list, not a filter, so it neither counts nor clears.
+  const clearAll = () => {
+    setFilter((f) => ({ priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted }))
+    setSearch('')
+    setQuickView('all')
+  }
   const quickLinks = (scroll: boolean) => (
     <FilterLinks className={scroll ? 'tk-flt-scroll' : undefined} ariaLabel="Quick view" options={tabs} value={quickView} onChange={setQuickView} />
   )
@@ -160,7 +167,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           <div className="tk-fsel">
             <button
               type="button"
-              onClick={() => { setFilter((f) => ({ priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
+              onClick={clearAll}
               style={{ color: 'var(--sk-t3)', textDecoration: 'underline', textUnderlineOffset: 2 }}
             >Clear all</button>
           </div>
@@ -185,7 +192,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
           count={activeFilterCount}
-          onClear={() => { setFilter(() => ({ priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: true })); setQuickView('all') }}
+          onClear={clearAll}
         >
           <FilterSection label="Show">{quickLinks(false)}</FilterSection>
           <FilterSection label="Narrow by"><div className="tk-fsheet-chips">{chips}</div></FilterSection>

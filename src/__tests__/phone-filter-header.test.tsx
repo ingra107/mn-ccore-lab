@@ -18,11 +18,11 @@ afterEach(async () => { await page.viewport(1280, 900) })
 
 const empty: FilterState = { priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: true }
 
-function Bar({ start = empty, quick = 'all' as QuickViewKey }: { start?: FilterState; quick?: QuickViewKey }) {
+function Bar({ start = empty, quick = 'all' as QuickViewKey, initialSearch = '' }: { start?: FilterState; quick?: QuickViewKey; initialSearch?: string }) {
   const [filter, setFilter] = useState(start)
   const [quickView, setQuickView] = useState<QuickViewKey>(quick)
   const [view, setView] = useState<ViewMode>('list')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch)
   return (
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
@@ -74,8 +74,38 @@ describe('Tasks header on a phone', () => {
 
   it('counts a filter a link arrived with', async () => {
     await page.viewport(390, 844)
-    const host = await mount(<Bar start={{ ...empty, priority: 'urgent', hideCompleted: false }} quick="overdue" />, { ready: filtersBtn, label: 'TopBar', width: '390px' })
-    expect(filtersBtn(host)!.getAttribute('aria-label')).toBe('Filters, 3 on')
+    const host = await mount(<Bar start={{ ...empty, priority: 'urgent' }} quick="overdue" />, { ready: filtersBtn, label: 'TopBar', width: '390px' })
+    expect(filtersBtn(host)!.getAttribute('aria-label')).toBe('Filters, 2 on')
+  })
+
+  // Show completed widens the list, so it is not a filter the count may claim.
+  it('does not count Show completed', async () => {
+    await page.viewport(390, 844)
+    const host = await mount(<Bar start={{ ...empty, hideCompleted: false }} />, { ready: filtersBtn, label: 'TopBar', width: '390px' })
+    expect(filtersBtn(host)!.getAttribute('aria-label')).toBe('Filters')
+  })
+
+  // One clearAll: chips, quick view and search go; Show completed stays as set.
+  it.each([[390, 844, 'phone'], [1280, 900, 'wide']] as const)('Clear all does the same on %i (%s)', async (w, h, kind) => {
+    await page.viewport(w, h)
+    const host = await mount(<Bar start={{ ...empty, priority: 'urgent', hideCompleted: false }} quick="overdue" initialSearch="irb" />, {
+      ready: (x) => x.querySelector('input[aria-label="Search tasks"]'), label: 'TopBar', width: `${Math.min(w, 1100)}px`,
+    })
+    if (kind === 'phone') {
+      await vi.waitFor(() => expect(filtersBtn(host)).not.toBeNull())
+      filtersBtn(host)!.click()
+    }
+    const root = () => (kind === 'phone' ? document.querySelector<HTMLElement>('[role="dialog"][aria-label="Filters"]')! : host)
+    await vi.waitFor(() => expect(root()).not.toBeNull())
+    const clear = await vi.waitFor(() => {
+      const b = [...root().querySelectorAll('button')].find((x) => x.textContent === 'Clear all')
+      expect(b).toBeTruthy()
+      return b!
+    })
+    clear.click()
+    await vi.waitFor(() => expect(host.querySelector<HTMLInputElement>('input[aria-label="Search tasks"]')!.value).toBe(''))
+    expect([...root().querySelectorAll('button')].some((b) => b.textContent === 'Hide completed')).toBe(true)
+    expect([...root().querySelectorAll('[aria-label="Quick view"] [aria-pressed="true"]')].map((b) => b.textContent)).toEqual(['All'])
   })
 
   it('keeps the words and chips on the row at a wide width', async () => {
