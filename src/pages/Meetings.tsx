@@ -482,8 +482,7 @@ export default function Meetings() {
   const pageRef = useRef<HTMLDivElement>(null)
   const isPhone = useIsMobile(768)
   useFitViewportHeight(pageRef, { minHeight: 480, headerFloor: 360, fill: isPhone })
-  // `?filter=today` is the Today page's "meetings" stat line link: this page's
-  // list narrowed to today's meeting records.
+  // `?filter=today`: this page's list narrowed to today's meeting records.
   const [searchParams, setSearchParams] = useSearchParams()
   const filter: FilterMode = (['today', 'decisions', 'actions'] as const).find((k) => k === searchParams.get('filter')) ?? 'all'
   const setFilter = (next: FilterMode) => setSearchParams((prev) => {
@@ -501,6 +500,8 @@ export default function Meetings() {
   // M-34: mobile view — false = show list, true = show detail
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
+  const queryClient = useQueryClient()
+  const { showError } = useToast()
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
   const { data: projectList = [], isLoading: projectsLoading } = useProjects()
   const { data: cadence } = useMeetingCadence()
@@ -685,19 +686,29 @@ export default function Meetings() {
     { key: 'actions', label: 'Actions' },
   ]
 
-  function handleAddMeeting() {
+  // The form holds its fields until the server has the meeting. This used to
+  // clear them up front and reload the page on any answer, a 500 included, so a
+  // refused meeting vanished along with the filters (fable audit F16).
+  async function handleAddMeeting() {
     if (!newMeetingDate || !newMeetingTitle.trim()) return
-    fetch('/api/meetings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        date: newMeetingDate,
-        title: newMeetingTitle.trim(),
-        attendees: newMeetingAttendees,
-        agenda: newMeetingAgenda.filter((a) => a.trim()),
-        ...(newMeetingTags.length > 0 ? { tags: newMeetingTags } : {}),
-      }),
-    }).then(() => { window.location.reload() })
+    try {
+      const res = await fetch('/api/meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: newMeetingDate,
+          title: newMeetingTitle.trim(),
+          attendees: newMeetingAttendees,
+          agenda: newMeetingAgenda.filter((a) => a.trim()),
+          ...(newMeetingTags.length > 0 ? { tags: newMeetingTags } : {}),
+        }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    } catch {
+      showError('Could not save the meeting. Your entries are still in the form.')
+      return
+    }
+    void queryClient.invalidateQueries({ queryKey: ['meetings'] })
     setNewMeetingDate('')
     setNewMeetingTitle('')
     setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin'])
