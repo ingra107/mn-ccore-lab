@@ -250,7 +250,11 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 296 as of 2026-11-03 -- schema-v157 Today sections (+1): POST /api/tasks/:id/sort.
     // 294 as of 2026-11-04 -- the Re-plan button retired (-2): GET + POST
     //   /api/week-plan/replan. A plan is made in a live session now.
-    expect(ROUTE_REGISTRY).toHaveLength(294)
+    // 290 as of 2026-11-05 -- the Settings Profile and Templates tabs retired
+    //   (-4): GET + POST /api/settings, GET + POST /api/workflow-templates.
+    //   Nothing read what they stored; lab_settings itself stays (pi_emails,
+    //   the hub_* flags) and is read in the Worker, not through a route.
+    expect(ROUTE_REGISTRY).toHaveLength(290)
   })
 
   // cv-data returned team_members.email for mentee rows to any signed-in user

@@ -53,7 +53,6 @@ async function main() {
     '/api/calendar/events',
     '/api/stats',
     '/api/search?q=CLIF',
-    '/api/settings',
     '/api/commitments',
   ]
 

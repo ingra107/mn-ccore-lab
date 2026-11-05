@@ -30,12 +30,6 @@ async function main() {
       }
     }
 
-    // ═══════════════════ SETTINGS PERSISTENCE ═══════════════════
-    section(s, '11.B  Lab settings endpoint')
-    const settings = await apiGet<Array<{ key: string; value: string }>>(s, '/api/settings')
-    if (!settings) bug(s, 'SETTINGS-GET', 'P1', '11.B GET /api/settings', 'null', 'array')
-    else pass(s, `11.B /api/settings returns ${settings.length} settings`)
-
     // ═══════════════════ NARRATIVES ═══════════════════
     section(s, '11.C  Narratives endpoint')
     const narratives = await apiGet<Array<{ id: string; topic: string }>>(s, '/api/narratives')

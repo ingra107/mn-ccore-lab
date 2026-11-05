@@ -147,24 +147,6 @@
       "covered": true
     },
     {
-      "id": "api-get-settings",
-      "component": "api/routes/settings.ts",
-      "type": "api",
-      "description": "GET /api/settings — lab settings",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Lab settings",
-      "covered": true
-    },
-    {
-      "id": "api-get-workflow-templates",
-      "component": "api/routes/settings.ts",
-      "type": "api",
-      "description": "GET /api/workflow-templates — workflow templates",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API GET Workflow templates",
-      "covered": true
-    },
-    {
       "id": "api-get-calendar-events",
       "component": "api/routes/calendar.ts",
       "type": "api",
@@ -486,15 +468,6 @@
       "description": "POST /api/projects/:slug/updates — post project update",
       "test_file": "tests/inspection.spec.ts",
       "test_name": "API POST: Post project update",
-      "covered": true
-    },
-    {
-      "id": "api-post-settings",
-      "component": "api/routes/settings.ts",
-      "type": "api",
-      "description": "POST /api/settings — update lab settings",
-      "test_file": "tests/inspection.spec.ts",
-      "test_name": "API POST: Update lab settings",
       "covered": true
     },
     {

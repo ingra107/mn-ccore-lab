@@ -1,21 +1,11 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import {
-  Layers, Plus, X, GripVertical, Check, RotateCcw, Sun, Moon, ArrowRight,
-  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker,
-} from 'lucide-react'
+import { Check, RotateCcw, Sun, Moon, ArrowRight } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
-import EmptyState from '../../components/EmptyState'
-import { Button } from '../../components/ui/Button'
 import Field from '../../components/ui/Field'
 import SectionHead from '../../components/ui/SectionHead'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
-import { TextSkeleton } from '../../components/LoadingSkeleton'
-import { staggerContainer, staggerItem } from '../../lib/animations'
-import InlineSelect from '../../components/InlineSelect'
 import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
@@ -26,27 +16,6 @@ import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { useDarkMode } from '../../hooks/useDarkMode'
 import ConfirmButton from '../../components/ui/ConfirmButton'
-
-interface WorkflowTemplate {
-  id: string
-  name: string
-  stages: string
-  is_default: number
-  created_at: string
-}
-
-const LAB_ICON_OPTIONS = [
-  { name: 'flask', Icon: FlaskConical },
-  { name: 'microscope', Icon: Microscope },
-  { name: 'brain', Icon: Brain },
-  { name: 'heartbeat', Icon: Activity },
-  { name: 'heart', Icon: Heart },
-  { name: 'stethoscope', Icon: Stethoscope },
-  { name: 'dna', Icon: Dna },
-  { name: 'atom', Icon: Atom },
-  { name: 'beaker', Icon: Beaker },
-  { name: 'book', Icon: BookOpen },
-] as const
 
 // P3-7 (2026-06-09): the ONE global table-density control. Backed by the
 // `hub-table-density` key, applied at the document root so every data table
@@ -98,85 +67,32 @@ function TodayDefaultViewControl() {
   )
 }
 
-function LabIconPicker({ value, onChange }: { value: string; onChange: (next: string) => void }) {
-  // Legacy emoji values fall through to no-selection — picking any tile migrates.
-  const selected = LAB_ICON_OPTIONS.some(o => o.name === value) ? value : ''
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-      {LAB_ICON_OPTIONS.map(({ name, Icon }) => {
-        const isSelected = selected === name
-        return (
-          <Button size="icon"
-            key={name}
-            type="button"
-            onClick={() => onChange(name)}
-            aria-label={name}
-            aria-pressed={isSelected}
-            className={`tk-btn${isSelected ? ' tk-sel' : ''}`}
-            style={{ width: 40, height: 40, justifyContent: 'center', padding: 0 }}
-          >
-            <Icon {...ICON_PROPS} size={18} />
-          </Button>
-        )
-      })}
-    </div>
-  )
+// P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
+// P1-9: AI tab removed (Nick, 2026-06-09) — it was placeholder copy + a
+// duplicate Team Directory link. The Directory link already lives at the top
+// of this page (its sensible home), so nothing is lost.
+// F08/F09 (2026-11-05): the Profile tab (four lab_settings keys nothing
+// read) and the Templates tab (workflow templates nothing read) are gone;
+// an old #profile or #templates link lands on Lab (TAB_ALIASES).
+const TABS = [
+  { key: 'lab', label: 'Lab' },
+  { key: 'integrations', label: 'Integrations' },
+  { key: 'appearance', label: 'Appearance' },
+  { key: 'danger', label: 'Danger Zone' },
+] as const
+
+type TabKey = (typeof TABS)[number]['key']
+
+// Old hash links from before the Profile and Templates tabs were removed.
+const TAB_ALIASES: Record<string, string> = { profile: 'lab', templates: 'lab' }
+
+function tabFromHash(): TabKey {
+  const raw = window.location.hash.replace('#', '')
+  const hash = TAB_ALIASES[raw] ?? raw
+  return TABS.find((t) => t.key === hash)?.key ?? 'lab'
 }
 
 export default function SettingsPage() {
-  const queryClient = useQueryClient()
-
-  // Load settings
-  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
-    queryKey: ['settings'],
-    queryFn: async () => {
-      const res = await fetch('/api/settings')
-      if (!res.ok) return {}
-      const data = await res.json()
-      return data.data as Record<string, string>
-    },
-    staleTime: 60 * 1000,
-  })
-
-  // Load workflow templates
-  const { data: templates = [], isPending: templatesPending } = useQuery({
-    queryKey: ['workflow-templates'],
-    queryFn: async () => {
-      const res = await fetch('/api/workflow-templates')
-      if (!res.ok) return []
-      const data = await res.json()
-      return data.data as WorkflowTemplate[]
-    },
-    staleTime: 60 * 1000,
-  })
-
-  // Update settings mutation
-  const updateSettings = useMutation({
-    mutationFn: async (updates: Record<string, string>) => {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      })
-      return res.json()
-    },
-    onSuccess: () => { setSaved(true); setTimeout(() => setSaved(false), 2000) },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['settings'] }),
-  })
-
-  // Create workflow template mutation
-  const createTemplate = useMutation({
-    mutationFn: async (template: { name: string; stages: string[] }) => {
-      const res = await fetch('/api/workflow-templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(template),
-      })
-      return res.json()
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['workflow-templates'] }),
-  })
-
   const [saved, setSaved] = useState(false)
   const [showDebugItems, setShowDebugItems] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -191,47 +107,8 @@ export default function SettingsPage() {
   const currentTheme: 'light' | 'dark' = isDark ? 'dark' : 'light'
   const applyTheme = (theme: 'light' | 'dark') => setTheme(theme)
 
-  // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
-  // P1-9: AI tab removed (Nick, 2026-06-09) — it was placeholder copy + a
-  // duplicate Team Directory link. The Directory link already lives at the top
-  // of this page (its sensible home), so nothing is lost.
-  const TABS = [
-    { key: 'profile', label: 'Profile' },
-    { key: 'templates', label: 'Templates' },
-    { key: 'lab', label: 'Lab' },
-    { key: 'integrations', label: 'Integrations' },
-    { key: 'appearance', label: 'Appearance' },
-    { key: 'danger', label: 'Danger Zone' },
-  ] as const
 
-  // T-34 "changed-this-session" dots. Snapshot settings on first load;
-  // compare current per-tab to detect dirty tabs. Auto-saves clear nothing —
-  // the dot signals "you edited this tab since opening settings."
-  // Adjust state during render (React-endorsed "store info from a prop"
-  // pattern: https://react.dev/learn/you-might-not-need-an-effect) rather
-  // than an effect — avoids both a ref-read-during-render and a
-  // setState-in-effect cascading render for what's a one-time snapshot.
-  const [initialSettings, setInitialSettings] = useState<Record<string, unknown> | null>(null)
-  // Snapshot only once the query has loaded: while loading, `settings` is the
-  // {} default, and snapshotting that marked Profile dirty with no edit.
-  if (!settingsLoading && !initialSettings) {
-    setInitialSettings({ ...settings })
-  }
-  const dirtyTabs = useMemo(() => {
-    const out = new Set<string>()
-    if (!initialSettings || !settings) return out
-    const profileKeys = ['lab_name', 'lab_description', 'lab_icon', 'lab_type']
-    if (profileKeys.some((k) => JSON.stringify(initialSettings[k]) !== JSON.stringify((settings as Record<string, unknown>)[k]))) out.add('profile')
-    // Other tabs either save outside the settings row (appearance = localStorage,
-    // danger = actions) or have no tracked fields yet.
-    return out
-  }, [settings, initialSettings])
-  type TabKey = (typeof TABS)[number]['key']
-  const [activeTab, setActiveTab] = useState<TabKey>(() => {
-    if (typeof window === 'undefined') return 'profile'
-    const fromHash = window.location.hash.replace('#', '') as TabKey
-    return TABS.some((t) => t.key === fromHash) ? fromHash : 'profile'
-  })
+  const [activeTab, setActiveTab] = useState<TabKey>(() => (typeof window === 'undefined' ? 'lab' : tabFromHash()))
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.location.hash !== `#${activeTab}`) {
@@ -239,15 +116,10 @@ export default function SettingsPage() {
     }
   }, [activeTab])
   useEffect(() => {
-    function onHash() {
-      const next = window.location.hash.replace('#', '') as TabKey
-      if (TABS.some((t) => t.key === next)) setActiveTab(next)
-    }
+    function onHash() { setActiveTab(tabFromHash()) }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-
-  if (settingsLoading) return <TextSkeleton lines={8} />
 
   return (
     <div className="content-container">
@@ -273,121 +145,11 @@ export default function SettingsPage() {
           idPrefix="settings"
           value={activeTab}
           onChange={setActiveTab}
-          options={TABS.map((tab) => ({
-            value: tab.key,
-            label: tab.label,
-            icon: dirtyTabs.has(tab.key) ? (
-              <span
-                aria-label="Edited this session"
-                style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--job-accent)' }}
-              />
-            ) : undefined,
-          }))}
+          options={TABS.map((tab) => ({ value: tab.key, label: tab.label }))}
         />
       </div>
 
       <div className="flex flex-col max-w-2xl" role="tabpanel" id={`settings-tabpanel-${activeTab}`} aria-labelledby={`settings-tab-${activeTab}`} style={{ marginTop: 'var(--sp-xl)' }}>
-        {/* Basic Information */}
-        {activeTab === 'profile' && (
-        <SettingsSection title="Basic Information" subtitle="These appear in the sidebar header and dashboard">
-          <SettingsField label="Lab name" hint="Shown in the sidebar and page titles">
-            <SettingsInput
-              value={settings.lab_name || ''}
-              onSave={(v) => updateSettings.mutate({ lab_name: v })}
-              placeholder="Enter lab name"
-            />
-          </SettingsField>
-          <SettingsField label="Description" hint="Brief summary of your lab's research focus">
-            <SettingsInput
-              value={settings.lab_description || ''}
-              onSave={(v) => updateSettings.mutate({ lab_description: v })}
-              placeholder="Describe your lab's focus"
-              multiline
-            />
-          </SettingsField>
-          <SettingsField label="Lab icon" hint="Displayed next to your lab name">
-            <LabIconPicker
-              value={settings.lab_icon || ''}
-              onChange={(v) => updateSettings.mutate({ lab_icon: v })}
-            />
-          </SettingsField>
-          <SettingsField label="Lab type">
-            <InlineSelect
-              value={settings.lab_type || 'clinical_research'}
-              options={[
-                { value: 'clinical_research', label: 'Clinical Research' },
-                { value: 'basic_science', label: 'Basic Science' },
-                { value: 'translational', label: 'Translational' },
-                { value: 'computational', label: 'Computational' },
-                { value: 'mixed', label: 'Mixed Methods' },
-              ]}
-              onChange={(v) => updateSettings.mutate({ lab_type: v })}
-              size="md"
-              alwaysShowChevron
-            />
-          </SettingsField>
-        </SettingsSection>
-        )}
-
-        {/* Workflow Templates */}
-        {activeTab === 'templates' && (
-        <SettingsSection title="Workflow Templates" subtitle="Define the stages your projects move through (e.g., Idea → Analysis → Writing → Published)">
-          {templates.length === 0 && !templatesPending && (
-            <EmptyState
-              icon={<Layers size={32} />}
-              title="No workflow templates"
-              subtitle="Create a template to define custom project stages."
-            />
-          )}
-          <motion.div className="flex flex-col gap-3" variants={staggerContainer} initial="hidden" animate="visible">
-            {templates.map((template) => {
-              const stages: string[] = JSON.parse(template.stages)
-              return (
-                <motion.div key={template.id} variants={staggerItem} className="sk-mat" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                      {template.name}
-                    </span>
-                    {template.is_default === 1 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--sk-t2)', backgroundColor: 'var(--sk-line)' }}>
-                        Default
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {stages.map((stage, i) => {
-                      // One neutral chip for every stage: a stage is not a color
-                      // job (rules-ui-design principle 21).
-                      const colors = [
-                        { bg: 'var(--sk-line)', text: 'var(--sk-t2)' },
-                      ]
-                      const c = colors[i % colors.length]
-                      return (
-                        <span
-                          key={i}
-                          className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-                          style={{
-                            color: c.text,
-                            backgroundColor: c.bg,
-                          }}
-                        >
-                          {stage}
-                        </span>
-                      )
-                    })}
-                  </div>
-                  <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                    {stages.length} stage{stages.length !== 1 ? 's' : ''}
-                  </span>
-                </motion.div>
-              )
-            })}
-          </motion.div>
-
-          <CreateTemplateForm onSubmit={(name, stages) => createTemplate.mutate({ name, stages })} />
-        </SettingsSection>
-        )}
-
         {/* Lab preferences — T-29 attention thresholds */}
         {activeTab === 'lab' && (
         <SettingsSection title="Lab Preferences" subtitle="Staleness & attention thresholds — one definition (days since meaningful movement), per-domain defaults">
@@ -682,156 +444,3 @@ function SettingsField({ label, hint, children }: { label: string; hint?: string
   )
 }
 
-// ── Settings Input (auto-save on blur) ───────────────────────
-
-function SettingsInput({ value, onSave, placeholder, multiline }: { value: string; onSave: (v: string) => void; placeholder: string; multiline?: boolean }) {
-  const [draft, setDraft] = useState(value)
-  useEffect(() => { setDraft(value) }, [value])
-
-  const handleBlur = () => {
-    if (draft !== value) onSave(draft)
-  }
-
-  const inputStyle = {
-    fontSize: '14px',
-    color: 'var(--ink)',
-    border: '1px solid var(--field-edge)',
-    backgroundColor: 'var(--field-bg)',
-  }
-
-  if (multiline) {
-    return (
-      <textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={handleBlur}
-        placeholder={placeholder}
-        rows={2}
-        className="w-full rounded-md px-3 py-2 text-sm outline-none resize-none"
-        style={inputStyle}
-      />
-    )
-  }
-
-  return (
-    <input
-      type="text"
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={handleBlur}
-      placeholder={placeholder}
-      className="w-full rounded-md px-3 py-2 text-sm outline-none"
-      style={inputStyle}
-    />
-  )
-}
-
-// ── Create Template Form ─────────────────────────────────────
-
-function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: string[]) => void }) {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [stages, setStages] = useState<string[]>([''])
-  const nameInputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (open) nameInputRef.current?.focus({ preventScroll: true })
-  }, [open])
-
-  const addStage = () => setStages([...stages, ''])
-  const removeStage = (i: number) => setStages(stages.filter((_, idx) => idx !== i))
-  const updateStage = (i: number, v: string) => setStages(stages.map((s, idx) => idx === i ? v : s))
-
-  const handleSubmit = () => {
-    const validStages = stages.filter((s) => s.trim())
-    if (!name.trim() || validStages.length < 2) return
-    onSubmit(name.trim(), validStages)
-    setName('')
-    setStages([''])
-    setOpen(false)
-  }
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="tk-btn self-start mt-2"
-      >
-        <Plus {...ICON_PROPS} size={14} />
-        Create Custom Template
-      </button>
-    )
-  }
-
-  return (
-    <div className="sk-mat mt-2" style={{ borderRadius: 'var(--radius-lg)', padding: 'var(--sp-lg)' }}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
-        <Button size="icon" onClick={() => setOpen(false)} aria-label="Close" className="hit-area" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
-          <X {...ICON_PROPS} size={16} />
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <input
-          ref={nameInputRef}
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Template name (e.g., Clinical Trial)"
-          className="w-full rounded-md px-3 py-2 text-sm outline-none"
-          style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
-        />
-
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium" style={{ color: 'var(--slate)' }}>Stages (in order)</span>
-          {stages.map((stage, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <GripVertical {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-              <input
-                type="text"
-                value={stage}
-                onChange={(e) => updateStage(i, e.target.value)}
-                placeholder={`Stage ${i + 1}`}
-                className="flex-1 rounded-md px-3 py-1.5 text-sm outline-none"
-                style={{ border: '1px solid var(--field-edge)', backgroundColor: 'var(--field-bg)' }}
-              />
-              {stages.length > 1 && (
-                <Button size="icon"
-                  type="button"
-                  onClick={() => removeStage(i)}
-                  aria-label={`Remove stage ${i + 1}`}
-                  title={`Remove stage ${i + 1}`}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: 5, margin: -5 }}
-                >
-                  <X {...ICON_PROPS} size={14} />
-                </Button>
-              )}
-            </div>
-          ))}
-          <button
-            onClick={addStage}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded self-start"
-            style={{ color: 'var(--job-accent)', cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            <Plus {...ICON_PROPS} size={12} /> Add stage
-          </button>
-        </div>
-
-        <div className="flex justify-end gap-2 mt-1">
-          <button onClick={() => setOpen(false)} className="tk-btn">
-            Cancel
-          </button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={!name.trim() || stages.filter((s) => s.trim()).length < 2}
-            className="px-3 py-1.5 rounded-md text-sm font-medium"
-            style={{ padding: '6px 12px', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.85 : 1 }}
-          >
-            Create Template
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}

@@ -501,14 +501,6 @@ else
   skip "D4: No project slug"
 fi
 
-# D5: Settings refuse an unknown key (#8949). The old round-trip posted
-# {"key":..,"value":..}, which the route stored as rows named 'key' and 'value'
-# in prod. The route now takes only the Settings-page keys; this checks the
-# refusal, which writes nothing.
-echo "D5: Settings refuse an unknown key..."
-SETTINGS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/api/settings" -H "Content-Type: application/json" -d '{"key":"_workflow_test","value":"hello"}')
-[ "$SETTINGS_CODE" = "400" ] && pass "D5: Settings refuse an unknown key" || fail "D5: Settings" "expected 400, got: $SETTINGS_CODE"
-
 # D6: Decision creation
 echo "D6: Decision creation..."
 DEC_RES=$(d1post "/api/decisions" '{"title":"WORKFLOW-TEST decision — delete","context":"test","decision":"test","made_by":"nick-ingraham"}')
