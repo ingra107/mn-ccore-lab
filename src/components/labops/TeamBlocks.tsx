@@ -10,7 +10,7 @@ import EmptyStateArt from '../EmptyStateArt'
 import { FaceDisc } from '../today/skin'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
-import { isOverdueWork } from '../../lib/taskStats'
+import { isOverdueWork, isWorkTask } from '../../lib/taskStats'
 import { addDays, mondayOf } from '../../lib/isoWeek'
 import { buildLeadershipInsights, commitmentRate } from '../../lib/labReports'
 import { rampBar, BAR_TRACK } from '../../lib/tealRamp'
@@ -75,9 +75,11 @@ interface WorkloadRow { slug: string; open: number; done: number; total: number;
 /**
  * Open tasks per person. A PI gets every person with their done/total and
  * overdue counts, each row a link to Tasks filtered to that person; a member
- * gets the top eight open counts, as Analytics always showed them. The open
- * counts and the average come from the server's Insights read when it is there
- * (the PI's), and from the task list otherwise.
+ * gets the top eight open counts, as Analytics always showed them. The counts
+ * come from the task list, the rows every task list shows, so the block and My
+ * Tasks agree. The average per person is the server's Insights read (the PI's):
+ * the server does not collapse same-title rows the way useTasks does (live walk
+ * 2026-11-05: header 55, footer 53).
  */
 export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks: TaskRow[]; insights?: InsightsDashboardData }) {
   const rows = useMemo<WorkloadRow[]>(() => {
@@ -88,6 +90,7 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
       return r
     }
     for (const t of tasks) {
+      if (!isWorkTask(t)) continue
       const r = row(t.assignee)
       r.total++
       if (t.completed) r.done++
@@ -96,22 +99,19 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
         if (isOverdueWork(t)) r.overdue++
       }
     }
-    if (isPi && insights) {
-      for (const r of map.values()) r.open = 0
-      for (const d of insights.metrics.tasksPerPerson.distribution) row(d.slug).open = d.count
-    }
     return [...map.values()].filter((r) => (isPi ? r.total > 0 || r.open > 0 : r.open > 0)).sort((a, b) => b.open - a.open || b.total - a.total)
-  }, [tasks, insights, isPi])
+  }, [tasks, isPi])
 
   const shown = isPi ? rows : rows.slice(0, 8)
   const max = Math.max(1, ...shown.map((r) => r.open))
-  const openTotal = tasks.filter((t) => !t.completed).length
+  const work = tasks.filter(isWorkTask)
+  const openTotal = work.filter((t) => !t.completed).length
   const m = insights?.metrics.tasksPerPerson
 
   return (
     <ChartCard
       title="Workload"
-      count={m ? `${m.avg} open per person · ${m.total} total` : 'Open tasks per person'}
+      count={m ? `${m.avg} open per person` : 'Open tasks per person'}
     >
       <div className="flex flex-col gap-2">
         {shown.map((r) => {
@@ -151,7 +151,7 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
         })}
         {shown.length === 0 && <p className="text-center py-6 text-sm" style={dim}>No task data yet</p>}
       </div>
-      <p className="text-[11px] mt-3" style={dim}>{openTotal} pending of {tasks.length} total tasks</p>
+      <p className="text-[11px] mt-3" style={dim}>{openTotal} open of {work.length} total tasks</p>
     </ChartCard>
   )
 }

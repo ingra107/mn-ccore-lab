@@ -21,6 +21,8 @@ import { usePIDashboard } from '../../../hooks/usePIDashboard'
 import { isForbidden, useInsightsDashboard } from '../../../hooks/useInsightsDashboard'
 import { useWeekParam } from '../../../hooks/useWeekParam'
 import { useWeekStats } from '../../../hooks/useWeekStats'
+import { isProjectDone } from '../../../lib/taskConstants'
+import { isWorkTask } from '../../../lib/taskStats'
 
 /**
  * Lab overview > Pipeline. What moved this week and what is stuck first (the
@@ -45,7 +47,7 @@ export default function PipelineTab() {
   const header = (
     <PageHeader
       title="Lab overview"
-      subtitle={w.tasks.length > 0 || projects.length > 0 ? `${projects.length} projects, ${w.tasks.filter((t) => !t.completed).length} active tasks` : 'Pipeline, velocity and stalled work'}
+      subtitle={w.tasks.length > 0 || projects.length > 0 ? `${projects.filter((pr) => !isProjectDone(pr.status)).length} open projects, ${projects.filter((pr) => isProjectDone(pr.status)).length} done, ${w.tasks.filter((t) => !t.completed && isWorkTask(t)).length} open tasks` : 'Pipeline, velocity and stalled work'}
       actions={
         <div className="flex items-center gap-3 flex-wrap">
           <WeekControl />

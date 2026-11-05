@@ -14,6 +14,7 @@ import TaskTitle from '../tasks/TaskTitle'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
+import { isWorkTask } from '../../lib/taskStats'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 import { taskShortLabel } from '../../lib/displayNames'
 import { meetingHrefFor } from '../../lib/meetingOrigin'
@@ -30,8 +31,10 @@ function ActionBoardCard() {
   // already on (Rule 63e).
   const [detailTask, setDetailTask] = useState<TaskRowData | null>(null)
 
-  const pending = items.filter((i) => !isTaskDone(i))
-  const completed = items.filter((i) => isTaskDone(i))
+  // Work only: My Tasks, which the hero opens, lists no approval either.
+  const work = items.filter(isWorkTask)
+  const pending = work.filter((i) => !isTaskDone(i))
+  const completed = work.filter((i) => isTaskDone(i))
 
   // Wave 3 (Lab Overview option A): the card is one hero number and the three
   // tasks to look at first (soonest due, undated last). The full list is one
