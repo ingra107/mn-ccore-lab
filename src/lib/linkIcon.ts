@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PB_LINK_ICONS, ICONS_HASH } from './pbLinkIcons.generated'
+import { normalizeLink } from './pbLinks.generated'
 
 export { ICONS_HASH }
 
@@ -117,6 +118,17 @@ const FALLBACK: LinkIconSpec = ICON_MAP.web ?? { Icon: Globe, color: 'var(--link
 export function iconForType(type: string | null | undefined): LinkIconSpec {
   if (!type) return FALLBACK
   return ICON_MAP[type] ?? FALLBACK
+}
+
+/**
+ * A link's type: what normalizeLink reads from the URL, except that a Gmail URL
+ * described as a Gmail draft is a draft. A reply draft's URL is its thread's
+ * (`#all/<thread id>`), so the URL alone reads it as a thread. PB's desk kit
+ * applies the same rule (desk_cards.link_type).
+ */
+export function linkTypeFor(url: string, desc?: string | null): string | null {
+  if (/^https?:\/\/mail\.google\.com\//i.test(url) && /gmail draft/i.test(desc ?? '')) return 'gmail_draft'
+  return normalizeLink(url)?.type ?? null
 }
 
 /**

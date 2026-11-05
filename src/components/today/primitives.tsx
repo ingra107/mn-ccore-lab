@@ -8,8 +8,7 @@
 
 import { INK_MUTED } from './constants'
 import { classifyUrl } from '../../lib/urlClassify'
-import { normalizeLink } from '../../lib/pbLinks.generated'
-import { iconForType, linkTintForType } from '../../lib/linkIcon'
+import { iconForType, linkTintForType, linkTypeFor } from '../../lib/linkIcon'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
 
@@ -50,10 +49,12 @@ export function LinkRow({ links, slot = false }: { links: TaskLink[]; slot?: boo
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: slot ? 0 : 6 }}>
       {links.map((l, i) => {
-        // Prefer stored type; then canonical normalizer (15-type icons from URL);
-        // finally classifyUrl's coarse 5-bucket fallback.
+        // A link that reads as a Gmail draft is one, whatever type was stored with
+        // it. Otherwise prefer stored type; then canonical normalizer (15-type icons
+        // from URL); finally classifyUrl's coarse 5-bucket fallback.
         const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
-        const resolvedType = l.type || normalizeLink(l.url)?.type
+        const fromLink = linkTypeFor(l.url, l.desc)
+        const resolvedType = fromLink === 'gmail_draft' ? fromLink : l.type || fromLink
         const stored = resolvedType ? iconForType(resolvedType) : null
         const Icon = stored ? stored.Icon : FallbackIcon
         const color = stored ? stored.tint : INK_MUTED
