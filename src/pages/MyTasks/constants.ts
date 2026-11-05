@@ -120,3 +120,9 @@ export function readPlannedToday(tasks: TaskRow[] = []): Set<string> {
   }
   return s
 }
+
+/** The words of the bulk Delete. The action soft-deletes (action 'delete'). */
+export function bulkDeleteCopy(count: number): { confirm: string; toast: string } {
+  const tasks = `${count} task${count === 1 ? '' : 's'}`
+  return { confirm: `Delete ${tasks}? They'll be soft-deleted.`, toast: `Deleted ${tasks}` }
+}

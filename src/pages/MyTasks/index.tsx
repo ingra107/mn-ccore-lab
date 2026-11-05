@@ -40,6 +40,7 @@ import { useFitViewportHeight } from '../../hooks/useFitViewportHeight'
 import {
   readPlannedToday, isTaskDone, parseViewMode, parseQuickView, parseStatusParam,
   type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
+  bulkDeleteCopy,
 } from './constants'
 import { isSectionKey, type SectionKey } from '../../lib/taskSections'
 
@@ -331,11 +332,11 @@ export default function UnifiedMyTasks() {
     }
   }, [updateTask, bulkUpdate, undoToast])
 
-  const onBulkArchive = useCallback(() => {
-    if (!window.confirm(`Archive ${selected.size} task${selected.size === 1 ? '' : 's'}? They'll be soft-deleted.`)) return
+  const onBulkDelete = useCallback(() => {
+    if (!window.confirm(bulkDeleteCopy(selected.size).confirm)) return
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'delete' }, {
-      onSuccess: () => { undoToast.showSuccess(`Archived ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+      onSuccess: () => { undoToast.showSuccess(bulkDeleteCopy(ids.length).toast); clearSelection() },
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
@@ -430,7 +431,7 @@ export default function UnifiedMyTasks() {
           commonDue={bulkCommonDue}
           onSetDue={onBulkSetDue}
           onComplete={onBulkComplete}
-          onArchive={onBulkArchive}
+          onDelete={onBulkDelete}
           onReassign={onBulkReassign}
           onPriority={onBulkPriority}
           onStatus={onBulkStatus}
