@@ -414,7 +414,7 @@ export default function ManuscriptsPage() {
                 onClick={() => setFilterStalled(!filterStalled)}
                 title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
               >
-                Stalled
+                Stalled in stage
                 {stalledCount > 0 && <span className="tk-cnt">{stalledCount}</span>}
               </button>
             </div>
@@ -432,7 +432,7 @@ export default function ManuscriptsPage() {
             {/* T-29: Needs your attention. M-12 (D25): Active submissions. */}
             <NeedsAttentionDashboard compact filter={attentionFilter} onFilterChange={setAttentionFilter} />
             <ActiveSubmissionsWidget compact />
-            <StageTally manuscripts={manuscripts} stages={STAGES} stageLabels={STAGE_LABELS} stalledCount={stalledCount} />
+            <StageTally manuscripts={manuscripts} stages={STAGES} stageLabels={STAGE_LABELS} stalledCount={stalledCount} stalledDays={stalledThresholdDays} />
           </>
         ) : undefined}
         isLoading={isLoading || productsLoading}
@@ -643,11 +643,12 @@ export default function ManuscriptsPage() {
 type StageKey = string
 
 // The stage tally (was a footer under the rows; s79: a block in the right rail).
-function StageTally({ manuscripts, stages, stageLabels, stalledCount }: {
+function StageTally({ manuscripts, stages, stageLabels, stalledCount, stalledDays }: {
   manuscripts: ManuscriptRow[]
   stages: string[]
   stageLabels: Record<string, string>
   stalledCount: number
+  stalledDays: number
 }) {
   if (manuscripts.length === 0) return null
   const counts = manuscripts.reduce<Record<string, number>>((acc, p) => {
@@ -675,7 +676,7 @@ function StageTally({ manuscripts, stages, stageLabels, stalledCount }: {
         </div>
       </dl>
       {stalledCount > 0 && (
-        <p style={{ margin: '6px 0 0', fontSize: 'var(--label-size)', color: 'var(--job-stale)' }}>{stalledCount} stalled</p>
+        <p style={{ margin: '6px 0 0', fontSize: 'var(--label-size)', color: 'var(--job-stale)' }}>{stalledCount} stalled in stage {stalledDays}d+</p>
       )}
     </section>
   )
