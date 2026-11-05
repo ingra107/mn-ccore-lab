@@ -16,8 +16,9 @@
  *     a published request counted once;
  *   - a packet_prepare request reads landing_visibility 'author', and its
  *     answer posts no comment and no notification;
- *   - a kept pick makes no request, uses no cap and posts no note, and kept is
- *     frozen across a start flip; a candidate holds 1 to 4 options.
+ *   - on a first answer a kept pick makes no request, uses no cap and posts no
+ *     note; a later flip of a kept saved pick is a real start; kept is frozen
+ *     across a flip; a candidate holds 1 to 4 options.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -462,14 +463,28 @@ describe('week plan: a kept pick makes no request, uses no cap and posts no note
     expect(storedAnswer().kept).toEqual(['task_a'])
   })
 
-  it('a flip of a kept saved pick starts nothing: kept holds on a flip too', async () => {
+  it('a_flip_of_a_kept_saved_pick_starts_it', async () => {
     const saved = { task_id: 'task_b', option_key: 'b1', text: null, start: false }
     expect((await send(answer([saved], { choice: 'save', kept: ['task_b'] }))).status).toBe(200)
+    expect(requests()).toHaveLength(0)
+    const before = await dailyPacketCount(env.DB, '2026-10-28')
     const stored = storedAnswer()
     const r = await send({ ...stored, choice: 'start', picks: [{ ...saved, start: true }] })
     expect(r.status).toBe(200)
-    expect(requests()).toHaveLength(0)
+    expect(requests().map((x) => x.source_id)).toEqual(['task_b'])
+    expect(await dailyPacketCount(env.DB, '2026-10-28')).toBe(before + 1)
     expect(storedAnswer().kept).toEqual(['task_b'])
+  })
+
+  it('a flip of a kept saved pick meets the cap like any start', async () => {
+    const saved = { task_id: 'task_b', option_key: 'b1', text: null, start: false }
+    expect((await send(answer([saved], { choice: 'save', kept: ['task_b'] }))).status).toBe(200)
+    fill(CAP)
+    const stored = storedAnswer()
+    const r = await send({ ...stored, choice: 'start', picks: [{ ...saved, start: true }] })
+    expect(r.status).toBe(409)
+    expect(r.body).toMatchObject({ code: 'daily_cap', used: CAP, cap: CAP })
+    expect(storedAnswer().picks[0].start).toBe(false)
   })
 
   it('one_option_candidate_is_accepted', async () => {

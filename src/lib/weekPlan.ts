@@ -38,8 +38,9 @@ export interface AcceptedWeekPlan {
    *  "not this week", even for a pick prep had started. They are not in
    *  `earlier`; the session's brief reads them to not offer them again. */
   withdrawn: string[]
-  /** This plan's picks carried from the plan before (2026-11-04): they made no
-   *  request and no note here, whatever their start reads. */
+  /** This plan's picks carried from the plan before (2026-11-04): their first
+   *  answer made no request and no note, whatever their start reads. A later Prep
+   *  on a kept saved pick is a real start, so `start` does not say which is which. */
   kept: string[]
 }
 

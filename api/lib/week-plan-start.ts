@@ -10,8 +10,8 @@
 //
 // Only Start creates work. The answer to a source='week_plan' question carries
 // typed picks (shared/weekPlan.ts); the write that stores it also inserts one
-// ai_requests row per pick with start:true, except a kept pick (the answer's
-// `kept`, a pick carried from the plan before), in the SAME D1 batch, each INSERT
+// ai_requests row per pick with start:true, except on a first answer a kept pick
+// (the answer's `kept`, a pick carried from the plan before), in the SAME D1 batch, each INSERT
 // guarded on the row write having landed (mutations.ts commitRowWrite
 // `dependents`). So an answer never lands without its requests, and a request
 // never exists for an answer that did not land. The rows go through the one
@@ -179,10 +179,10 @@ export type WeekPlanStart =
  * answer (question rules, frozen, expired), so a bad answer reports its own
  * code and this sees only answers that will be stored.
  *
- * Starts: on the first answer, every pick with start:true; on a start flip
- * (shared/weekPlan.ts weekPlanFlipError), the flipped picks. A kept pick is
- * neither (weekPlanNewlyStarted): no request, no cap. Nothing else starts
- * anything; a stored answer cannot otherwise change.
+ * Starts: on the first answer, every pick with start:true that is not kept (a
+ * kept one makes no request and uses no cap); on a start flip (shared/weekPlan.ts
+ * weekPlanFlipError), the flipped picks, kept or not: a flip is a real start.
+ * Nothing else starts anything; a stored answer cannot otherwise change.
  *
  * Only the packet owner may start work (the requests read as private and use
  * Nick's cap); anyone else's starting answer is refused (`forbidden`).
