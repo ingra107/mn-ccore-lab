@@ -259,12 +259,16 @@ describe('The Plan section on Today', () => {
 
   it('no empty line while the tasks are still loading', async () => {
     const waiting: ((r: Response) => void)[] = []
+    let answered = false
     vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+      // A task read that starts after the answer below must not wait forever: under load one did, and the section never left loading.
+      if (String(url).includes('/api/tasks') && answered) return Promise.resolve(respond(200, { data: [], count: 0 }))
       if (String(url).includes('/api/tasks')) return new Promise<Response>((r) => { waiting.push(r) })
       return Promise.resolve(respond(404, { error: 'not stubbed' }))
     }))
     const h = await mount(page(), { ready: (host) => section(host), label: 'the section' })
     expect(section(h)!.querySelector('[data-testid="plan-empty"]')).toBeNull()
+    answered = true
     for (const answer of waiting) answer(respond(200, { data: [], count: 0 }))
     await waitFor(() => section(h)!.querySelector('[data-testid="plan-empty"]'), 'the empty line after the read')
   })

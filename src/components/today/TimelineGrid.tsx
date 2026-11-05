@@ -737,7 +737,7 @@ function AgendaOverlapRegion({
   nowLineEl?: ReactNode
   nowOffsetPx?: number
 }) {
-  // Phone: the spine is ~250px, so two 200px-min columns overflow and scroll
+  // Phone: the spine is ~300px, so two 200px-min columns overflow and scroll
   // sideways. Stack the overlapping meetings in ONE full-width column (no stagger
   // offset: stacked cards read top to bottom in start order). Desktop unchanged.
   const colCount = isPhone ? 1 : (unit.placements[0]?.colCount ?? 1)
@@ -1047,9 +1047,8 @@ export function TimelineGrid({
       )}
 
       {/* Outer layout: time-spine + agenda | service. On a phone the service
-          blocks become a full-width strip ABOVE the agenda: beside a spine that
-          already has 56px of left padding, a clamp(96px,25%,180px) column
-          squeezed meeting cards to ~150px, wrapped titles to three lines and
+          blocks become a full-width strip ABOVE the agenda: beside the spine, a
+          clamp(96px,25%,180px) column squeezed meeting cards to ~150px, wrapped titles to three lines and
           pushed each card's hide x off its action row (overnight 2026-10-14
           audit, G1-9; rules-ui-design #14, actions on one baseline). */}
       <div style={{
@@ -1059,7 +1058,7 @@ export function TimelineGrid({
         alignItems: isPhone ? 'stretch' : 'flex-start',
       }}>
         {/* Time spine + agenda column */}
-        <div style={{ flex: 1, minWidth: 0, paddingLeft: 56, position: 'relative' }}>
+        <div className="tk-tlspine" style={{ flex: 1, minWidth: 0, position: 'relative' }}>
           {/* Day-start time label */}
           <div aria-hidden="true" className="tk-tlab" style={{ left: 0, top: 6 }}>
             {fmtMin(dayStart)}

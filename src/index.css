@@ -1060,6 +1060,8 @@ a:hover {
     position: static; max-height: none; overflow: visible; padding: 16px 0 32px; border: 0;
     border-top: 1px solid var(--sk-line);
   }
+  /* A jump to the stacked rail stops below the portal's fixed bar. */
+  .pwr-rail { scroll-margin-top: 72px; }
   .pwr-rf, .pwr-rf.pwr-start { grid-template-areas: "head" "top" "rail" "main"; }
   .pwr-rf > .pwr-rail { padding: 0 0 24px; border-top: 0; }
   .pwr-wide-only { display: none; }
@@ -2851,6 +2853,12 @@ button.tk-mact-hd:hover{color:var(--sk-t1)}
 .tk .tk-mcr .tk-pill,.tk .tk-mcr .tk-join,.tk .tk-mcr .tk-joinq{padding-top:1px;padding-bottom:1px;line-height:1.3;flex-shrink:0}
 .tk .tk-mcr .tk-sp{flex:1;min-width:0}
 .tk .tk-tlab{width:52px;padding-right:6px;font-size:9.5px;box-sizing:border-box}
+/* The Today timeline's time gutter. A phone drops it, labels and all: a meeting
+   card's action rows take the width (Nick, M20), and each card prints its own time. */
+.tk .tk-tlspine{padding-left:56px}
+@media (max-width:767px){.tk .tk-tlspine{padding-left:0}.tk .tk-tlab{display:none}}
+/* The Plan head holds its count, the week and the button on one phone line: the fade gives way. */
+@media (max-width:767px){.tk .tk-planned .tk-ctog::after{display:none}}
 /* people pattern: initials badge + first name */
 .tk-face.tk-sm{width:16px;height:16px;font-size:7px;box-shadow:none}
 .tk-face.tk-herm{background:color-mix(in srgb, var(--job-accent) 10%, transparent);color:var(--job-accent)}

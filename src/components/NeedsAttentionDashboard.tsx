@@ -42,6 +42,29 @@ const SUBGROUPS: Array<{
  * empty siblings are skipped entirely (not rendered as zero-state rows).
  * Section-level collapse persists in localStorage.
  */
+/** Where the rail stacks under the list (a phone), one line above the list says
+ *  something in it wants him, and takes him there. Beside the list it is not shown
+ *  (.pwr-stack-only): the rail is already on screen. Nothing wanted, no line. */
+export function AttentionLine() {
+  const { prefs } = useLabPrefs()
+  const { data } = useManuscriptsAttention({ reviewDays: prefs.manuscriptsReviewDays, staleDays: prefs.manuscriptsStaleDays })
+  if (!data) return null
+  const { revisions_overdue, awaiting_review, stale_drafts } = data.data
+  const n = revisions_overdue.length + awaiting_review.length + stale_drafts.length
+  if (n === 0) return null
+  return (
+    <button
+      type="button"
+      data-testid="attention-line"
+      className="pwr-stack-only touch-tall"
+      style={{ background: 'none', border: 0, padding: '0 0 var(--sp-sm)', font: 'inherit', fontSize: 13, fontWeight: 500, color: 'var(--job-wants)', cursor: 'pointer', textAlign: 'left' }}
+      onClick={(e) => e.currentTarget.closest('.pwr')?.querySelector('.pwr-rail')?.scrollIntoView({ block: 'start' })}
+    >
+      {n} {n === 1 ? 'needs' : 'need'} your attention ▾
+    </button>
+  )
+}
+
 export default function NeedsAttentionDashboard({ filter, onFilterChange, compact = false }: Props) {
   const { prefs } = useLabPrefs()
   const { data, isLoading } = useManuscriptsAttention({

@@ -59,8 +59,7 @@ interface DataPageProps {
   hideControls?: boolean
 
   /** A switcher that changes WHAT the page lists (Manuscripts' product kind
-   *  tabs). It rides in the header under the controls row, so a stacked rail
-   *  (railFirst) can never push it below the rail on a phone. */
+   *  tabs). It rides in the header under the controls row. */
   headControls?: ReactNode
 
   // ── Content between the controls row and the body (e.g. attention
@@ -91,8 +90,6 @@ interface DataPageProps {
   /** A right rail beside the body (PageWithRail). Absent = the body alone at --col-main. */
   rail?: ReactNode
   railLabel?: string
-  /** Stacked, the rail leads the body (a page whose rail holds what needs you first). */
-  railFirst?: boolean
 
   /** The page's rendered table/board/grid. */
   children?: ReactNode
@@ -122,7 +119,6 @@ export default function DataPage({
   empty,
   rail,
   railLabel = 'Side panel',
-  railFirst,
   children,
 }: DataPageProps) {
   const showControls =
@@ -173,7 +169,7 @@ export default function DataPage({
         {rail && !wideBody ? (
           // With a rail the header is the head slot: it spans exactly the main
           // column, so its right edge is the body's, at any band width.
-          <PageWithRail head={headerEl} railLabel={railLabel} rail={rail} railFirst={railFirst} testId="data-page-grid" railTestId="data-page-rail">
+          <PageWithRail head={headerEl} railLabel={railLabel} rail={rail} testId="data-page-grid" railTestId="data-page-rail">
             {body}
           </PageWithRail>
         ) : (

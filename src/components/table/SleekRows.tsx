@@ -61,7 +61,7 @@ interface Layout {
 }
 const LayoutCtx = createContext<Layout | null>(null)
 
-export function SleekTable<T>({ columns, sort = null, onSort, header = true, narrowBelow = 640, defaultSortLabel = 'Default order', className, style, children }: {
+export function SleekTable<T>({ columns, sort = null, onSort, header = true, narrowBelow = 640, defaultSortLabel = 'Default order', className, ariaLabel, style, children }: {
   columns: SleekColumn<T>[]
   sort?: SleekSort
   /** Receives the next sort state (header click = the asc/desc/cleared cycle). */
@@ -70,6 +70,7 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
   narrowBelow?: number
   defaultSortLabel?: string
   className?: string
+  ariaLabel?: string
   style?: CSSProperties
   children: ReactNode
 }) {
@@ -111,6 +112,7 @@ export function SleekTable<T>({ columns, sort = null, onSort, header = true, nar
         ref={ref}
         className={`tk sr${narrow ? ' sr-narrow' : ''}${className ? ` ${className}` : ''}`}
         role="table"
+        aria-label={ariaLabel}
         // Focusable by script only: the header click parks focus here (above).
         tabIndex={-1}
         style={{ ...style, '--sr-cols': template } as CSSProperties}
