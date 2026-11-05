@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-11-05 — The plan as one section of task cards (#169, round 2)
+
+Today's plan is one section of real task cards, each task shown once, with finished ones at the bottom until the next plan. Pressing Plan rebuilds a fresh round of the desk; unfinished picks stay unless removed, and answers not yet sent survive. A card may offer one first step. The desk clears by keyboard or tap, and the session watches for Send. Key links described as a Gmail draft get the draft icon everywhere. No schema change. Spec `docs/superpowers/specs/2026-11-04-plan-section-design.md`.
+
 ## 2026-11-04 — Public site audit: faces, layout, claims
 
 Nick's review plus a line-by-line fact check and Codex and Fable consults. Faces: `photoFrame` crops per person (`lib/photoFrame.ts`); paper rows and detail pages show every lab member the site credits (`labAuthorsOn`), and a detail page names a study-team investigator who is not on the printed byline (COVID-OUT, PMID 37302406). Home: the lede spells out MN-CCORE, the number band has four equal columns with pixel-height bars, the logo scrolls to top when already on the landing page. Claims corrected: "13 hospitals" is 13 institutions, "All 332 papers" linked to 579, Nathan's 4 trainees is 3, the Network lede claimed the lab is the center of CLIF co-authorship, "289 journals" and "145 first authors" counted raw strings and namesakes and are gone, "High-impact" matched substrings. Credentials and titles match the med.umn.edu bios for Nick, Nathan, McEachron and Safadi.

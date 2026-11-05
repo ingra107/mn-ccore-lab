@@ -1,3 +1,17 @@
+# ▶▶ 2026-11-05 (work, overnight): #169 ROUND 2 LIVE; WHOLE-HUB SWEEP RUNNING. Hub `f198beb5` deployed, PB `2daf9e2d0`. **Schema v157.**
+
+## Shipped
+- Plan section, rounds, kept picks, tap and keyboard desk, Send watch, link icons (CLAUDE.md Rule 57a). Round-1's `This week` is gone. Rollback is reverting the commits.
+
+## First real plan must confirm
+Keep #169 and `bug_mw291o484isxfj` open until a real plan reaches the Hub. Check: the old desk's round and bookkeeping state; how long writing steps takes on a full rebuild (17 cards, brief alone 87 s); a fresh step on each free-text current pick, or `validate` refuses by name; `fix-link` on "Decide Oct A0 NOFO" prints No change; kept picks make no `packet_prepare` rows; the 60-second watch finds a Send and approval is still asked; tap flow in the artifact frame on a phone; a drag onto the section near the window's top; the go-back path in `new-round.md`.
+
+## Landmines added
+- `git_commit_files` pushes to PB main unless given `--no-push`, even from a worktree on a branch. One commit reached main that way (`eb59e8be6`), left in place because it only loosens validators.
+- A script that chains tests and a deploy must stop on failure. Mine didn't, on 2026-11-05: an unnamed `test:src` flake passed 2 of 2 reruns, and the deploy had gone out. Flakes seen this round: `faces-photo.test.tsx:65`, `GrantGantt.test.tsx`, an unnamed `test:src` test, PB `test_start_over_on_a_brief_already_new_moves_one_round_not_two`.
+
+---
+
 # ▶▶ 2026-11-04 (work, night): PUBLIC SITE AUDIT SHIPPED. Schema unchanged (v157); `publications.status` takes two new values, no CHECK on the column.
 
 ## Shipped
