@@ -11,7 +11,7 @@ import { NOT_QUESTION_SQL_T } from '../../shared/taskKinds';
 //
 // `viewerSlug` (2026-10-08, Nick: "the lab calendar and Today page show tasks
 // not assigned to the user"): task deadlines are the CALLER'S OWN tasks.
-// Meetings and grant milestones stay lab-wide; a task is someone's work, and
+// Meetings stay lab-wide; a task is someone's work, and
 // on the first team logins every member's calendar was Nick's to-do list. The
 // slug is the Worker-resolved identity (`user.slug`, #8945), never a query
 // param, so no client can ask for someone else's tasks here, and a caller
@@ -21,7 +21,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
   const endDate = url.searchParams.get('end') || ctToday(90);
 
   // Aggregate from multiple sources
-  const [meetings, tasks, milestones] = await Promise.all([
+  const [meetings, tasks] = await Promise.all([
     // Meetings come through the viewer-bound handle (#145), so this is the
     // caller's meetings, not the lab's. The caller's OWN row sorts first on a
     // tie so the title+date merge below keeps it over a same-titled row
@@ -31,10 +31,8 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
     env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.kind, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND t.assignee = ? ORDER BY t.due_date`)
       .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; kind: string | null; due_date: string; assignee: string; status: string; priority: string }>(),
-    // The legacy grants join is gone (2026-10-12): a grant's dates are its
-    // product's now; a grant milestone is a milestone task.
-    env.DB.prepare('SELECT m.id, m.title, m.target_date, m.status FROM milestones m WHERE m.target_date >= ? AND m.target_date <= ? ORDER BY m.target_date')
-      .bind(startDate, endDate).all<{ id: string; title: string; target_date: string; status: string }>(),
+    // A milestone is a task with kind='milestone' (Rule 86), so the tasks leg
+    // above returns it; the legacy `milestones` table has no leg here.
   ]);
 
   // `title` stays the FULL title (the dedup key below and the client's
@@ -42,7 +40,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
   // shows, through src/lib/displayNames.ts taskShortLabel (eval item 34).
   // `kind` rides along so that label names a check-in or milestone task
   // ("Check-in: X"; schema-v156 stopped storing the prefix in the title).
-  // Meetings and legacy milestones rows carry kind null.
+  // Meetings carry kind null.
   const events: { id: string; date: string; title: string; short_title?: string | null; kind: string | null; type: string; category: string; meta?: Record<string, unknown> }[] = [];
 
   // Meetings
@@ -61,18 +59,6 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
       type: 'task',
       category: t.priority,
       meta: { assignee: t.assignee, status: t.status },
-    });
-  }
-
-  // Legacy milestones rows (the Airtable-era table)
-  for (const m of milestones.results || []) {
-    events.push({
-      id: m.id,
-      date: m.target_date,
-      title: m.title,
-      kind: null,
-      type: 'milestone',
-      category: 'grant',
     });
   }
 

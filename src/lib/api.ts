@@ -724,9 +724,9 @@ export interface CalendarEvent {
   short_title?: string | null
   /** Task rows: tasks.kind, so the label names a check-in or milestone
    *  ("Check-in: X", displayNames.taskShortLabel; schema-v156). null for a
-   *  meeting or a legacy milestones row (that one draws its own diamond). */
+   *  meeting. A milestone task has kind 'milestone' and type 'task'. */
   kind: string | null
-  type: string // meeting, task, milestone
+  type: string // meeting, task
   category: string
   meta?: Record<string, unknown>
 }
