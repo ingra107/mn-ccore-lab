@@ -148,3 +148,8 @@
 - [ ] **Step 1: Write the docs:** Rule 57a gains owner, close, and that the session runs the work; the first-run watch list goes in the handoff: time from approval to the last Ready, whether agents respect the brief, whether "With Claude" reads right, whether eight picks at once strain the laptop.
 - [ ] **Step 2:** Run `python scripts/check-schema-versions.py` and the Hub checks. Expected: pass; no new migration.
 - [ ] **Step 3: Commit** in each repo. Landing, by the controller, once Nick's current plan session has finished: merge Hub, `npm run deploy:pages:gated`, then PB, then write the What's new draft.
+
+### Added from the first run's report (fold into Task 5)
+
+- A second `capture` makes a new submission and drops the session's edits and strikes, so the session redid them by hand. Write a failing test first: capturing again for the same Send carries forward every edit, strike and close, and says which ones no longer apply.
+- `strike` records "struck by Nick" even when the session chose it. Add `by: "session" | "nick"`, default `session`, set to `nick` only when he struck it live, and print that on the list.
