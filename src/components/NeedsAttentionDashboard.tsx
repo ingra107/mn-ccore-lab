@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useManuscriptsAttention } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
@@ -10,6 +10,7 @@ import { formatShortDate } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from './ui/Button'
+import { Caret } from './ui/Caret'
 
 export type AttentionFilter = 'revisions-overdue' | 'awaiting-review' | 'stale-drafts' | null
 
@@ -162,7 +163,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
             cursor: 'pointer', padding: '4px 6px', fontSize: '11px', opacity: 0.75,
           }}
         >
-          {sectionCollapsed ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronUp {...ICON_PROPS} size={12} />}
+          <Caret dir={sectionCollapsed ? 'down' : 'up'} />
           <span>{sectionCollapsed ? 'Show' : 'Hide'}</span>
         </button>
       </div>
@@ -207,8 +208,8 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange, compac
                       }}
                     >
                       {openForReal
-                        ? <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
-                        : <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
+                        ? <Caret />
+                        : <Caret dir="right" />
                       }
                     </Button>
                   )}

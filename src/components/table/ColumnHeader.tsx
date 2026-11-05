@@ -1,5 +1,4 @@
-import { ChevronUp, ChevronDown } from 'lucide-react'
-import { ICON_PROPS } from '../../lib/iconProps'
+import { Caret } from '../ui/Caret'
 
 interface ColumnHeaderProps {
   label: string
@@ -15,7 +14,7 @@ interface ColumnHeaderProps {
 
 /**
  * Shared column header for data tables.
- * Renders uppercase label with sort indicator (ChevronUp/ChevronDown) when active.
+ * Renders uppercase label with sort indicator (Caret) when active.
  * Consistent styling: 11px, uppercase, 0.55 opacity, 0.06em letter-spacing.
  */
 export default function ColumnHeader({
@@ -54,7 +53,7 @@ export default function ColumnHeader({
       }}
     >
       {label}
-      {isActive && (sortAsc ? <ChevronUp {...ICON_PROPS} size={10} /> : <ChevronDown {...ICON_PROPS} size={10} />)}
+      {isActive && <Caret dir={sortAsc ? 'up' : 'down'} />}
       {sortRank != null && sortRank > 0 && (
         <span
           style={{

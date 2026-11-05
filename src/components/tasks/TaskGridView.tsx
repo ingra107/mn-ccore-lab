@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CheckCircle2, ChevronDown, Link2, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
+import { CheckCircle2, Link2, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -38,6 +38,7 @@ import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import { useProjectPairs } from '../../hooks/useProjectPairs'
 import { parseBlockedBy } from '../../../shared/blockedBy'
 import { Button } from '../ui/Button'
+import { Caret } from '../ui/Caret'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -1666,7 +1667,7 @@ function InlineCellSelect({
         } as React.CSSProperties}
       >
         {renderValue(value)}
-        <ChevronDown {...ICON_PROPS} size={10} className="inline-select-chevron" />
+        <Caret className="inline-select-chevron" />
       </button>
 
       {open && createPortal(

@@ -8,8 +8,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronDown,
-  ChevronRight,
   Plus,
   MessageSquare,
   Clock,
@@ -41,6 +39,7 @@ import { Button } from './ui/Button'
 import { scopeByProduct, type ProductRow } from '../lib/products'
 import { useTagItem } from '../hooks/useProjectProducts'
 import ProductTag from './project/ProductTag'
+import { Caret } from './ui/Caret'
 
 // ── Constants ──
 
@@ -406,9 +405,9 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             </div>
           )}
           {isExpanded ? (
-            <ChevronDown {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Caret />
           ) : (
-            <ChevronRight {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Caret dir="right" />
           )}
         </div>
       </Button>
