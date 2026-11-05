@@ -7,6 +7,7 @@ import { SegmentedToggle } from '../../components/ui/SegmentedToggle'
 import { FilterLinks } from '../../components/ui/FilterLinks'
 import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
+import QueryState from '../../components/QueryState'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
@@ -98,7 +99,9 @@ export default function CalendarPage() {
   // Meetings are lab-wide; task deadlines (milestones included) are the
   // viewer's own, scoped by the Worker (api/routes/calendar.ts), so a task
   // row needs no assignee label here.
-  const { data: rawEvents = [], isLoading } = useCalendarEvents({ start, end })
+  // isLoadingError, not isError: a failed background refetch keeps the events on
+  // screen; only a read with nothing to show is an error page (#163).
+  const { data: rawEvents = [], isLoading, isLoadingError, error: eventsError } = useCalendarEvents({ start, end })
   const events = useMemo(
     () => rawEvents.filter((e) => isProductionVisible(e.title)),
     [rawEvents],
@@ -183,6 +186,8 @@ export default function CalendarPage() {
       <PageHeader
         title="Lab Calendar"
         subtitle={(() => {
+          // A count is a claim about a read that worked.
+          if (isLoading || isLoadingError) return ''
           const todayStr = localDateKey()
           const todayCount = events.filter(e => e.date === todayStr).length
           return todayCount > 0
@@ -259,6 +264,10 @@ export default function CalendarPage() {
             className="sk-mat"
             style={{ minHeight: 600, borderRadius: 'var(--radius-xl)', opacity: 0.85 }}
           />
+        ) : isLoadingError ? (
+          <QueryState isLoading={false} isError errorStatus={(eventsError as (Error & { status?: number }) | null)?.status}>
+            {null}
+          </QueryState>
         ) : (
           <>
             {view === 'month' && <MonthView currentDate={currentDate} events={events} denseWeek={denseWeek} onOpenDay={openDay} />}
