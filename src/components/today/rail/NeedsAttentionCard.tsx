@@ -15,6 +15,7 @@ import { civilDaysOverdue } from '../../../lib/dateUtils'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
 import { PATHS } from '../../../constants/paths'
+import { taskLinkFor } from '../../../../shared/taskLink'
 import type { TaskRow } from '../../../lib/api'
 import TaskTitle from '../../tasks/TaskTitle'
 import { taskShortLabel } from '../../../lib/displayNames'
@@ -47,7 +48,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             return (
               <div key={t.id} className="tk-rli">
                 {/* C13 TaskTitle — surfaces [Carried forward] chip */}
-                <Link to={`${PATHS.myTasks}?open=${t.id}`} className="tk-t" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Link to={taskLinkFor(t.id)} className="tk-t" style={{ color: 'inherit', textDecoration: 'none' }}>
                   <TaskTitle title={taskShortLabel(t)} />
                 </Link>
                 <span className="tk-d tk-o">{Number.isFinite(days) ? `${days}d` : '—'}</span>
