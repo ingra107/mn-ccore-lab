@@ -49,6 +49,9 @@ export const USER_PREF_FAMILIES = [
   // The What's new / Lab pulse pill (#156): ids of the release and the
   // announcement last opened, so reading on the phone clears the laptop.
   { key: 'hub.pulse.seen', param: false, merge: 'scalar' },
+  // The daily digest email, on or off (a boolean; no row is on). Unlike the rest
+  // this one is read by the Worker: handleSendDailyDigests skips a saved false.
+  { key: 'digest.email', param: false, merge: 'scalar' },
   // savedViews.<page>: the Saved views menu on each page.
   { key: 'savedViews.', param: true, merge: 'set', identity: 'id' },
   // tableConfig.<tableId>: sort, column widths and order, filters.
@@ -59,6 +62,9 @@ export const USER_PREF_FAMILIES = [
   { key: 'dashboard.tab', param: false, merge: 'scalar' },
   { key: 'dashboard.layout.', param: true, merge: 'scalar' },
 ] as const satisfies readonly UserPrefFamily[]
+
+/** The daily digest email's on/off pref, named for the Worker and the Settings tab. */
+export const DIGEST_EMAIL_PREF = 'digest.email'
 
 type Family = (typeof USER_PREF_FAMILIES)[number]
 type KeyOf<F> = F extends { key: infer K extends string; param: true }

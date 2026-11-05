@@ -9,6 +9,8 @@ import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
+import { useUserPref } from '../../hooks/useUserPref'
+import { DIGEST_EMAIL_PREF } from '../../../shared/userPrefKeys'
 import { resetDashboardPrefs } from '../../lib/dashboardLayout'
 import LauncherSettingsPanel from '../../components/LauncherSettingsPanel'
 import RangeSlider from '../../components/RangeSlider'
@@ -67,6 +69,41 @@ function TodayDefaultViewControl() {
   )
 }
 
+// The daily digest email, on or off, per person on the server. The Worker skips a
+// saved false (handleSendDailyDigests); the email's Manage notifications link lands here.
+const isOn = (stored: unknown) => stored !== false
+function DigestEmailSwitch() {
+  const [on, setOn] = useUserPref<boolean>(DIGEST_EMAIL_PREF, true, isOn)
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p id="digest-email-label" className="text-sm" style={{ color: 'var(--ink)' }}>Daily digest email</p>
+        <p id="digest-email-help" className="text-[11px]" style={{ color: 'var(--muted)' }}>
+          The morning summary of overdue work, what is due today and today's meetings. Turn it off and it stops; nothing else in the Hub changes.
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        data-testid="digest-email-switch"
+        aria-checked={on ? 'true' : 'false'}
+        aria-labelledby="digest-email-label"
+        aria-describedby="digest-email-help"
+        onClick={() => setOn(!on)}
+        className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+        style={{
+          color: on ? 'var(--job-accent)' : 'var(--slate)',
+          border: `1px solid ${on ? 'var(--job-accent)' : 'var(--border-subtle)'}`,
+          background: on ? 'color-mix(in srgb, var(--job-accent) 6%, transparent)' : 'none',
+          cursor: 'pointer', flexShrink: 0,
+        }}
+      >
+        {on ? 'On' : 'Off'}
+      </button>
+    </div>
+  )
+}
+
 // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
 // P1-9: AI tab removed (Nick, 2026-06-09) — it was placeholder copy + a
 // duplicate Team Directory link. The Directory link already lives at the top
@@ -76,6 +113,7 @@ function TodayDefaultViewControl() {
 // an old #profile or #templates link lands on Lab (TAB_ALIASES).
 const TABS = [
   { key: 'lab', label: 'Lab' },
+  { key: 'notifications', label: 'Notifications' },
   { key: 'integrations', label: 'Integrations' },
   { key: 'appearance', label: 'Appearance' },
   { key: 'danger', label: 'Danger Zone' },
@@ -154,6 +192,12 @@ export default function SettingsPage() {
         {activeTab === 'lab' && (
         <SettingsSection title="Lab Preferences" subtitle="Staleness & attention thresholds — one definition (days since meaningful movement), per-domain defaults">
           <LabPrefsPanel />
+        </SettingsSection>
+        )}
+
+        {activeTab === 'notifications' && (
+        <SettingsSection title="Notifications" subtitle="What the Hub emails you">
+          <DigestEmailSwitch />
         </SettingsSection>
         )}
 

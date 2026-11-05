@@ -8,6 +8,10 @@ import { nowInstant } from '../lib/time';
 import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
 import { NOT_QUESTION_SQL, withKindLabel } from '../../shared/taskKinds';
 import { taskLinkFor } from '../../shared/taskLink';
+import { DIGEST_EMAIL_PREF } from '../../shared/userPrefKeys';
+
+// The link lands on the Settings tab that holds the digest's on/off switch.
+const MANAGE_NOTIFICATIONS_LINK = `<a href="${HUB_URL}/portal/settings#notifications" style="color:#64748b;">Manage notifications</a>`;
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -291,7 +295,8 @@ function buildDigestHtml(data: DigestData): string {
 
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
-      MN-CCORE Lab Hub &middot; University of Minnesota
+      MN-CCORE Lab Hub &middot; University of Minnesota<br>
+      ${MANAGE_NOTIFICATIONS_LINK}
     </div>
 
   </div>
@@ -562,7 +567,8 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     </div>
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
-      MN-CCORE Lab Hub &middot; University of Minnesota
+      MN-CCORE Lab Hub &middot; University of Minnesota<br>
+      ${MANAGE_NOTIFICATIONS_LINK}
     </div>
   </div>
 </body>
@@ -604,12 +610,28 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
      WHERE member_type IN ('director', 'coordinator') AND slug IS NOT NULL`
   ).all<CoordinatorMember>();
 
+  // #145 Lane B: each email is built on a handle bound to its recipient, the
+  // same rule the request path uses (as the Pulse cron does), so a director
+  // is never mailed tasks, revisions or regulatory items from a project they
+  // are not on. The cron runs on the raw binding; the HTTP route passes the
+  // pre-binding database in, because its own env.DB is bound to the caller.
+  const rawDb = trigger.kind === 'http' ? trigger.unscopedDb : env.DB;
+
+  // A member's own switch (Settings > Notifications). Read on the raw handle: a
+  // viewer-bound one shows only the caller's own prefs. Only a saved false turns
+  // it off; no row, or anything else stored, stays on.
+  const offRows = await rawDb.prepare(
+    "SELECT member_slug FROM user_prefs WHERE key = ? AND value_json = 'false'"
+  ).bind(DIGEST_EMAIL_PREF).all<{ member_slug: string }>();
+  const optedOut = new Set((offRows.results ?? []).map((r) => r.member_slug));
+
   // Recipient switch: Nick only until widened. sendEmail enforces it too; this
   // pre-filter just skips building emails that would be blocked.
-  const members = (membersResult.results ?? []).filter((m) => isEmailRecipient(m.email || `${m.slug}@umn.edu`, env));
+  const allowed = (membersResult.results ?? []).filter((m) => isEmailRecipient(m.email || `${m.slug}@umn.edu`, env));
+  const members = allowed.filter((m) => !optedOut.has(m.slug));
   if (members.length === 0) {
-    warnIfRecipientsMatchNobody(env);
-    return json({ data: { sent: 0, skipped: 0, message: 'No digest recipients found' } });
+    if (allowed.length === 0) warnIfRecipientsMatchNobody(env);
+    return json({ data: { sent: 0, skipped: 0, opted_out: allowed.length, message: 'No digest recipients found' } });
   }
 
   const { sendEmail } = await import('../lib/email');
@@ -619,12 +641,6 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
   let skipped = 0;
   const errors: string[] = [];
 
-  // #145 Lane B: each email is built on a handle bound to its recipient, the
-  // same rule the request path uses (as the Pulse cron does), so a director
-  // is never mailed tasks, revisions or regulatory items from a project they
-  // are not on. The cron runs on the raw binding; the HTTP route passes the
-  // pre-binding database in, because its own env.DB is bound to the caller.
-  const rawDb = trigger.kind === 'http' ? trigger.unscopedDb : env.DB;
   const piEmails = await getPiEmails(env);
 
   for (const member of members) {
@@ -650,5 +666,5 @@ export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigg
   }
 
   console.log(`[DailyDigest] Done — sent ${sent}, skipped ${skipped}`);
-  return json({ data: { sent, skipped, total: members.length, errors: errors.length > 0 ? errors : undefined } });
+  return json({ data: { sent, skipped, opted_out: allowed.length - members.length, total: members.length, errors: errors.length > 0 ? errors : undefined } });
 }
