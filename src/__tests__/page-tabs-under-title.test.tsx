@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import PageTabs from '../components/PageTabs'
 import PageHeader from '../components/PageHeader'
 import { mount, cleanupMountsAfterEach } from './testMount'
+import notesSource from '../pages/portal/MeetingNotesPage.tsx?raw'
 
 cleanupMountsAfterEach()
 
@@ -55,5 +56,16 @@ describe('PageTabs under the title', () => {
       { ready: (h) => h.querySelector('h1'), label: 'one tab' },
     )
     expect(host.querySelector('[data-testid="page-tabs"]')).toBeNull()
+  })
+})
+
+// Review, 2026-11-05: its loading branch had no header, so on a cold load the title
+// vanished and the tray jumped to the top of the page, then back. The branch only runs
+// in a production build (DEV seeds initialData), so this reads the source.
+describe('Transcripts while it loads', () => {
+  it('keeps the header in the loading branch', () => {
+    const branch = /if \(isLoading\)[\s\S]*?<TableSkeleton/.exec(notesSource)?.[0] ?? ''
+    expect(branch).toContain('{header}')
+    expect(notesSource).toMatch(/const header = \(\s*<PageHeader\s+title="Meetings"/)
   })
 })

@@ -128,21 +128,26 @@ export default function MeetingNotesPage() {
   const processedCount = meetings.filter((m) => m.notes).length
   const totalCount = meetings.length
 
-  if (isLoading) return <TableSkeleton rows={5} cols={3} />
+  // One header through the load, or the title vanishes and the tab tray it draws jumps
+  // to the top of the page and back.
+  const header = (
+    <PageHeader
+      title="Meetings"
+      subtitle="Each meeting's transcript and notes"
+      count={processedCount}
+      actions={
+        <Button variant="primary" onClick={() => setShowCreate(true)}>
+          <FileText {...ICON_PROPS} size={16} />
+          Add Transcript
+        </Button>
+      }
+    />
+  )
+  if (isLoading) return <PageContainer>{header}<TableSkeleton rows={5} cols={3} /></PageContainer>
 
   return (
     <PageContainer>
-      <PageHeader
-        title="Meetings"
-        subtitle="Each meeting's transcript and notes"
-        count={processedCount}
-        actions={
-          <Button variant="primary" onClick={() => setShowCreate(true)}>
-            <FileText {...ICON_PROPS} size={16} />
-            Add Transcript
-          </Button>
-        }
-      />
+      {header}
 
       {/* Stats */}
       <StatRow
