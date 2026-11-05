@@ -72,23 +72,23 @@ export async function notifyWatchersChanged(
   actor: Actor,
   skip: readonly string[] = [],
 ): Promise<void> {
-  const stmt = env.DB.prepare(
-    `INSERT INTO notifications (${INSERT_COLS})
-     SELECT ?, ?, 'update', 'task', ?, ?, ?, ?
-      WHERE NOT EXISTS (SELECT 1 FROM notifications
-                         WHERE recipient_slug = ? AND type = 'update' AND source_type = 'task' AND source_id = ? AND read = 0)`,
-  );
-  const statements = tasks.flatMap((t) => parseWatchers(t.watchers)
-    .filter((slug) => slug !== actor.slug && !skip.includes(slug))
-    .map((slug) => stmt.bind(
-      generateId(), slug, t.id,
-      `${actorName(actor)} changed a task you watch`,
-      short(t.title, 200),
-      taskLinkFor(t.id),
-      slug, t.id,
-    )));
-  if (statements.length === 0) return;
   try {
+    const stmt = env.DB.prepare(
+      `INSERT INTO notifications (${INSERT_COLS})
+       SELECT ?, ?, 'update', 'task', ?, ?, ?, ?
+        WHERE NOT EXISTS (SELECT 1 FROM notifications
+                           WHERE recipient_slug = ? AND type = 'update' AND source_type = 'task' AND source_id = ? AND read = 0)`,
+    );
+    const statements = tasks.flatMap((t) => parseWatchers(t.watchers)
+      .filter((slug) => slug !== actor.slug && !skip.includes(slug))
+      .map((slug) => stmt.bind(
+        generateId(), slug, t.id,
+        `${actorName(actor)} changed a task you watch`,
+        short(t.title, 200),
+        taskLinkFor(t.id),
+        slug, t.id,
+      )));
+    if (statements.length === 0) return;
     await env.DB.batch(statements);
   } catch (e) {
     console.error('notifyWatchersChanged failed:', e);

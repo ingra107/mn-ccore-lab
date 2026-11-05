@@ -2339,7 +2339,7 @@ defineRoute({
   path: '/api/tasks/:id',
   auth: 'authed',
   entity: 'tasks',
-  handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c), ownWatchRemover(E(c), c.get('unscopedDb'))),
+  handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c), ownWatchRemover(E(c), c.get('unscopedDb'), c.req.param('id'), USER(c))),
 });
 defineRoute({
   method: 'POST',

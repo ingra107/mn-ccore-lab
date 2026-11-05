@@ -142,6 +142,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   ): Promise<SaveResult> => {
     const patch: Record<string, unknown> = { ...fields }
     delete patch.expected_description // a guard for the route, not a column
+    delete patch.expected_watchers // the same
     const keys = Object.keys(patch)
     const pick = (src: Record<string, unknown>) => Object.fromEntries(keys.filter((k) => k in src).map((k) => [k, src[k]]))
     const before = task && task.id === id ? pick(task as unknown as Record<string, unknown>) : null
@@ -181,6 +182,19 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   // "In flight" is read from the mutation cache (inFlightDescription below),
   // so it holds across a remount and a second panel on the same task, ends
   // with the QueryClient, and a hung save is a visible "Saving...".
+  // A watcher save replaces the whole list, so it says what it started from. A stale
+  // one answers 409 with the current list (the failed-write toast says why): the panel
+  // shows that list, and the person chooses again. As saveDescription does.
+  const saveWatchers = (id: string, next: string | null, expected: string | null) => {
+    void saveFields(id, { watchers: next, expected_watchers: expected }).then((r) => {
+      if (r.ok) return
+      const e = r.error
+      if (e instanceof ApiError && e.status === 409 && e.body.code === 'watchers_changed') {
+        const now = typeof e.body.watchers === 'string' ? e.body.watchers : null
+        setLiveTask((t) => (t && t.id === id ? { ...t, watchers: now } : t))
+      }
+    })
+  }
   const saveDescription = (id: string, next: string | null, expected: string | null): Promise<DescriptionSave> =>
     saveFields(id, { description: next, expected_description: expected }).then((r): DescriptionSave => {
       if (r.ok) {
@@ -853,7 +867,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 lets a watcher read and edit the task even when they are off its
                 project, and api/lib/task-watchers.ts notifies them. */}
             <FieldBlock label="Watchers" noContainer>
-              <WatchersPicker value={task.watchers} onChange={(v) => handleFieldUpdate('watchers', v)} />
+              <WatchersPicker value={task.watchers} onChange={(v) => saveWatchers(task.id, v, task.watchers ?? null)} />
               <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--muted)' }}>
                 Each person here can see and edit this task, and is notified when it changes, even if they are not on the project.
               </p>

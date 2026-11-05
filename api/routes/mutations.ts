@@ -411,7 +411,13 @@ export async function handleMutations(
  *  TABLE_FIELDS. A closed list: a column joins by being named here. */
 export interface HubOnlyColumns {
   watchers: string | null;
+  /** Not a column. The stored list this whole-list save replaces: the row write
+   *  requires it (`watchers IS ?`), and a row that has moved answers `conflict`
+   *  with reason WATCHERS_CHANGED. Omitted = no check. */
+  watchersBase?: string | null;
 }
+
+export const WATCHERS_CHANGED = 'watchers_changed';
 
 async function processOne(
   env: Env,
@@ -1180,6 +1186,14 @@ async function decideAndCommitUpdate(
     return mutErr(mut.mutation_id, 'record_not_found', `${mut.table} record ${mut.record_id} not found`);
   }
 
+  // A stale whole-list watcher save. Nothing was written and the mutation id is
+  // never reused, so no processed_mutations row is recorded (as undoRefused).
+  if (hubOnly?.watchersBase !== undefined && (current.watchers ?? null) !== hubOnly.watchersBase) {
+    const moved: MutationResult = { mutation_id: mut.mutation_id, status: 'conflict', reason: WATCHERS_CHANGED };
+    RECEIPT_HANDLED.add(moved);
+    return moved;
+  }
+
   // schema-v150: never re-role, re-scope or re-own a product's current draft
   // through the generic door (api/lib/current-draft.ts).
   if (mut.table === 'links') {
@@ -1371,6 +1385,7 @@ async function decideAndCommitUpdate(
       ...(mirrorSlots ? { dependentLinksRead: touchedLinksRead(env.DB, mut.mutation_id) } : {}),
       receipt: { op: 'update', fields: write.fields, patch: mut.patch as Record<string, unknown> },
       ...(guard ? { undo: guard.statements, undoWhere: guard.where } : {}),
+      ...(hubOnly?.watchersBase !== undefined ? { undoWhere: { sql: 'watchers IS ?', vals: [hubOnly.watchersBase] } } : {}),
       // schema-v157: a hand sort's event goes in BEFORE the row write (the
       // transition trigger looks for it) and is taken back after it if the
       // write did not land (api/lib/task-work-kind.ts).
@@ -2192,7 +2207,7 @@ async function applyPatch(
     }
   }
 
-  if (hubOnly) effectivePatch = { ...effectivePatch, ...hubOnly };
+  if (hubOnly) effectivePatch = { ...effectivePatch, watchers: hubOnly.watchers };
   const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below

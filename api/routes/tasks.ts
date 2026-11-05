@@ -4,7 +4,7 @@ import { filterFixtures } from '../lib/fixtures';
 import { taskLinkFor } from '../../shared/taskLink';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
-import { applyMutation, applyWorkKindSort, hashTouched } from './mutations';
+import { applyMutation, WATCHERS_CHANGED, applyWorkKindSort, hashTouched } from './mutations';
 import { parseSortBody } from '../lib/task-work-kind';
 import { eventDateRefusal } from './products';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
@@ -15,7 +15,7 @@ import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
-import { parseWatchers, serializeWatchers } from '../../shared/watchers';
+import { parseWatchers, sameWatchers, serializeWatchers } from '../../shared/watchers';
 import { WATCHED_TASK_FIELDS, notifyWatchersAdded, notifyWatchersChanged, watchedFieldsChanged } from '../lib/task-watchers';
 import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, notApprovalSql, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
@@ -351,12 +351,31 @@ const descriptionChanged = (description: string | null): Response =>
  * The one write a viewer's handle cannot commit: a watcher taking themselves off a
  * task they can read only as its watcher. The commit's own checks read the row back,
  * and this write has just hidden it from them, so a landed write would read as not
- * found. handleUpdateTask decides when; this only runs that mutation. Pinned to this
- * route in api/health-unscoped.test.ts.
+ * found. Bound at the route to one task and one person, this does exactly that and
+ * nothing else: its only argument is the stored list the save started from, which
+ * must name the person, and the row write requires that list (`watchers IS ?`). So
+ * someone removed a moment earlier cannot write. Pinned in api/health-unscoped.test.ts.
  */
-export type OwnWatchRemover = (mutation: Parameters<typeof applyMutation>[1]) => ReturnType<typeof applyMutation>;
-export const ownWatchRemover = (env: Env, unscoped: D1Database): OwnWatchRemover =>
-  (mutation) => applyMutation({ ...env, DB: unscoped }, mutation);
+type MutationOutcome = Awaited<ReturnType<typeof applyMutation>>;
+export type OwnWatchRemover = (base: string | null) => Promise<MutationOutcome>;
+const isPerson = (user: AuthUser) => (s: string) => s.toLowerCase() === user.slug.toLowerCase() || s.toLowerCase() === user.email.toLowerCase();
+export const ownWatchRemover = (env: Env, unscoped: D1Database, taskId: string, user: AuthUser): OwnWatchRemover => async (base) => {
+  const mine = isPerson(user);
+  const list = parseWatchers(base);
+  if (!list.some(mine)) return { mutation_id: generateId('mut'), status: 'conflict', reason: WATCHERS_CHANGED };
+  return applyMutation({ ...env, DB: unscoped }, {
+    table: 'tasks',
+    record_id: taskId,
+    op: 'update',
+    patch: {},
+    route: 'handleUpdateTask',
+    user,
+    hubOnly: { watchers: serializeWatchers(list.filter((s) => !mine(s))), watchersBase: base },
+  });
+};
+
+const watchersChanged = (watchers: string | null): Response =>
+  json({ error: 'The watcher list changed since this edit started. This is the current list.', code: WATCHERS_CHANGED, watchers }, 409);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env, removeOwnWatch?: OwnWatchRemover): Promise<Response> {
   // The task must be one the caller may read (guardTaskProject).
@@ -538,21 +557,39 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     `SELECT watchers, ${WATCHED_TASK_FIELDS.join(', ')} FROM tasks WHERE id = ?`
   ).bind(id).first<Record<string, unknown>>();
 
-  // Only a write that changes the watcher list and nothing else takes this path. The
-  // guard above already said this person may edit the task.
-  const dropsOwnWatch = watchers !== undefined && Object.keys(patchRecord).length === 0
-    && parseWatchers(prior?.watchers).includes(user.slug) && !parseWatchers(watchers).includes(user.slug);
-  const apply: OwnWatchRemover = dropsOwnWatch && removeOwnWatch ? removeOwnWatch : (m) => applyMutation(env, m);
-  const updateMutResult = await apply({
-    table: 'tasks',
-    record_id: id,
-    op: 'update',
-    patch: patchRecord,
-    route: 'handleUpdateTask',
-    user,
-    ...cas,
-    ...(watchers === undefined ? {} : { hubOnly: { watchers } }),
-  });
+  // A whole-list save replaces whoever is listed now, so it says what it started from
+  // (`expected_watchers`; omitted = no check, for a tab older than this). A stale one
+  // answers the conflict with the current list and writes nothing. The list read here
+  // also goes on the row write, for a change landing between this read and the commit.
+  const watchersBase = (prior?.watchers ?? null) as string | null;
+  if (watchers !== undefined && 'expected_watchers' in body && !sameWatchers(body.expected_watchers, watchersBase)) {
+    return watchersChanged(watchersBase);
+  }
+
+  // Dropping your own watch can end your read of the task, so it goes alone: anything
+  // else in the same write would land with no way left to confirm it.
+  const mine = isPerson(user);
+  const dropsOwnWatch = watchers !== undefined && parseWatchers(watchersBase).some(mine) && !parseWatchers(watchers).some(mine);
+  if (dropsOwnWatch && (Object.keys(patchRecord).length > 0
+    || !sameWatchers(watchers, parseWatchers(watchersBase).filter((s) => !mine(s))))) {
+    return error('Removing yourself as a watcher has to be saved on its own, with no other change.', 400);
+  }
+  const updateMutResult = dropsOwnWatch && removeOwnWatch
+    ? await removeOwnWatch(watchersBase)
+    : await applyMutation(env, {
+      table: 'tasks',
+      record_id: id,
+      op: 'update',
+      patch: patchRecord,
+      route: 'handleUpdateTask',
+      user,
+      ...cas,
+      ...(watchers === undefined ? {} : { hubOnly: { watchers, watchersBase } }),
+    });
+  if (updateMutResult.status === 'conflict' && updateMutResult.reason === WATCHERS_CHANGED) {
+    const now = await env.DB.prepare('SELECT watchers FROM tasks WHERE id = ?').bind(id).first<{ watchers: string | null }>();
+    return now ? watchersChanged(now.watchers) : error('Task not found', 404);
+  }
   if (guardsDescription && updateMutResult.status === 'conflict') {
     const now = updateMutResult.current_payload?.description;
     return descriptionChanged(typeof now === 'string' ? now : null);
@@ -577,9 +614,14 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
   if (prior) {
     const nextTitle = (typeof patchRecord.title === 'string' ? patchRecord.title : prior.title) as string | null;
     const nextWatchers = watchers === undefined ? prior.watchers : watchers;
-    const justAdded = watchers === undefined ? [] : await notifyWatchersAdded(env, { id, title: nextTitle }, prior.watchers, watchers, user);
-    if (watchedFieldsChanged(prior, patchRecord).length > 0) {
-      await notifyWatchersChanged(env, [{ id, title: nextTitle, watchers: nextWatchers }], user, justAdded);
+    // The write has landed: a failed note must not answer 500 and invite a retry.
+    try {
+      const justAdded = watchers === undefined ? [] : await notifyWatchersAdded(env, { id, title: nextTitle }, prior.watchers, watchers, user);
+      if (watchedFieldsChanged(prior, patchRecord).length > 0) {
+        await notifyWatchersChanged(env, [{ id, title: nextTitle, watchers: nextWatchers }], user, justAdded);
+      }
+    } catch (e) {
+      console.error('handleUpdateTask: watcher notes failed:', e);
     }
   }
 

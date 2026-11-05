@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import type Database from 'better-sqlite3'
 import worker from '../index'
 import type { AuthUser, Env } from '../helpers'
-import { handleBatchUpdateTasks } from './tasks'
+import { handleBatchUpdateTasks, handleUpdateTask, handleUpdateTaskStatus, ownWatchRemover } from './tasks'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { _resetPiEmailsCacheForTests } from '../helpers'
 
@@ -113,9 +113,27 @@ describe('a write that takes away the writer\'s own read', () => {
     expect(db.prepare('SELECT outcome FROM processed_mutations WHERE mutation_id = ?').get(row.last_mutation_id)).toMatchObject({ outcome: 'accepted' })
   })
 
-  it('a body that also changes another field does not take the unscoped path', async () => {
+  const row = () => db.prepare('SELECT watchers, priority FROM tasks WHERE id = ?').get(TASK) as { watchers: string | null; priority: string }
+
+  it('dropping your own watch and changing another field is refused whole: a 400 and nothing written', async () => {
     const res = await call('POST', `/api/tasks/${TASK}`, CASEY, { watchers: null, priority: 'high' })
-    expect(res.status).toBe(409)
+    expect(res.status).toBe(400)
+    expect(JSON.stringify(res.body)).toMatch(/on its own/)
+    expect(row()).toEqual({ watchers: '["casey-eddington"]', priority: 'medium' })
+  })
+
+  it('dropping your own watch and adding someone in the same save is refused whole too', async () => {
+    const res = await call('POST', `/api/tasks/${TASK}`, CASEY, { watchers: '["nate-mesfin"]' })
+    expect(res.status).toBe(400)
+    expect(row().watchers).toBe('["casey-eddington"]')
+  })
+
+  it('dropping your own watch keeps the others on the list', async () => {
+    db.prepare(`UPDATE tasks SET watchers = '["casey-eddington","nate-mesfin"]' WHERE id = ?`).run(TASK)
+    const res = await call('POST', `/api/tasks/${TASK}`, CASEY, { watchers: '["nate-mesfin"]' })
+    expect(res.status).toBe(200)
+    expect(res.body?.data).toBeNull()
+    expect(row().watchers).toBe('["nate-mesfin"]')
   })
 
   it('removing someone else keeps the read of the writer and echoes the row', async () => {
@@ -142,6 +160,151 @@ describe('a write that takes away the writer\'s own read', () => {
     db.prepare('UPDATE tasks SET watchers = NULL WHERE id = ?').run(TASK)
     expect((await call('POST', `/api/tasks/${TASK}`, CASEY, { priority: 'high' })).status).toBe(404)
     expect((db.prepare('SELECT priority FROM tasks WHERE id = ?').get(TASK) as { priority: string }).priority).toBe('medium')
+  })
+})
+
+describe('the own-watch operation names nothing but the base list', () => {
+  const casey = { email: CASEY, name: 'Casey', slug: 'casey-eddington' } as AuthUser
+  const watchersNow = () => (db.prepare('SELECT watchers FROM tasks WHERE id = ?').get(TASK) as { watchers: string | null }).watchers
+
+  it('takes only its own person off the list, on its own task', async () => {
+    db.prepare(`UPDATE tasks SET watchers = '["casey-eddington","nate-mesfin"]' WHERE id = ?`).run(TASK)
+    const r = await ownWatchRemover(env, env.DB, TASK, casey)('["casey-eddington","nate-mesfin"]')
+    expect(r.status).toBe('accepted')
+    expect(watchersNow()).toBe('["nate-mesfin"]')
+  })
+
+  it('a watcher already removed cannot write: nothing lands, whatever the caller read', async () => {
+    db.prepare(`UPDATE tasks SET watchers = '["nate-mesfin","dan-shyu"]' WHERE id = ?`).run(TASK)
+    const r = await ownWatchRemover(env, env.DB, TASK, casey)('["casey-eddington"]')
+    expect(r).toMatchObject({ status: 'conflict', reason: 'watchers_changed' })
+    expect(watchersNow()).toBe('["nate-mesfin","dan-shyu"]')
+  })
+
+  it('a base list that does not hold the caller is refused, even if it is the stored one', async () => {
+    db.prepare(`UPDATE tasks SET watchers = '["nate-mesfin"]' WHERE id = ?`).run(TASK)
+    const r = await ownWatchRemover(env, env.DB, TASK, casey)('["nate-mesfin"]')
+    expect(r).toMatchObject({ status: 'conflict', reason: 'watchers_changed' })
+    expect(watchersNow()).toBe('["nate-mesfin"]')
+  })
+
+  it('removed between the read and the commit: the retry sees it and nothing lands', async () => {
+    let raced = false
+    const racing = new Proxy(env.DB, {
+      get(t, k) {
+        if (k !== 'batch') { const v = Reflect.get(t, k); return typeof v === 'function' ? v.bind(t) : v }
+        return async (stmts: unknown[]) => {
+          if (!raced) { raced = true; db.prepare(`UPDATE tasks SET watchers = '["nate-mesfin"]' WHERE id = ?`).run(TASK) }
+          return t.batch(stmts as never)
+        }
+      },
+    }) as Env['DB']
+    const r = await ownWatchRemover({ ...env, DB: racing } as Env, racing, TASK, casey)('["casey-eddington"]')
+    expect(raced).toBe(true)
+    expect(r).toMatchObject({ status: 'conflict', reason: 'watchers_changed' })
+    expect(watchersNow()).toBe('["nate-mesfin"]')
+  })
+
+  it('the row write itself carries the base list', async () => {
+    const seen: string[] = []
+    const spying = new Proxy(env.DB, {
+      get(t, k) {
+        if (k !== 'prepare') { const v = Reflect.get(t, k); return typeof v === 'function' ? v.bind(t) : v }
+        return (sql: string) => { seen.push(sql); return t.prepare(sql) }
+      },
+    }) as Env['DB']
+    await ownWatchRemover({ ...env, DB: spying } as Env, spying, TASK, casey)('["casey-eddington"]')
+    expect(seen.find((s) => s.startsWith('UPDATE tasks SET watchers'))).toContain('watchers IS ?')
+  })
+})
+
+describe('a stale watcher save', () => {
+  const watchersNow = () => (db.prepare('SELECT watchers FROM tasks WHERE id = ?').get(TASK) as { watchers: string | null }).watchers
+  beforeEach(() => {
+    insertRow(db, 'team_members', { id: 'tm-dan', name: 'Dan', slug: 'dan-shyu', email: 'shyu@umn.edu' })
+    insertRow(db, 'team_members', { id: 'tm-lia', name: 'Lia', slug: 'lia-siegel', email: 'siegel@umn.edu' })
+  })
+
+  it('two editors from one list: the later save answers the conflict with the current list, and drops no one', async () => {
+    const base = '["casey-eddington"]'
+    const first = await call('POST', `/api/tasks/${TASK}`, NATE, { watchers: '["casey-eddington","dan-shyu"]', expected_watchers: base })
+    expect(first.status).toBe(200)
+    const second = await call('POST', `/api/tasks/${TASK}`, NATE, { watchers: '["casey-eddington","lia-siegel"]', expected_watchers: base })
+    expect(second.status).toBe(409)
+    expect(second.body).toMatchObject({ code: 'watchers_changed', watchers: '["casey-eddington","dan-shyu"]' })
+    expect(watchersNow()).toBe('["casey-eddington","dan-shyu"]')
+  })
+
+  it('the comparison is of the people, not the spelling', async () => {
+    db.prepare("UPDATE tasks SET watchers = 'casey-eddington, nate-mesfin' WHERE id = ?").run(TASK)
+    const res = await call('POST', `/api/tasks/${TASK}`, NATE, { watchers: '["casey-eddington","nate-mesfin","dan-shyu"]', expected_watchers: '["casey-eddington","nate-mesfin"]' })
+    expect(res.status).toBe(200)
+  })
+
+  it('no list at all reads the same as an empty one', async () => {
+    db.prepare('UPDATE tasks SET watchers = NULL WHERE id = ?').run(TASK)
+    const res = await call('POST', `/api/tasks/${TASK}`, NATE, { watchers: '["dan-shyu"]', expected_watchers: null })
+    expect(res.status).toBe(200)
+  })
+
+  it('a stale self-removal is refused too', async () => {
+    db.prepare(`UPDATE tasks SET watchers = '["casey-eddington","dan-shyu"]' WHERE id = ?`).run(TASK)
+    const res = await call('POST', `/api/tasks/${TASK}`, CASEY, { watchers: null, expected_watchers: '["casey-eddington"]' })
+    expect(res.status).toBe(409)
+    expect(watchersNow()).toBe('["casey-eddington","dan-shyu"]')
+  })
+
+  it('a change landing between the read and the commit answers the conflict too', async () => {
+    const realBatch = env.DB.batch.bind(env.DB)
+    let raced = false
+    const racing = new Proxy(env.DB, {
+      get(t, k) {
+        if (k !== 'batch') { const v = Reflect.get(t, k); return typeof v === 'function' ? v.bind(t) : v }
+        return async (stmts: unknown[]) => {
+          if (!raced) { raced = true; db.prepare(`UPDATE tasks SET watchers = '["casey-eddington","dan-shyu"]' WHERE id = ?`).run(TASK) }
+          return realBatch(stmts as never)
+        }
+      },
+    }) as Env['DB']
+    const nate = { email: NATE, name: 'Nate', slug: 'nate-mesfin' } as AuthUser
+    const req = new Request(`https://x/api/tasks/${TASK}`, { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ watchers: '["casey-eddington","lia-siegel"]' }) })
+    const res = await handleUpdateTask(TASK, req, nate, { ...env, DB: racing } as Env)
+    expect(raced).toBe(true)
+    expect(res.status).toBe(409)
+    expect(watchersNow()).toBe('["casey-eddington","dan-shyu"]')
+  })
+})
+
+describe('a notification failure after the write landed', () => {
+  const nate = { email: NATE, name: 'Nate', slug: 'nate-mesfin' } as AuthUser
+  const noNotes = () => new Proxy(env.DB, {
+    get(t, k) {
+      if (k !== 'prepare') { const v = Reflect.get(t, k); return typeof v === 'function' ? v.bind(t) : v }
+      return (sql: string) => {
+        if (sql.startsWith('INSERT INTO notifications')) throw new Error('notifications are down')
+        return t.prepare(sql)
+      }
+    },
+  }) as Env['DB']
+  const post = (body: unknown) => new Request(`https://x/api/tasks/${TASK}`, { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+  it('a changed field: 200, the write stands', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const res = await handleUpdateTask(TASK, post({ priority: 'high' }), nate, { ...env, DB: noNotes() } as Env)
+    expect(res.status).toBe(200)
+    expect((db.prepare('SELECT priority FROM tasks WHERE id = ?').get(TASK) as { priority: string }).priority).toBe('high')
+  })
+
+  it('an added watcher: 200, the write stands', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const res = await handleUpdateTask(TASK, post({ watchers: '["casey-eddington","nate-mesfin"]' }), { ...nate, slug: 'someone-else' }, { ...env, DB: noNotes() } as Env)
+    expect(res.status).toBe(200)
+  })
+
+  it('the status route: 200, the write stands', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const req = new Request(`https://x/api/tasks/${TASK}/status`, { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'in_progress' }) })
+    expect((await handleUpdateTaskStatus(TASK, req, nate, { ...env, DB: noNotes() } as Env)).status).toBe(200)
   })
 })
 

@@ -121,10 +121,11 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block).toContain("method: 'GET'")
       expect(block).toContain("path: '/api/pulse',")
     }
-    // Plus the own-watch remover (api/routes/tasks.ts): one mutation, a watcher taking
-    // themselves off a task they read only as its watcher, on the task update route
-    // only. Like the join minter, it writes a row the caller is about to lose.
-    const OWN_WATCH = "ownWatchRemover(E(c), c.get('unscopedDb'))"
+    // Plus the own-watch remover (api/routes/tasks.ts): bound here to the route's one
+    // task and the caller, its only argument the stored list it must match, it takes
+    // that person off that list and does nothing else, on the task update route only.
+    // Like the join minter, it writes a row the caller is about to lose.
+    const OWN_WATCH = "ownWatchRemover(E(c), c.get('unscopedDb'), c.req.param('id'), USER(c))"
     const ownWatch = lines.filter((l) => l.includes(OWN_WATCH))
     expect(ownWatch).toHaveLength(1)
     expect(ownWatch[0].split("get('unscopedDb')").length - 1).toBe(1)
@@ -134,6 +135,9 @@ describe('GET /api/health is about the database, not the caller', () => {
       const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
       expect(block).toContain("method: 'POST'")
       expect(block).toContain("path: '/api/tasks/:id',")
+      const tasksSrc = readFileSync(join(__dirname, 'routes/tasks.ts'), 'utf8')
+      expect(tasksSrc).toContain('export type OwnWatchRemover = (base: string | null) => Promise<MutationOutcome>;')
+      expect(tasksSrc.match(/applyMutation\(\{ \.\.\.env, DB: unscoped \}/g)).toHaveLength(1)
     }
     const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER) && !l.includes(PULSE_COUNTS) && !l.includes(OWN_WATCH))
     expect(uses).toHaveLength(3)

@@ -108,6 +108,7 @@ export function useUpdateTask() {
       // expected_description is a write guard for the route, not a column.
       const row = { ...fields }
       delete row.expected_description
+      delete row.expected_watchers
       // Per-field record: a late failure puts back only what THIS save wrote.
       const rows = optimisticRowUpdate<TaskRow>(
         queryClient, ['tasks'],

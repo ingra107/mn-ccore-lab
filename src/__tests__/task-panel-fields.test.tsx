@@ -167,6 +167,30 @@ describe('G27: panel text stays above the opacity floor', () => {
   })
 })
 
+describe('a stale watcher save', () => {
+  const isWrite = (c: { url: string; method: string }) => c.method === 'POST' && /\/api\/tasks\/task_f1$/.test(c.url)
+
+  it('sends the list it started from', async () => {
+    const calls = stubFetch((url, init) => (init?.method === 'POST' && /\/api\/tasks\/task_f1$/.test(url) ? json({ data: task({ watchers: null }) }) : undefined))
+    await mount(tree(<TaskDetailPanel task={task({ watchers: '["casey-eddington"]' })} onClose={() => {}} />), panelReady)
+    ;(await until(() => panel().querySelector<HTMLElement>('button[aria-label^="Remove watcher"]'), 'remove watcher')).click()
+    await waitFor(() => calls.some(isWrite), 'the save')
+    expect(calls.find(isWrite)!.body).toEqual({ watchers: null, expected_watchers: '["casey-eddington"]' })
+  })
+
+  it('the conflict shows the current list and says why, with the panel still open', async () => {
+    stubFetch((url, init) => (init?.method === 'POST' && /\/api\/tasks\/task_f1$/.test(url)
+      ? json({ error: 'The watcher list changed since this edit started', code: 'watchers_changed', watchers: '["casey-eddington","nate-mesfin"]' }, 409)
+      : undefined))
+    const onClose = vi.fn()
+    await mount(tree(<TaskDetailPanel task={task({ watchers: '["casey-eddington"]' })} onClose={onClose} />), panelReady)
+    ;(await until(() => panel().querySelector<HTMLElement>('button[aria-label^="Remove watcher"]'), 'remove watcher')).click()
+    await waitFor(() => panel().querySelectorAll('button[aria-label^="Remove watcher"]').length === 2, 'the current list')
+    await waitFor(() => /watcher list changed/.test(document.body.textContent ?? ''), 'the words')
+    expect(onClose).not.toHaveBeenCalled()
+  })
+})
+
 describe('a save that takes away the viewer own read', () => {
   it('the panel says so and closes, with no failure toast', async () => {
     stubFetch((url, init) => (init?.method === 'POST' && /\/api\/tasks\/task_f1$/.test(url) ? json({ data: null }) : undefined))
