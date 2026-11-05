@@ -173,4 +173,4 @@ Where the build settled a call differently from the text above, this section win
 - **Nothing joins a list once `apply` has started.** `edit`, `close`, `pick`, `set-pick-owner` and `add-options` refuse: "this list has run; a new change is a new Send". `strike` still works.
 - **An open prep request is not unfinished.** Prep on a Claude pick hands it to the listener, so the brief leaves it out of `unfinished`, and the Plan card reads Preparing rather than With Claude until the packet lands. If the requests can't be read, no pick is called unfinished and `source_status` names them. A carried start queued nothing, so it keeps its owner's tag.
 - **A Today tick counts as an answer.** It joins the submission id only when on, so a re-Send that adds one captures, and a list with none keeps its id.
-- **A close's words from a note run to at least two words;** said live, at least three characters.
+- **A close's words from a note are his whole note, even one word like "Done", or at least two words from inside it;** said live, at least three characters.
