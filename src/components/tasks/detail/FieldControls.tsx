@@ -15,7 +15,7 @@ export function FieldBlock({ label, children, noContainer }: { label: string; ch
 
 // ── Editable Title ───────────────────────────────────────────
 
-export function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+export function EditableTitle({ value, placeholder, onSave }: { value: string; placeholder?: string; onSave: (v: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,6 +33,7 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
       <input
         ref={inputRef}
         value={draft}
+        placeholder={placeholder}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={save}
         onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
@@ -58,13 +59,13 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
       style={{
         fontSize: '1.125rem',
         fontWeight: 'var(--weight-heading, 600)',
-        color: 'var(--ink)',
+        color: value ? 'var(--ink)' : 'var(--muted)',
         // Resting: no border, no box. Hover: subtle bg tint only.
         background: 'none',
         '--hov-bg': 'var(--hover-subtle)',
       } as React.CSSProperties}
     >
-      {value}
+      {value || placeholder}
     </h3>
   )
 }
