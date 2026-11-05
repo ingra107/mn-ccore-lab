@@ -4,11 +4,10 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Link2, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../../lib/dndSensors'
 import InlineAssigneePicker from '../InlineAssigneePicker'
@@ -20,8 +19,8 @@ import { iconForType, linkTypeFor } from '../../lib/linkIcon'
 import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
-import { useSubtasks, useProjects } from '../../hooks/useApiData'
-import { useCreateSubtask, useToggleSubtask, useReorderSubtasks } from '../../hooks/useMutations'
+import { useProjects } from '../../hooks/useApiData'
+import { usePostTaskComment } from '../../hooks/useMutations'
 import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_ORDER, STATUS_ORDER } from '../../lib/taskConstants'
 import { useTableConfig } from '../../hooks/useTableConfig'
 import { ColumnHeader } from '../table'
@@ -34,7 +33,6 @@ import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
-import { tealRamp, BAR_TRACK } from '../../lib/tealRamp'
 import { Chip } from '../ui/Chip'
 import { projectShortLabel, taskShortLabel } from '../../lib/displayNames'
 import { useProjectPairs } from '../../hooks/useProjectPairs'
@@ -126,8 +124,6 @@ interface TaskGridViewProps {
   onSelectRange?: (targetId: string, orderedIds: string[], anchor: string | null) => void
   focusedIndex?: number
   onFocusIndex?: (index: number) => void
-  expandedTasks?: Set<string>
-  onToggleExpand?: (id: string) => void
   onPinToFocus?: (id: string) => void
   pinnedIds?: Set<string>
   isLoading?: boolean
@@ -137,7 +133,7 @@ const parseBlockedByIds = parseBlockedBy
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, anchorId, onSelectRange, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds, isLoading }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, anchorId, onSelectRange, focusedIndex, onFocusIndex, onPinToFocus, pinnedIds, isLoading }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
 
   // ── Table config (persisted sort + column widths + column order) ──
@@ -244,8 +240,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     }
   }, [])
 
-  const [internalExpanded, setInternalExpanded] = useState<Set<string>>(new Set())
-
   // Project data for the PROJECT column
   const { data: projects = [] } = useProjects()
   const projectMap = useMemo(() => {
@@ -257,19 +251,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   }, [projects])
   const { state: contextMenuState, openMenu: openContextMenu, closeMenu: closeContextMenu } = useContextMenu()
 
-  const expandedTasks = controlledExpanded ?? internalExpanded
-  const toggleExpand = (id: string) => {
-    if (controlledToggleExpand) {
-      controlledToggleExpand(id)
-    } else {
-      setInternalExpanded(prev => {
-        const next = new Set(prev)
-        if (next.has(id)) next.delete(id)
-        else next.add(id)
-        return next
-      })
-    }
-  }
   const contextMenuTask = useMemo(
     () => (contextMenuState.taskId ? tasks.find(t => t.id === contextMenuState.taskId) ?? null : null),
     [contextMenuState.taskId, tasks]
@@ -349,20 +330,8 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // Estimate row size: expanded rows are taller to account for subtask section.
-  // Mobile rows use flex-wrap and stack ≥96px tall — use that as base.
-  const mobileRowEstimate = 96
-  const estimateSize = useCallback(
-    (index: number) => {
-      const task = sorted[index]
-      const base = isMobile ? mobileRowEstimate : rowHeight
-      if (task && expandedTasks.has(task.id)) {
-        return base + 160 // base row + estimated subtask section
-      }
-      return base
-    },
-    [sorted, expandedTasks, rowHeight, isMobile],
-  )
+  // Estimate row size. Mobile rows use flex-wrap and stack >=96px tall.
+  const estimateSize = useCallback(() => (isMobile ? 96 : rowHeight), [rowHeight, isMobile])
 
   const virtualizer = useVirtualizer({
     count: sorted.length,
@@ -370,11 +339,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     estimateSize,
     overscan: 15,
   })
-
-  // Re-measure all rows when expandedTasks changes
-  useEffect(() => {
-    virtualizer.measure()
-  }, [expandedTasks, virtualizer])
 
   // Scroll focused row into view within the virtual list
   useEffect(() => {
@@ -497,13 +461,12 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const task = sorted[virtualRow.index]
-              const isExpanded = expandedTasks.has(task.id)
               return (
                 <div
                   key={task.id}
                   data-index={virtualRow.index}
                   ref={(el) => {
-                    // Dynamic measurement for expanded rows
+                    // A row with its quick comment open is taller: measure it
                     if (el) virtualizer.measureElement(el)
                   }}
                   style={{
@@ -534,8 +497,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     isFocused={focusedIndex === virtualRow.index}
                     onFocusIndex={onFocusIndex}
                     onContextMenu={openContextMenu}
-                    expanded={isExpanded}
-                    onToggleExpand={() => toggleExpand(task.id)}
                     projectMap={projectMap}
                     onPinToFocus={onPinToFocus}
                     isPinnedToFocus={pinnedIds?.has(task.id)}
@@ -543,13 +504,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     onCellTab={handleCellTab}
                     onCellFocus={setFocusedCell}
                   />
-                                    {isExpanded && (
-                      <InlineSubtaskRow
-                        key={`sub-${task.id}`}
-                        taskId={task.id}
-                        onHeightChange={() => virtualizer.measure()}
-                      />
-                    )}
                 </div>
               )
             })}
@@ -567,15 +521,14 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
         state={contextMenuState}
         task={contextMenuTask}
         onClose={closeContextMenu}
-        onStatusChange={onStatusChange}
+        onStatusChange={(id, status) => {
+          const prev = tasks.find((t) => t.id === id)?.status
+          onStatusChange(id, status)
+          if (prev) showUndo(`Status \u2192 ${STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status}`, () => onStatusChange(id, prev))
+        }}
         onFieldChange={onFieldChange}
         onOpenDetail={onOpenDetail}
         onPeek={onPeek}
-        onArchive={(t) => {
-          const prev = t.status
-          onStatusChange(t.id, 'done')
-          showUndo('Archived task', () => onStatusChange(t.id, prev))
-        }}
       />
 
       <style>{`
@@ -608,12 +561,6 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           outline: 2px solid var(--job-accent);
           outline-offset: -2px;
           border-radius: var(--radius-sm);
-        }
-        .task-grid-row:hover .subtask-expand-btn {
-          opacity: 0.85 !important;
-        }
-        .task-grid-row:hover .subtask-expand-btn:hover {
-          opacity: 0.8 !important;
         }
         /* Hover badges are visually hidden until row hover/focus.
            a11y: also remove from accessibility tree so screen readers
@@ -784,7 +731,7 @@ function SortableColumnHeader({
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, onSelectRange, anchorId, orderedTaskIds, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
+  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, onSelectRange, anchorId, orderedTaskIds, selectModeActive, isFocused, onFocusIndex, onContextMenu, projectMap, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -805,8 +752,6 @@ function TaskGridRow({
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
   onContextMenu?: (e: React.MouseEvent, taskId: string) => void
-  expanded?: boolean
-  onToggleExpand?: () => void
   projectMap: Map<string, string>
   onPinToFocus?: (id: string) => void
   isPinnedToFocus?: boolean
@@ -824,6 +769,8 @@ function TaskGridRow({
   const [titleDraft, setTitleDraft] = useState('')
   const [quickComment, setQuickComment] = useState(false)
   const [commentDraft, setCommentDraft] = useState('')
+  const postComment = usePostTaskComment(task.id)
+  const { showSuccess } = useUndoToast()
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
 
@@ -974,7 +921,6 @@ function TaskGridRow({
           'transparent'
         }`,
         cursor: selectModeActive && onToggleSelect ? 'cell' : (onOpenDetail || onSelect) ? 'pointer' : 'default',
-        opacity: isDone ? 0.85 : 1,
         transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
         background: 'var(--cream)',
@@ -1095,19 +1041,6 @@ function TaskGridRow({
                 style={{ minWidth: 0, paddingRight: '12px' }}
               >
                 <div className="flex items-center gap-1">
-                  <Button size="icon" aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
-                    onClick={(e) => { e.stopPropagation(); onToggleExpand?.() }}
-                    className="subtask-expand-btn"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
-                      display: 'flex', alignItems: 'center', flexShrink: 0,
-                      color: 'var(--slate)', opacity: expanded ? 0.85 : 0.25,
-                      transition: 'opacity var(--transition-fast) var(--ease-out)',
-                    }}
-                    title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
-                  >
-                    <ChevronRight {...ICON_PROPS} size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) var(--ease-out)' }} />
-                  </Button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
                       <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t2)', opacity: 0.85 }} />
@@ -1197,7 +1130,7 @@ function TaskGridRow({
                       style={{
                         fontSize: 'var(--text-base)',
                         fontWeight: 'var(--weight-heading)',
-                        color: 'var(--ink)',
+                        color: isDone ? 'var(--muted)' : 'var(--ink)',
                         textDecoration: isDone ? 'line-through' : 'none',
                         lineHeight: 1.35,
                         cursor: onOpenDetail ? 'pointer' : 'default',
@@ -1500,18 +1433,6 @@ function TaskGridRow({
         >
           <MessageSquare {...ICON_PROPS} size={12} />
         </Button>
-        <Button size="icon"
-          className="task-grid-row-action-btn"
-          onClick={() => {
-            const prev = task.status
-            onStatusChange(task.id, 'done')
-            showUndo('Archived task', () => onStatusChange(task.id, prev))
-          }}
-          title="Archive task"
-          aria-label="Archive task"
-        >
-          <Archive {...ICON_PROPS} size={12} />
-        </Button>
       </div>
 
       {/* Quick comment input — below the row */}
@@ -1527,31 +1448,15 @@ function TaskGridRow({
               onChange={(e) => setCommentDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && commentDraft.trim()) {
-                  // M08: await the fetch and check res.ok before showing success
-                  // (pre-fix: fire-and-forget, toast showed before response).
-                  const content = commentDraft.trim();
-                  setCommentDraft('');
-                  setQuickComment(false);
-                  (async () => {
-                    try {
-                      const res = await fetch(`/api/tasks/${task.id}/comments`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content }),
-                      });
-                      if (!res.ok) {
-                        // Restore draft so the user can retry
-                        setCommentDraft(content);
-                        setQuickComment(true);
-                        console.error('quick-comment failed', res.status);
-                      } else {
-                        showUndo('Comment added', () => {});
-                      }
-                    } catch {
-                      setCommentDraft(content);
-                      setQuickComment(true);
-                    }
-                  })();
+                  // A failure reaches the failed-write floor (UndoToast.tsx), and
+                  // the draft comes back so the person can retry.
+                  const content = commentDraft.trim()
+                  setCommentDraft('')
+                  setQuickComment(false)
+                  postComment.mutate(content, {
+                    onSuccess: () => showSuccess('Comment added'),
+                    onError: () => { setCommentDraft(content); setQuickComment(true) },
+                  })
                 }
                 if (e.key === 'Escape') { setQuickComment(false); setCommentDraft('') }
                 e.stopPropagation()
@@ -1650,165 +1555,6 @@ function TaskKeyLinks({ task }: { task: TaskRow }) {
         <KeyLinkIcon key={i} url={l.url!} label={l.desc} />
       ))}
     </span>
-  )
-}
-
-// ── Inline Sortable Subtask Item ──────────────────────────────
-
-function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; title: string; completed: number }; onToggle: (id: string) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.85 : 1,
-    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, transition: `opacity var(--duration-normal) var(--ease-out), ${transition || ''}` }}
-      className="flex items-center gap-2 py-1 group"
-      {...attributes}
-    >
-      <Button size="icon" aria-label="Reorder subtask"
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing reveal-on-hover flex-shrink-0"
-        style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <GripVertical {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
-      </Button>
-      <Button size="icon" aria-label={subtask.completed ? "Mark subtask not done" : "Mark subtask done"}
-        onClick={(e) => { e.stopPropagation(); onToggle(subtask.id) }}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
-      >
-        {subtask.completed ? (
-          <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--sk-t2)' }} />
-        ) : (
-          <Circle {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-        )}
-      </Button>
-      <span
-        style={{
-          fontSize: '12px',
-          color: subtask.completed ? 'var(--slate)' : 'var(--ink)',
-          textDecoration: subtask.completed ? 'line-through' : 'none',
-          opacity: subtask.completed ? 0.85 : 0.8,
-        }}
-      >
-        {subtask.title}
-      </span>
-    </div>
-  )
-}
-
-// ── Inline Subtask Row (Linear-style expand) ─────────────────
-
-function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeightChange?: () => void }) {
-  const { data: subtasks = [] } = useSubtasks(taskId)
-  const createSubtask = useCreateSubtask(taskId)
-  const toggleSubtask = useToggleSubtask(taskId)
-  const reorderSubtasks = useReorderSubtasks(taskId)
-  const [newTitle, setNewTitle] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
-  const prevSubtaskCount = useRef(subtasks.length)
-
-  // #514: input-safe variants (same class as #481); listeners are
-  // grip-scoped (InlineSortableSubtask's GripVertical button, not the
-  // row), so this is preventive, not a fix for a reachable bug today.
-  const sensors = useSensors(
-    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
-  )
-
-  useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 200)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    if (subtasks.length !== prevSubtaskCount.current) {
-      prevSubtaskCount.current = subtasks.length
-      onHeightChange?.()
-    }
-  }, [subtasks.length, onHeightChange])
-
-  const completed = subtasks.filter((s) => s.completed).length
-  const total = subtasks.length
-
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTitle.trim()) return
-    createSubtask.mutate(newTitle.trim())
-    setNewTitle('')
-    inputRef.current?.focus()
-  }
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = subtasks.findIndex((s) => s.id === active.id)
-    const newIndex = subtasks.findIndex((s) => s.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const reordered = arrayMove(subtasks, oldIndex, newIndex)
-    reorderSubtasks.mutate(reordered.map((s) => s.id))
-    onHeightChange?.()
-  }
-
-  const [subtaskListRef] = useAutoAnimate<HTMLDivElement>()
-
-  return (
-    <div>
-      <div
-        style={{
-          padding: '6px 16px 10px 48px',
-          borderBottom: '1px solid var(--border-subtle)',
-          background: 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-        }}
-      >
-        {total > 0 && (
-          <div className="flex items-center gap-2 mb-1.5">
-            {/* Teal data ramp: dim early, the full accent when all are done. */}
-            <div style={{ flex: 1, height: 2, borderRadius: 'var(--radius-sm)', background: BAR_TRACK, overflow: 'hidden' }}>
-              <div style={{ width: `${total > 0 ? (completed / total) * 100 : 0}%`, height: '100%', background: tealRamp(total > 0 ? completed / total : 0), borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-out)' }} />
-            </div>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{completed}/{total}</span>
-          </div>
-        )}
-
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            <div ref={subtaskListRef}>
-              {subtasks.map((s) => (
-              <InlineSortableSubtask
-                key={s.id}
-                subtask={s}
-                onToggle={(id) => toggleSubtask.mutate(id)}
-              />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
-          <Plus {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
-          <input
-            ref={inputRef}
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Add subtask..."
-            style={{
-              flex: 1, fontSize: '12px', background: 'none', border: 'none',
-              outline: 'none', color: 'var(--ink)', padding: '3px 0',
-            }}
-          />
-        </form>
-      </div>
-    </div>
   )
 }
 

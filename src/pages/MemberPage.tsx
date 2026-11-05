@@ -85,10 +85,9 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
           <div
             style={{
               fontSize: '15px',
-              color: 'var(--ink)',
+              color: isDone ? 'var(--muted)' : 'var(--ink)',
               lineHeight: 1.4,
               textDecoration: isDone ? 'line-through' : 'none',
-              opacity: isDone ? 0.85 : 1,
             }}
           >
             {item.commitment}
@@ -709,7 +708,7 @@ export default function MemberPage() {
             </AnimatePresence>
 
             {doneCommitments.length > 0 && (
-              <div style={{ marginTop: '0.75rem', opacity: 0.85 }}>
+              <div style={{ marginTop: '0.75rem' }}>
                 <AnimatePresence mode="popLayout">
                   {doneCommitments.map((c) => (
                     <MemberCommitmentCard key={c.id} item={c} />
