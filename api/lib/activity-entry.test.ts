@@ -1573,6 +1573,26 @@ describe('root feeds carry the thread summary (reply_count, last_reply_at, last_
     expect(((await rep.json()) as { count: number }).count).toBe(2)
   })
 
+  it("only Hermes's unanswered placeholder is left out of last_reply_*; a person using the same words is not", async () => {
+    const { env } = makeEnv(FX)
+    const posted = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'root', actorSlug: 'nate-mesfin' })
+    if (!posted.ok) throw new Error('seed failed')
+    const rootId = posted.row.id as string
+    const summary = async () => {
+      const res = await handleGetTaskActivity('t1', piReq(), env)
+      return ((await res.json()) as { data: FeedRow[] }).data.find(r => r.id === rootId)!
+    }
+    await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: '', parentId: rootId, kind: 'comment', body: 'Thinking about this... (AI response pending)', actorSlug: 'claude-ai' })
+    const pending = await summary()
+    expect(pending.reply_count).toBe(1)
+    expect(pending.last_reply_actor).toBeNull()
+
+    await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: '', parentId: rootId, kind: 'comment', body: 'Thinking about this more, I disagree.', actorSlug: 'nate-mesfin' })
+    const person = await summary()
+    expect(person.last_reply_actor).toBe('nate-mesfin')
+    expect(person.last_reply_at).not.toBeNull()
+  })
+
   it('a thread with no replies has a zero count and null summary fields', async () => {
     const { env } = makeEnv(FX)
     const posted = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'alone', actorSlug: 'nate-mesfin' })

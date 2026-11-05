@@ -254,6 +254,19 @@ describe('handleGetUnseenActivity — private Hermes-answer arm (§9.5.1, PRIVAC
     expect((await unseen()).data).toHaveLength(0)
   })
 
+  it('badges a private thread whose landed answer opens with the placeholder words', async () => {
+    task('task-w2', 'Task Words')
+    entry({
+      id: 'root-task-w2', entity_type: 'task', entity_id: 'task-w2', parent_id: null,
+      visibility: 'author', actor_slug: 'nick-ingraham', body: '@hermes a question', created_at: sqlTs(-1),
+    })
+    entry({
+      id: 'reply-task-w2', entity_type: 'task', entity_id: 'task-w2', parent_id: 'root-task-w2',
+      visibility: 'author', actor_slug: 'claude-ai', body: 'Thinking about this as a survival problem, use Cox.', created_at: sqlTs(-1), answered_at: sqlTs(-1),
+    })
+    expect((await unseen()).data[0]).toMatchObject({ entity_id: 'task-w2', new_count: 1 })
+  })
+
   it('does not re-badge once the requester has seen the thread AFTER the answer landed', async () => {
     privateTaskThread()
     seen('task', 'task-1', 'nick-ingraham', 0)
@@ -326,6 +339,21 @@ describe('handleGetUnseenActivity — team-visible Hermes answers', () => {
     reply('s-reply', 'task-s', 's-root', 'Answered.', sqlTs(-2))
     seen('task', 'task-s', 'nick-ingraham', -1)
     expect((await unseen()).data).toHaveLength(0)
+  })
+
+  it('a Hermes answer that opens with the placeholder words badges once it landed', async () => {
+    task('task-w', 'Words thread')
+    root('w-root', 'task-w')
+    reply('w-reply', 'task-w', 'w-root', 'Thinking about this as a survival problem, use Cox.', sqlTs(-1))
+    seen('task', 'task-w', 'nick-ingraham', -2)
+    expect((await unseen()).data[0]).toMatchObject({ entity_id: 'task-w', new_count: 1 })
+  })
+
+  it('a note PB posts as Hermes has no answered_at and still badges', async () => {
+    task('task-n', 'Note thread')
+    entry({ id: 'n-1', entity_type: 'task', entity_id: 'task-n', parent_id: null, visibility: 'team', actor_slug: 'claude-ai', body: 'Session note from PB.', created_at: sqlTs(-1) })
+    seen('task', 'task-n', 'nick-ingraham', -2)
+    expect((await unseen()).data[0]).toMatchObject({ entity_id: 'task-n', new_count: 1 })
   })
 
   it('a person whose comment opens with the same words still counts', async () => {

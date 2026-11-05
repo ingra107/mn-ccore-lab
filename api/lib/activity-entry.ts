@@ -1289,9 +1289,11 @@ export function replySummaryColumns(
   // A Hermes reply keeps created_at at ASK time and stamps answered_at when the
   // answer lands (ai-requests.ts), so "when did this reply arrive" is
   // COALESCE(answered_at, created_at) -- same rule as seen.ts. The pending
-  // placeholder is not an arrival, so it never sets last_reply_at/actor.
+  // placeholder is not an arrival, so it never sets last_reply_at/actor. It is
+  // Hermes's own row, with the prefix, not yet answered: a person may open with
+  // the same words, and so may an answer once it lands.
   const landed = `COALESCE(r.answered_at, r.created_at)`;
-  const arrived = `${from} AND r.body NOT LIKE '${HERMES_PENDING_PREFIX}%'`;
+  const arrived = `${from} AND NOT (r.actor_slug = 'claude-ai' AND r.answered_at IS NULL AND r.body LIKE '${HERMES_PENDING_PREFIX}%')`;
   const sql = `(SELECT COUNT(*) ${from}) AS reply_count,
             (SELECT MAX(${landed}) ${arrived}) AS last_reply_at,
             (SELECT r.actor_slug ${arrived} ORDER BY ${landed} DESC, r.id DESC LIMIT 1) AS last_reply_actor,
