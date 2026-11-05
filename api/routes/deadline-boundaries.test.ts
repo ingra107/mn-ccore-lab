@@ -50,6 +50,28 @@ describe('R10: project health velocity reads completion performance', () => {
     expect(await velocity('late')).toBe(5)
   })
 
+  it('a task finished on its due evening in Chicago is on time (7:30 PM CDT is the next day in UTC)', async () => {
+    project('evening')
+    doneTask('t1', 'evening', '2026-10-10', '2026-10-11T00:30:00.000Z')
+    expect(await velocity('evening')).toBe(25)
+  })
+
+  it('the next Chicago morning is late', async () => {
+    project('morning')
+    doneTask('t1', 'morning', '2026-10-10', '2026-10-11T13:00:00.000Z')
+    expect(await velocity('morning')).toBe(5)
+  })
+
+  it('a soft-deleted task does not count against the project', async () => {
+    project('deleted')
+    doneTask('t1', 'deleted', '2026-10-10', '2026-10-09T12:00:00')
+    insertRow(db, 'tasks', {
+      id: 't2', title: 't2', project_id: 'deleted', status: 'done', priority: 'medium', assignee: 'bob', completed: 1,
+      due_date: '2026-10-10', completed_at: '2026-10-20T12:00:00', deleted_at: '2026-10-21T12:00:00',
+    })
+    expect(await velocity('deleted')).toBe(25)
+  })
+
   it('no dated completions stays the neutral 15', async () => {
     project('none')
     expect(await velocity('none')).toBe(15)

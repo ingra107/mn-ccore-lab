@@ -457,11 +457,13 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   // milestone day counts) which is timezone-agnostic.
   const nowIso = ctToday();
 
+  // On time means by the end of the due day in Chicago. completed_at is UTC, and Chicago's day ends
+  // at 05:00 or 06:00 UTC next day, so 06:00 is the bound: at most an hour generous in daylight time.
   // Six aggregation queries — whole-table scans but one-shot.
   const [updatesAgg, tasksCompAgg, activityAgg, commentsAgg, tasksVelocityAgg, milestonesAgg] = await Promise.all([
     // project updates → activity_entries kind='update', entity_type='project'
     env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='update' AND hidden_at IS NULL GROUP BY project_id").all<{ project_id: string; latest: string }>(),
-    env.DB.prepare('SELECT project_id, MAX(completed_at) as latest, COUNT(*) as done_count, SUM(CASE WHEN due_date IS NOT NULL AND completed_at <= due_date || \'T23:59:59\' THEN 1 ELSE 0 END) as on_time_count, SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) as with_due_count FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL GROUP BY project_id').all<{ project_id: string; latest: string; done_count: number; on_time_count: number; with_due_count: number }>(),
+    env.DB.prepare('SELECT project_id, MAX(completed_at) as latest, COUNT(*) as done_count, SUM(CASE WHEN due_date IS NOT NULL AND datetime(completed_at) < datetime(due_date, \'+1 day\', \'+6 hours\') THEN 1 ELSE 0 END) as on_time_count, SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) as with_due_count FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL AND deleted_at IS NULL GROUP BY project_id').all<{ project_id: string; latest: string; done_count: number; on_time_count: number; with_due_count: number }>(),
     env.DB.prepare("SELECT related_id, MAX(timestamp) as latest FROM activity_log WHERE related_type = 'project' GROUP BY related_id").all<{ related_id: string; latest: string }>(),
     // project comments → activity_entries kind='comment', entity_type='project'
     env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='comment' AND hidden_at IS NULL GROUP BY project_id").all<{ project_id: string; latest: string }>(),
