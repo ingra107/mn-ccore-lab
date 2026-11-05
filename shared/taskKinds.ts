@@ -113,3 +113,15 @@ export function notQuestionSql(alias = ''): string {
 }
 export const NOT_QUESTION_SQL = notQuestionSql();
 export const NOT_QUESTION_SQL_T = notQuestionSql('t');
+
+/**
+ * SQL for "this row is not a meeting-approval row" (pending, accepted or
+ * declined; source='meeting_approval'). An approval asks whether a calendar
+ * event is a meeting; it is not work. Every task list on the client drops these
+ * (src/lib/taskStats.ts isWorkTask), so a server count of open or overdue work
+ * must too, or it reads higher than the list it describes. Pass the alias as above.
+ */
+export function notApprovalSql(alias = ''): string {
+  const p = alias ? `${alias}.` : '';
+  return `COALESCE(${p}approval_status, '') NOT IN ('pending', 'accepted', 'declined')`;
+}
