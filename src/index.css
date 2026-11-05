@@ -8,7 +8,7 @@
   --ink: oklch(0.15 0.02 250);           /* #0f1923 */
   --ink-bright: oklch(1 0 0);            /* #ffffff — white fill on dark surfaces (hero, badges, CTAs) */
   /* --slate explicit hex (2026-04-18 axe AA): see dark-mode note. Darker
-     slate gives ~4.8:1 through --ink-label=0.70 on sidebar-bg (#d7d7d7)
+     slate gives ~4.8:1 through --ink-label=0.70 on sidebar-bg (#ebe7e2)
      and still passes AA at full opacity on #fff (7:1+). */
   --slate: #1a2939;
   /* Light-mode colors pinned to sRGB hex so axe-core 4.11 grades the
@@ -249,8 +249,6 @@
 
   --bg-rgb: 10, 13, 17;  /* = --sk-page */
   --page-bg: var(--sk-page);
-
-  letter-spacing: 0.01em;
 }
 
 /* ── Stepped-surface tokens (Today reskin, 2026-10-09) ──
@@ -505,8 +503,8 @@ html[data-density="comfortable"] {
   --field-bg: rgba(0, 0, 0, 0.02);
   --field-bg-hover: rgba(0, 0, 0, 0.04);
 
-  /* Sidebar surface — DARKER than content (3-plane depth, matches Linear) */
-  --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
+  /* Sidebar surface: a warm off-white, one step under the warm page (--sk-page). Nick's mock, 2026-11-05. */
+  --sidebar-bg: #ebe7e2;
 
   /* Working-card surface: white on the cream canvas (P2, 2026-09-20 — see
      the surface-model note above --page-bg). Dark keeps its lift below. */
@@ -1468,9 +1466,9 @@ a:hover {
    .inline-select-chevron-always. See design ticket § 0 Ask 2. */
 /* The one caret (ui/Caret): a typed triangle, 11px so it does not read as a dot. */
 .caret{font-size:11px;line-height:1;color:var(--sk-t3);margin-left:2px;flex-shrink:0}
-.caret::before{content:'BE'}
-.caret-up::before{content:'B4'}
-.caret-right::before{content:'B8'}
+.caret::before{content:'▾'}
+.caret-up::before{content:'▴'}
+.caret-right::before{content:'▸'}
 .inline-select-chevron {
   opacity: 0;
   margin-left: 2px;
