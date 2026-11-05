@@ -38,7 +38,7 @@ import ProductKindList from '../../components/project/ProductKindList'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useAllProjectProducts, useSetProductStage } from '../../hooks/useProjectProducts'
-import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productKindLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
+import { byEventDateDesc, homeOf, kindsForManuscriptsTab, ladderFor, manuscriptsPageTabs, manuscriptPageLadder, MANUSCRIPT_LADDER_FALLBACK, matchesRoleFilter, NO_ROLES, productKindLabel, productsOfKinds, ROLE_FILTERS, type ProductRow } from '../../lib/products'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
@@ -172,7 +172,9 @@ export default function ManuscriptsPage() {
     const fromKinds = ladderFor(productData?.kinds ?? [], 'manuscript')
     return fromKinds.length > 0 ? fromKinds : [...MANUSCRIPT_LADDER_FALLBACK]
   }, [productData])
-  const STAGES = useMemo(() => ladder.map((s) => s.stage), [ladder])
+  // What the Stage cell and the Pipeline offer. STAGE_ORDER and writingOrdinal
+  // below keep reading the whole ladder.
+  const STAGES = useMemo(() => manuscriptPageLadder(ladder).map((s) => s.stage), [ladder])
   const STAGE_LABELS = useMemo<Record<string, string>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.label])), [ladder])
   const STAGE_ORDER = useMemo<Record<string, number>>(() => Object.fromEntries(ladder.map((s) => [s.stage, s.ordinal])), [ladder])
   const writingOrdinal = ladder.find((s) => s.stage === 'writing')?.ordinal ?? Number.POSITIVE_INFINITY
@@ -240,9 +242,18 @@ export default function ManuscriptsPage() {
     [STAGE_ORDER, writingOrdinal],
   )
 
+  // What the undo toast calls a field and its new value: the words on the row.
+  const fieldChangeLabel = (field: string, value: unknown): string => {
+    const v = String(value ?? '')
+    if (field === 'status') return `Status: ${STATUS_OPTIONS.find((o) => o.value === v)?.label ?? v}`
+    if (field === 'category') return `Group: ${CATEGORY_LABEL[v] ?? v}`
+    if (field === 'pi') return `PI: ${v ? displayName(v, 'display') : 'Unassigned'}`
+    return 'Saved'
+  }
+
   const handleFieldChange = (slug: string, field: string, value: unknown, prev: unknown) => {
     inlineUpdate.mutate({ slug, fields: { [field]: value } })
-    showUndo(`${field} → ${value}`, () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
+    showUndo(fieldChangeLabel(field, value), () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
   }
 
   // One stage write for the list cell and the pipeline drag: the home
@@ -336,6 +347,14 @@ export default function ManuscriptsPage() {
 
   // S4: stalled count scoped to the manuscript subset (stage >= writing, not
   // yet published), so the pill count matches the page's own taxonomy.
+  const filtersOn = Boolean(filterPI || filterCategory || filterStalled || attentionFilter)
+  const clearFilters = () => {
+    setFilterPI('')
+    setFilterCategory('')
+    setFilterStalled(false)
+    setAttentionFilter(null)
+  }
+
   const stalledCount = useMemo(() =>
     msCandidates.filter(p => isManuscriptRow(p) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
   , [msCandidates, isManuscriptRow, stalledThresholdDays])
@@ -501,6 +520,13 @@ export default function ManuscriptsPage() {
                 onStageChange={handleStageChange}
                 keyboardDisabled={showCreate}
               />
+            ) : filtersOn ? (
+              <EmptyState
+                icon={<FileText size={40} />}
+                title="No manuscripts match"
+                subtitle="Nothing on the shelf fits these filters."
+                action={{ label: 'Clear filters', onClick: clearFilters }}
+              />
             ) : (
               <EmptyState
                 icon={<FileText size={40} />}
@@ -621,6 +647,9 @@ export default function ManuscriptsPage() {
       <CreateProjectModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
+        // A manuscript made here starts at the first rung this page lists, so it
+        // appears on the page that made it.
+        prefill={{ stage: STAGES[0] }}
         onCreate={(input) => createProject.mutate(input)}
       />
 
