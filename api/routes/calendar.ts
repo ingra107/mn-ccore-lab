@@ -79,7 +79,7 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
   // Dedup by title+date (meetings may have duplicates from multiple syncs with different IDs)
   const seen = new Set<string>();
   const deduped = events.filter((e) => {
-    const key = `${e.type}::${e.date}::${e.title}`;
+    const key = e.type === 'meeting' ? `meeting::${e.date}::${e.title}` : `${e.type}::${e.id}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
