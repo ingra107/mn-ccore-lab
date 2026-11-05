@@ -5,6 +5,7 @@ import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
 import { LANE_SOURCE_TYPES, RETIRED_LANE_SOURCE_TYPES, isLaneSourceType, isRetiredLaneSourceType } from '../../shared/weekPlan';
 import { packetOwnerEmailSql } from '../lib/packet-owner';
+import { taskLinkFor } from '../../shared/taskLink';
 
 // GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
 //
@@ -791,7 +792,7 @@ async function _submitterNotification(
  * Priority order:
  *   1. Artifact URL embedded in the response text (Hermes produced an artifact).
  *   2. Source-surface fallback keyed on source_type:
- *      - daily_thought, source_id = task_<ulid> → /portal/my-tasks?openTask=<task_id>
+ *      - daily_thought, source_id = task_<ulid> → taskLinkFor(<task_id>)
  *        (#521: a typed @hermes prefix on a task compose surface — TaskDetailPanel,
  *        SmartCompose task mode — posts source_type='daily_thought' with the TASK id
  *        as source_id, per hermesRouting.ts's contract; task ids are always
@@ -799,7 +800,7 @@ async function _submitterNotification(
  *        Today-bar's `YYYY-MM-DD`) can never collide with)
  *      - daily_thought, source_id = date-key → /today (the Today-bar's own
  *        MorningThoughtCompose)
- *      - task_comment  → /portal/my-tasks?open=<task_id>
+ *      - task_comment  → taskLinkFor(<task_id>)
  *      - project_comment → /portal/projects/<slug>
  *      - artifact_comment → /portal/artifacts/<artifact_id>
  *      - other → /portal/dashboard
@@ -819,7 +820,7 @@ async function _hermesNotifyLink(
   switch (req.source_type) {
     case 'daily_thought':
       return req.source_id.startsWith('task_')
-        ? `/portal/my-tasks?openTask=${encodeURIComponent(req.source_id)}`
+        ? taskLinkFor(req.source_id)
         : '/today';
     case 'task_comment': {
       // activity-hidden-exempt: redirect-link routing — resolve the entity a
@@ -827,7 +828,7 @@ async function _hermesNotifyLink(
       const entry = await env.DB.prepare(
         'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'
       ).bind(req.source_id).first<{ entity_id: string }>();
-      return entry ? `/portal/my-tasks?open=${entry.entity_id}` : '/portal/my-tasks';
+      return entry ? taskLinkFor(entry.entity_id) : '/portal/my-tasks';
     }
     case 'project_comment':
       return req.project_slug ? `/portal/projects/${req.project_slug}` : '/portal/overview';

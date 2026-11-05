@@ -7,6 +7,7 @@ import { nowInstant } from '../lib/time';
 
 import { HUB_URL, isEmailRecipient, raw, warnIfRecipientsMatchNobody } from '../lib/email';
 import { NOT_QUESTION_SQL, withKindLabel } from '../../shared/taskKinds';
+import { taskLinkFor } from '../../shared/taskLink';
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ function taskRow(task: DigestTask): string {
   // Always My Tasks: tasks.project_id here is the typed proj_* PK, not the slug the
   // /portal/projects/:slug route expects, so a project deep-link would be broken — ?open=
   // on My Tasks is unambiguous and consumes via useOpenParam.
-  const href = `${HUB_URL}/portal/my-tasks?open=${encodeURIComponent(task.id)}`;
+  const href = `${HUB_URL}${taskLinkFor(task.id)}`;
   return `<tr>
     <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
       <a href="${href}" style="color:#0f1923;text-decoration:none;">${escapeHtml(withKindLabel(task.kind, task.title))}</a>${priorityLabel(task.priority)}${due}

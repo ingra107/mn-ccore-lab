@@ -374,10 +374,10 @@ describe('handleUpdateAIResponse — submitter notifications', () => {
     expect(rows[0].title as string).toContain('Hermes replied to:');
   });
 
-  it('daily_thought notification with a task-keyed source_id links to ?openTask= (#521)', async () => {
+  it('daily_thought notification with a task-keyed source_id links to the task through taskLinkFor (#521)', async () => {
     aiRequest({ id: 'ai-n1b', source_type: 'daily_thought', source_id: 'task_01hqz3x9k2v8m4n6p7q8r9s0', requested_by: 'ingra107@umn.edu' });
     await handleUpdateAIResponse('ai-n1b', makeRequest({ response: 'Finish the draft first.' }), env);
-    expect(notifications('ai-n1b')).toMatchObject([{ link: '/portal/my-tasks?openTask=task_01hqz3x9k2v8m4n6p7q8r9s0' }]);
+    expect(notifications('ai-n1b')).toMatchObject([{ link: '/portal/my-tasks?open=task_01hqz3x9k2v8m4n6p7q8r9s0' }]);
   });
 
   it('does not insert notification when requested_by is null', async () => {
