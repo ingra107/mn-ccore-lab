@@ -373,7 +373,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           />
           {!collapsed && (
             <img
-              src={isDark ? '/logos/mnccore-logo-dark.svg' : '/logos/mnccore-logo-primary.svg'}
+              src={isDark ? '/logos/mnccore-wordmark-dark.svg' : '/logos/mnccore-wordmark-primary.svg'}
               alt="MN-CCORE"
               style={{ height: 24 }}
             />

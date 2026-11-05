@@ -79,31 +79,22 @@ export default function PageTooltip({ id, text, delay = 0 }: PageTooltipProps) {
         // it as a direct child of a full-width page column, not inside
         // another band container (the margins would apply twice).
         <div className="band-anchored-wide" style={{ flexShrink: 0, paddingBottom: 8 }}>
-        {/* Scale + y transform only — keep opacity at 1 throughout so axe
-            doesn't catch the tooltip mid-animation (false-positive contrast
-            fail: partially-transparent --ink bg over page bg). r7 2026-04-22. */}
+        {/* Today's plain hint line, not a bubble: the bubble was the loudest thing
+            on Meetings (Nick's mock, 2026-11-05). Transform only, so axe never
+            catches it mid-fade. */}
         <motion.div
-          initial={{ y: 4, scale: 0.97 }}
-          animate={{ y: 0, scale: 1 }}
-          exit={{ y: 4, scale: 0.97 }}
+          initial={{ y: 4 }}
+          animate={{ y: 0 }}
+          exit={{ y: 4 }}
           transition={spring.snappy}
           className="inline-flex items-center gap-2 page-tooltip"
-          style={{
-            padding: '6px 12px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--ink)',
-            color: 'var(--cream)',
-            fontSize: 11,
-            fontWeight: 400,
-            boxShadow: 'var(--shadow-elevated)',
-            maxWidth: 'min(92vw, 480px)',
-          }}
+          style={{ fontSize: 12, color: 'var(--sk-t3)', maxWidth: 'min(92vw, 480px)' }}
         >
           <span style={{ minWidth: 0 }}>{text}</span>
           <Button size="icon"
             onClick={dismiss}
             aria-label="Dismiss tooltip"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.7, padding: 4, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sk-t3)', padding: 4, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
             <X {...ICON_PROPS} size={14} />
           </Button>

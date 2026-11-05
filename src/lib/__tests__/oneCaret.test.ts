@@ -34,6 +34,7 @@ describe('one caret', () => {
   it('styles the typed caret at 11px, so it stops reading as a dot', () => {
     const css = readFileSync(join(SRC, 'index.css'), 'utf8')
     expect(css).toMatch(/\.caret\{[^}]*font-size:11px/)
+    expect(css).toContain(".caret::before{content:'▾'}")
     expect(css).not.toMatch(/\.sr-car\{[^}]*font-size:9px/)
     expect(css).not.toMatch(/\.tk-caret\{[^}]*font-size:9px/)
   })
