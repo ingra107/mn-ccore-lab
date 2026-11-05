@@ -1,4 +1,5 @@
 import { parseSearchPrefix } from '../../shared/searchPrefix';
+import { taskLinkFor } from '../../shared/taskLink';
 import type { Env } from '../helpers';
 import { compactStageLabel, homeProductCols, homeProductJoin } from '../lib/project-home';
 import { json, error } from '../helpers';
@@ -303,7 +304,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     // S-07: deeplink into project context when task has a project_id.
     const url = t.project_id
       ? `/portal/projects/${t.project_id}?openTask=${t.id}`
-      : `/portal/my-tasks?open=${t.id}`;
+      : taskLinkFor(String(t.id));
     results.push({
       id: t.id,
       type: 'task',
@@ -399,7 +400,8 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       type: 'idea',
       title: i.title,
       subtitle: `${i.submitted_by} · ${i.status}`,
-      url: '/portal/ideas',
+      // Ideas is a tab on Projects; the tab opens this idea (useOpenParam).
+      url: `/portal/projects?tab=ideas&open=${encodeURIComponent(String(i.id))}`,
       score,
       timestamp,
       snippet: match.snippet,
@@ -479,7 +481,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       type: 'task_note',
       title: (n.content || '').slice(0, 120),
       subtitle: `note on task · ${n.task_title || n.task_id} · ${n.author_slug}`,
-      url: `/portal/my-tasks?open=${n.task_id}`,
+      url: taskLinkFor(String(n.task_id)),
       score,
       timestamp,
       snippet: match.snippet,
@@ -499,7 +501,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       type: 'task_comment',
       title: (c.content || '').slice(0, 120),
       subtitle: `comment on task · ${c.task_title || c.task_id} · ${c.author_slug}`,
-      url: `/portal/my-tasks?open=${c.task_id}`,
+      url: taskLinkFor(String(c.task_id)),
       score,
       timestamp,
       snippet: match.snippet,
@@ -548,10 +550,12 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
     const entityUrl = f.entity_type === 'project'
       ? `/portal/projects/${f.entity_id}`
       : f.entity_type === 'task'
-        ? `/portal/my-tasks?open=${f.entity_id}`
+        ? taskLinkFor(String(f.entity_id))
         : f.entity_type === 'meeting'
           ? `/portal/meetings/${f.entity_id}`
-          : '/portal/search';
+          : f.entity_type === 'artifact'
+            ? `/portal/artifacts/${f.entity_id}`
+            : '/portal/search';
     const match = pickMatch(q, [{ name: 'filename', value: f.filename }]);
     results.push({
       id: f.id,
@@ -581,7 +585,9 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       id: p.id,
       type: 'publication',
       title: p.title,
-      subtitle: [p.journal, p.year, p.status].filter(Boolean).join(' · '),
+      // The publication page is the public marketing site (own nav, no way back
+      // into the portal), so the row says so and the portal opens it in a new tab.
+      subtitle: [p.journal, p.year, p.status, 'Public site'].filter(Boolean).join(' · '),
       url: `/publications/${p.id}`,
       score,
       timestamp,
@@ -591,6 +597,7 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
         journal: p.journal,
         year: p.year,
         status: p.status,
+        external: true,
       },
     });
   }
@@ -612,7 +619,8 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
       type: 'grant',
       title,
       subtitle: [g.venue, g.pi].filter(Boolean).join(' · '),
-      url: '/portal/grants',
+      // The grants page has no URL state; the grant is a product of this project.
+      url: `/portal/projects/${g.project_slug}`,
       score,
       timestamp,
       snippet: match.snippet,
@@ -685,11 +693,13 @@ export async function handleGetSearch(url: URL, env: Env, request: Request): Pro
   // Return top 50 — with 14 entity types searched, 20 was too narrow
   // (notes/decisions/files got pushed out by tasks/projects hitting the
   // cap). 50 gives per-type visibility without overwhelming the UI.
-  const top = (onlyTypes ? results.filter((r) => onlyTypes.includes(r.type as string)) : results).slice(0, 50);
+  const matched = onlyTypes ? results.filter((r) => onlyTypes.includes(r.type as string)) : results;
+  const top = matched.slice(0, 50);
 
   // `failedSources` is additive — the frontend's typed shape only reads
   // `data` and `count`, so this field is safely ignored by existing consumers.
   // It lets API callers and future monitoring detect partial degradation.
   const extra = failedSources.length > 0 ? { partial: true, failedSources } : {};
-  return json({ data: top, count: top.length, query: q, ...extra });
+  // `truncated` lets the page say "top 50" instead of passing 50 off as the whole set.
+  return json({ data: top, count: top.length, truncated: matched.length > top.length, query: q, ...extra });
 }

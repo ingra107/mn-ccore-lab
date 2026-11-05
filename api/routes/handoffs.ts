@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 import { applyMutation } from './mutations';
+import { taskLinkFor } from '../../shared/taskLink';
 
 interface HandoffRow {
   id: string
@@ -94,8 +95,8 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
   const taskLabel = task?.title || task?.description || 'a task';
 
   await env.DB.prepare(
-    `INSERT INTO notifications (id, type, title, body, recipient_slug, source_id, source_type)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO notifications (id, type, title, body, recipient_slug, source_id, source_type, link)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     generateId(),
     'handoff',
@@ -104,6 +105,7 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     toSlug,
     taskId,
     'task',
+    taskLinkFor(taskId),
   ).run();
 
   // Log activity

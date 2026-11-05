@@ -1241,6 +1241,19 @@ describe('postActivityEntry — per-entity config (#125)', () => {
     expect(mention('daily_thought')?.link).toBe('/portal/dashboard')
   })
 
+  it('a project mention with no slug links to the project page by id, a route that exists', async () => {
+    const fx: Partial<Fixtures> = {
+      projects: { proj_a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
+    }
+    const { env, notifications } = makeEnv(fx)
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'project', entityId: 'proj_a', kind: 'comment',
+      body: 'hey @nate-mesfin look', actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    expect(notifications.find((n) => n.type === 'mention')?.link).toBe('/portal/projects/proj_a')
+  })
+
   it('an unknown entity_type is a 400 that lists every configured type', async () => {
     const { env } = makeEnv({})
     const r = await postActivityEntry({

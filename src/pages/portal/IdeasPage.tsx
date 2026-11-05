@@ -17,6 +17,7 @@ import { Button } from '../../components/ui/Button'
 import { FIELD_LABEL_STYLE } from '../../components/ui/labelStyle'
 import Modal from '../../components/ui/Modal'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea, useCreateProject } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
@@ -109,6 +110,20 @@ export default function IdeasPage() {
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   // S15: the approved idea currently being promoted into a project.
   const [promotingIdea, setPromotingIdea] = useState<IdeaRow | null>(null)
+
+  // Search emits /portal/projects?tab=ideas&open=<id>. Only the list view has
+  // expandable rows, so switch to it, open the idea and scroll to it. A miss
+  // (deleted idea) just leaves the page as it is; the param is stripped anyway.
+  useOpenParam(
+    'open',
+    (id) => {
+      setViewMode('list')
+      setEditingId(null)
+      setExpandedId(id)
+      requestAnimationFrame(() => document.getElementById(`idea-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    },
+    { ready: !isLoading },
+  )
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -607,6 +622,7 @@ function IdeaRowView({
 
   return (
     <div
+      id={`idea-${idea.id}`}
       className={`idea-row group${isFocused ? ' task-row-focused' : ''}`}
       style={{
         borderBottom: '1px solid var(--row-separator)',

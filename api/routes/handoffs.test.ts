@@ -31,6 +31,12 @@ describe('POST /api/tasks/:id/handoffs', () => {
     expect(count("SELECT COUNT(*) n FROM notifications WHERE recipient_slug='jane' AND type='handoff'")).toBe(1)
   })
 
+  it('the handoff notification links to the task, so the bell row opens it', async () => {
+    await handleCreateHandoff('task_1', req({ to_slug: 'jane', situation: 'over to you' }), USER, env)
+    const n = db.prepare("SELECT link FROM notifications WHERE recipient_slug='jane' AND type='handoff'").get() as { link: string | null }
+    expect(n.link).toBe('/portal/my-tasks?open=task_1')
+  })
+
   it('writes no handoff and no notification when the reassignment did not land', async () => {
     const res = await handleCreateHandoff('task_missing', req({ to_slug: 'jane', situation: 'over to you' }), USER, env)
     expect(res.status).toBe(409)

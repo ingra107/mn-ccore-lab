@@ -15,10 +15,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CollapseChevron } from '../SectionCollapseToggle'
 import { collapseToggleProps } from '../collapseToggleProps'
-import { PATHS } from '../../../constants/paths'
 import { formatRelativeTime } from '../../../lib/dateUtils'
 import { useMailWatch } from '../../../hooks/useMailWatch'
 import { mailCardStatus, type StatusTone } from '../../../lib/mailStatusLine'
+import { taskLinkFor } from '../../../lib/taskLink'
 
 const TONE_COLOR: Record<StatusTone, string> = {
   ok: 'var(--sk-t3)',
@@ -53,7 +53,7 @@ export function MailWatchCard({ isNick }: { isNick: boolean }) {
           <div key={t.thread_id} className="tk-rli">
             <span className="tk-t">
               {task ? (
-                <Link to={`${PATHS.myTasks}?open=${task.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>{task.title}</Link>
+                <Link to={taskLinkFor(task.id)} style={{ color: 'inherit', textDecoration: 'none' }}>{task.title}</Link>
               ) : 'Thread'}
               <span style={{ display: 'block', fontSize: 11, color: 'var(--sk-t3)' }}>
                 {t.last_from ?? 'Someone'} replied{t.excerpt ? `: ${t.excerpt}` : ''}

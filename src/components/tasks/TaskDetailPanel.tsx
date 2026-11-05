@@ -62,6 +62,7 @@ import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { taskOwnOverflowLinks } from '../../lib/taskLinkOverflow'
 import { taskShortLabel } from '../../lib/displayNames'
 import { Button } from '../ui/Button'
+import { taskLinkFor } from '../../lib/taskLink'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
 
@@ -523,7 +524,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <Button size="icon" aria-label="Copy task link"
               data-testid="copy-task-link"
               onClick={() => {
-                const url = `${window.location.origin}${PATHS.myTasks}?open=${task.id}`
+                const url = `${window.location.origin}${taskLinkFor(task.id)}`
                 navigator.clipboard.writeText(url).then(() => {
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)

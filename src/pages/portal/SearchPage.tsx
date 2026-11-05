@@ -7,7 +7,7 @@ import {
   Search, SquareCheck, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
   ScrollText, Scale, Paperclip, BookOpen, Banknote,
-  AlertTriangle, Calendar, FileText,
+  AlertTriangle, Calendar, FileText, ExternalLink,
 } from 'lucide-react'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import SectionHead from '../../components/ui/SectionHead'
@@ -22,6 +22,7 @@ import { FaceDisc } from '../../components/today/skin'
 import CategoryIcon from '../../components/CategoryIcon'
 import HermesMark from '../../components/HermesMark'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { orderSearchTypes } from '../../lib/searchTypes'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -285,14 +286,14 @@ export default function SearchPage() {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['search', debouncedQuery],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ data: SearchResult[]; count: number; truncated?: boolean }> => {
       if (!debouncedQuery || debouncedQuery.length < 2) return { data: [], count: 0 }
       const res = await fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
       if (!res.ok) {
         // S-16: distinguish error from empty results.
         throw new Error(`Search failed: ${res.status}`)
       }
-      return res.json() as Promise<{ data: SearchResult[]; count: number }>
+      return res.json()
     },
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000,
@@ -336,13 +337,6 @@ export default function SearchPage() {
     }
   }, [focusedIndex, results, debouncedQuery, submitQuery])
   useListKeyboardNav({ itemCount: results.length, focusedIndex, setFocusedIndex, onEnter: handleSearchEnter })
-
-  const typeOrder = [
-    'task', 'project', 'meeting', 'idea',
-    'note', 'task_note', 'comment', 'task_comment',
-    'decision', 'file',
-    'publication', 'grant', 'activity',
-  ]
 
   // Per-type filter chips. S-10: default to multi-select (no shift required).
   const [typeFilter, setTypeFilter] = useState<string[]>([])
@@ -420,6 +414,9 @@ export default function SearchPage() {
     acc[r.type] = (acc[r.type] || 0) + 1
     return acc
   }, {} as Record<string, number>)
+  // Every type the API returned, in display order (lib/searchTypes.ts), so the
+  // chips sum to "All" and By type shows what Mixed shows.
+  const typeOrder = orderSearchTypes(Object.keys(countByType))
 
   const teamMembers = useMemo(() => getAllMembers(), [])
   const hasActiveFilters = typeFilter.length > 0 || personFilter || timeFilter !== 'all' || statusFilter !== 'all'
@@ -539,10 +536,14 @@ export default function SearchPage() {
               options={[
                 { value: FILTER_ALL, label: 'All', count: results.length },
                 ...typeOrder
-                  .filter((t) => (countByType[t] || 0) > 0)
                   .map((t) => ({ value: t, label: (typeConfig[t] || typeConfig.activity).plural, count: countByType[t] || 0 })),
               ]}
             />
+            {data?.truncated && (
+              <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+                Top {results.length} matches shown. Narrow the search to see the rest.
+              </span>
+            )}
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
@@ -792,6 +793,9 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
     <motion.div variants={staggerItem}>
       <Link
         to={item.url || '#'}
+        // A result on the public site opens in a new tab: the portal has no way back from it.
+        target={d.external ? '_blank' : undefined}
+        rel={d.external ? 'noopener' : undefined}
         className="flex items-start gap-3 px-4 py-2.5 rounded-lg transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
         style={{ textDecoration: 'none' }}
       >
@@ -848,7 +852,9 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
             </p>
           ) : null}
         </div>
-        <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0, marginTop: 4 }} />
+        {d.external
+          ? <ExternalLink {...ICON_PROPS} size={14} aria-label="Opens the public site" style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0, marginTop: 4 }} />
+          : <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0, marginTop: 4 }} />}
       </Link>
     </motion.div>
   )

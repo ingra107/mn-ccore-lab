@@ -30,6 +30,7 @@ import {
   type OvernightLine, type OvernightRun,
 } from '../../../hooks/useOvernight'
 import { overnightSince } from '../../../lib/overnightWindow'
+import { taskLinkFor } from '../../../lib/taskLink'
 
 const ALL = '__all__'
 
@@ -61,7 +62,7 @@ function countsText(c: OvernightRun['counts']): string {
 function EntityLink({ line }: { line: OvernightLine }) {
   if (!line.entity_id) return null
   if (line.entity_type === 'tasks') {
-    return <Link to={`${PATHS.myTasks}?open=${line.entity_id}`} style={{ fontSize: 11, color: 'var(--job-accent)' }}>Open task</Link>
+    return <Link to={taskLinkFor(line.entity_id)} style={{ fontSize: 11, color: 'var(--job-accent)' }}>Open task</Link>
   }
   if (line.entity_type === 'projects') {
     return <Link to={PATHS.project(line.entity_id)} style={{ fontSize: 11, color: 'var(--job-accent)' }}>Open project</Link>

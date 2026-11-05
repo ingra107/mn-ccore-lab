@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import MarkdownView from './MarkdownView'
+import { taskLinkFor } from '../lib/taskLink'
 
 export type HermesCitation =
   | { type: 'project'; slug: string; title: string }
@@ -48,7 +49,7 @@ function citationHref(c: HermesCitation): string | null {
   if (c.type === 'project' && c.slug) return PATHS.project(c.slug)
   // openTask is the app-wide deep-link param (useOpenParam) that opens the
   // task editor drawer — NOT `focus`, which nothing on MyTasks consumes.
-  if (c.type === 'task' && c.id) return `${PATHS.tasks}?openTask=${encodeURIComponent(c.id)}`
+  if (c.type === 'task' && c.id) return taskLinkFor(c.id)
   if (c.type === 'meeting' && c.id) return PATHS.meeting(c.id)
   if (c.type === 'publication') {
     if (c.url) return c.url

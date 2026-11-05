@@ -52,6 +52,7 @@ import {
   type StoredKind,
   type Visibility,
 } from '../../shared/activityKinds';
+import { taskLinkFor } from '../../shared/taskLink';
 // Hermes trigger regexes — SSOT in lib/hermes-mention.ts (shared with
 // routes/questions.ts so the trigger pattern can't drift between surfaces).
 import { HERMES_DETECT_RE, HERMES_STRIP_RE } from './hermes-mention';
@@ -123,7 +124,7 @@ const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     // Direct portal deep-link (2026-06-11): opens the task editor without the
     // legacy /tasks redirect hop. Old /tasks?open= links still work via the
     // NavigateKeepSearch shim in App.tsx.
-    mentionLink: (id) => `/portal/my-tasks?open=${id}`,
+    mentionLink: (id) => taskLinkFor(id),
   },
   project: {
     async resolve(env, entityId) {
@@ -137,7 +138,7 @@ const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
     mentionLink: (id, projectSlug) =>
       projectSlug
         ? `/projects/${projectSlug}` // legacy project-mention link shape
-        : `/projects?open=${id}`,
+        : `/portal/projects/${id}`, // the page resolves an id as well as a slug
   },
   artifact: {
     async resolve(env, entityId) {
@@ -238,7 +239,7 @@ export interface PostActivityEntryInput {
   /**
    * For project entities: the project's slug, used to preserve the legacy
    * mention-notification link shape (`/projects/<slug>`). Optional — when
-   * absent the link falls back to `/projects?open=<entityId>`.
+   * absent the link falls back to `/portal/projects/<entityId>`.
    */
   projectSlug?: string | null;
   /** Backfill idempotency: original table + row id. When set, INSERT OR IGNORE + return existing on conflict. */
@@ -689,7 +690,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
             entityId,
             title,
             body.slice(0, 200),
-            `/portal/my-tasks?open=${entityId}`,
+            taskLinkFor(entityId),
           ).run();
         }
       } catch (e) {
@@ -835,7 +836,7 @@ async function fireMentionNotifications(
   // (DELETE notifications WHERE source_type IN ('task','task_comment')) and
   // click-through consumers keep matching. Both the source_type and the link
   // come from ENTITY_CONFIG: one entry per entity type, so a new type cannot
-  // fall through to the project default and build `/projects?open=<id>` out of
+  // fall through to the project default and build a project link out of
   // an id that is not a project (the dead meeting link of #124).
   const config = entityConfig(args.entityType)!;
   const sourceType = config.mentionSource(args.kind);
