@@ -19,6 +19,7 @@ import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
 import { agendaEmptyTitle, agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
 import { Button } from '../../components/ui/Button'
+import { taskLinkFor } from '../../lib/taskLink'
 
 
 // Color jobs (Nick 2026-10-11): an event's TYPE is not a color job. Meeting
@@ -55,7 +56,7 @@ function eventFullTitleHint(e: CalendarEvent): string | undefined {
 // (deadlines) land on the Deadlines page.
 function eventLinkTo(e: CalendarEvent): string | null {
   if (e.type === 'meeting') return PATHS.meeting(e.id)
-  if (e.type === 'task') return `${PATHS.myTasks}?open=${e.id}`
+  if (e.type === 'task') return taskLinkFor(e.id)
   if (e.type === 'milestone') return PATHS.deadlines
   return null
 }

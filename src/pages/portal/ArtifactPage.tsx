@@ -37,6 +37,7 @@ import { getPersonInfo } from '../../data/team'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTouchOnly, modKeyLabel } from '../../lib/platform'
 import PageHeartbeat from '../../components/moments/PageHeartbeat'
+import { taskLinkFor } from '../../lib/taskLink'
 
 interface ArtifactVersion {
   artifact_id: string
@@ -285,7 +286,7 @@ export default function ArtifactPage() {
           {/* Origin task chip */}
           {artifact.task_id && (
             <Link
-              to={`${PATHS.myTasks}?openTask=${encodeURIComponent(artifact.task_id)}`}
+              to={taskLinkFor(artifact.task_id)}
               className="inline-flex items-center gap-1"
               style={{ fontSize: 11, color: 'var(--sk-t2)', background: 'var(--sk-line)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
             >

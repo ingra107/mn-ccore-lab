@@ -15,6 +15,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   JOB_ACCENT,
   INK,
+  STATUS_LABEL, STATUS_FILTER_KEYS, parseStatusParam,
   type ViewMode, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
 import { SECTION_ORDER, SECTION_LABEL, type SectionKey } from '../../../lib/taskSections'
@@ -45,7 +46,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   const isPhone = useIsMobile(768)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
-  const activeFilterCount = [filter.group, filter.priority, filter.project, filter.mentee].filter(Boolean).length
+  const activeFilterCount = [filter.group, filter.priority, filter.status, filter.project, filter.mentee].filter(Boolean).length
   const showFilterChips = !isPhone || filtersOpen
   // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
   // sidebar badge count + the gold NEW chip on rows). Drains on open.
@@ -60,7 +61,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     { value: 'stale', label: 'Stale' },
     { value: 'declined', label: 'Declined' },
   ]
-  const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
+  const hasFilters = filter.priority || filter.status || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
     // P1-1 (Nick 2026-06-10): the border-bottom spans full width (visual
     // separator) but the toolbar CONTENT is band-centered via .mt-band so its
@@ -146,6 +147,12 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           onChange={(v) => setFilter((f) => ({ ...f, priority: v }))}
         />
         <FilterChip
+          label="Status"
+          value={filter.status}
+          options={[{ v: null, l: 'Any' }, ...STATUS_FILTER_KEYS.map((k) => ({ v: k, l: STATUS_LABEL[k] }))]}
+          onChange={(v) => setFilter((f) => ({ ...f, status: parseStatusParam(v) }))}
+        />
+        <FilterChip
           label="Project"
           value={filter.project}
           options={[{ v: null, l: 'All' }, ...projectOptions]}
@@ -171,7 +178,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           <div className="tk-fsel">
             <button
               type="button"
-              onClick={() => { setFilter((f) => ({ priority: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
+              onClick={() => { setFilter((f) => ({ priority: null, status: null, project: null, mentee: null, group: null, hideCompleted: f.hideCompleted })); setSearch(''); setQuickView('all') }}
               style={{ color: 'var(--sk-t3)', textDecoration: 'underline', textUnderlineOffset: 2 }}
             >Clear all</button>
           </div>

@@ -32,6 +32,7 @@ import { QueryErrorNote } from '../components/QueryErrorNote'
 import { tealRamp, BAR_TRACK } from '../lib/tealRamp'
 import SectionHead from '../components/ui/SectionHead'
 import BodyText from '../components/BodyText'
+import { taskLinkFor } from '../lib/taskLink'
 
 // All = one digest date; Unprocessed and Saved each span every date.
 type StatusFilter = 'all' | 'unprocessed' | 'saved'
@@ -103,7 +104,7 @@ function NoteTaskAction({ noteId, paperId, taskId, taskVisible }: { noteId: stri
   if (taskId) {
     return taskVisible ? (
       <Link
-        to={`/portal/my-tasks?open=${taskId}`}
+        to={taskLinkFor(taskId)}
         className="text-xs hover:underline flex-shrink-0"
         style={{ color: 'var(--job-accent)' }}
         onClick={(e) => e.stopPropagation()}

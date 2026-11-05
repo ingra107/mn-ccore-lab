@@ -9,11 +9,12 @@ import { useMemo } from 'react'
 import {
   MENTEE_SLUGS,
   todayKey, daysSince,
-  tagForTask, isTaskDone,
+  tagForTask, isTaskDone, matchesStatusFilter,
   type FilterState, type QuickViewKey,
 } from '../constants'
 import { SECTION_ORDER, bucketBySection, orderSection, sectionForTask, type SectionKey } from '../../../lib/taskSections'
 import { isOverdue } from '../../../lib/dateUtils'
+import { taskMatchesSearch } from '../../../lib/displayNames'
 import { isToday } from '../../../components/today/constants'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
@@ -62,6 +63,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       // 'done-today' is the one view that is ABOUT completed rows.
       if (filter.hideCompleted && quickView !== 'done-today' && isTaskDone(t)) return false
       if (filter.priority && t.priority !== filter.priority) return false
+      if (!matchesStatusFilter(t, filter.status)) return false
       if (filter.project && t.project_id !== filter.project) return false
       if (filter.mentee) {
         // '__any_mentee__' = any researchTeam slug; specific slug = exact match
@@ -72,7 +74,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       if (filter.group) {
         if (sectionForTask(t, sectionCtx) !== filter.group) return false
       }
-      if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
+      if (!taskMatchesSearch(t, search)) return false
       return true
     }).map((t) => ({ ...t, _section: sectionForTask(t, sectionCtx), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _section: SectionKey; _tag: string | null })
   }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays, viewerSlug, sectionCtx])

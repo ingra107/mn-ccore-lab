@@ -10,6 +10,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG } from '../../lib/taskConstants'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { viewportBottom } from '../../lib/viewportBottom'
+import { taskLinkFor } from '../../lib/taskLink'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -427,7 +428,7 @@ export default function TaskContextMenu({
 
       {/* Open in new tab */}
       <MenuItem onClick={() => handleAction(() => {
-        window.open(`${PATHS.myTasks}?open=${task.id}`, '_blank')
+        window.open(taskLinkFor(task.id), '_blank')
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
           <ExternalLink {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
@@ -445,7 +446,7 @@ export default function TaskContextMenu({
 
       {/* Copy link */}
       <MenuItem onClick={() => handleAction(() => {
-        const url = `${window.location.origin}${PATHS.tasks}?task=${task.id}`
+        const url = `${window.location.origin}${taskLinkFor(task.id)}`
         copyToClipboard(url)
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>

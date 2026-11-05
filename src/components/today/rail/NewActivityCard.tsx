@@ -16,6 +16,7 @@ import { PATHS } from '../../../constants/paths'
 import { useUnseenActivity } from '../../../hooks/useEntitySeen'
 import { AttentionChip } from '../../tasks/AttentionChip'
 import { formatRelativeTime } from '../../../lib/dateUtils'
+import { taskLinkFor } from '../../../lib/taskLink'
 
 export function NewActivityCard() {
   const [open, setOpen] = useState(true)
@@ -33,7 +34,7 @@ export function NewActivityCard() {
       </div>
       {open && rows.map((r) => {
         const to = r.entity_type === 'task'
-          ? `${PATHS.myTasks}?open=${r.entity_id}`
+          ? taskLinkFor(r.entity_id)
           : r.project_slug ? PATHS.project(r.project_slug) : null
         const inner = (
           <>

@@ -54,6 +54,7 @@ import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { withAlpha } from '../../lib/taskGrouping'
 import { useArmedConfirm } from '../../hooks/useArmedConfirm'
 import { Button } from '../ui/Button'
+import { taskLinkFor } from '../../lib/taskLink'
 // canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
 // burndown, #174) — this file's react-refresh contract is components-only;
 // that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
@@ -714,7 +715,7 @@ export function ActivityEntryItem({
 
   // Deep-link back to the task in the My Tasks view (project-stream only).
   const taskHref = isTask
-    ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}`
+    ? taskLinkFor(entry.entity_id)
     : null
   const taskLabel = entry.task_title ?? null
   const onTaskLinkClick = isTask ? taskLinkClickHandler(entry.entity_id, onOpenTask) : undefined

@@ -2,37 +2,23 @@
 // Uses ui/Modal (animated=true for framer-motion enter/exit; previous-focus
 // restoration is now owned by Modal so the local previousFocusRef is gone).
 import Modal from './ui/Modal'
+import { NAV_CHORDS } from '../constants/chords'
 
 const shortcuts = [
   {
     category: 'Navigation (press G, then key — 1s window)',
-    items: [
-      { keys: 'G D', action: 'Go to Today' },
-      { keys: 'G T', action: 'Go to My Tasks' },
-      { keys: 'G P', action: 'Go to Projects' },
-      { keys: 'G M', action: 'Go to Meetings' },
-      { keys: 'G E', action: 'Go to Deadlines' },
-      { keys: 'G I', action: 'Go to Ideas' },
-      { keys: 'G S', action: 'Go to Settings' },
-      { keys: 'G C', action: 'Go to Calendar' },
-      { keys: 'G H', action: 'Go to Home' },
-      { keys: 'G R', action: 'Go to Research Digest' },
-      { keys: 'G G', action: 'Go to Grants' },
-      { keys: 'G A', action: 'Go to Activity' },
-    ],
+    items: NAV_CHORDS.filter((c) => !c.alias).map((c) => ({ keys: `G ${c.key.toUpperCase()}`, action: c.label })),
   },
   {
     category: 'Actions',
     items: [
-      { keys: 'C', action: 'Create new task' },
-      { keys: 'N', action: 'New task (navigates to Tasks + opens create modal)' },
+      { keys: 'Q', action: 'Quick add task' },
     ],
   },
   {
     category: 'Global',
     items: [
       { keys: '⌘ K', action: 'Command palette' },
-      { keys: 'q', action: 'Quick add task' },
       { keys: '⌘ I', action: 'Quick capture to Peripheral Brain inbox' },
       { keys: '/', action: 'Search' },
       { keys: 'F', action: 'Focus mode (hide sidebar + header)' },

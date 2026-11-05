@@ -61,6 +61,14 @@ export function taskSubjectLabel(t: TaskSubjectFields): string {
   return t.short_title?.trim() || t.title?.trim() || t.description?.trim() || ''
 }
 
+/** Does a task match a typed search? It matches the long title AND the label the
+ *  row shows (short title first), so typing what you read finds the row. */
+export function taskMatchesSearch(t: TaskSubjectFields, search: string): boolean {
+  const q = search.trim().toLowerCase()
+  if (!q) return true
+  return (t.title ?? '').toLowerCase().includes(q) || taskSubjectLabel(t).toLowerCase().includes(q)
+}
+
 /** What a text surface shows: the subject, named by its kind when the kind is
  *  one a reader must be told ("Check-in: X", "Milestone: X";
  *  shared/taskKinds.ts withKindLabel, schema-v156). */
