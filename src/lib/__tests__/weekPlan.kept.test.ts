@@ -60,13 +60,13 @@ describe('kept on the answer', () => {
     expect(parseWeekPlanPicks({ picks: [pickA], kept: ['task_a'] }, spec)).toEqual([pickA])
   })
 
-  it('weekPlanNewlyStarted skips a kept pick on a first answer and on a flip', () => {
+  it('weekPlanNewlyStarted skips a kept pick on a first answer, and a flip starts it', () => {
     expect(weekPlanNewlyStarted(null, { picks: [pickA, pickB], kept: ['task_a'] }, spec)).toEqual([pickB])
     expect(weekPlanNewlyStarted(null, { picks: [pickA], kept: ['task_a'] }, spec)).toBeNull()
     expect(weekPlanNewlyStarted(null, { picks: [pickA, pickB] }, spec)).toEqual([pickA, pickB])
     const base = { v: 1, via: 'hub', at: 'x', kept: ['task_a'] }
     const stored = { ...base, choice: 'save', picks: [{ ...pickA, start: false }, { ...pickB, start: false }] }
-    expect(weekPlanNewlyStarted(stored, { ...base, choice: 'start', picks: [pickA, pickB] }, spec)).toEqual([pickB])
+    expect(weekPlanNewlyStarted(stored, { ...base, choice: 'start', picks: [pickA, pickB] }, spec)).toEqual([pickA, pickB])
   })
 
   it('weekPlanFlipError freezes kept', () => {

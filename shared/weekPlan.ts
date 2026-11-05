@@ -262,11 +262,13 @@ export function weekPlanWithdrawn(answer: unknown): string[] {
 
 /**
  * The kept rules (the answer's optional `kept`, 2026-11-04): picks the session
- * carried from the plan before, not new ones. A kept pick makes no
- * packet_prepare, uses no cap and posts no week plan note (weekPlanNewlyStarted,
- * week-plan-start.ts weekPlanNotes), however its start reads. Absent is fine, and
- * an old answer has none. Present, it is an array of distinct non-empty strings,
- * each the task_id of one of this answer's picks.
+ * carried from the plan before, not new ones. On the FIRST answer to its row a
+ * kept pick makes no packet_prepare, uses no cap and posts no week plan note
+ * (weekPlanNewlyStarted, week-plan-start.ts weekPlanNotes), however its start
+ * reads. A later flip of a kept saved pick is a real start: it makes its request
+ * and counts toward the cap, and kept stays frozen (Prep must never do nothing).
+ * Absent is fine, and an old answer has none. Present, it is an array of distinct
+ * non-empty strings, each the task_id of one of this answer's picks.
  * PB's twin is scripts/questions/state.py Answer.kept.
  */
 export function weekPlanKeptError(answer: unknown, picks: unknown): string | null {
@@ -404,22 +406,22 @@ export function weekPlanFlipError(stored: unknown, next: unknown, spec: WeekPlan
 }
 
 /**
- * The picks a week plan write starts, never a kept one: on the first answer,
- * every pick with start:true; on a start flip (weekPlanFlipError null), the
- * flipped ones.
+ * The picks a week plan write starts: on the first answer, every pick with
+ * start:true that is not kept; on a start flip (weekPlanFlipError null), the
+ * flipped ones, kept or not.
  * Null when the write starts nothing or is not one of those two shapes.
  */
 export function weekPlanNewlyStarted(stored: unknown, next: unknown, spec: WeekPlanSpec): WeekPlanPick[] | null {
   const after = parseWeekPlanPicks(next, spec)
   if (!after) return null
-  const kept = new Set(weekPlanKept(next))
   if (stored === null || stored === undefined) {
+    const kept = new Set(weekPlanKept(next))
     const s = after.filter((p) => p.start && !kept.has(p.task_id))
     return s.length ? s : null
   }
   if (weekPlanFlipError(stored, next, spec) !== null) return null
   const before = parseWeekPlanPicks(stored, spec)!
-  return after.filter((p, i) => p.start && !before[i].start && !kept.has(p.task_id))
+  return after.filter((p, i) => p.start && !before[i].start)
 }
 
 /** True when the offer's expires_at is set and is before `nowIso`. */
