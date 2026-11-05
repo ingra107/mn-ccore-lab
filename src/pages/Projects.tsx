@@ -603,8 +603,12 @@ export default function Projects() {
               className="pipeline-board"
               style={{
                 display: 'grid',
-                gridTemplateColumns: `repeat(${STAGES.length}, minmax(160px, 1fr))`,
-                gap: 'var(--sp-lg)',
+                // The track is the column's whole width. A minWidth on the column
+                // larger than its track spilled over the next one, which put each
+                // count beside the next column's title and pushed the last column
+                // off the band. 132px fits seven stages in Today's width.
+                gridTemplateColumns: `repeat(${STAGES.length}, minmax(132px, 1fr))`,
+                gap: 'var(--sp-sm)',
                 overflowX: 'auto',
                 paddingBottom: '1rem',
                 maxWidth: '100%',
@@ -620,14 +624,14 @@ export default function Projects() {
                       background: 'var(--sk-panel)',
                       borderRadius: 'var(--radius-xl)',
                       borderTop: '2px solid var(--sk-line2)',
-                      padding: 'var(--sp-lg)',
+                      padding: 'var(--sp-md)',
                       minHeight: '300px',
-                      minWidth: '200px',
+                      minWidth: 0,
                     }}
                   >
                     {/* Column header */}
                     <div style={{ marginBottom: '14px' }}>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between" style={{ gap: 6 }}>
                         <h3
                           style={{
                             fontWeight: 400,
