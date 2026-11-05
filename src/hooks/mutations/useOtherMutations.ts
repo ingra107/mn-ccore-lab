@@ -95,7 +95,7 @@ export function usePostTaskUpdate(taskId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input: { content: string; update_type?: string }) =>
+    mutationFn: (input: { content: string; update_type?: string; visibility?: 'author' }) =>
       fetchApi(`/api/tasks/${taskId}/updates`, {
         method: 'POST',
         body: JSON.stringify(input),

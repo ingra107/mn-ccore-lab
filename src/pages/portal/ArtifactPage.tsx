@@ -139,7 +139,7 @@ export default function ArtifactPage() {
   const hiddenCount = activityData?.hiddenCount ?? 0
 
   const postComment = useMutation({
-    mutationFn: async (payload: { content: string; visibility?: string }) => {
+    mutationFn: async ({ payload }: { payload: { content: string; visibility?: string }; sent: string }) => {
       const res = await fetch(`/api/artifacts/${id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,9 +148,13 @@ export default function ArtifactPage() {
       if (!res.ok) throw new Error('Failed to post comment')
       return res.json()
     },
-    onSuccess: () => {
-      setComment('')
-      setAuthorOnly(false)
+    onSuccess: (_data, { sent }) => {
+      // Clear only what this post sent: text written while it was pending stays,
+      // with its lock.
+      if (commentNow.current === sent) {
+        editComment('')
+        setAuthorOnly(false)
+      }
       qc.invalidateQueries({ queryKey: ['artifact-activity', id] })
       showSuccess('Comment posted')
     },
@@ -160,7 +164,7 @@ export default function ArtifactPage() {
   const handlePostComment = () => {
     const content = comment.trim()
     if (!content) return
-    postComment.mutate({ content, visibility: authorOnly ? 'author' : undefined })
+    postComment.mutate({ payload: { content, visibility: authorOnly ? 'author' : undefined }, sent: comment })
   }
 
   const copyMarkdown = async () => {
@@ -470,7 +474,7 @@ export default function ArtifactPage() {
             <>
               <textarea
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => editComment(e.target.value)}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); handlePostComment() }
                 }}

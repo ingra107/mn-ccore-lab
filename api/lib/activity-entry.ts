@@ -655,7 +655,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
         entityType,
         entityId,
         kind,
-        mentions,
+        // An author-only entry notifies no one: the notification carries its body.
+        mentions: visibility === 'team' ? mentions : [],
         actorName: user.name || user.email,
         bodyPreview: body.slice(0, 200),
         projectSlug: input.projectSlug ?? null,
