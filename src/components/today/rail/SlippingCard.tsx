@@ -57,7 +57,7 @@ function useCalendarAhead(today: string) {
   return useQuery({
     queryKey: ['user-calendar-events', 'ahead-14', today],
     queryFn: async (): Promise<UserCalendarEvent[]> => {
-      const res = await fetch(`/api/integrations/calendar/events?start=${today}&end=${civilDatePlusDays(today, 14)}`)
+      const res = await fetch(`/api/integrations/calendar/events?start=${today}&end=${civilDatePlusDays(today, 14)}&tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`)
       if (!res.ok) throw new Error(`calendar events fetch failed: ${res.status}`)
       return ((await res.json()) as { events: UserCalendarEvent[] }).events
     },

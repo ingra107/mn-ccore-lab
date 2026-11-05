@@ -1777,7 +1777,8 @@ export function useUserCalendarEvents() {
   return useQuery({
     queryKey: ['user-calendar-events'],
     queryFn: async (): Promise<UserCalendarEvent[]> => {
-      const res = await fetch('/api/integrations/calendar/events')
+      // tz: the range is the viewer's days (R13), and the Worker cannot know their zone.
+      const res = await fetch(`/api/integrations/calendar/events?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`)
       // #495: this used to swallow failures as `return []`, which renders
       // identically to "no events today" — a real backend outage produced
       // zero signal (masked the 2026-07-06 calendar outage post-mortem).
