@@ -7,6 +7,7 @@ import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstan
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import BodyText from './BodyText'
+import { PhotoOrInitials } from './PhotoOrInitials'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -92,11 +93,7 @@ function MiniAvatar({ slug }: { slug: string }) {
       }}
       title={info.name}
     >
-      {info.photoUrl ? (
-        <img src={info.photoUrl} alt={info.name} className="w-full h-full rounded-full object-cover" loading="lazy" />
-      ) : (
-        info.initials
-      )}
+      <PhotoOrInitials src={info.photoUrl} alt={info.name} className="w-full h-full rounded-full object-cover" loading="lazy" fallback={info.initials} />
     </div>
   )
 }
@@ -238,11 +235,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
           fontWeight: 500,
         }}
       >
-        {data.photoUrl ? (
-          <img src={data.photoUrl} alt={data.name} className="w-full h-full rounded-full object-cover" loading="lazy" />
-        ) : (
-          data.initials
-        )}
+        <PhotoOrInitials src={data.photoUrl} alt={data.name} className="w-full h-full rounded-full object-cover" loading="lazy" fallback={data.initials} />
       </div>
 
       {/* Info */}

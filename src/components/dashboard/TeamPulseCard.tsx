@@ -6,6 +6,7 @@ import { directors, getAllMembers } from '../../data/team'
 import { withAlpha } from '../../lib/taskGrouping'
 import { QueryErrorNote } from '../QueryErrorNote'
 import { useAuth } from '../../hooks/useAuth'
+import { PhotoOrInitials } from '../PhotoOrInitials'
 
 function TeamPulseCard() {
   const { data, isError, refetch } = useTeamPulse(48)
@@ -150,16 +151,20 @@ function MemberDot({ name, initials, photoUrl, isActive }: {
           transition: 'border-color 0.2s',
         }}
       >
-        {photoUrl ? (
-          <img src={photoUrl} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <span style={{
-            fontSize: '10px', fontWeight: 700,
-            color: isActive ? 'var(--sk-t2)' : 'var(--slate)', opacity: isActive ? 1 : 0.85,
-          }}>
-            {initials}
-          </span>
-        )}
+        <PhotoOrInitials
+          src={photoUrl}
+          alt={name}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          fallback={(
+            <span style={{
+              fontSize: '10px', fontWeight: 700,
+              color: isActive ? 'var(--sk-t2)' : 'var(--slate)', opacity: isActive ? 1 : 0.85,
+            }}>
+              {initials}
+            </span>
+          )}
+        />
       </div>
       <div style={{
         position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 'var(--radius-circle)',

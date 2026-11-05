@@ -37,6 +37,7 @@ import MemberHead from '../components/MemberHead'
 import { statusLabel } from '../lib/textUtils'
 import { formatContributionScore } from '../lib/contributionScore'
 import { Button } from '../components/ui/Button'
+import { PhotoOrInitials } from '../components/PhotoOrInitials'
 
 // isOverdue imported from dateUtils
 
@@ -122,10 +123,8 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
               <>
                 {(item.due_date || item.source) && <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
-                  {toPersonInfo?.photoUrl ? (
-                    <img src={toPersonInfo.photoUrl} alt={toPersonInfo.name} style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : toPersonInfo ? (
-                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--sk-face)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--sk-face-t)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
+                  {toPersonInfo ? (
+                    <PhotoOrInitials src={toPersonInfo.photoUrl} alt={toPersonInfo.name} style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} fallback={<span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--sk-face)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--sk-face-t)', flexShrink: 0 }}>{toPersonInfo.initials}</span>} />
                   ) : null}
                   {toPersonInfo ? toPersonInfo.name : item.to_whom}
                 </span>
