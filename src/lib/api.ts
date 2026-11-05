@@ -343,6 +343,8 @@ export interface PBSessionRow {
   project_name: string | null
   /** That project's short name, when the name matches a project title. */
   project_short_name?: string | null
+  /** That project's slug, for a link. Null when the name matches no live project. */
+  project_slug?: string | null
   summary: string | null
   actions_count: number
   commits_count: number

@@ -56,9 +56,13 @@ type DecisionSortKey = 'title' | 'outcome_status' | 'decided_by' | 'project' | '
 function DecisionTimeline({
   decisions,
   projects,
+  expandedId,
+  onToggleExpand,
 }: {
   decisions: DecisionRow[]
   projects: { slug: string; title: string }[]
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
 }) {
   // P3-09: group decisions by month-year so the timeline reads as a
   // narrative arc, not a flat dump of dots.
@@ -121,6 +125,7 @@ function DecisionTimeline({
         const projTitle = decision.project_slug
           ? projects.find((p) => p.slug === decision.project_slug)?.title
           : null
+        const open = expandedId === decision.id
         return (
           <div key={decision.id} className="relative mb-6">
             <div
@@ -151,15 +156,25 @@ function DecisionTimeline({
             </div>
             <div className="p-3 sk-mat" style={{ borderRadius: 'var(--radius-lg)' }}>
               <div className="flex items-center gap-2 flex-wrap">
-                <span
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => onToggleExpand(decision.id)}
+                  className="link-affordance"
                   style={{
                     fontWeight: 'var(--weight-heading)',
                     fontSize: 'var(--text-base)',
                     color: 'var(--ink)',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    textAlign: 'left',
                   }}
                 >
                   {decision.title}
-                </span>
+                </button>
                 <SentimentBadge sentiment={sentiment} />
                 {tags.map((tag) => (
                   <span
@@ -177,7 +192,7 @@ function DecisionTimeline({
                   </span>
                 ))}
               </div>
-              {decision.outcome && (
+              {decision.outcome && !open && (
                 <p
                   style={{
                     fontSize: 'var(--text-small)',
@@ -204,6 +219,10 @@ function DecisionTimeline({
                   {projTitle}
                 </Link>
               )}
+              <AnimatePresence initial={false}>
+                {/* The card already shows the tags. */}
+                {open && <DecisionDetail decision={decision} projects={projects} tags={[]} inset={false} />}
+              </AnimatePresence>
             </div>
           </div>
         )
@@ -211,6 +230,86 @@ function DecisionTimeline({
         </div>
       ))}
     </div>
+  )
+}
+
+// ── Outcome form ─────────────────────────────────────────────
+
+// The outcome field and its sentiment: the "Record outcome?" card and a row
+// whose Outcome select asked for a status that needs one.
+function OutcomeForm({ status = 'recorded', updateOutcome, decisionId, onSaved }: {
+  decisionId: string
+  status?: string
+  updateOutcome: ReturnType<typeof useUpdateDecisionOutcome>
+  onSaved?: () => void
+}) {
+  const [outcome, setOutcome] = useState('')
+  const [sentiment, setSentiment] = useState('neutral')
+
+  function handleSave() {
+    if (!outcome.trim()) return
+    updateOutcome.mutate({
+      id: decisionId,
+      outcome: outcome.trim(),
+      outcome_status: status,
+      outcome_sentiment: sentiment,
+    }, {
+      // Keep the typed outcome until the Hub has it; a failed save is toasted
+      // by the failed-write floor (lib/writeFailures) and the text stays.
+      onSuccess: () => { setOutcome(''); onSaved?.() },
+    })
+  }
+
+  return (
+    <>
+      <textarea
+        value={outcome}
+        onChange={(e) => setOutcome(e.target.value)}
+        placeholder="Describe the outcome..."
+        rows={3}
+        style={{
+          width: '100%',
+          fontSize: 'var(--text-small)',
+          color: 'var(--ink)',
+          background: 'var(--cream)',
+          border: '1px solid var(--field-edge)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--sp-sm) var(--sp-md)',
+          outline: 'none',
+          resize: 'vertical',
+          marginBottom: '8px',
+        }}
+      />
+      <div className="flex items-center gap-3">
+        <InlineSelect
+          value={sentiment}
+          options={[
+            { value: 'positive', label: 'Positive outcome' },
+            { value: 'neutral', label: 'Neutral outcome' },
+            { value: 'negative', label: 'Negative outcome' },
+          ]}
+          onChange={setSentiment}
+          alwaysShowChevron
+        />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!outcome.trim()}
+          className="cursor-pointer px-4 py-1.5"
+          style={{
+            background: outcome.trim() ? 'var(--job-accent)' : 'var(--sk-line)',
+            color: outcome.trim() ? 'var(--sk-card)' : 'var(--slate)',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-small)',
+            fontWeight: 500,
+            opacity: outcome.trim() ? 1 : 0.85,
+          }}
+        >
+          Save Outcome
+        </button>
+      </div>
+    </>
   )
 }
 
@@ -225,8 +324,6 @@ function ReviewCard({
   projects: { slug: string; title: string }[]
   updateOutcome: ReturnType<typeof useUpdateDecisionOutcome>
 }) {
-  const [outcome, setOutcome] = useState('')
-  const [sentiment, setSentiment] = useState('neutral')
   // S21: the outcome form is collapsed by default — a one-line "Record outcome →"
   // prompt that expands on click. Eight always-expanded textareas stacked before
   // any content was a chore-wall; logging the decisions first is the priority.
@@ -239,20 +336,6 @@ function ReviewCard({
     (new Date().getTime() - parseDbUtc(decision.created_at).getTime()) /
       (1000 * 60 * 60 * 24)
   )
-
-  function handleSave() {
-    if (!outcome.trim()) return
-    updateOutcome.mutate({
-      id: decision.id,
-      outcome: outcome.trim(),
-      outcome_status: 'recorded',
-      outcome_sentiment: sentiment,
-    }, {
-      // Keep the typed outcome until the Hub has it; a failed save is toasted
-      // by the failed-write floor (lib/writeFailures) and the text stays.
-      onSuccess: () => setOutcome(''),
-    })
-  }
 
   return (
     <div className="sk-mat" style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden' }}>
@@ -346,53 +429,7 @@ function ReviewCard({
         >
           This decision was made {days} days ago. What was the outcome?
         </p>
-        <textarea
-          value={outcome}
-          onChange={(e) => setOutcome(e.target.value)}
-          placeholder="Describe the outcome..."
-          rows={3}
-          style={{
-            width: '100%',
-            fontSize: 'var(--text-small)',
-            color: 'var(--ink)',
-            background: 'var(--cream)',
-            border: '1px solid var(--field-edge)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 'var(--sp-sm) var(--sp-md)',
-            outline: 'none',
-            resize: 'vertical',
-            marginBottom: '8px',
-          }}
-        />
-        <div className="flex items-center gap-3">
-          <InlineSelect
-            value={sentiment}
-            options={[
-              { value: 'positive', label: 'Positive outcome' },
-              { value: 'neutral', label: 'Neutral outcome' },
-              { value: 'negative', label: 'Negative outcome' },
-            ]}
-            onChange={setSentiment}
-            alwaysShowChevron
-          />
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!outcome.trim()}
-            className="cursor-pointer px-4 py-1.5"
-            style={{
-              background: outcome.trim() ? 'var(--job-accent)' : 'var(--sk-line)',
-              color: outcome.trim() ? 'var(--sk-card)' : 'var(--slate)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-small)',
-              fontWeight: 500,
-              opacity: outcome.trim() ? 1 : 0.85,
-            }}
-          >
-            Save Outcome
-          </button>
-        </div>
+        <OutcomeForm decisionId={decision.id} updateOutcome={updateOutcome} />
       </div>
       )}
     </div>
@@ -403,7 +440,15 @@ function ReviewCard({
 
 const OUTCOME_LABEL: Record<string, string> = Object.fromEntries(OUTCOME_OPTIONS.map((o) => [o.value, o.label]))
 
-function DecisionDetail({ decision, projects, tags }: { decision: DecisionRow; projects: { slug: string; title: string }[]; tags: string[] }) {
+function DecisionDetail({ decision, projects, tags, inset = true, outcomeForm }: {
+  decision: DecisionRow
+  projects: { slug: string; title: string }[]
+  tags: string[]
+  /** A row indents to its title; a Timeline card's own padding already does. */
+  inset?: boolean
+  /** The outcome field, when the Outcome select asked for a status that needs one. */
+  outcomeForm?: React.ReactNode
+}) {
   return (
     <motion.div
       initial={{ height: 0, opacity: 0 }}
@@ -411,7 +456,8 @@ function DecisionDetail({ decision, projects, tags }: { decision: DecisionRow; p
       exit={{ height: 0, opacity: 0 }}
       style={{ overflow: 'hidden' }}
     >
-      <div style={{ padding: 'var(--sp-xs) var(--sp-lg) var(--sp-lg) 34px' }}>
+      <div style={{ padding: inset ? 'var(--sp-xs) var(--sp-lg) var(--sp-lg) 34px' : 'var(--sp-sm) 0 0' }}>
+        {outcomeForm && <div style={{ marginBottom: 'var(--sp-md)' }}>{outcomeForm}</div>}
         {decision.rationale && (
           <p
             style={{
@@ -493,6 +539,9 @@ function DecisionsList({
   onToggleExpand,
   onStatusChange,
   focusedIndex,
+  askingOutcome,
+  updateOutcome,
+  onOutcomeSaved,
 }: {
   decisions: DecisionRow[]
   projects: { slug: string; title: string }[]
@@ -503,6 +552,10 @@ function DecisionsList({
   onToggleExpand: (id: string) => void
   onStatusChange: (decision: DecisionRow, newStatus: string) => void
   focusedIndex: number
+  /** The row whose Outcome select is waiting on an outcome, and the status it asked for. */
+  askingOutcome: { id: string; status: string } | null
+  updateOutcome: ReturnType<typeof useUpdateDecisionOutcome>
+  onOutcomeSaved: () => void
 }) {
   const columns = useMemo<SleekColumn<DecisionRow>[]>(() => [
     {
@@ -578,7 +631,16 @@ function DecisionsList({
             onClick={() => onToggleExpand(d.id)}
           >
             <AnimatePresence initial={false}>
-              {expandedId === d.id && <DecisionDetail decision={d} projects={projects} tags={parseTagsString(d.tags)} />}
+              {expandedId === d.id && (
+                <DecisionDetail
+                  decision={d}
+                  projects={projects}
+                  tags={parseTagsString(d.tags)}
+                  outcomeForm={askingOutcome?.id === d.id
+                    ? <OutcomeForm decisionId={d.id} status={askingOutcome.status} updateOutcome={updateOutcome} onSaved={onOutcomeSaved} />
+                    : undefined}
+                />
+              )}
             </AnimatePresence>
           </SleekRow>
         </div>
@@ -597,6 +659,7 @@ export default function DecisionsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [askingOutcome, setAskingOutcome] = useState<{ id: string; status: string } | null>(null)
   // Newest first until a header is clicked; a header cycles asc, desc, cleared.
   const [sort, setSort] = useState<SleekSort>(null)
   const sortKey = (sort?.key ?? 'created_at') as DecisionSortKey
@@ -632,6 +695,14 @@ export default function DecisionsPage() {
   const handleStatusChange = (decision: DecisionRow, newStatus: string) => {
     const prevStatus = decision.outcome_status || 'pending'
     if (prevStatus === newStatus) return
+    // Recorded and Revisited claim an outcome, and the API refuses a blank one.
+    // A row with none opens the field right there and writes nothing until it
+    // has one. The stored status moves on Save.
+    if (newStatus !== 'pending' && !decision.outcome) {
+      setExpandedId(decision.id)
+      setAskingOutcome({ id: decision.id, status: newStatus })
+      return
+    }
     const statusLabels: Record<string, string> = {
       pending: 'Pending',
       recorded: 'Recorded',
@@ -701,6 +772,13 @@ export default function DecisionsPage() {
 
     return sorted
   }, [allDecisions, filterStatus, searchQuery, sortKey, sortAsc, projectMap])
+
+  const filtersOn = Boolean(filterStatus || filterTag || searchQuery.trim())
+  const clearFilters = () => {
+    setFilterStatus('')
+    setFilterTag('')
+    setSearchQuery('')
+  }
 
   const pendingCount = allDecisions.filter(
     (d) => d.outcome_status === 'pending'
@@ -872,6 +950,13 @@ export default function DecisionsPage() {
             subtitle="Something went wrong fetching the decision log."
             action={{ label: 'Retry', onClick: () => refetch() }}
           />
+        ) : filteredDecisions.length === 0 && filtersOn ? (
+          <EmptyState
+            icon={<Scale size={40} />}
+            title="No decisions match"
+            subtitle="Nothing in the log fits this search or filter."
+            action={{ label: 'Clear filters', onClick: clearFilters }}
+          />
         ) : filteredDecisions.length === 0 ? (
           <EmptyState
             icon={<Scale size={40} />}
@@ -880,7 +965,12 @@ export default function DecisionsPage() {
             action={{ label: 'Log Decision', onClick: () => setShowCreate(true) }}
           />
         ) : viewMode === 'timeline' ? (
-          <DecisionTimeline decisions={filteredDecisions} projects={projects} />
+          <DecisionTimeline
+            decisions={filteredDecisions}
+            projects={projects}
+            expandedId={expandedId}
+            onToggleExpand={(id) => setExpandedId(expandedId === id ? null : id)}
+          />
         ) : (
           <DecisionsList
             decisions={filteredDecisions}
@@ -889,9 +979,15 @@ export default function DecisionsPage() {
             sort={sort}
             onSort={setSort}
             expandedId={expandedId}
-            onToggleExpand={(id) => setExpandedId(expandedId === id ? null : id)}
+            onToggleExpand={(id) => {
+              setAskingOutcome(null)
+              setExpandedId(expandedId === id ? null : id)
+            }}
             onStatusChange={handleStatusChange}
             focusedIndex={focusedIndex}
+            askingOutcome={askingOutcome}
+            updateOutcome={updateOutcome}
+            onOutcomeSaved={() => setAskingOutcome(null)}
           />
         )}
       </div>
