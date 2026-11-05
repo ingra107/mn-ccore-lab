@@ -18,7 +18,7 @@
 // draws it, through PageTabsContext, so the title and the tray keep their places when
 // the tab changes. Every tab's page titles itself with the host's word.
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SegmentedToggle } from './ui/SegmentedToggle'
 import { PageTabsContext, resolveTab } from '../lib/pageTabs'
@@ -69,9 +69,6 @@ export default function PageTabs({ title, tabs, ariaLabel, keepParams = [] }: {
       scrollable={visible.length > 3}
     />
   ) : null
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the toggle is new each render; the value must follow it
-  const host = useMemo(() => ({ title, tray: toggle, claim }), [title, active.key, visible.length, claim])
-
   return (
     <>
       {toggle && claims === 0 && (
@@ -79,7 +76,7 @@ export default function PageTabs({ title, tabs, ariaLabel, keepParams = [] }: {
           {toggle}
         </div>
       )}
-      <PageTabsContext.Provider value={host}>
+      <PageTabsContext.Provider value={{ title, tray: toggle, claim }}>
         <div key={active.key} role="tabpanel" aria-label={active.label}>
           {active.render()}
         </div>

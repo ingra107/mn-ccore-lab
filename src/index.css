@@ -3394,7 +3394,7 @@ html[data-density="compact"] .tk .tk-tch,.tk .tk-tc.tk-dense .tk-tch{padding:6px
 .sr .sr-ph-l>.sr-c:empty{display:none}
 .sr .sr-ph-l>.sr-c:first-child{flex:0 1 auto}
 .sr .sr-sorter{display:flex;justify-content:space-between;font-size:11px;color:var(--sk-t3);padding:0 8px 6px}
-.sr .sr-sorter select{background:none;border:none;color:var(--sk-t2);font:inherit;font-size:12px;margin-left:6px;cursor:pointer;padding:2px 0}
+.sr .sr-sorter select{appearance:none;-webkit-appearance:none;background:none;border:none;color:var(--sk-t2);font:inherit;font-size:12px;margin-left:6px;cursor:pointer;padding:2px 0}
 /* Quiet overdue line above a table */
 .sr-ovl{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--sk-t2);padding:2px 10px 12px}
 .sr-ovl i{width:6px;height:6px;border-radius:50%;background:var(--job-overdue);flex-shrink:0}
@@ -3612,8 +3612,8 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 
 .page-head{padding-top:12px}
 .page-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-lg);flex-wrap:wrap}
-/* Phone: the same row height with or without an action, so every title starts at one edge. */
-@media (max-width:767px){.page-head{padding-top:0}.page-title-row{min-height:44px;gap:6px var(--sp-md)}}
+/* Phone: every title starts at one edge, with or without an action or a long note. */
+@media (max-width:767px){.page-head{padding-top:0}.page-title-row{align-items:flex-start;gap:6px var(--sp-md)}.page-title-row>.tk-titlerow{padding-top:12px}}
 /* Page tabs under the title; on a phone Projects' view switch shares the row. */
 .page-tabs-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 
