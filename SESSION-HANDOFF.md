@@ -1,3 +1,18 @@
+# ▶▶ 2026-11-05 (work): WHO-DOES-WHAT BUILT ON BRANCH `plan-owner`, NOT LANDED. Hub and PB both need the controller to merge; Hub deploys first.
+
+## Do first
+- Land after Nick's current plan session ends: merge Hub, `npm run deploy:pages:gated`, merge PB, write the What's new draft.
+- #169 stays open until a plan with a kept pick runs on the new code. A plan with no kept pick doesn't test it.
+
+## First-run watch list
+- Time from approval to the last Ready.
+- Whether agents respect the brief (no task change, comment, send or close).
+- Whether "With Claude" reads right to Nick.
+- Whether eight picks at once strain the laptop.
+- A close: it lands after publish, and a teammate's comment since the brief holds it. Check a held close is listed as a conflict.
+
+---
+
 # ▶▶ 2026-11-05 (work, day): NICK'S DECISIONS SHIPPED. Hub deployed, cron worker deployed, PB `3081556a2`. **Schema v159 applied to test and prod.**
 
 ## Do first

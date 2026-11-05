@@ -158,3 +158,13 @@ Ship when tests pass. Hub first, for `owner`; PB straight after. Nick's in-progr
 ## Left to the builder
 
 Skill wording and the split into reference files, card copy, brief format, how New is marked, and test layout.
+
+## As built
+
+Where the build settled a call differently from the text above, this section wins.
+
+- **A close leaves a keep alone, and lands after publish.** The list does not carry a close as part of a withdraw. The plan publishes first, then the task closes, and a finished pick sits in Done until the next plan. A close is read only from the newest list of its Send, so an older list's close can't fire. A teammate's comment on the task since the brief holds the close and lists it as a conflict, because `updated_at` doesn't move on a comment and "don't close this" is the likeliest reason to hold. A comment by Nick or Claude doesn't count.
+- **Answered stays open by default,** as in the mock Nick approved. From earlier rounds stays folded. The text above says both fold; flipping Answered is one line.
+- **A carried pick with unmoved threads starts under Answered.** A decided or kept card asks nothing, so it doesn't start under Needs you.
+- **The `moved` sidecar form.** Evidence timestamps cover mail only, but the session also reads Slack and comments. A kept card shows fresh steps when its sidecar entry has `moved: true` as well as when `observed_at` is later than `answered_at`. A session that over-marks only re-asks.
+- **No agent cap.** The session sends every Claude pick at once. The standing rule stays: more than 10 Opus-tier agents in one round, tell Nick first.
