@@ -5,7 +5,7 @@ import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, GitBranch, 
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
-import ToggleButton from '../../components/ToggleButton'
+import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
@@ -14,7 +14,7 @@ import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useAp
 import { useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue, isDoneStatus } from '../../lib/dateUtils'
 import { isWorkTask } from '../../lib/taskStats'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
@@ -181,35 +181,16 @@ export default function DeadlinesPage() {
         }
       >
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            {([
-              { key: 'list' as ViewMode, label: 'List', icon: List },
-              { key: 'timeline' as ViewMode, label: 'Timeline', icon: GanttChartSquare },
-            ]).map((v) => {
-              const Icon = v.icon
-              const active = view === v.key
-              return (
-                <ToggleButton
-                  key={v.key}
-                  active={active}
-                  onClick={() => setView(v.key)}
-                >
-                  <Icon {...ICON_PROPS} size={14} />
-                  {v.label}
-                </ToggleButton>
-              )
-            })}
-          </div>
-          <Link
-            to={PATHS.labCascadeTab}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
-            style={{
-              fontSize: '12px',
-              color: 'var(--job-accent)',
-              border: '1px solid var(--sk-line2)',
-              textDecoration: 'none',
-            }}
-          >
+          <SegmentedToggle
+            ariaLabel="Deadlines view"
+            options={[
+              { value: 'list' as ViewMode, label: 'List', icon: <List {...ICON_PROPS} size={14} /> },
+              { value: 'timeline' as ViewMode, label: 'Timeline', icon: <GanttChartSquare {...ICON_PROPS} size={14} /> },
+            ]}
+            value={view}
+            onChange={setView}
+          />
+          <Link to={PATHS.labCascadeTab} className="tk-btn tk-sm" style={{ textDecoration: 'none' }}>
             <GitBranch {...ICON_PROPS} size={12} />
             Cascade View
           </Link>
@@ -257,40 +238,6 @@ export default function DeadlinesPage() {
       {/* Regulatory items expiring within 60 days, each with an .ics reminder
           (moved here from the retired My Hub page, 2026-10-09). */}
       <RegulatoryExpiringList />
-
-      {/* Urgent deadline banner — CLS fix R7: reserve 72px slot */}
-      <div style={{ minHeight: '72px', marginTop: 'var(--sp-md)', contain: 'layout' }}>
-      {(() => {
-        const nextUrgent = [...overdue, ...thisWeek].filter(d => d.status !== 'done' && d.status !== 'completed')[0]
-        if (!nextUrgent) return null
-        const isOver = nextUrgent.isOverdue
-        // Same wording as the rows below, so the banner and the list never disagree.
-        const daysText = dueLabelText(nextUrgent.due_date, isOver)
-        return (
-          <div
-            className="flex items-center gap-3 px-4 py-3 rounded-lg"
-            style={{
-              background: isOver ? 'color-mix(in srgb, var(--job-overdue) 6%, transparent)' : 'color-mix(in srgb, var(--sk-t1) 3%, transparent)',
-              boxShadow: `inset 0 0 0 1px ${isOver ? 'color-mix(in srgb, var(--job-overdue) 20%, transparent)' : 'var(--sk-line2)'}`,
-            }}
-          >
-            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--job-overdue)' : 'var(--sk-t3)', flexShrink: 0 }} />
-            <div className="min-w-0 flex-1 truncate text-sm" style={{ color: 'var(--ink)' }}>
-              {nextUrgent.title}
-            </div>
-            <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
-              style={{
-                backgroundColor: isOver ? 'color-mix(in srgb, var(--job-overdue) 10%, transparent)' : 'var(--sk-line)',
-                color: isOver ? 'var(--job-overdue)' : 'var(--sk-t2)',
-              }}
-            >
-              {daysText}
-            </span>
-          </div>
-        )
-      })()}
-      </div>
 
       {/* Content — CLS fix (C8 R6): reserve viewport height and render skeleton rows at
           the list's row height, so the data swaps in without layout thrash. */}
