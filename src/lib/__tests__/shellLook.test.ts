@@ -38,4 +38,20 @@ describe('shell look', () => {
     expect(sidebar).not.toContain('mnccore-logo-dark.svg')
     expect(read('src/components/Layout.tsx')).toContain('mnccore-logo-dark.svg')
   })
+
+  it('Trajectory draws its numbers as a StatRow, not boxed tiles', () => {
+    const page = read('src/pages/TrajectoryPage.tsx')
+    expect(page).toContain("label: 'Completion rate'")
+    expect(page).toContain("label: 'Tasks completed'")
+    expect(page).not.toContain('ContribMetricCard')
+  })
+
+  it('empty wells and Related projects take the card material, not the flat near-black', () => {
+    const page = read('src/pages/TrajectoryPage.tsx')
+    expect(page).not.toMatch(/text-center rounded-xl"\s+style=\{\{ background: 'var\(--ice\)'/)
+    expect(page.match(/text-center rounded-xl sk-mat/g)?.length).toBe(7)
+    const panel = read('src/components/InsightPanel.tsx')
+    expect(panel).toContain('hov-border sk-mat')
+    expect(panel).not.toContain("background: 'var(--ice)'")
+  })
 })

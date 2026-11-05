@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
-import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Printer, BookOpen, BarChart3, FolderKanban, Flag, ClipboardList, MessageSquare, GitBranch, Users, FileText, CheckCircle2, TrendingUp } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useCanSeePerson } from '../hooks/useCanSeePerson'
 import { useTrajectory, useContributions } from '../hooks/useApiData'
@@ -33,6 +33,7 @@ import { useShowMore } from '../hooks/useShowMore'
 import { ShowMoreButton } from '../components/ui/ShowMore'
 import { PhotoOrInitials } from '../components/PhotoOrInitials'
 import { formatBrandName } from '../components/BrandName'
+import { StatRow } from '../components/ui/StatRow'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -93,8 +94,8 @@ function PublicationCurve({ publications }: { publications: TrajectoryData['publ
     // Settings, which has no such control (overnight audit 2026-10-14, G9-5).
     return (
       <div
-        className="py-10 px-6 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 px-6 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <TrendingUp size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -169,8 +170,8 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
   if (!projectStages || projectStages.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -323,93 +324,16 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
     ? Math.round((metrics.overdue / (metrics.total - metrics.completed)) * 100)
     : 0
 
-  const cards = [
-    {
-      label: 'Completion Rate',
-      value: `${completionRate}%`,
-      color: 'var(--sk-t1)',
-      icon: CheckCircle2,
-      subtitle: `${metrics.completed} of ${metrics.total}`,
-    },
-    {
-      label: 'Avg Days to Complete',
-      value: metrics.avg_days != null ? `${metrics.avg_days}` : '--',
-      color: 'var(--sk-t1)',
-      icon: Clock,
-      subtitle: 'per task',
-    },
-    {
-      label: 'Overdue',
-      value: `${metrics.overdue}`,
-      color: metrics.overdue > 0 ? 'var(--job-overdue)' : 'var(--sk-t1)',
-      icon: AlertTriangle,
-      subtitle: metrics.total - metrics.completed > 0 ? `${overdueRate}% of open` : 'none open',
-    },
-    {
-      label: 'Total Tasks',
-      value: `${metrics.total}`,
-      color: 'var(--ink)',
-      icon: BarChart3,
-      subtitle: `${metrics.total - metrics.completed} open`,
-    },
-  ]
-
+  // Plain numbers, not links: they lead nowhere yet (Nick's mock, 2026-11-05).
   return (
-    <div
-      className="grid gap-3"
-      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}
-    >
-      {cards.map((card) => {
-        const Icon = card.icon
-        return (
-          <div
-            key={card.label}
-            className="card"
-            style={{
-              padding: '1.25rem',
-              textAlign: 'center',
-            }}
-          >
-            <Icon {...ICON_PROPS}
-              size={18}
-              style={{ color: card.color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
-              aria-hidden="true"
-            />
-            <div
-              style={{
-                fontSize: '1.75rem',
-                fontWeight: 700,
-                color: 'var(--ink)',
-                lineHeight: 1,
-              }}
-            >
-              {card.value}
-            </div>
-            <div
-              style={{
-                fontSize: '10px',
-                color: 'var(--slate)',
-                marginTop: '0.35rem',
-              }}
-            >
-              {card.label}
-            </div>
-            {card.subtitle && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: 'var(--slate)',
-                  opacity: 'var(--ink-label)',
-                  marginTop: '0.2rem',
-                }}
-              >
-                {card.subtitle}
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
+    <StatRow
+      stats={[
+        { label: 'Completion rate', value: `${completionRate}%`, sub: `${metrics.completed} of ${metrics.total}` },
+        { label: 'Avg days to complete', value: metrics.avg_days ?? '--', sub: 'per task' },
+        { label: 'Overdue', value: metrics.overdue, rule: 'o', sub: metrics.total - metrics.completed > 0 ? `${overdueRate}% of open` : 'none open' },
+        { label: 'Total tasks', value: metrics.total, sub: `${metrics.total - metrics.completed} open` },
+      ]}
+    />
   )
 }
 
@@ -420,8 +344,8 @@ function PublicationTimeline({ publications }: { publications: TrajectoryData['p
   if (publications.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <BookOpen size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -582,8 +506,8 @@ function TaskVelocity({ taskStats }: { taskStats: TrajectoryData['taskStats'] })
   if (totalCompleted === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <BarChart3 size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -666,8 +590,8 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
   if (projects.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <FolderKanban size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -755,8 +679,8 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
   if (milestones.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <Flag size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -907,55 +831,6 @@ function PeriodSelector({
   )
 }
 
-// ── Contribution Metric Card ──────────────────────────────
-
-function ContribMetricCard({
-  label,
-  count,
-  color,
-  icon: Icon,
-}: {
-  label: string
-  count: number
-  color: string
-  icon: typeof CheckCircle2
-}) {
-  return (
-    <div
-      className="card"
-      style={{
-        padding: '1.25rem',
-        textAlign: 'center',
-      }}
-    >
-      <Icon {...ICON_PROPS}
-        size={20}
-        style={{ color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
-        aria-hidden="true"
-      />
-      <div
-        style={{
-          fontSize: '2rem',
-          fontWeight: 700,
-          color: 'var(--ink)',
-          lineHeight: 1,
-        }}
-      >
-        {count}
-      </div>
-      <div
-        style={{
-          fontSize: '10px',
-          color: 'var(--slate)',
-          marginTop: '0.35rem',
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  )
-}
-
 // ── Contribution Timeline Entry ───────────────────────────
 
 interface TimelineEntry {
@@ -1054,8 +929,8 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
   if (entries.length === 0) {
     return (
       <div
-        className="py-10 text-center rounded-xl"
-        style={{ background: 'var(--ice)' }}
+        className="py-10 text-center rounded-xl sk-mat"
+        style={{ borderRadius: 'var(--r-card)' }}
       >
         <ClipboardList size={28} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-md)' }} />
         <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
@@ -1271,17 +1146,18 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
 
       <PrintHeader title={`Contribution Portfolio -- ${memberName}`} note={`${period === 365 ? '1 year' : `${period} days`} ending ${longToday()}`} />
 
-      {/* Summary stats grid */}
-      <div
-        className="grid gap-3 mb-8"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}
-      >
-        <ContribMetricCard label="Tasks Completed" count={s.tasks_completed} color="var(--sk-t3)" icon={CheckCircle2} />
-        <ContribMetricCard label="Updates Posted" count={s.updates_posted} color="var(--sk-t3)" icon={FileText} />
-        <ContribMetricCard label="Comments Made" count={s.comments_made} color="var(--sk-t3)" icon={MessageSquare} />
-        <ContribMetricCard label="Decisions Made" count={s.decisions_made} color="var(--sk-t3)" icon={GitBranch} />
-        <ContribMetricCard label="Meetings" count={s.meetings_contributed} color="var(--sk-t3)" icon={Users} />
-        <ContribMetricCard label="Publications" count={s.publications} color="var(--sk-t3)" icon={BookOpen} />
+      {/* Summary stats, Today's stat face. Plain numbers, not links. */}
+      <div className="mb-8">
+        <StatRow
+          stats={[
+            { label: 'Tasks completed', value: s.tasks_completed },
+            { label: 'Updates posted', value: s.updates_posted },
+            { label: 'Comments made', value: s.comments_made },
+            { label: 'Decisions made', value: s.decisions_made },
+            { label: 'Meetings', value: s.meetings_contributed },
+            { label: 'Publications', value: s.publications },
+          ]}
+        />
       </div>
 
       <Divider />

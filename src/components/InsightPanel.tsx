@@ -51,10 +51,8 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
             <Link
               key={s.slug}
               to={PATHS.project(s.slug)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hov-border"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hov-border sk-mat"
               style={{
-                background: 'var(--ice)',
-                border: '1px solid var(--border-subtle)',
                 textDecoration: 'none',
                 '--hov-border': 'color-mix(in srgb, var(--sk-t1) 20%, transparent)',
               } as React.CSSProperties}
