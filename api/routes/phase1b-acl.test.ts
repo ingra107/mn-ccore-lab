@@ -495,6 +495,70 @@ describe('handleGetFile — raw=true streams bytes for <img src>', () => {
     expect(await res.text()).toBe('fake-bytes')
   })
 
+  // R01: the raw route answers on the Hub's own origin, so an uploaded document
+  // that a browser would execute runs with the viewer's session.
+  describe('active content never renders on the Hub origin', () => {
+    const serve = async (contentType: string | undefined, filename = 'evil.html', rowType: string | null = null) => {
+      db.prepare('UPDATE file_attachments SET filename = ?, content_type = ? WHERE id = ?').run(filename, rowType, 'fa1')
+      const env = makeEnv({
+        FILES: {
+          get: async () => ({
+            body: new Response('<script>1</script>').body,
+            httpMetadata: { contentType },
+            // R2 replays whatever metadata the upload stored, a disposition included.
+            writeHttpMetadata: (h: Headers) => {
+              if (contentType) h.set('content-type', contentType)
+              h.set('content-disposition', 'inline')
+            },
+          }),
+        },
+      } as unknown as Env)
+      return handleGetFile('task/task-1/shot.png', env, false, true)
+    }
+
+    it.each([
+      'text/html', 'TEXT/HTML; charset=utf-8', 'application/xhtml+xml', 'text/xml', 'application/xml',
+      'text/javascript', 'application/javascript', 'application/x-unknown', 'text/markdown',
+    ])('%s downloads as opaque bytes, with nosniff', async (type) => {
+      const res = await serve(type)
+      expect(res.headers.get('content-disposition')).toBe('attachment; filename="evil.html"')
+      expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+      expect(res.headers.get('content-type')).toBe('application/octet-stream')
+    })
+
+    it('no recorded type at all is unknown, so it downloads', async () => {
+      const res = await serve(undefined)
+      expect(res.headers.get('content-disposition')).toMatch(/^attachment/)
+      expect(res.headers.get('content-type')).toBe('application/octet-stream')
+    })
+
+    it('the object type outranks a harmless attachment-row type', async () => {
+      const res = await serve('text/html', 'evil.html', 'image/png')
+      expect(res.headers.get('content-disposition')).toMatch(/^attachment/)
+    })
+
+    it('SVG downloads when opened, keeps its type so an <img> still draws, and is sandboxed', async () => {
+      const res = await serve('image/svg+xml', 'logo.svg')
+      expect(res.headers.get('content-disposition')).toBe('attachment; filename="logo.svg"')
+      expect(res.headers.get('content-type')).toBe('image/svg+xml')
+      expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+      expect(res.headers.get('content-security-policy')).toContain('sandbox')
+    })
+
+    it.each(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'text/plain; charset=utf-8'])(
+      '%s still previews inline, with nosniff', async (type) => {
+        const res = await serve(type, 'a.bin')
+        expect(res.headers.get('content-disposition')).toBe('inline')
+        expect(res.headers.get('content-type')).toBe(type)
+        expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+      })
+
+    it('a filename cannot break out of the header', async () => {
+      const res = await serve('text/html', 'a"; x=é.html')
+      expect(res.headers.get('content-disposition')).toBe('attachment; filename="a___x__.html"')
+    })
+  })
+
   it('returns 404 when the R2 object is missing (never silently 200s an empty image)', async () => {
     const res = await handleGetFile('task/task-1/shot.png', makeEnv({ FILES: { get: async () => null } } as unknown as Env), false, true)
     expect(res.status).toBe(404)

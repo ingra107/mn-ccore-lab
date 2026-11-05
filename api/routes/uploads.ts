@@ -304,6 +304,34 @@ export async function handleListFiles(url: URL, env: Env, isService = false): Pr
   return json(safe);
 }
 
+// R01: /raw answers on the Hub's own origin, the one that scopes CF_Authorization,
+// so anything a browser would execute there runs as the viewer. Only types a
+// browser renders inertly may stay inline; the list is an allowlist, so a type
+// nobody thought of downloads.
+const INLINE_RAW_TYPES = new Set([
+  'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/avif', 'image/bmp',
+  'image/tiff', 'image/heic', 'image/heif', 'image/x-icon', 'image/vnd.microsoft.icon',
+  'application/pdf', 'text/plain',
+]);
+
+/** The response headers that decide whether a stored type runs, renders or downloads. */
+function rawContentHeaders(storedType: string | null | undefined, filename: string): Record<string, string> {
+  const declared = (storedType ?? '').trim();
+  const mime = declared.split(';')[0].trim().toLowerCase();
+  const nosniff = { 'X-Content-Type-Options': 'nosniff' };
+  if (INLINE_RAW_TYPES.has(mime)) {
+    return { ...nosniff, 'Content-Type': declared, 'Content-Disposition': 'inline' };
+  }
+  const attachment = `attachment; filename="${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}"`;
+  // An SVG opened directly downloads, but an <img src> ignores the disposition and
+  // never runs script, so it keeps its type for the pictures already in comments.
+  // The sandbox is the second lock if a browser ever renders it as a document.
+  if (mime === 'image/svg+xml') {
+    return { ...nosniff, 'Content-Type': mime, 'Content-Disposition': attachment, 'Content-Security-Policy': "sandbox; default-src 'none'; style-src 'unsafe-inline'" };
+  }
+  return { ...nosniff, 'Content-Type': 'application/octet-stream', 'Content-Disposition': attachment };
+}
+
 /** GET /api/files/:key+ — presigned download URL (JSON envelope).
  *  GET /api/files/:key+/raw — the actual bytes, streamed same-origin. This
  *  is what an <img src> / direct browser navigation needs: the JSON form
@@ -333,7 +361,11 @@ export async function handleGetFile(key: string, env: Env, isService = false, ra
     if (!obj) return error('File not found in storage', 404);
     const headers = new Headers();
     obj.writeHttpMetadata(headers);
-    headers.set('Content-Type', obj.httpMetadata?.contentType || row?.content_type || 'application/octet-stream');
+    // After writeHttpMetadata, so a disposition stored with the object cannot win.
+    const filename = row?.filename || key.split('/').pop() || 'download';
+    for (const [name, value] of Object.entries(rawContentHeaders(obj.httpMetadata?.contentType || row?.content_type, filename))) {
+      headers.set(name, value);
+    }
     headers.set('Access-Control-Allow-Origin', '*');
     // Immutable content-addressed-ish key (timestamp-prefixed, never overwritten
     // in place) — safe to cache aggressively client-side.
