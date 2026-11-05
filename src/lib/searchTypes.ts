@@ -16,3 +16,14 @@ export function orderSearchTypes(present: Iterable<string>): string[] {
   const extra = [...have].filter((t) => !(SEARCH_TYPE_ORDER as readonly string[]).includes(t))
   return [...known, ...extra]
 }
+
+/** Enter on a focused result. A result on the public site opens a new tab, as a
+ *  click on its row does: the portal has no way back from it. */
+export function openSearchResult(
+  item: { url?: string | null; details?: { external?: unknown } | null },
+  win: Pick<Window, 'open' | 'location'> = window,
+): void {
+  if (!item.url) return
+  if (item.details?.external) win.open(item.url, '_blank', 'noopener')
+  else win.location.href = item.url
+}

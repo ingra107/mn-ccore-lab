@@ -27,6 +27,12 @@ describe('chord map', () => {
     expect(src('hooks/useKeyboardShortcuts.ts')).not.toMatch(/navMap/)
     expect(src('components/ShortcutHelp.tsx')).not.toMatch(/keys: 'G [A-Z]'/)
     expect(src('components/CommandPalette.tsx')).not.toMatch(/shortcut: 'G [A-Z]'/)
+  })
+  it('the palette shows a literal key only when something binds it', () => {
+    // Q is quick add (GlobalQuickAddModal); chords come through chordLabelFor. A
+    // hint nothing binds was on Schedule Meeting ("M").
+    const hints = [...src('components/CommandPalette.tsx').matchAll(/shortcut: '([^']+)'/g)].map((m) => m[1])
+    expect(hints).toEqual(['Q'])
     expect(src('components/CommandPalette.tsx')).not.toMatch(/label: 'All Tasks'/)
   })
 })

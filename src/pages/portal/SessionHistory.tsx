@@ -170,7 +170,8 @@ export default function SessionHistory() {
     return (
       <PageContainer>
         <PageHeader title="Session History" />
-        <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)' }}>Session history is for the PI.</p>
+        {/* Until /api/auth/me answers, nobody is known to be a non-PI: no note yet. */}
+        {user?.piResolved && <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)' }}>Session history is for the PI.</p>}
       </PageContainer>
     )
   }
