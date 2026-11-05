@@ -4,9 +4,17 @@
 // muted label: overdue, stalled, planned, meetings, done. No pill, no box. A
 // non-zero number is a REAL link to the list it counts (overdue -> Tasks
 // filtered overdue, stalled -> Projects ?filter=stalled, planned -> Tasks
-// planned today, meetings -> Meetings today, done -> Tasks done today). A zero
+// planned today, meetings -> Calendar, done -> Tasks done today). A zero
 // is dim and not a link, because something that looks clickable and does
 // nothing is worse than something quiet (Nick, 2026-10-09).
+//
+// meetings counts the timeline: meeting records plus personal calendar events.
+// The Meetings page lists records only, so a day of six calendar events opened
+// an empty list. The Calendar shows both (fable audit F04, 2026-11-05).
+//
+// stalled names its window. It is the viewer's Lab Preferences threshold on last
+// movement; Lab Overview's "stalled" is a fixed 14 days without a posted update,
+// and Manuscripts' is days in stage. Three real differences, so three labels.
 //
 // "N needs you" (2026-10-26, Nick: "snooze that actual box ... in the same
 // line of the 16 overdue ... if I click that needs you, then it appears back
@@ -59,8 +67,10 @@ interface Stat {
 
 export type StatKey = 'overdue' | 'stalled' | 'planned' | 'meetings' | 'done' | 'done-week'
 
-export function StatLine({ counts, doneThisWeek, pending, failed, needsYou }: {
+export function StatLine({ counts, stalledDays, doneThisWeek, pending, failed, needsYou }: {
   counts: DailyCounts
+  /** The viewer's stale window, in days. Named on the stalled stat when given. */
+  stalledDays?: number
   doneThisWeek?: number
   /** Stats whose source query has not answered yet; each renders a dash, not a number. */
   pending?: Partial<Record<StatKey, boolean>>
@@ -72,9 +82,9 @@ export function StatLine({ counts, doneThisWeek, pending, failed, needsYou }: {
 }) {
   const stats: Stat[] = [
     { key: 'overdue', value: counts.overdue, label: 'overdue', rule: 'o', to: `${PATHS.myTasks}?filter=overdue`, dest: 'Tasks filtered to overdue' },
-    { key: 'stalled', value: counts.stalled, label: 'stalled', rule: 'u', to: `${PATHS.projects}?filter=stalled`, dest: 'Projects filtered to stalled (no movement in the stale window)' },
+    { key: 'stalled', value: counts.stalled, label: stalledDays === undefined ? 'stalled' : `stalled ${stalledDays}d+`, rule: 'u', to: `${PATHS.projects}?filter=stalled`, dest: `Projects filtered to stalled (no movement in ${stalledDays === undefined ? 'the stale window' : `${stalledDays} days`})` },
     { key: 'planned', value: counts.planned, label: 'planned', rule: 'n', to: `${PATHS.myTasks}?filter=planned`, dest: 'Tasks planned for today' },
-    { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: `${PATHS.meetings}?filter=today`, dest: "The Meetings page (today's calendar is on the timeline below)" },
+    { key: 'meetings', value: counts.meetings, label: counts.meetings === 1 ? 'meeting' : 'meetings', rule: 't', to: PATHS.calendar, dest: 'The Calendar (meetings and calendar events)' },
     { key: 'done', value: counts.doneToday, label: 'done', rule: 't', to: `${PATHS.myTasks}?filter=done-today`, dest: 'Tasks done today' },
   ]
   const week = useConfirmedCount(doneThisWeek ?? 0)

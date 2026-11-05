@@ -1,4 +1,4 @@
-// NoNextStepCard: count as hero, short names, 5-row cap with "and N more",
+// NoNextStepCard: count as hero, short names, 5 rows then the rest in place,
 // "Add next step" opens the existing create-task modal on that project, and the
 // card hides at zero. fetch is stubbed per URL; the endpoint shape is
 // GET /api/projects/next-step-gaps -> { data: [{ id, slug, title, tier, last_movement }], count }.
@@ -50,12 +50,17 @@ function wrap(node: ReactElement): ReactElement {
 }
 
 describe('NoNextStepCard', () => {
-  it('shows the count, short names, five rows and "and N more"', async () => {
+  it('shows the count, short names and five rows, and opens the rest in place', async () => {
     stub([1, 2, 3, 4, 5, 6, 7].map(gap), [{ id: 'p1', slug: 'proj-1', title: 'Long Title 1', short_name: 'Short One', status: 'active' }])
     const host = await mount(wrap(<NoNextStepCard />), { ready: (h) => h.querySelector('[data-testid="no-next-step-count"]'), label: 'count' })
     expect(host.querySelector('[data-testid="no-next-step-count"]')?.textContent).toBe('7')
     expect(host.querySelectorAll('[data-testid^="no-next-step-p"]').length).toBe(5)
-    expect(host.querySelector('[data-testid="no-next-step-more"]')?.textContent?.trim()).toBe('and 2 more')
+    // Rule 73: the count clicks through. The rows it counts open here; the old
+    // "and 2 more" link went to the unfiltered Projects list.
+    expect(host.querySelector('a[href="/portal/projects"]')).toBeNull()
+    const more = Array.from(host.querySelectorAll('button')).find((b) => b.textContent?.includes('Show 2 more')) as HTMLButtonElement
+    more.click()
+    await waitFor(() => host.querySelectorAll('[data-testid^="no-next-step-p"]').length === 7, 'all seven rows')
     // projects list arrives after the gaps: the short name replaces the title.
     await waitFor(() => host.querySelector('[data-testid="no-next-step-p1"]')?.textContent?.includes('Short One'), 'short name')
     expect(host.textContent).not.toContain('#')

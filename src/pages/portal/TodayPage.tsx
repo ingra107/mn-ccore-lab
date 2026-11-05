@@ -685,6 +685,7 @@ export default function TodayPage() {
         {/* Each number waits on the query it counts: a dash, never a false 0. */}
         <StatLine
           counts={counts}
+          stalledDays={prefs.projectStaleDays}
           doneThisWeek={doneThisWeek}
           pending={{
             overdue: tasksQuery.isPending,
