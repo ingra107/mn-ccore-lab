@@ -146,7 +146,7 @@ describe('Needs you: the Plan your week row', () => {
     const host = await mount(<QuestionsCard tasks={[]} band={false} planNudge />)
     await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
     expect(nudgeRow(host)?.textContent).toContain('Plan your week')
-    expect(nudgeRow(host)?.querySelector('[data-testid="plan-button"]')?.textContent).toBe('Plan')
+    expect(nudgeRow(host)?.querySelector('[data-testid="plan-button"]')?.textContent).toBe('Plan week')
     expect(host.querySelectorAll('.tk-attn')).toHaveLength(1)
     expect(host.querySelector('.tk-cnt')).toBeNull()
     expect(cardQuestionCount([])).toBe(0)
@@ -449,7 +449,7 @@ describe('The Plan section cards', () => {
     expect(done.querySelector('.tk-card.tk-done')).not.toBeNull()
     expect(done.querySelector('[data-testid="pick-step"]')).toBeNull()
     expect(done.querySelector('[data-testid="pick-packet-tag"]')).toBeNull()
-    expect(host.querySelector('.tk-cnt')?.textContent).toBe('1 of 1')
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('1 of 1 done')
     await click(done.querySelector('button[aria-label="Mark not done"]'))
     expect(reopened).toEqual(['task_a'])
   })
@@ -519,15 +519,39 @@ describe('The Plan button and the empty line', () => {
     const calls = stubFetch({ used: 0, cap: 3 })
     const week = await mount(section(stored(), [task('task_a')]))
     const none = await mount(section(null, []))
-    for (const host of [week, none]) {
+    for (const [host, label] of [[week, 'Replan'], [none, 'Plan week']] as const) {
       await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
       const btn = host.querySelector('[data-testid="plan-button"]') as HTMLButtonElement
-      expect(btn.textContent).toBe('Plan')
+      expect(btn.textContent).toBe(label)
+      expect(btn.getAttribute('data-tip')).toBe(label === 'Replan' ? 'Replan the week with Claude, live' : 'Plan the week with Claude, live')
       expect(btn.className).toContain('tk-btn tk-sm')
       expect(btn.disabled).toBe(false)
       expect(host.querySelector('[data-testid="replan"]')).toBeNull()
     }
     expect(calls.some((c) => c.url.startsWith('/api/week-plan/replan'))).toBe(false)
+  })
+
+  it("the label follows the week a press would plan, not the plan on show (a Sunday shows last week's)", async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const st = state({})
+    const host = await mount(<PlanSection plan={stored()} weekPlanned={false} model={planSectionModel(stored(), [task('task_a')], st.planned, DAY, st.done)} state={st} projectsByPid={new Map()} viewerSlug="" />)
+    await until(() => host.querySelector('[data-testid="plan-button"]')?.getAttribute('data-state') === 'ready', 'Plan ready')
+    expect(host.querySelector('[data-testid="plan-button"]')?.textContent).toBe('Plan week')
+  })
+
+  it('while the task read has not answered there is no label yet to claim a plan or its absence', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const st = state({})
+    const host = await mount(<PlanSection plan={null} loading model={planSectionModel(null, [], st.planned, DAY, st.done)} state={st} projectsByPid={new Map()} viewerSlug="" />)
+    await tick(); await tick()
+    expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
+  })
+
+  it('the empty line says what to do without naming a button whose word changes', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(section(null, []))
+    await until(() => !!host.querySelector('[data-testid="plan-button"]'), 'the button')
+    expect(host.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned yet. Plan the week, or drag a task here to plan it for today.')
   })
 
   it('a member sees no Plan button, with or without a plan, and nothing is requested', async () => {
@@ -539,7 +563,7 @@ describe('The Plan button and the empty line', () => {
       expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
       expect(host.querySelector('[data-testid="plan-note"]')).toBeNull()
     }
-    expect(none.querySelector('[data-testid="plan-empty"]')?.textContent).not.toContain('Press Plan')
+    expect(none.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned. Drag a task here to plan it for today.')
     expect(calls.some((c) => c.url.startsWith('/api/launch-log'))).toBe(false)
   })
 
@@ -572,6 +596,6 @@ describe('The Plan button and the empty line', () => {
     expect(cards(host).map((c) => c.querySelector('[data-task-id]')?.getAttribute('data-task-id'))).toEqual(['task_b'])
     // The newer plan's saved pick has Prep, against the NEWER plan.
     expect(host.querySelectorAll('[data-testid="pick-start"]')).toHaveLength(1)
-    expect(host.querySelector('.tk-cnt')?.textContent).toBe('0 of 1')
+    expect(host.querySelector('.tk-cnt')?.textContent).toBe('0 of 1 done')
   })
 })

@@ -79,7 +79,7 @@ describe('Plan button', () => {
     const calls = stubLaunchApi(() => rows, () => { rows = [launchRow()] })
     const host = await mountButton()
     await waitFor(() => btn(host)?.dataset.state === 'ready' && !btn(host)!.disabled, 'Plan ready')
-    expect(btn(host)!.textContent).toBe('Plan')
+    expect(btn(host)!.textContent).toBe('Plan week')
 
     btn(host)!.click()
     await waitFor(() => posts(calls).length === 1, 'the POST')
