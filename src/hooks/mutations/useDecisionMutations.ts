@@ -21,9 +21,11 @@ export function useCreateDecision() {
         body: JSON.stringify(input),
       }),
 
-    onSettled: () => {
+    onSettled: (_data, _error, input) => {
       queryClient.invalidateQueries({ queryKey: ['decisions'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // The meeting page lists the decisions logged on it.
+      if (input.meeting_id) queryClient.invalidateQueries({ queryKey: ['meeting', input.meeting_id] })
     },
   })
 }

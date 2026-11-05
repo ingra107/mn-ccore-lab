@@ -27,10 +27,11 @@ import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 import { isEditableTarget } from '../lib/editableTarget'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail, useProjects, useTeam } from '../hooks/useApiData'
+import { useAttendeeViews } from '../hooks/useAttendeeViews'
 import { buildAttendeeLookup, resolveAttendeeList } from '../../shared/attendees'
 import type { AgendaItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta } from '../hooks/useMutations'
+import { useAddAgendaItem, useReorderAgenda, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta } from '../hooks/useMutations'
 import { useMarkSeen } from '../hooks/useEntitySeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
@@ -41,14 +42,14 @@ import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
-import { FaceDisc } from '../components/today/skin'
+import { FaceDisc, Who } from '../components/today/skin'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
 import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
-import { formatLongDate } from '../lib/dateUtils'
+import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
@@ -57,6 +58,10 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { isTaskDone } from '../lib/taskGrouping'
 import { MeetingActionList } from '../components/meetings/MeetingActionList'
 import { prepareActionItems } from '../lib/meetingActionItems'
+import { meetingSummaryText } from '../lib/meetingSummary'
+import { grantedProjectList, meetingDefaultProjectSlug, meetingProjectPills, meetingTagList } from '../lib/projectMeetings'
+import { projectShortLabel } from '../lib/displayNames'
+import { firstNameFor } from '../lib/personLabel'
 import MeetingActivityFeed from '../components/meetings/MeetingActivityFeed'
 import MeetingProjectsSection from '../components/meetings/MeetingProjectsSection'
 import { isLabSeriesTitle } from '../../shared/meetingAudience'
@@ -114,6 +119,7 @@ export default function MeetingDetail() {
   const [agendaCopied, setAgendaCopied] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
   const addAgenda = useAddAgendaItem(meeting?.id || '')
+  const reorderAgenda = useReorderAgenda(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   // T6: single mutation for all metadata edits (title/type/attendees/tags).
   const updateMeta = useUpdateMeetingMeta(meeting?.id || '')
@@ -132,6 +138,8 @@ export default function MeetingDetail() {
   const [showDecisionForm, setShowDecisionForm] = useState(false)
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
+  // null = the person has not chosen: the meeting's own project, when it has one.
+  const [decisionProject, setDecisionProject] = useState<string | null>(null)
   const decisionTitleRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     if (showDecisionForm) decisionTitleRef.current?.focus({ preventScroll: true })
@@ -205,7 +213,17 @@ export default function MeetingDetail() {
   const attendees = parseJsonArray(meeting.attendees)
   const autoAgenda = parseJsonArray(meeting.agenda)
   const decisions = parseJsonArray(meeting.decisions)
+  const loggedDecisions = meeting.logged_decisions ?? []
+  const hasDecisions = decisions.length > 0 || loggedDecisions.length > 0
   const status = meetingStatus(meeting)
+  // The action items' projects stand in for "discussed" until the debrief tags it.
+  const derivedTags = [...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]
+  const knownProjects = allProjects.filter((p): p is typeof p & { id: string } => !!p.id)
+  const storedTags = meetingTagList(meeting.tags)
+  const defaultDecisionProject = meetingDefaultProjectSlug(meetingProjectPills(
+    storedTags.length > 0 ? storedTags : derivedTags, grantedProjectList(meeting.granted_projects), knownProjects,
+  ))
+  const chosenDecisionProject = decisionProject ?? defaultDecisionProject ?? ''
   const rawTeamAgendaItems = meeting.agenda_items || []
   // S9: apply the local drag order so a reordered agenda stays put (mirrors
   // orderedPendingActions). Items with no recorded order sink to the bottom in
@@ -233,15 +251,12 @@ export default function MeetingDetail() {
     const reordered = arrayMove(teamAgendaItems, oldIndex, newIndex)
 
     // S9: write the new order to local state FIRST (optimistic) so the item
-    // stays where dropped, then persist. Mirrors handleActionDragEnd.
-    setAgendaOrder(reordered.map(i => i.id))
-
-    // Persist to API
-    fetch(`/api/meetings/${meeting!.id}/agenda/reorder`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: reordered.map(i => i.id) }),
-    })
+    // stays where dropped, then persist. A refusal puts the order back; the
+    // failed-write floor says why.
+    const before = agendaOrder
+    const ids = reordered.map(i => i.id)
+    setAgendaOrder(ids)
+    reorderAgenda.mutate(ids, { onError: () => setAgendaOrder(before) })
   }
 
   async function handleGenerateAgenda() {
@@ -400,28 +415,15 @@ export default function MeetingDetail() {
                 <button
                   onClick={() => {
                     if (!meeting) return
-                    const lines = [
-                      `# ${meeting.title}`,
-                      `Date: ${meeting.date}`,
-                      '',
-                    ]
-                    const decisions = parseJsonArray(meeting.decisions)
-                    if (decisions.length > 0) {
-                      lines.push('## Decisions')
-                      decisions.forEach(d => lines.push(`- ${d}`))
-                      lines.push('')
-                    }
-                    const actions = (meeting.action_items || []).filter((a) => !a.completed)
-                    if (actions.length > 0) {
-                      lines.push('## Open Action Items')
-                      actions.forEach((a) => lines.push(`- [ ] ${a.title || a.description} (@${a.assignee})`))
-                      lines.push('')
-                    }
-                    if (meeting.notes) {
-                      lines.push('## Notes')
-                      lines.push(meeting.notes)
-                    }
-                    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                    const summary = meetingSummaryText({
+                      title: meeting.title,
+                      date: meeting.date,
+                      notes: meeting.notes,
+                      decisions: [...decisions, ...loggedDecisions.map((d) => d.title)],
+                      actionItems,
+                      firstName: firstNameFor,
+                    })
+                    navigator.clipboard.writeText(summary).then(() => {
                       setCopiedSummary(true)
                       setTimeout(() => setCopiedSummary(false), 2000)
                     })
@@ -497,8 +499,8 @@ export default function MeetingDetail() {
                 sits here, beside the action items Nick reviews. */}
             <MeetingProjectsSection
               meeting={meeting}
-              derivedTags={[...new Set(actionItems.filter((a) => a.project_id).map((a) => a.project_id!))]}
-              allProjects={allProjects.filter((p): p is typeof p & { id: string } => !!p.id)}
+              derivedTags={derivedTags}
+              allProjects={knownProjects}
               updateMeta={updateMeta}
             />
             {/* T-50 Files section — files attached to this meeting. */}
@@ -733,16 +735,18 @@ export default function MeetingDetail() {
                       rationale: decisionRationale.trim() || undefined,
                       context: `From meeting: ${meeting?.title} (${meeting?.date})`,
                       meeting_id: meeting?.id,
+                      project_slug: chosenDecisionProject || undefined,
                     }, {
                       onSuccess: () => {
                         showSuccess('Decision logged')
                         setDecisionTitle('')
                         setDecisionRationale('')
+                        setDecisionProject(null)
                         setShowDecisionForm(false)
                       },
                     })
                   }}
-                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid var(--sk-line)' : 'none' }}
+                  style={{ marginBottom: hasDecisions ? '12px' : 0, paddingBottom: hasDecisions ? '12px' : 0, borderBottom: hasDecisions ? '1px solid var(--sk-line)' : 'none' }}
                 >
                   <input
                     type="text"
@@ -769,6 +773,19 @@ export default function MeetingDetail() {
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   />
+                  <select
+                    aria-label="Decision project"
+                    value={chosenDecisionProject}
+                    onChange={(e) => setDecisionProject(e.target.value)}
+                    style={{
+                      width: '100%', fontSize: '12px', color: 'var(--ink)', fontFamily: 'inherit',
+                      background: 'var(--cream)', border: '1px solid var(--field-edge)', borderRadius: 'var(--radius-lg)',
+                      padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="">No project</option>
+                    {knownProjects.map((p) => <option key={p.id} value={p.slug}>{projectShortLabel(p)}</option>)}
+                  </select>
                   <div className="flex gap-2">
                     <button
                       type="submit"
@@ -778,7 +795,7 @@ export default function MeetingDetail() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale('') }}
+                      onClick={() => { setShowDecisionForm(false); setDecisionTitle(''); setDecisionRationale(''); setDecisionProject(null) }}
                       style={{ background: 'none', border: '1px solid var(--sk-line2)', borderRadius: 'var(--radius-md)', padding: '5px 14px', fontSize: '12px', cursor: 'pointer', color: 'var(--slate)' }}
                     >
                       Cancel
@@ -788,17 +805,31 @@ export default function MeetingDetail() {
               )}
             </AnimatePresence>
 
-            {decisions.length > 0 && (
+            {hasDecisions && (
               <div className="tk">
                 <ul className="tk-decs tk-flat">
                   {decisions.map((d, i) => (
                     <li key={i} className="tk-dec"><span className="tk-dia" aria-hidden="true">&#8226;</span><span>{d}</span></li>
                   ))}
+                  {/* Logged here or on the Decision Log: who, when, outcome, and the way to the full row. */}
+                  {loggedDecisions.map((d) => (
+                    <li key={d.id} className="tk-dec" data-testid="meeting-logged-decision">
+                      <span className="tk-dia" aria-hidden="true">&#8226;</span>
+                      <span>
+                        <Link to={`${PATHS.decisions}?open=${encodeURIComponent(d.id)}`} style={{ color: 'inherit' }}>{d.title}</Link>
+                        <span className="flex items-center flex-wrap" style={{ gap: 6, marginTop: 2, fontSize: 'var(--label-size)', color: 'var(--muted)' }}>
+                          {d.decided_by && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Who value={d.decided_by} /></span>}
+                          <span>{formatShortDate(d.created_at)}</span>
+                          {d.outcome && <span>· Outcome: {d.outcome}</span>}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
 
-            {decisions.length === 0 && !showDecisionForm && (
+            {!hasDecisions && !showDecisionForm && (
               <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
                 No decisions logged yet. Record one during the meeting so nobody forgets.
               </p>
@@ -870,6 +901,9 @@ function AttendeeChip({ slug }: { slug: string }) {
   const p = getPersonInfo(slug)
   const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
   const memberData = buildMemberHoverData(slug)
+  const values = useMemo(() => [slug], [slug])
+  const [view] = useAttendeeViews(values)
+  const badge = <AttendeeBadge value={slug} />
 
   return (
     <div
@@ -881,7 +915,9 @@ function AttendeeChip({ slug }: { slug: string }) {
       onMouseLeave={handlers.onMouseLeave}
     >
       <span className="tk inline-flex items-center gap-1.5" style={{ fontSize: '12.5px', color: 'var(--sk-t1)', whiteSpace: 'nowrap' }}>
-        <AttendeeBadge value={slug} />
+        {view?.slug
+          ? <Link to={PATHS.teamMember(view.slug)} className="inline-flex items-center gap-1.5" style={{ color: 'inherit', textDecoration: 'none' }}>{badge}</Link>
+          : badge}
       </span>
       <HoverCard
         data={memberData}
@@ -1207,7 +1243,7 @@ function LabToggle({ meeting, updateMeta }: { meeting: MeetingDetailData; update
     <button
       type="button"
       role="switch"
-      aria-checked={isLab}
+      aria-checked={isLab ? 'true' : 'false'}
       disabled={updateMeta.isPending}
       onClick={() => updateMeta.mutate({ audience: isLab ? 'private' : 'lab' })}
       title={isLab ? 'Every member can see this meeting. Click to make it private.' : 'Only you, its attendees and granted projects see this. Click to share it with the lab.'}

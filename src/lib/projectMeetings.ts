@@ -141,3 +141,15 @@ export function meetingProjectPills(
   }
   return out
 }
+
+/**
+ * The project a decision logged on this meeting starts on: its one granted
+ * project, else its one discussed project the viewer can see, else none. Two
+ * candidates are a choice for the person, not a guess.
+ */
+export function meetingDefaultProjectSlug(pills: readonly ProjectPill[]): string | null {
+  const known = pills.filter((p) => p.projectId && p.slug)
+  const granted = known.filter((p) => p.granted)
+  const pick = granted.length > 0 ? granted : known
+  return pick.length === 1 ? pick[0].slug : null
+}
