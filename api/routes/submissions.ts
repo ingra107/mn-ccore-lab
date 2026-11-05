@@ -145,11 +145,13 @@ export async function handleDeleteSubmission(id: string, request: Request, user:
 // Includes days-since-submission and days-until-revision-due
 export async function handleGetActiveSubmissions(env: Env): Promise<Response> {
   const today = ctToday(); // AM-7: CT calendar date for the bound anchors below
-  // Get the most recent non-deleted event per project
+  // The most recent non-deleted LIFECYCLE event per project. R12: revision_due is
+  // a deadline, not a state, and it is dated in the future, so it must not outrank
+  // an acceptance. It only stands as "latest" when a project has nothing else.
   const activeProjects = await env.DB.prepare(`
     WITH latest_events AS (
       SELECT se.*,
-        ROW_NUMBER() OVER (PARTITION BY se.project_id ORDER BY se.event_date DESC, se.created_at DESC) as rn
+        ROW_NUMBER() OVER (PARTITION BY se.project_id ORDER BY se.event_type = 'revision_due', se.event_date DESC, se.created_at DESC) as rn
       FROM submission_events se
       WHERE se.deleted_at IS NULL
     ),

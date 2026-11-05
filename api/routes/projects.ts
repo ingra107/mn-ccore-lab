@@ -505,10 +505,12 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
     else activityScore = 0;
 
     let velocityScore: number;
-    const withDue = v?.with_due_count ?? 0;
+    // R10: performance comes from the COMPLETION aggregate; `v` is open work and
+    // never had these two columns, so every project scored the no-data 15.
+    const withDue = latestTaskDone?.with_due_count ?? 0;
     if (withDue === 0) velocityScore = 15;
     else {
-      const onTimePct = (v?.on_time_count ?? 0) / withDue;
+      const onTimePct = (latestTaskDone?.on_time_count ?? 0) / withDue;
       if (onTimePct >= 0.8) velocityScore = 25;
       else if (onTimePct >= 0.6) velocityScore = 20;
       else if (onTimePct >= 0.4) velocityScore = 15;
