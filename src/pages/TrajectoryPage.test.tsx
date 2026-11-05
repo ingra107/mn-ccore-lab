@@ -16,7 +16,7 @@ import TrajectoryPage from './TrajectoryPage'
 
 const SLUG = 'dan-shyu'
 let mounted: { host: HTMLElement; root: Root }[] = []
-let publications: { id: string; title: string; journal: string; year: number; doi: string | null }[] = []
+let publications: { id: string; title: string; journal: string; year: number; doi: string | null; status: string }[] = []
 let contributionTasks: { id: string; title: string; completed_at: string }[] = []
 
 const asUser = (slug: string | null, isPi = false): AuthUser => ({
@@ -28,9 +28,9 @@ const json = (body: unknown, status = 200) =>
 
 beforeEach(() => {
   publications = [
-    { id: 'p1', title: 'First paper', journal: 'Chest', year: 2021, doi: null },
-    { id: 'p2', title: 'Second paper', journal: 'CCM', year: 2023, doi: null },
-    { id: 'p3', title: 'Third paper', journal: 'JAMA', year: 2023, doi: null },
+    { id: 'p1', title: 'First paper', journal: 'Chest', year: 2021, doi: null, status: 'Published' },
+    { id: 'p2', title: 'Second paper', journal: 'CCM', year: 2023, doi: null, status: 'Published' },
+    { id: 'p3', title: 'Third paper', journal: 'JAMA', year: 2023, doi: null, status: 'Published' },
   ]
   contributionTasks = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
@@ -87,9 +87,23 @@ const button = (h: HTMLElement, text: string | RegExp) =>
   [...h.querySelectorAll('button')].find((b) => (typeof text === 'string' ? b.textContent?.trim() === text : text.test(b.textContent ?? ''))) as HTMLButtonElement | undefined
 
 describe('TrajectoryPage', () => {
+  // Live walk 2026-11-05: the member page said "68 published" and this page 77,
+  // which was those 68 plus 9 abstracts, preprints and papers in preparation.
+  it('counts published papers on the curve, as the member page does, and names the others', async () => {
+    publications.push({ id: 'p4', title: 'A preprint', journal: 'medRxiv', year: 2024, doi: null, status: 'Preprint' })
+    const h = await mount(asUser(SLUG))
+    const curve = h.querySelector('#publication-curve')!
+    expect(curve.textContent).toContain('Cumulative published papers by year')
+    expect(curve.querySelector('[data-testid="curve-total"]')!.textContent).toBe('3')
+    const all = h.querySelector('#publication-timeline')!
+    expect(all.textContent).toContain('All papers')
+    expect(all.textContent).toContain('A preprint')
+    expect(all.textContent).toContain('Preprint ·')
+  })
+
   it('draws the publication curve from `year` and lists each paper with its year', async () => {
     const h = await mount(asUser(SLUG))
-    expect(h.textContent).toContain('Cumulative publications by year')
+    expect(h.textContent).toContain('Cumulative published papers by year')
     expect(h.textContent).not.toContain('No indexed publications yet')
     const timeline = h.querySelector('#publication-timeline')!
     expect(timeline.textContent).toContain('2021')

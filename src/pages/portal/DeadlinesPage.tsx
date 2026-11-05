@@ -15,6 +15,7 @@ import { useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue, dueLabelText, isDoneStatus } from '../../lib/dateUtils'
+import { isWorkTask } from '../../lib/taskStats'
 import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
 import { useSelection } from '../MyTasks/hooks/useSelection'
@@ -96,7 +97,9 @@ export default function DeadlinesPage() {
     // milestones included) may carry only its hard date.
     for (const task of tasks) {
       const date = task.due_date ?? (task.kind === 'milestone' ? task.deadline : null)
-      if (!date) continue
+      // An approval asks whether something is a meeting: not work, so not a
+      // deadline, and Tasks' Overdue list leaves it out too.
+      if (!date || !isWorkTask(task)) continue
       const dueDate = new Date(date + 'T23:59:59')
       const daysUntil = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({
@@ -310,7 +313,7 @@ export default function DeadlinesPage() {
               <EmptyState
                 icon={<Clock size={40} />}
                 title="The runway is clear"
-                subtitle="Nothing due in the next 90 days. Enjoy the quiet — deadlines surface here as tasks and grant milestones land."
+                subtitle="Nothing is due. Deadlines surface here as tasks and grant milestones land."
               />
             ) : (
               <DeadlineList
@@ -352,7 +355,7 @@ export default function DeadlinesPage() {
             )}
           </>
         ) : (
-          <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} />
+          <DeadlineTimeline items={[...overdue, ...thisWeek, ...nextWeek, ...later]} onOpenTask={openTask} />
         )}
       </div>
 
@@ -380,15 +383,18 @@ export default function DeadlinesPage() {
 
 // ── Deadline Row ─────────────────────────────────────────────
 
-function DeadlineRow({ item }: { item: DeadlineItem }) {
+function DeadlineRow({ item, onOpen }: { item: DeadlineItem; onOpen: () => void }) {
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
   const isMilestone = item.type === 'milestone'
 
   return (
-    <div
-      className="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-      style={{ opacity: isDone ? 0.85 : 1 }}
+    <button
+      type="button"
+      data-deadline-row
+      onClick={onOpen}
+      className="w-full text-left flex items-center gap-3 py-2 px-3 rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+      style={{ opacity: isDone ? 0.85 : 1, background: 'none', border: 'none', cursor: 'pointer' }}
     >
       {/* Type icon */}
       {isMilestone ? (
@@ -439,7 +445,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         className="text-[11px] flex-shrink-0 w-16 text-right"
         style={{ opacity: item.isOverdue ? 1 : 0.85 }}
       />
-    </div>
+    </button>
   )
 }
 
@@ -620,7 +626,7 @@ function UpcomingConferencesSection() {
 
 // ── Timeline View ────────────────────────────────────────────
 
-function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
+function DeadlineTimeline({ items, onOpenTask }: { items: DeadlineItem[]; onOpenTask: (task: TaskRow) => void }) {
   // Group by week — must be above the early return to satisfy Rules of Hooks.
   // When items is empty the memo returns an empty array and the EmptyState
   // renders below; the memo result is never used in that branch.
@@ -697,7 +703,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
               {weekItems.map((item, idx) => (
                 <Fragment key={item.id}>
                   {idx > 0 && item.id === nowBeforeId && nowMarker}
-                  <DeadlineRow item={item} />
+                  <DeadlineRow item={item} onOpen={() => { if (item.task) onOpenTask(item.task) }} />
                 </Fragment>
               ))}
             </div>

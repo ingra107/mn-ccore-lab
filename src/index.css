@@ -1863,19 +1863,17 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    fixed 300px of columns left Project and Summary 0px wide and pushed the page
    to ~465px, so each session stacks: time, duration and counts on one line,
    then the project, then up to two lines of summary. */
-.sess-grid { display: grid; grid-template-columns: 100px 80px 1fr 2fr 60px 60px; gap: var(--sp-sm); align-items: center; }
+.sess-grid { display: grid; grid-template-columns: 100px 80px 1fr 2fr; gap: var(--sp-sm); align-items: center; }
 .sess-grid .sg-sum { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 640px) {
   .sess-grid {
-    grid-template-columns: auto auto 1fr auto auto;
-    grid-template-areas: "time dur . act com" "proj proj proj proj proj" "sum sum sum sum sum";
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: "time dur ." "proj proj proj" "sum sum sum";
     row-gap: 2px;
   }
   .sess-head { display: none; }
   .sess-grid .sg-time { grid-area: time; }
   .sess-grid .sg-dur { grid-area: dur; }
-  .sess-grid .sg-act { grid-area: act; }
-  .sess-grid .sg-com { grid-area: com; }
   .sess-grid .sg-proj { grid-area: proj; }
   .sess-grid .sg-sum {
     grid-area: sum;

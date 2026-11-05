@@ -153,9 +153,11 @@ export default function Projects() {
   // One title writer (D3(a)): this used to race a second raw document.title
   // effect, so the tab read "My projects" or "Projects (N active)" depending
   // on which ran last.
-  const activeProjectCount = projects.filter((p) => isProjectActive(p.status)).length
+  // Open (not finished), the word and the number the page's hero leads with: the
+  // tab read "91 active" over a hero of 100 (live walk, 2026-11-05).
+  const openProjectCount = projects.filter((p) => !isProjectDone(p.status)).length
   usePageMeta(
-    portalTitle('Projects', `${activeProjectCount} active`),
+    portalTitle('Projects', `${openProjectCount} open`),
     isPi
       ? 'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
       : 'Track MN-CCORE research projects from idea to publication across MN-CCORE and CLIF.'
@@ -354,10 +356,18 @@ export default function Projects() {
   // Summary stats — 3-bucket canonical (Stage 4 #12-followup, 2026-05-08).
   // #123: counted over statusScoped, not `projects` — the strip must describe
   // the population the page is actually showing.
-  const totalCount = statusScoped.length
-  const mncoreCount = statusScoped.filter((p) => p.category === 'MNCCORE').length
-  const clifCount = statusScoped.filter((p) => p.category === 'CLIF').length
-  const pbCount = statusScoped.filter((p) => p.category === 'Peripheral Brain').length
+  // The list's own rows (fable audit F14): arriving from "3 stalled", the hero read
+  // the whole open count over three rows. The word says which rows they are.
+  const totalCount = filtered.length
+  const heroLabel = findQ.trim() ? 'found'
+    : stalledOnly ? 'stalled'
+    : activeStatus === 'all' ? (totalCount === 1 ? 'project' : 'projects')
+    : activeStatus
+  const categoryStrip = [
+    ['MN-CCORE', filtered.filter((p) => p.category === 'MNCCORE').length],
+    ['CLIF', filtered.filter((p) => p.category === 'CLIF').length],
+    ['PB', filtered.filter((p) => p.category === 'Peripheral Brain').length],
+  ].filter(([, n]) => n !== 0).map(([label, n]) => `${n} ${label}`).join(' · ')
   // No guard on activeStatus: the 'all' branch makes statusScoped === projects,
   // so the difference is already 0 there. Under 'active' the hidden rows are
   // waiting/blocked as well as done, so the label says "hidden", not "done".
@@ -373,7 +383,7 @@ export default function Projects() {
       title={browsing ? 'Browse projects' : allProjectsOn ? 'All projects' : 'My projects'}
       // The page's one telling number (color-back pick 2): how many projects
       // this list holds. Static: the list it counts is right below.
-      hero={browsing || (projectsLoading && projects.length === 0) ? undefined : { value: totalCount, label: totalCount === 1 ? 'project' : 'projects' }}
+      hero={browsing || (projectsLoading && projects.length === 0) ? undefined : { value: totalCount, label: heroLabel }}
       actions={
         <>
         <AllProjectsSwitch />
@@ -464,7 +474,7 @@ export default function Projects() {
               whiteSpace: 'nowrap',
             }}
           >
-              {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
+              {categoryStrip}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
           </span>}
           {viewMode === 'pipeline' && (
             <button

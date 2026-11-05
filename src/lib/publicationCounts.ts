@@ -45,7 +45,7 @@ export function countPublications(
   return { published, inReview, inPreparation, all: pubs.length }
 }
 
-export function isPublished(p: Pick<Publication, 'status'>): boolean {
+export function isPublished(p: { status?: string | null }): boolean {
   return p.status === 'Published'
 }
 

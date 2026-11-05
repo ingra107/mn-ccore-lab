@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { History, Clock, GitCommit, Zap, Monitor, Filter, Search } from 'lucide-react'
+import { History, Clock, Monitor, Filter, Search } from 'lucide-react'
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
 import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -14,6 +14,7 @@ import StatRow from '../../components/ui/StatRow'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { projectShortLabel, projectFullTitleHint } from '../../lib/displayNames'
+import { useAuth } from '../../hooks/useAuth'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -160,7 +161,23 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
 
 // ── Main Page ──────────────────────────────────────────────────
 
+// The sessions read is PI-only (/api/pb/*). A member reached the page by URL, read
+// the refused query as an empty list, and was told to install a hook (fable audit
+// F33). The LaunchesPage note, for the same reason.
 export default function SessionHistory() {
+  const { user } = useAuth()
+  if (!user?.isPi) {
+    return (
+      <PageContainer>
+        <PageHeader title="Session History" />
+        <p style={{ fontSize: 'var(--text-small)', color: 'var(--slate)' }}>Session history is for the PI.</p>
+      </PageContainer>
+    )
+  }
+  return <SessionHistoryBody />
+}
+
+function SessionHistoryBody() {
   const [projectFilter, setProjectFilter] = useState('')
   const [sinceFilter, setSinceFilter] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -318,9 +335,9 @@ export default function SessionHistory() {
           <StatRow
             stats={[
               { label: activePreset === 'all' ? 'Total sessions' : `Sessions, last ${activePreset}`, value: stats.total_sessions },
-              { label: 'Total hours', value: stats.total_hours, sub: `${stats.total_commits} commits` },
+              { label: 'Total hours', value: stats.total_hours },
               { label: 'Avg session', value: formatDuration(stats.avg_minutes) },
-              { label: 'This week', value: stats.sessions_this_week, sub: `${stats.total_actions} actions total` },
+              { label: 'This week', value: stats.sessions_this_week },
             ]}
           />
         </div>
@@ -349,8 +366,10 @@ export default function SessionHistory() {
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible">
           {/* Table header */}
-          {/* .sess-grid (index.css) owns the columns: six on a wide screen,
-              stacked on a phone, where the header row hides. */}
+          {/* .sess-grid (index.css) owns the columns: four on a wide screen, stacked
+              on a phone, where the header row hides. No actions or commits
+              column: all 14,159 rows hold 0 in both (2026-11-05), PB never fills
+              them. */}
           <div
             className="sess-grid sess-head"
             style={{
@@ -366,8 +385,6 @@ export default function SessionHistory() {
             <div>Duration</div>
             <div>Project</div>
             <div>Summary</div>
-            <div style={{ textAlign: 'center' }}>Actions</div>
-            <div style={{ textAlign: 'center' }}>Commits</div>
           </div>
 
           {/* Grouped by date */}
@@ -470,30 +487,6 @@ export default function SessionHistory() {
                         title={session.summary || ''}
                       >
                         {session.summary || '--'}
-                      </div>
-
-                      {/* Actions count */}
-                      <div className="sg-act" style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-                        {session.actions_count > 0 ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Zap {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
-                            {session.actions_count}
-                          </span>
-                        ) : (
-                          <span style={{ opacity: 0.85 }}>--</span>
-                        )}
-                      </div>
-
-                      {/* Commits count */}
-                      <div className="sg-com" style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-                        {session.commits_count > 0 ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <GitCommit {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', opacity: 0.85 }} />
-                            {session.commits_count}
-                          </span>
-                        ) : (
-                          <span style={{ opacity: 0.85 }}>--</span>
-                        )}
                       </div>
                     </motion.div>
                   )

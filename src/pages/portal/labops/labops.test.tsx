@@ -176,6 +176,8 @@ describe('Pipeline tab', () => {
     await waitFor(() => registry.textContent?.includes('no updates yet'), 'never-updated row after Show all')
     expect(host.textContent).not.toContain('999')
     expect(host.textContent).toContain('Active projects')
+    // Live walk 2026-11-05: the subtitle's bare "190 projects" was 100 open + 90 done.
+    expect(host.textContent).toMatch(/\d+ open projects, \d+ done, \d+ open tasks/)
     expect(host.textContent).toContain('Task velocity')
     // The one scope: products come from pi-dashboard's active-project rollup.
     expect(calls).toContain('/api/analytics/pi-dashboard')

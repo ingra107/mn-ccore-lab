@@ -9,6 +9,7 @@
 // a page may still set its own (a count suffix, a record's name) through
 // usePageMeta or portalTitle.
 
+import { Calendar, Clock, DollarSign, FileText, FolderKanban, LayoutDashboard, Library, SquareCheck, Users, Video, type LucideIcon } from 'lucide-react'
 import { PATHS } from './paths'
 
 export const PORTAL_PAGE_LABELS: Record<string, string> = {
@@ -31,6 +32,23 @@ export const PORTAL_PAGE_LABELS: Record<string, string> = {
   [PATHS.search]: 'Search',
   [PATHS.decisions]: 'Decisions',
   [PATHS.narratives]: 'Research Narratives',
+}
+
+// One icon per page, for the same reason: the sidebar and the mobile drawer drew
+// Tasks and Grants with different glyphs (Principle 4, fable audit F27).
+export const PORTAL_PAGE_ICONS: Record<string, LucideIcon> = {
+  [PATHS.dashboard]: LayoutDashboard,
+  // SquareCheck (check contained INSIDE the square) over the old CheckSquare,
+  // whose check overflowed the frame: reads cleaner at 18px.
+  [PATHS.myTasks]: SquareCheck,
+  [PATHS.projects]: FolderKanban,
+  [PATHS.calendar]: Calendar,
+  [PATHS.deadlines]: Clock,
+  [PATHS.meetings]: Video,
+  [PATHS.manuscripts]: FileText,
+  [PATHS.grants]: DollarSign,
+  [PATHS.library]: Library,
+  [PATHS.team]: Users,
 }
 
 /** "<label> · MN-CCORE", or "<label> (<detail>) · MN-CCORE" with a detail. */
