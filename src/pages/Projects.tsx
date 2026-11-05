@@ -21,6 +21,7 @@ import { TableSkeleton } from '../components/LoadingSkeleton'
 import type { Project } from '../data/types'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from '../components/ui/Button'
 import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
 import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
@@ -387,15 +388,10 @@ export default function Projects() {
       actions={
         <>
         <AllProjectsSwitch />
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          className="tk-btn tk-sm new-project-btn"
-          style={{ color: 'var(--job-accent)', fontWeight: 600 }}
-        >
+        <Button variant="primary" type="button" onClick={() => setShowCreate(true)} className="new-project-btn">
           <Plus {...ICON_PROPS} size={14} />
           New Project
-        </button>
+        </Button>
         </>
       }
       views={[

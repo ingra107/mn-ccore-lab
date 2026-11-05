@@ -26,7 +26,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
-import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
+import NeedsAttentionDashboard, { AttentionLine, type AttentionFilter } from '../../components/NeedsAttentionDashboard'
 import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
 import type { SleekSort } from '../../components/table/SleekRows'
 import { ManuscriptsList, type ManuscriptRow } from './ManuscriptsList'
@@ -43,6 +43,7 @@ import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
 import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Button } from '../../components/ui/Button'
 
 // A manuscript row is a project whose HOME product (the live home, else its
 // only product) is a manuscript at stage writing or later (S4, Nick
@@ -397,14 +398,10 @@ export default function ManuscriptsPage() {
       <DataPage
         title="Manuscripts"
         actions={
-          <button
-            onClick={() => setShowCreate(true)}
-            className="tk-btn tk-sm new-project-btn"
-            style={{ color: 'var(--job-accent)', fontWeight: 600 }}
-          >
+          <Button variant="primary" onClick={() => setShowCreate(true)} className="new-project-btn">
             <Plus {...ICON_PROPS} size={14} />
             New Manuscript
-          </button>
+          </Button>
         }
         views={kindTab !== 'manuscript' ? undefined : [
           { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
@@ -445,7 +442,6 @@ export default function ManuscriptsPage() {
         controlsCount={kindTab !== 'manuscript' ? kindRows.length : view === 'trophy' ? manuscripts.length - activeCount : manuscripts.length}
         controlsCountLabel={kindTab === 'all' ? 'products' : kindTab !== 'manuscript' ? kindLabel.toLowerCase() : view === 'trophy' ? 'published' : 'manuscripts'}
         railLabel="Manuscripts side panel"
-        railFirst
         rail={!isLoading && kindTab === 'manuscript' && view === 'list' ? (
           <>
             {/* T-29: Needs your attention. M-12 (D25): Active submissions. */}
@@ -472,6 +468,8 @@ export default function ManuscriptsPage() {
             {!isLoading && kindTab === 'manuscript' && view !== 'list' && (
               <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
             )}
+            {/* Stacked, the rail follows the list (Nick, M15), so one line says when it holds something. */}
+            {!isLoading && kindTab === 'manuscript' && view === 'list' && <AttentionLine />}
             {productsFailed && (
               <div role="alert" data-testid="manuscripts-products-error">
                 <QueryErrorNote label="product stages, which list the manuscripts" onRetry={() => { void refetchProducts() }} />
@@ -653,12 +651,6 @@ export default function ManuscriptsPage() {
         prefill={{ stage: STAGES[0] }}
         onCreate={(input) => createProject.mutate(input)}
       />
-
-      <style>{`
-        .new-project-btn:hover {
-          background: color-mix(in srgb, var(--job-accent) 6%, transparent) !important;
-        }
-      `}</style>
     </>
   )
 }
