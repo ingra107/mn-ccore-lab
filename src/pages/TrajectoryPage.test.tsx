@@ -4,6 +4,10 @@
 //   G9-3/G11-2 the timeline shows 50 entries, the rest one click away
 //   G9-5       no dead "Link ORCID" link in the empty state
 //   G11-8      a visitor who is not the member or the PI sees papers only
+// Cold audit 2, 2026-11-05:
+//   G09/imp 12 the export prints every row, and a header on both tabs
+//   G19        a stage chip has a valid tint; a milestone date is formatted
+//   G28        the page sits in the shared band; an unknown member stays in the portal
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
@@ -18,6 +22,8 @@ const SLUG = 'dan-shyu'
 let mounted: { host: HTMLElement; root: Root }[] = []
 let publications: { id: string; title: string; journal: string; year: number; doi: string | null; status: string }[] = []
 let contributionTasks: { id: string; title: string; completed_at: string }[] = []
+let milestones: { id: string; title: string; project_title: string; due_date: string; status: string }[] = []
+let projects: { id: string; slug: string; title: string; category: string; home_kind: string | null; home_stage: string | null; stage_label: string | null }[] = []
 
 const asUser = (slug: string | null, isPi = false): AuthUser => ({
   email: slug ? `${slug}@umn.edu` : '', slug: slug ?? '', isAuthenticated: Boolean(slug),
@@ -33,11 +39,13 @@ beforeEach(() => {
     { id: 'p3', title: 'Third paper', journal: 'JAMA', year: 2023, doi: null, status: 'Published' },
   ]
   contributionTasks = []
+  milestones = []
+  projects = []
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input)
     if (url === `/api/team/${SLUG}/trajectory`) {
       return json({ data: {
-        publications, taskStats: [], projects: [], milestones: [], projectStages: [],
+        publications, taskStats: [], projects, milestones, projectStages: [],
         taskMetrics: { total: 0, completed: 0, overdue: 0, avg_days: null },
       } })
     }
@@ -59,7 +67,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function mount(user: AuthUser): Promise<HTMLElement> {
+async function mount(user: AuthUser, path = `/team/${SLUG}/trajectory`): Promise<HTMLElement> {
   const host = document.createElement('div')
   host.style.width = '390px'
   document.body.appendChild(host)
@@ -68,9 +76,12 @@ async function mount(user: AuthUser): Promise<HTMLElement> {
     root.render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <AuthContext.Provider value={{ user, isAuthenticated: user.isAuthenticated, isLoading: false }}>
-          <MemoryRouter initialEntries={[`/team/${SLUG}/trajectory`]}>
+          <MemoryRouter initialEntries={[path]}>
             <Routes>
               <Route path="/team/:slug/trajectory" element={<TrajectoryPage />} />
+              <Route path="/portal/team/:slug/trajectory" element={<TrajectoryPage />} />
+              <Route path="/portal/team" element={<div>portal team page</div>} />
+              <Route path="/team" element={<div>public team page</div>} />
               <Route path="*" element={<div>elsewhere</div>} />
             </Routes>
           </MemoryRouter>
@@ -145,5 +156,59 @@ describe('TrajectoryPage', () => {
     expect(entries()).toBe(121)
     expect(timeline.textContent).toContain('A paper this year')
     expect(timeline.textContent).toContain('2026')
+  })
+
+  it('printing shows every row of a capped list and no Show more; afterprint folds it back', async () => {
+    contributionTasks = Array.from({ length: 120 }, (_, i) => ({
+      id: `t${i}`, title: `Task ${i}`, completed_at: `2026-09-${String((i % 28) + 1).padStart(2, '0')} 12:00:00`,
+    }))
+    const h = await mount(asUser(SLUG))
+    await act(async () => { button(h, /Contributions/)!.click() })
+    await expect.poll(() => h.querySelector('#contribution-timeline'), { timeout: 5000 }).not.toBeNull()
+    const timeline = h.querySelector('#contribution-timeline')!
+    await expect.poll(() => timeline.querySelectorAll('p').length).toBe(50)
+    act(() => { window.dispatchEvent(new Event('beforeprint')) })
+    expect(timeline.querySelectorAll('p').length).toBe(121)
+    expect(timeline.textContent).not.toMatch(/Show \d+ more|Show fewer/)
+    act(() => { window.dispatchEvent(new Event('afterprint')) })
+    expect(timeline.querySelectorAll('p').length).toBe(50)
+  })
+
+  it('printing the Trajectory tab shows the other capped lists in full, each row visible, under a header', async () => {
+    projects = Array.from({ length: 20 }, (_, i) => ({
+      id: `p${i}`, slug: `p-${i}`, title: `Project ${i}`, category: 'CLIF', home_kind: null, home_stage: null, stage_label: null,
+    }))
+    const h = await mount(asUser(SLUG))
+    const header = h.querySelector('.trajectory-print-header')!
+    expect(header.textContent).toContain('Development Trajectory')
+    expect(header.textContent).toContain('Dan')
+    const list = () => [...h.querySelectorAll('#active-projects a')] as HTMLElement[]
+    await expect.poll(() => list().length).toBe(12)
+    act(() => { window.dispatchEvent(new Event('beforeprint')) })
+    expect(list().length).toBe(20)
+    // A row printed mid-animation must not be invisible (Rule 44): nothing here starts at opacity 0.
+    expect(list().every((a) => getComputedStyle(a.parentElement!).opacity === '1')).toBe(true)
+  })
+
+  it('a stage chip carries a valid tint, and a milestone date reads as a date', async () => {
+    projects = [{ id: 'p1', slug: 'p-1', title: 'A project', category: 'CLIF', home_kind: 'manuscript', home_stage: 'writing', stage_label: 'Writing' }]
+    milestones = [{ id: 'ms1', title: 'A milestone', project_title: 'A project', due_date: '2026-11-30', status: 'pending' }]
+    const h = await mount(asUser(SLUG))
+    await expect.poll(() => h.querySelector('#active-projects a')).not.toBeNull()
+    const chip = [...h.querySelectorAll<HTMLElement>('#active-projects span')].find((s) => s.style.color)!
+    expect(chip.getAttribute('style')).toMatch(/background:\s*color-mix\(/)
+    const ms = h.querySelector('#milestones')!
+    expect(ms.textContent).toContain('Nov 30')
+    expect(ms.textContent).not.toContain('2026-11-30')
+  })
+
+  it('sits in the shared content band', async () => {
+    const h = await mount(asUser(SLUG))
+    expect(h.querySelector('.content-container')).not.toBeNull()
+  })
+
+  it('an unknown member under /portal stays in the portal', async () => {
+    const h = await mount(asUser(SLUG), '/portal/team/nobody-here/trajectory')
+    await expect.poll(() => h.textContent).toBe('portal team page')
   })
 })

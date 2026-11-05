@@ -22,3 +22,19 @@ export function meetingStatus(m: {
   const hasDecisions = Array.isArray(d) ? d.length > 0 : !!d && d.trim() !== '' && d.trim() !== '[]'
   return hasDecisions ? 'completed' : 'upcoming'
 }
+
+/**
+ * How far off a meeting is, in days. A meeting row has a date and no time, so
+ * this never names an hour (it used to assume 3 pm for every meeting). Null once
+ * the day has passed.
+ */
+export function meetingCountdownLabel(date: string, today: string = localDateKey()): string | null {
+  const dayNumber = (d: string) => {
+    const [y, m, day] = d.slice(0, 10).split('-').map(Number)
+    return Date.UTC(y, m - 1, day) / 86400000
+  }
+  const days = dayNumber(date) - dayNumber(today)
+  if (days < 0) return null
+  if (days === 0) return 'Today'
+  return days === 1 ? 'Tomorrow' : `In ${days} days`
+}

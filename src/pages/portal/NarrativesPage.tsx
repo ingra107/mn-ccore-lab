@@ -7,8 +7,7 @@ import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
-import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
-import { PATHS } from '../../constants/paths'
+import { PATHS, PUBLIC_PATHS } from '../../constants/paths'
 import { stageColor } from '../../lib/stageNormalize'
 import { stageCountLabel } from '../../lib/projectStage'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -33,7 +32,6 @@ function rungLabel(r: { kind_label: string; stage_label: string }): string {
 export default function NarrativesPage() {
   usePageMeta('Research Narratives · MN-CCORE', 'Auto-detected research arcs across the lab.')
   const { data: narratives = [], isLoading, isError, refetch } = useNarratives()
-  const [focusedIndex, setFocusedIndex] = useState(-1)
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredNarratives = useMemo(() => {
@@ -45,8 +43,6 @@ export default function NarrativesPage() {
       arc.sharedTopics.some((t: { topic: string }) => t.topic.toLowerCase().includes(q))
     )
   }, [narratives, searchTerm])
-
-  useListKeyboardNav({ itemCount: filteredNarratives.length, focusedIndex, setFocusedIndex })
 
   return (
     <PageContainer>
@@ -188,7 +184,15 @@ export default function NarrativesPage() {
                     </span>
                   </div>
                   {arc.relatedPubs.map((p) => (
-                    <Link key={p.id} to={`/publications/${p.id}`} className="block py-1" style={{ textDecoration: 'none' }}>
+                    <Link
+                      key={p.id}
+                      to={PUBLIC_PATHS.publication(p.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Opens on the public site"
+                      className="block py-1"
+                      style={{ textDecoration: 'none' }}
+                    >
                       <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                         {p.title}
                       </span>
