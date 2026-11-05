@@ -342,9 +342,11 @@ export function parseMentions(text: string): string[] {
  *      check). An unknown slug returns an error (caller 400s).
  *   3. Cross-identity impersonation (override ≠ caller's own slug) is allowed
  *      ONLY when `allowImpersonation` is true — i.e. the request is a PI or the
- *      API-key/service path. EXCEPTION: `claude-ai` (Hermes) is always allowed,
- *      because the AI listener posts answers/comments as claude-ai via the
- *      service key and that identity has no team_members row.
+ *      API-key/service path. `claude-ai` (Hermes) follows the same rule; it only
+ *      skips the directory check, because that identity has no team_members row.
+ *      The listener acts as claude-ai through the service key. (R03: it used to
+ *      be allowed for every caller, which let any member sign as Hermes and pass
+ *      an ownership check on whatever Hermes created.)
  *
  * Returns { slug } on success or { error } on a rejected override. Async
  * because it validates the override against team_members.
@@ -359,9 +361,11 @@ export async function resolveActor(
   const raw = typeof override === 'string' ? override.trim() : '';
   if (!raw) return { slug: callerSlug };
 
-  // claude-ai (Hermes) is always allowed and bypasses the team_members check —
-  // it's a synthetic agent identity, not a directory row.
-  if (raw === 'claude-ai') return { slug: 'claude-ai' };
+  // claude-ai (Hermes) bypasses the team_members check, since it is a synthetic
+  // agent identity and not a directory row. It does not bypass the authority check.
+  if (raw === 'claude-ai') {
+    return opts.allowImpersonation ? { slug: 'claude-ai' } : { error: 'Not authorized to act as "claude-ai".' };
+  }
 
   // Canonicalize email-looking overrides to a slug before validating.
   const candidate = raw.includes('@') ? await resolveSlug(env, raw) : raw;
