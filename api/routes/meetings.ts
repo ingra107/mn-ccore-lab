@@ -13,6 +13,7 @@ import { isSiteAdmin, personViewer, SITE_ADMIN_SLUG, type Viewer } from '../lib/
 import { meetingArms } from '../lib/table-scope';
 import { prepActivityWhere } from '../lib/activity-feed-types';
 import { NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, notApprovalSql } from '../../shared/taskKinds';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
@@ -141,11 +142,17 @@ export async function handleGetMeeting(id: string, env: Env, viewer?: Viewer): P
   // endpoint (tasks.ts handleGetTasks `deletedFilter`); `IS NULL` (not the
   // `OR = ''` variant at :321) is the app-wide form.
   const sourceId = (meeting as { source_id?: string | null }).source_id ?? null;
-  const [actionItemsRaw, agendaItems] = await Promise.all([
+  // logged_decisions: what "Log decision" on this page wrote (hub_decisions).
+  // meetings.decisions is the PB debrief's JSON, a different list. env.DB is the
+  // viewer's handle, so the table's own rule applies; `IN (?, ?)` as for the tasks.
+  const [actionItemsRaw, agendaItems, loggedDecisions] = await Promise.all([
     env.DB.prepare(
       `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} ORDER BY t.created_at`
     ).bind(id, sourceId ?? id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
+    env.DB.prepare(
+      'SELECT id, title, decided_by, outcome, outcome_status, created_at FROM hub_decisions WHERE meeting_id IN (?, ?) ORDER BY created_at, id'
+    ).bind(id, sourceId ?? id).all<{ title: string }>(),
   ]);
   const actionItems = { ...actionItemsRaw, results: (actionItemsRaw.results ?? []).map(safeTaskRow) };
 
@@ -154,6 +161,7 @@ export async function handleGetMeeting(id: string, env: Env, viewer?: Viewer): P
       ...meeting,
       action_items: actionItems.results,
       agenda_items: agendaItems.results,
+      logged_decisions: filterFixtures(loggedDecisions.results ?? [], 'title'),
       // Who may flip the audience and toggle project access: decided here,
       // not by the browser (the handlers below check it again).
       can_manage_access: viewer ? canManageMeetingAccess(viewer, meeting.owner_slug as string | null, meeting.title as string | null) : false,
