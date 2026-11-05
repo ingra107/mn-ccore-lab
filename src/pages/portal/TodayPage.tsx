@@ -225,8 +225,9 @@ export default function TodayPage() {
   const allTaskIds = useMemo(() => tasks.map((t) => t.id), [tasks])
   // Workstream B (schema v75): the plan is now SYNCED task columns; useTodayState
   // derives planned from these rows (planned_for/plan_slot/plan_rank) and
-  // PATCHes the task on plan/promote/unplan. Pass the open-task rows (a planned
-  // task is never done, so the open list is the right derivation source).
+  // PATCHes the task on plan/promote/unplan. Pass the open-task rows: a finished
+  // task keeps its plan columns and shows in the Plan section's Done, but it is not
+  // planned work, so the open list is the right derivation source.
   const state = useTodayState(tasks, completedTodayIds)
 
   // Local done flags that are genuine completions for the "Completed today"

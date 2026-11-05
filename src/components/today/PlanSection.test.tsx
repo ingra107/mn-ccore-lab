@@ -7,6 +7,7 @@
 // react-dom directly like QuestionsCard.test.tsx. fetch is stubbed, so the
 // test reads the exact request body the Worker would receive.
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
+import { useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { DndContext } from '@dnd-kit/core'
@@ -345,6 +346,55 @@ describe('The Plan section cards', () => {
     const host = await mount(section(currentWeekPlan([answer], DAY), [task('task_b')]))
     await click(host.querySelector('[data-testid="pick-start"]'))
     await until(() => calls.some((c) => c.url === '/api/tasks/task_plan'), 'the flip POST')
+  })
+
+  const keptStarted = (over: Partial<TaskRow> = {}) => row({ question_answer_json: JSON.stringify({
+    v: 1, choice: 'start', via: 'hub', at: '2026-10-26T14:00:00Z', kept: ['task_b'],
+    picks: [{ task_id: 'task_b', option_key: 'b1', text: null, start: true }],
+  }), ...over })
+  const tags = (h: ParentNode) => [...h.querySelectorAll('.tk-tag')].map((t) => t.textContent)
+
+  it('a kept started pick with no live packet claims nothing: no Preparing, no Prep', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(section(currentWeekPlan([keptStarted()], DAY), [task('task_b')]))
+    expect(cards(host)).toHaveLength(1)
+    expect(tags(host)).not.toContain('Preparing')
+    expect(host.querySelector('[data-testid="pick-start"]')).toBeNull()
+  })
+
+  it('a kept started pick with a live packet still shows it', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(section(currentWeekPlan([keptStarted()], DAY), [task('task_b', { packet_state: 'ready' })]))
+    expect(host.querySelector('[data-testid="pick-packet-tag"]')?.textContent).toBe('Ready')
+  })
+
+  it('a started pick that was not kept still reads Preparing', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const answer = answered([{ task_id: 'task_b', option_key: 'b1', text: null, start: true }])
+    const host = await mount(section(currentWeekPlan([answer], DAY), [task('task_b')]))
+    expect(tags(host)).toContain('Preparing')
+  })
+
+  it('a kept saved pick flipped by Prep reads Preparing: the press is a real start', async () => {
+    stubFetch({ used: 0, cap: 3 })
+    const saved = row({ question_answer_json: JSON.stringify({
+      v: 1, choice: 'save', via: 'hub', at: '2026-10-26T14:00:00Z', kept: ['task_b'],
+      picks: [{ task_id: 'task_b', option_key: 'b1', text: null, start: false }],
+    }) })
+    // The page re-reads the plan after the flip, and this mount of the section lives on.
+    function Refetches() {
+      const [answer, setAnswer] = useState(saved)
+      return (
+        <>
+          <button type="button" data-testid="refetch" onClick={() => setAnswer(keptStarted())}>refetch</button>
+          {section(currentWeekPlan([answer], DAY), [task('task_b')])}
+        </>
+      )
+    }
+    const host = await mount(<Refetches />)
+    await click(host.querySelector('[data-testid="pick-start"]'))
+    await click(host.querySelector('[data-testid="refetch"]'))
+    expect(tags(host)).toContain('Preparing')
   })
 
   it('a refused Prep says the daily cap, in the section', async () => {

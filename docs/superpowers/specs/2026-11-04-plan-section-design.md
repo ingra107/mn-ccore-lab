@@ -114,7 +114,7 @@ Nick chose this over adding them to the approved list. It is the one named excep
 - Monday with last week's plan: empty section, tasks back in their sections.
 - Sunday evening with next week's plan answered: the section shows the plan for the week the existing window picks, and the nudge reads as it does now.
 - A new round: old answers don't reappear; unsent answers survive a press of Plan.
-- A card left alone keeps its pick and step, a started one keeps `start:true` with no new prep request; an all-Keep Send publishes nothing new and says so.
+- A card left alone keeps its pick and step, a started one keeps `start:true` with no new prep request; an all-Keep Send publishes nothing new and says so, unless the current plan holds a finished pick: then it publishes, so the Done area clears (Nick, 2026-11-05: *"whenever I replan that section all the done things go"*).
 - A finished pick stays in Done over a day with no re-plan; a finished non-pick leaves when its day ends.
 - A half-applied round: Plan finishes it before starting a new one.
 - A one-option candidate passes both validators; a zero-option one is refused.
@@ -132,7 +132,7 @@ Ship when tests pass, no waiting schedule. The Hub ships first: PB's one-option 
 - Cards order: Today first, then picks; the section never folds.
 - A kept pick reads "In your plan" instead of a marked button.
 - A week's Done area stays out of Completed today until the next plan.
-- An all-Keep Send publishes no new plan.
+- An all-Keep Send publishes no new plan, unless the current plan holds a finished pick (Nick's ruling, 2026-11-05).
 - Once a minute, not every 15 seconds.
 - Link fixes cover labels only, because that's the example given.
 - The fix is listed as done on the approval list too.

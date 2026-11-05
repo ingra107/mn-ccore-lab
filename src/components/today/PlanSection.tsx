@@ -67,6 +67,10 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
   // Session-only collapse: starts open on every load, like the sections below.
   const [open, setOpen] = useState(true)
   const [starting, setStarting] = useState<string | null>(null)
+  // A kept pick's flip is a real start, but its stored answer reads the same as a
+  // carried one (AcceptedWeekPlan.kept). So only the press that made it can say so,
+  // and after a reload that pick shows no tag until its packet does.
+  const [flipped, setFlipped] = useState<ReadonlySet<string>>(new Set())
   const [err, setErr] = useState<string | null>(null)
   const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
   const planCtl = usePlanControl()
@@ -80,7 +84,7 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
     setErr(null)
     const r = await postWeekPlanAnswer(plan.task.id, answer)
     setStarting(null)
-    if (r.ok) { qc.invalidateQueries({ queryKey: ['tasks'] }); return }
+    if (r.ok) { setFlipped((s) => new Set(s).add(taskId)); qc.invalidateQueries({ queryKey: ['tasks'] }); return }
     if (r.code === 'daily_cap' && 'used' in r) setErr(`Today's ${r.cap} prepared first steps are already used or queued. Try tomorrow.`)
     else setErr(`Not prepped: ${r.error}`)
   }
@@ -99,7 +103,7 @@ export function PlanSection({ plan, model, state, projectsByPid, stepsByParent, 
     const pick = picks.get(t.id)
     const done = isTaskDone(t) || t.completed === 1
     // A done card shows no step or Prep (the card hides that line); no tag either.
-    const tag = pick && where !== 'done' ? pickTag(t, pick.start) : null
+    const tag = pick && where !== 'done' ? pickTag(t, pick.start, !!plan?.kept.includes(t.id) && !flipped.has(t.id)) : null
     const prepBtn = pick && !pick.start ? (
       <button
         type="button"

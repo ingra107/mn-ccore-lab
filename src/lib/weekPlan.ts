@@ -28,7 +28,9 @@ export interface AcceptedWeekPlan {
   withdrawn: string[]
   /** This plan's picks carried from the plan before (2026-11-04): their first
    *  answer made no request and no note, whatever their start reads. A later Prep
-   *  on a kept saved pick is a real start, so `start` does not say which is which. */
+   *  on a kept saved pick is a real start, so `start` does not say which is which,
+   *  and `kept` is frozen across that flip, so kept + start cannot say it either:
+   *  the stored answer can't tell a carried start from a real one (pickTag's `carried`). */
   kept: string[]
 }
 
@@ -158,12 +160,14 @@ export async function postWeekPlanAnswer(taskId: string, answer: Record<string, 
   return { ok: false, code: body.code ?? null, error: body.error ?? res.statusText }
 }
 
-/** The tag a pick shows for its packet. */
-export function pickTag(task: TaskRow | undefined, started: boolean): { label: string; cls: string } | null {
+/** The tag a pick shows for its packet. `carried`: a start this plan only kept, which
+ *  queued nothing, so with no live packet there is no background work to claim. */
+export function pickTag(task: TaskRow | undefined, started: boolean, carried = false): { label: string; cls: string } | null {
   if (task && isTaskDone(task)) return { label: 'Done', cls: 'tk-n' }
   if (task?.packet_state === 'ready') return { label: 'Ready', cls: 'tk-ac' }
   if (task?.packet_state === 'changed') return { label: 'Changed', cls: 'tk-stale' }
   if (task?.packet_state === 'unverified') return { label: 'Check it', cls: 'tk-stale' }
+  if (started && carried) return null
   return started ? { label: 'Preparing', cls: 'tk-n' } : { label: 'Saved', cls: 'tk-n' }
 }
 
