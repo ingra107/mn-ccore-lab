@@ -3,7 +3,9 @@
 // Look (Today reskin, 2026-10-09): a panel; two small sub-heads, overdue days
 // in maroon (the one color that means "late"), stalled days in orange (going
 // stale is orange's one job, principle 21).
-// A stalled project is a real link to its page and shows by short name.
+// A stalled project is a real link to its page and shows by short name; an
+// overdue task is a real link to the task (fable audit F17, 2026-11-05: the
+// rows sat side by side, one dead text, one a link).
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Attention).
 
@@ -45,7 +47,9 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             return (
               <div key={t.id} className="tk-rli">
                 {/* C13 TaskTitle — surfaces [Carried forward] chip */}
-                <TaskTitle title={taskShortLabel(t)} className="tk-t" style={{ display: 'block' }} />
+                <Link to={`${PATHS.myTasks}?open=${t.id}`} className="tk-t" style={{ color: 'inherit', textDecoration: 'none' }}>
+                  <TaskTitle title={taskShortLabel(t)} />
+                </Link>
                 <span className="tk-d tk-o">{Number.isFinite(days) ? `${days}d` : '—'}</span>
               </div>
             )
