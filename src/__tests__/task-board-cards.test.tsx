@@ -156,8 +156,8 @@ describe('Tasks Board cards', () => {
     const host = await board()
     const urgent = card(host, 'b')
     expect(urgent.classList.contains('tk-urg')).toBe(true)
-    // The title row's own Urgent tag is hidden on the board; the context line carries it.
-    expect(getComputedStyle(urgent.querySelector<HTMLElement>('.tk-ct .tk-urgtag')!).display).toBe('none')
+    // The title row carries no Urgent tag; the context line's priority control says it.
+    expect(urgent.querySelector('.tk-ct .tk-urgtag')).toBeNull()
     const prio = urgent.querySelector<HTMLButtonElement>('.tk-ctx button.tk-prio')!
     expect(prio.textContent).toBe('Urgent')
     prio.click()

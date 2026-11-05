@@ -8,9 +8,10 @@
 // column is a fixed 50px: the assignee's face on top, folder + Work on pinned
 // under it, so face / folder / Work-on form a triangle. No expand caret: the
 // body click still expands. Priority is gray except
-// Urgent, which gets the one orange rail and an "Urgent" tag (HIGH no longer
-// paints a rail: a second color for a second priority is the equal-weight
-// color noise the reskin removes). No subtask steps and no invented content.
+// Urgent, which gets the one orange rail and says so to screen readers (Rule 76:
+// one signal, one channel; HIGH no longer paints a rail: a second color for a
+// second priority is the equal-weight color noise the reskin removes). No
+// subtask steps and no invented content.
 //
 // The contract is the standard row's: square = COMPLETE, body click = expand,
 // grip = drag-to-plan, pin = plan for today, planned pill = unplan. Styles:
@@ -307,7 +308,6 @@ export function CardRow(props: CardTaskRowProps) {
             {titleNode}
             {titleTag}
             <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} packetTag={packetTag} />
-            {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
             {hasTail && (
               <span className="tk-tail">
                 {planBtn ?? <span className="tk-tail-gap" style={{ width: TAIL_PLAN_W }} />}

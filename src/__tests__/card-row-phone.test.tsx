@@ -96,6 +96,19 @@ describe('task card action slots', () => {
   })
 })
 
+describe('urgency on a card', () => {
+  it('is the rail plus screen-reader text, with no visible tag', async () => {
+    await page.viewport(1440, 900)
+    const host = await mount(
+      wrap(<CardRow {...props} task={task('a', 'Urgent one', { priority: 'urgent' })} project={null} />),
+      { ready: (h) => h.querySelector('.tk-tch'), label: 'card' },
+    )
+    expect(host.querySelector('.tk-tc')!.classList.contains('tk-urg')).toBe(true)
+    expect(host.querySelector('.tk-urgtag')).toBeNull()
+    expect(host.querySelector('.sr-only')!.textContent).toContain('Urgent')
+  })
+})
+
 describe('select beside complete', () => {
   it('the select control is round, the complete box stays the only square', async () => {
     await page.viewport(390, 844)
