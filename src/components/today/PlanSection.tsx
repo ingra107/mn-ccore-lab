@@ -64,9 +64,11 @@ interface PlanSectionProps {
   /** The gold Plan your week row is on screen with its own button: this section does
    *  not offer a second one. */
   planRowAbove?: boolean
+  /** The read of others' tasks has not answered: a pick can sit with someone else, so the count would be short. */
+  countPending?: boolean
 }
 
-export function PlanSection({ plan, weekPlanned = !!plan, model, state, projectsByPid, stepsByParent, viewerSlug, planRowAbove = false, loading = false }: PlanSectionProps) {
+export function PlanSection({ plan, weekPlanned = !!plan, model, state, projectsByPid, stepsByParent, viewerSlug, planRowAbove = false, loading = false, countPending = false }: PlanSectionProps) {
   const qc = useQueryClient()
   // Per-surface expand state: a task on the timeline too does not open here.
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -167,7 +169,8 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Plan</h3>
-          {total > 0 && <span className="tk-cnt">{model.done.length} of {total} done</span>}
+          {(loading || countPending) && <span className="tk-cnt">—</span>}
+          {!loading && !countPending && total > 0 && <span className="tk-cnt">{model.done.length} of {total} done</span>}
         </div>
         {plan && <span className="tk-hintx">{weekRangeLabel(plan.spec.week_start)}</span>}
         {/* Not while the task read is out: the word would claim the week has no plan. */}

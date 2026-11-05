@@ -22,7 +22,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // expandedId/onExpand no longer come from TodayPage: TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlanSection (Item 2 fix, 2026-06-22).
-export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug }: {
+export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug, loading = false }: {
   skey: SectionKey
   tasks: TaskRowData[]
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
@@ -30,6 +30,8 @@ export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, vi
   stepsByParent?: Map<string, TaskRowData[]>
   /** Whose Today this is: the New test (assigned to you, never opened) reads it. */
   viewerSlug: string
+  /** A read that feeds this section has not answered: its count would be partial, so a dash. */
+  loading?: boolean
 }) {
   const label = SECTION_LABEL[skey]
   const isDoneRow = useCallback((t: TaskRowData) => !!state.done[t.id] || isTaskDone(t), [state.done])
@@ -83,7 +85,9 @@ export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, vi
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>{label}</h3>
-          {others ? (
+          {others && loading ? (
+            <span className="tk-cnt" data-others-summary>—</span>
+          ) : others ? (
             <span className="tk-cnt" data-others-summary>
               {others.total}
               {others.urgent > 0 && ` · ${others.urgent} urgent`}

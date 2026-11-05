@@ -784,6 +784,7 @@ export default function TodayPage() {
           stepsByParent={stepsByParent}
           viewerSlug={userSlug}
           loading={tasksQuery.isPending}
+          countPending={othersQuery.isPending}
           planRowAbove={!needsYouFolded && planRowWeek !== null}
         />
 
@@ -863,6 +864,7 @@ export default function TodayPage() {
               state={state}
               stepsByParent={stepsByParent}
               viewerSlug={userSlug}
+              loading={skey === 'others' && othersQuery.isPending}
             />
           ))
         )}
@@ -875,7 +877,7 @@ export default function TodayPage() {
             <div className="tk-ctog">
               <CollapseChevron open={completedOpen} />
               <h3>Completed today</h3>
-              <span className="tk-cnt">{completedListed.length + localCompletedListed.length}</span>
+              <span className="tk-cnt">{tasksQuery.isPending ? '—' : completedListed.length + localCompletedListed.length}</span>
             </div>
           </div>
           {completedOpen && (
@@ -904,9 +906,9 @@ export default function TodayPage() {
       <aside className="b2-rail">
         {/* Nick only (the site admin): what PB changed overnight, with Undo (receipts v154). */}
         <OvernightCard isNick={!!user?.canShowAllProjects} />
-        <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
+        <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} overdueLoading={tasksQuery.isPending} stalledLoading={projectsQuery.isPending} />
         {/* Pick P3: Silence Map + Backward Shadows, combined. */}
-        <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} />
+        <SlippingCard meetings={meetingsQuery.data ?? []} tasks={tasks} viewerSlug={userSlug} tasksPending={tasksQuery.isPending} meetingsPending={meetingsQuery.isPending} />
         {/* Active projects with no open task; hides itself at zero. */}
         <NoNextStepCard />
         {/* Projects whose ball is with someone else (#168); hides itself at zero. */}

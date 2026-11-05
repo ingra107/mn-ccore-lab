@@ -77,13 +77,17 @@ const shortDay = (civil: string) => {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), nowMin: nowProp }: {
+export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), nowMin: nowProp, tasksPending = false, meetingsPending = false }: {
   meetings: MeetingRow[]
   tasks: TaskRow[]
   viewerSlug: string
   now?: Date
   /** Minutes since local midnight; absent = this card's own minute clock. */
   nowMin?: number
+  /** The task read has not answered: no waiting count, no "nothing due" line. */
+  tasksPending?: boolean
+  /** Same for the meetings read behind Going quiet. */
+  meetingsPending?: boolean
 }) {
   const ownClock = useNowMinutes()
   const nowMin = nowProp ?? ownClock
@@ -123,7 +127,8 @@ export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), no
   const shownWaits = waits.slice(0, Math.max(0, 5 - shownSeries.length))
   const moreQuiet = quietRows - shownSeries.length - shownWaits.length
   const waitingCount = tasks.filter((t) => t.waiting_on?.trim()).length
-  if (quietRows === 0 && shadows.length === 0) return null
+  const pending = tasksPending || meetingsPending
+  if (!pending && quietRows === 0 && shadows.length === 0) return null
 
   return (
     <section className="tk-panel" data-pick="slipping" style={{ marginTop: 14 }}>
@@ -131,15 +136,15 @@ export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), no
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>What is slipping</h3>
-          <span className="tk-cnt">{shownSeries.length + shownWaits.length + shadows.length}</span>
+          <span className="tk-cnt">{pending ? '—' : shownSeries.length + shownWaits.length + shadows.length}</span>
         </div>
       </div>
       {open && (
         <>
           <div className="tk-rsub" style={{ marginTop: 0 }}>
-            Going quiet <span>· checked {seriesCount} meeting series, {waitingCount} waiting {waitingCount === 1 ? 'task' : 'tasks'}</span>
+            Going quiet <span>{pending ? '· checking' : `· checked ${seriesCount} meeting series, ${waitingCount} waiting ${waitingCount === 1 ? 'task' : 'tasks'}`}</span>
           </div>
-          {quietRows === 0 && <div className="pk-s">Nothing has gone quiet.</div>}
+          {!pending && quietRows === 0 && <div className="pk-s">Nothing has gone quiet.</div>}
           {shownSeries.map((q) => {
             const row = mine.find((m) => m.title === q.title)
             const people = (row ? meetingCardFields(row).people ?? [] : []).filter((s) => s !== viewerSlug)
@@ -168,7 +173,7 @@ export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), no
           {moreQuiet > 0 && <div className="pk-s" data-testid="quiet-more">{moreQuiet} more quiet, not shown.</div>}
 
           <div className="tk-rsub">Deadlines casting back <span>· next 2 weeks</span></div>
-          {shadows.length === 0 && <div className="pk-s">No milestones, hard deadlines or deep work due in the next 2 weeks.</div>}
+          {!tasksPending && shadows.length === 0 && <div className="pk-s">No milestones, hard deadlines or deep work due in the next 2 weeks.</div>}
           {shadows.length > 0 && (
             <div className="pk-cal" style={{ ['--pk-days' as string]: days.length }} aria-label="Free calendar time before each deadline">
               <div />

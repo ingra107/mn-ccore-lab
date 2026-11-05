@@ -20,7 +20,14 @@ import type { TaskRow } from '../../../lib/api'
 import TaskTitle from '../../tasks/TaskTitle'
 import { taskShortLabel } from '../../../lib/displayNames'
 
-export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueTasks: TaskRow[]; stalledProjects: Array<{ name: string; days: number; slug?: string }> }) {
+export function NeedsAttentionCard({ overdueTasks, stalledProjects, overdueLoading = false, stalledLoading = false }: {
+  overdueTasks: TaskRow[]
+  stalledProjects: Array<{ name: string; days: number; slug?: string }>
+  /** The task read has not answered: no "None" and no count, which would claim the list is empty. */
+  overdueLoading?: boolean
+  /** Same for the projects read behind Stalled. */
+  stalledLoading?: boolean
+}) {
   // Session-only collapse — starts expanded on every load (no localStorage).
   const [open, setOpen] = useState(true)
   // TP-18: when more than 5 in either bucket, append a "+N more →" link
@@ -34,13 +41,14 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
         <div className="tk-ctog">
           <CollapseChevron open={open} />
           <h3>Needs attention</h3>
-          <span className="tk-cnt">{overdueTasks.length + stalledProjects.length}</span>
+          <span className="tk-cnt">{overdueLoading || stalledLoading ? '—' : overdueTasks.length + stalledProjects.length}</span>
         </div>
       </div>
       {open && (
         <>
           <div className="tk-rsub" style={{ marginTop: 0 }}>Overdue</div>
-          {overdueTasks.length === 0 && (
+          {overdueLoading && <div style={{ fontSize: 12, color: 'var(--sk-t3)' }}>—</div>}
+          {!overdueLoading && overdueTasks.length === 0 && (
             <div style={{ fontSize: 12, color: 'var(--sk-t3)' }}>None. Clean slate.</div>
           )}
           {overdueTasks.slice(0, 5).map((t) => {
@@ -62,7 +70,8 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
           )}
 
           <div className="tk-rsub">Stalled</div>
-          {stalledProjects.length === 0 && (
+          {stalledLoading && <div style={{ fontSize: 12, color: 'var(--sk-t3)' }}>—</div>}
+          {!stalledLoading && stalledProjects.length === 0 && (
             <div style={{ fontSize: 12, color: 'var(--sk-t3)' }}>Everything's moving.</div>
           )}
           {stalledProjects.slice(0, 5).map((s, i) => (
