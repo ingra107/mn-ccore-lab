@@ -522,3 +522,12 @@ export function kindsForManuscriptsTab(tab: string, kinds: readonly ProductKind[
   if (tab === 'all') return kinds.map((k) => k.kind).filter((k) => MANUSCRIPTS_PAGE_KINDS.includes(k))
   return MANUSCRIPTS_PAGE_KINDS.includes(tab) ? [tab] : []
 }
+
+/** The rungs of a manuscript ladder the Manuscripts page lists: Writing and on.
+ *  A move below Writing takes the row off this page, so it is the project page's
+ *  to make, where the row has somewhere to go. Only the manuscript ladder has
+ *  this rule: abstracts and talks keep their whole ladders (ProductKindList). */
+export function manuscriptPageLadder<S extends { stage: string; ordinal: number }>(ladder: readonly S[]): S[] {
+  const writing = ladder.find((s) => s.stage === 'writing')?.ordinal
+  return writing === undefined ? [...ladder] : ladder.filter((s) => s.ordinal >= writing)
+}

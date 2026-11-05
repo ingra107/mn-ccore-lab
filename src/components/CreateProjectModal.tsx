@@ -13,6 +13,8 @@ export interface CreateProjectPrefill {
   title?: string
   description?: string
   pi?: string
+  /** The rung the form starts on, for the default kind (New Manuscript: Writing). */
+  stage?: string
 }
 
 interface CreateProjectModalProps {
@@ -80,7 +82,7 @@ export default function CreateProjectModal({ open, onClose, prefill, onCreate }:
     setPi(prefill?.pi ?? user.slug)
     setCategory('MNCCORE')
     setKind(DEFAULT_KIND)
-    setStage('')
+    setStage(prefill?.stage ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 

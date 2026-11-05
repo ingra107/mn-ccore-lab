@@ -761,6 +761,7 @@ export default function Digest() {
 
   const { user } = useAuth()
   const userSlug = user?.slug ?? ''
+  const { showSuccess, showError } = useUndoToast()
 
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -887,6 +888,23 @@ export default function Digest() {
     // a bucket the server's order is untouched.
     return [...result].sort((a, b) => processRank(a.status) - processRank(b.status))
   }, [papers, searchQuery, forYouFilter, userSlug])
+
+  // Copy takes the view on screen when a filter narrows it, otherwise the whole
+  // reading list, every saved paper rather than one date's.
+  const narrowed = Boolean(topicFilter || forYouFilter || searchQuery.trim())
+  const copyPapers = narrowed ? filteredPapers : savedAll
+  const copyBibliography = () => {
+    const bib = copyPapers.map((p) => {
+      const authors = truncateAuthors(p.authors)
+      const year = p.pub_date ? p.pub_date.slice(0, 4) : ''
+      return `${authors}. ${p.title}. ${p.journal || ''}${year ? ` (${year})` : ''}${p.doi ? `. doi:${p.doi}` : ''}`
+    }).join('\n\n')
+    const n = copyPapers.length
+    navigator.clipboard.writeText(bib).then(
+      () => showSuccess(`Copied ${n} paper${n === 1 ? '' : 's'}`),
+      () => showError('Could not copy to the clipboard'),
+    )
+  }
 
   const isEmpty = dates.length === 0 && !isLoading
 
@@ -1044,22 +1062,14 @@ export default function Digest() {
               {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
             </span>
 
-            {/* Copy reading list: every saved paper, not one date's */}
-            {savedAll.length > 0 && (
+            {copyPapers.length > 0 && (
               <button
-                onClick={() => {
-                  const bib = savedAll.map(p => {
-                    const authors = truncateAuthors(p.authors)
-                    const year = p.pub_date ? p.pub_date.slice(0, 4) : ''
-                    return `${authors}. ${p.title}. ${p.journal || ''}${year ? ` (${year})` : ''}${p.doi ? `. doi:${p.doi}` : ''}`
-                  }).join('\n\n')
-                  navigator.clipboard.writeText(bib)
-                }}
+                onClick={copyBibliography}
                 className="tk-btn tk-sm"
-                title="Copy saved papers as bibliography"
+                title={narrowed ? 'Copy the papers on screen as bibliography' : 'Copy saved papers as bibliography'}
               >
                 <Copy {...ICON_PROPS} size={10} />
-                Copy reading list
+                {narrowed ? `Copy these ${copyPapers.length}` : 'Copy reading list'}
               </button>
             )}
           </div>
