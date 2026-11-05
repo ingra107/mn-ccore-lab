@@ -117,7 +117,9 @@ export default function GrantsPage() {
   return (
     <div className="content-container">
       <PageHeader title="Grants & Funding">
-        <TableControls
+        {/* The list's controls leave with the list: on the other tabs the pills
+            changed nothing on screen (fable audit F19). */}
+        {activeTab === 'grants' && <TableControls
           views={[
             { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
             { key: 'timeline', icon: <GanttChartSquare {...ICON_PROPS} size={14} />, label: 'Timeline' },
@@ -127,7 +129,7 @@ export default function GrantsPage() {
           filters={filterPills}
           count={shownCount}
           countLabel={shownCount === 1 ? 'grant' : 'grants'}
-        />
+        />}
       </PageHeader>
 
       {/* The headline numbers, then the section toggle (s79, Grants B: no rail). */}
