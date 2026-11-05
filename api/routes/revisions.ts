@@ -2,6 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { hiddenResource } from '../lib/hidden-resource';
+import { ctToday } from '../lib/ct-date';
 
 const VALID_REVISION_STATUSES = ['in_progress', 'submitted', 'accepted', 'rejected'];
 const VALID_COMMENT_STATUSES = ['pending', 'in_progress', 'done', 'wont_fix'];
@@ -302,7 +303,8 @@ export async function handleUpdateRevisionComment(id: string, request: Request, 
 // section. Each subgroup computes from existing tables — no schema changes.
 //
 //   1. Revisions overdue — manuscript_revisions.status='in_progress'
-//      AND response_due < NOW().
+//      AND response_due is before today in lab time (R11: a due date is a civil
+//      day, so it stays due through the end of that day in Chicago).
 //   2. Awaiting your review — reviewer_comments.assigned_to = actor
 //      AND status='pending' AND created_at older than `review_days` (default 7).
 //   3. Stale drafts — publications.status='In Preparation'
@@ -330,10 +332,10 @@ export async function handleAttentionManuscripts(
       LEFT JOIN reviewer_comments c ON c.revision_id = r.id
       WHERE r.status = 'in_progress'
         AND r.response_due IS NOT NULL
-        AND r.response_due < datetime('now')
+        AND date(r.response_due) < ?
       GROUP BY r.id
       ORDER BY r.response_due ASC
-    `).all(),
+    `).bind(ctToday()).all(),
     env.DB.prepare(`
       SELECT c.id, c.revision_id, c.reviewer_number, c.comment_text, c.created_at,
              r.project_id, r.round,
