@@ -33,7 +33,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import type Database from 'better-sqlite3';
-import type { Env } from '../helpers';
+import { _resetPiEmailsCacheForTests, type Env } from '../helpers';
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db';
 import { handleCreateAIRequest, handleGetAIRequests, handleUpdateAIResponse } from './ai-requests';
 
@@ -321,6 +321,37 @@ describe('handleGetAIRequests — landing_visibility (#119)', () => {
     const byId = Object.fromEntries(data.map((r) => [r.id, r.landing_visibility]));
 
     expect(byId).toEqual({ 'lv-a': 'author', 'lv-t': 'team', 'lv-n': null });
+  });
+});
+
+// ── R16: the usage rollup is requester-scoped, like the rows ────────────────────
+
+describe('handleGetAIRequests — tokens rollup', () => {
+  beforeEach(() => {
+    insertRow(db, 'team_members', { id: 'tm-bob', name: 'Bob', slug: 'bob', email: 'bob@umn.edu' });
+    db.prepare("UPDATE lab_settings SET value = ? WHERE key = 'pi_emails'").run('["ingra107@umn.edu"]');
+    _resetPiEmailsCacheForTests();
+    env = { ...env, TEST_MODE_KEY: 'test-key' } as unknown as Env;
+    const base = { source_type: 'task_comment', source_id: 'direct' };
+    aiRequest({ ...base, id: 'mine', requested_by: 'bob@umn.edu', input_tokens: 10, output_tokens: 1 });
+    aiRequest({ ...base, id: 'mine-slug', requested_by: 'bob', input_tokens: 5, output_tokens: 2 });
+    aiRequest({ ...base, id: 'theirs', requested_by: 'ingra107@umn.edu', input_tokens: 1000, output_tokens: 100 });
+  });
+  const seat = (headers: Record<string, string>) => {
+    const req = new Request('https://example.com/api/ai-requests', { headers });
+    return handleGetAIRequests(new URL(req.url), env, req).then((r) => r.json()) as Promise<{ data: { id: string }[]; tokens: unknown }>;
+  };
+
+  it("a member's totals count only their own requests", async () => {
+    const body = await seat({ 'X-Test-Mode-Key': 'test-key', 'X-Test-User': 'bob@umn.edu' });
+    expect(body.data.map((r) => r.id).sort()).toEqual(['mine', 'mine-slug']);
+    expect(body.tokens).toEqual({ input: 15, output: 3, tracked: 2 });
+  });
+
+  it('the PI and the PB key still read the lab-wide totals', async () => {
+    const lab = { input: 1015, output: 103, tracked: 3 };
+    expect((await seat({ 'X-Test-Mode-Key': 'test-key', 'X-Test-User': 'ingra107@umn.edu' })).tokens).toEqual(lab);
+    expect((await seat({ Authorization: `Bearer ${KEY}` })).tokens).toEqual(lab);
   });
 });
 

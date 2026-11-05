@@ -286,3 +286,52 @@ describe('handleGetUnseenActivity — private Hermes-answer arm (§9.5.1, PRIVAC
     expect(body.data[0].latest_at).toBe(answeredAt)
   })
 })
+
+// R09: a team-visible Hermes answer is written by UPDATE onto the placeholder, so
+// its created_at is the ASK's. The private arm above has handled that since v103;
+// the team arm did not.
+describe('handleGetUnseenActivity — team-visible Hermes answers', () => {
+  const root = (id: string, taskId: string) => entry({
+    id, entity_type: 'task', entity_id: taskId, parent_id: null, visibility: 'team', actor_slug: 'someone-else', body: '@hermes question', created_at: sqlTs(-3),
+  })
+  const reply = (id: string, taskId: string, parent: string, body: string, answeredAt: string | null) => entry({
+    id, entity_type: 'task', entity_id: taskId, parent_id: parent, visibility: 'team', actor_slug: 'claude-ai', body, created_at: sqlTs(-3), answered_at: answeredAt,
+  })
+
+  it('badges an answer that landed after the viewer looked at the thinking placeholder', async () => {
+    task('task-t', 'Team thread')
+    root('t-root', 'task-t')
+    const answeredAt = sqlTs(-1)
+    reply('t-reply', 'task-t', 't-root', 'The real answer.', answeredAt)
+    seen('task', 'task-t', 'nick-ingraham', -2)
+    const body = await unseen()
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({ entity_type: 'task', entity_id: 'task-t', new_count: 1, latest_at: answeredAt })
+  })
+
+  it('does not count a pending placeholder as new activity', async () => {
+    task('task-p', 'Pending thread')
+    root('p-root', 'task-p')
+    reply('p-reply', 'task-p', 'p-root', 'Thinking about this... (AI response pending)', null)
+    seen('task', 'task-p', 'nick-ingraham', -4)
+    const body = await unseen()
+    // The ask is new; the placeholder is not.
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({ entity_id: 'task-p', new_count: 1 })
+  })
+
+  it('stops badging once the viewer has seen the answer', async () => {
+    task('task-s', 'Seen thread')
+    root('s-root', 'task-s')
+    reply('s-reply', 'task-s', 's-root', 'Answered.', sqlTs(-2))
+    seen('task', 'task-s', 'nick-ingraham', -1)
+    expect((await unseen()).data).toHaveLength(0)
+  })
+
+  it('a person whose comment opens with the same words still counts', async () => {
+    task('task-h', 'Human thread')
+    entry({ id: 'h-1', entity_type: 'task', entity_id: 'task-h', parent_id: null, visibility: 'team', actor_slug: 'someone-else', body: 'Thinking about this more, I disagree.', created_at: sqlTs(-1) })
+    seen('task', 'task-h', 'nick-ingraham', -2)
+    expect((await unseen()).data[0]).toMatchObject({ entity_id: 'task-h', new_count: 1 })
+  })
+})

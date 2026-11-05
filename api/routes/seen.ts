@@ -105,7 +105,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
       env.DB.prepare(
         `SELECT es.entity_type, es.entity_id,
                 COUNT(*) AS new_count,
-                MAX(ae.created_at) AS latest_at,
+                MAX(COALESCE(ae.answered_at, ae.created_at)) AS latest_at,
                 MAX(es.last_seen_at) AS seen_at,
                 CASE WHEN es.entity_type = 'task'
                      THEN COALESCE(t.short_title, t.title)
@@ -117,7 +117,11 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
           AND ae.visibility = 'team'
           AND ae.hidden_at IS NULL
           AND ae.actor_slug != es.viewer_slug
-          AND ae.created_at > es.last_seen_at
+          -- R09: a Hermes answer is an UPDATE onto its placeholder, so created_at is
+          -- the ask's time. answered_at is when it landed; the placeholder itself
+          -- is not news. Scoped to Hermes: a person may open with the same words.
+          AND COALESCE(ae.answered_at, ae.created_at) > es.last_seen_at
+          AND NOT (ae.actor_slug = 'claude-ai' AND ae.body LIKE 'Thinking about this%')
          LEFT JOIN tasks t ON es.entity_type = 'task' AND t.id = es.entity_id
          LEFT JOIN projects p ON es.entity_type = 'project' AND p.id = es.entity_id
          WHERE es.viewer_slug = ?

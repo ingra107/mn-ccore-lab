@@ -40,6 +40,9 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
     ${LANDING_VISIBILITY_SQL} AS landing_visibility
     FROM ai_requests WHERE 1=1`;
   const params: string[] = [];
+  // R16: the usage rollup carries the same requester scope as the rows.
+  let tokensScope = '';
+  const tokensParams: string[] = [];
 
   // Scope to the caller unless they're PI/service. `requested_by` holds the
   // EMAIL the request was made with, so compare on email and additionally on
@@ -53,8 +56,11 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
       // Authenticated-but-unresolvable: return nothing rather than everything.
       return json({ data: [], count: 0, tokens: { input: 0, output: 0, tracked: 0 } });
     }
-    query += ' AND (lower(requested_by) = lower(?) OR lower(requested_by) = lower(?))';
+    const mine = ' AND (lower(requested_by) = lower(?) OR lower(requested_by) = lower(?))';
+    query += mine;
     params.push(email, user?.slug ?? '');
+    tokensScope = mine;
+    tokensParams.push(email, user?.slug ?? '');
   }
 
   if (status) {
@@ -89,13 +95,14 @@ export async function handleGetAIRequests(url: URL, env: Env, request: Request):
 
   query += ' ORDER BY created_at DESC';
 
-  // N7b — usage rollup across ALL requests (not just the filtered page).
+  // N7b — usage rollup across every request the caller may read (not just the
+  // filtered page): the lab for a PI or the service, their own for a member.
   // One batched round-trip (/simplify: was two sequential awaits).
   const [result, tokensRes] = await env.DB.batch([
     env.DB.prepare(query).bind(...params),
     env.DB.prepare(
-      'SELECT COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COUNT(input_tokens) AS tracked FROM ai_requests'
-    ),
+      `SELECT COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COUNT(input_tokens) AS tracked FROM ai_requests WHERE 1=1${tokensScope}`
+    ).bind(...tokensParams),
   ]);
   const tokens = (tokensRes.results as { input: number; output: number; tracked: number }[] | undefined)?.[0];
   const rows = (result.results || []) as Record<string, unknown>[];
