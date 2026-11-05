@@ -1,3 +1,32 @@
+# ▶▶ 2026-11-05 (work, overnight): WHOLE-HUB SWEEP SHIPPED. Hub `3ba1c5ea` deployed (probe PASS), cron worker deployed, PB `2daf9e2d0`+. **Schema v157.**
+
+## Do first
+- **Nick's decisions:** https://claude.ai/artifact/So7PyUCJZied34W1LZkZM9 (slug `d0e49f24-bc46-44a5-8fd4-26843bea9a28`, collection `answers`). Read them with `db_list`, then do what he picked.
+- Held commits, on branches: `held/watchers` (1281dc69, server side of watchers, touches `mutations.ts`) and `held/urgent-chip` (9c5e3580, removes the Urgent chip).
+- Leftover processes from overnight agents: PIDs 1056 and 32436. The classifier denied `taskkill`, so Nick runs `! taskkill /PID 1056 /PID 32436 /T /F`, then remove `mn-ccore-lab-wt/sweep-f` and `sweep-h`.
+- #169 stays open until a real plan reaches the Hub. See the entry below for what it must confirm.
+
+## Shipped
+- About 60 fixes from Fable, Codex, a browser walk and a real-viewport audit; list in CHANGELOG 2026-11-05 "Whole-Hub sweep". Reports were in `.superpowers/sweep/` (gitignored): `fable-audit.md`, `fable-audit-2.md`, `codex-last.md`, `visual-audit.md`, `fix-*-report.md`, `wave*-review.md`.
+
+## Landmines added
+- `scripts/check-raw-fetch-writes` ratchets raw-`fetch` writes: 41 baseline sites. A new one fails the gate, so use `useMutation` or shrink the list.
+- `/api/settings`, `/api/workflow-templates` and the `/subtasks` and `task_files` routes are gone; the tables remain (no DDL). The route pin moved.
+- Uploads: `/api/files/:key/raw` serves images, PDF and plain text inline, and everything else as attachment.
+- `currentWeekPlan`'s `earlier` is gone, and an answer can carry `kept`.
+- Vite's cache is per checkout (`.vite-cache`), so worktrees no longer delete each other's deps.
+- Peer sessions may work the main checkout overnight, and a deploy builds its working tree. Check `git status` before deploying and message them (one collision on 2026-11-05 cost nothing).
+
+## Open from the sweep
+- `visual-audit.md`'s "not captured" list: task panel, modals, mobile drawer, secondary tabs. Portal shots used fixture data, because fake auth gets 401s from the API on a preview.
+- `npm run typecheck:api --update`: debt fell, floor not lowered.
+- PB paperwork for the retired `task_subtasks` and `task_files` routes: decision doc and I37 matrix, checklist results were in `fix-f-report.md`.
+
+## Ideas not built
+Contract test that every field the task panel edits is on the allowed list. A `Saved` moment on task panel fields. Deleted-task toast says what goes with it. Notification when added as a watcher, if watchers stay. Digest `Copy reading list` for the current filter.
+
+---
+
 # ▶▶ 2026-11-05 (work, early): SWIPES FIXED, IMPORTER FIXED, PHOTOS HOSTED. Schema unchanged (v157). Detail: CHANGELOG 2026-11-05 "Missing swipes".
 
 ## Landmines added

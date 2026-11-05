@@ -15,6 +15,10 @@ Two smaller flakes from the same runs: `SmartCompose` moved the caret to the end
 
 **Photos.** The 13 hotlinked team photos now live in `public/team/` (372 KB as JPEG, was about 2.5 MB), so they no longer depend on med.umn.edu or va.gov. `team_members.photo_url` updated in prod, with `photos-rollback.sql` in the same PB folder.
 
+## 2026-11-05 — Whole-Hub sweep
+
+Overnight audit by Fable, Codex, a live browser walk and real-viewport screenshots, with the fixes reviewed before each deploy. Security and privacy: uploaded HTML no longer runs on the Hub origin, generated agendas no longer carry private notes, the `claude-ai` actor override is limited to trusted callers, AI usage totals are requester-scoped. Data: distinct tasks with one title no longer collapse, trajectory and pulse counts skip soft-deleted tasks, calendar feeds re-expand before their horizon and overlapping refreshes can't empty them, revision and calendar dates use the Chicago day, project health reads completion performance. Navigation: Copy link, palette filters, search results and notification links open what they name, through `taskLinkFor`. Retired: Settings Profile and Templates tabs, subtask checklist, `task_files` link list, Reminder field, April release ribbon, legacy milestones calendar leg. Meetings: a logged decision shows on its meeting. Manuscripts: the ladder starts at Writing. Phone and light mode: search field, task rows, Columns, contrast leaks. Tests: a composer caret race fixed in the product, and the suite's flakes traced and fixed.
+
 ## 2026-11-05 — The plan as one section of task cards (#169, round 2)
 
 Today's plan is one section of real task cards, each task shown once, with finished ones at the bottom until the next plan. Pressing Plan rebuilds a fresh round of the desk; unfinished picks stay unless removed, and answers not yet sent survive. A card may offer one first step. The desk clears by keyboard or tap, and the session watches for Send. Key links described as a Gmail draft get the draft icon everywhere. No schema change. Spec `docs/superpowers/specs/2026-11-04-plan-section-design.md`.
