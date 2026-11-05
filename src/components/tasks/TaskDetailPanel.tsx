@@ -50,7 +50,7 @@ import { ApiError, type TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect, WorkflowSection, type WorkflowFields } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, ProjectInlineGhostSelect, DueInlineSelect, WorkflowSection, type WorkflowFields } from './detail/FieldControls'
 import { MeLockToggle } from '../ui/MeLockToggle'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { HandoffSection } from './detail/HandoffSection'
@@ -900,16 +900,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   </span>
                 )}
               </div>
-            </div>
-
-            {/* Instructions */}
-            <div>
-              <SectionHead as="h3" title="Instructions" />
-              <EditableTextarea
-                value={task.instructions || ''}
-                onSave={(v) => handleFieldUpdate('instructions', v || null)}
-                placeholder="Step-by-step instructions, protocols, or notes..."
-              />
             </div>
 
             {/* Dependencies — S14: clicking a blocker/blocked task swaps the

@@ -98,6 +98,16 @@ describe('G01: Watchers while the server refuses the field', () => {
   )
 })
 
+describe('The Instructions field is gone', () => {
+  it('renders no Instructions block, and a stored value does not bring it back', async () => {
+    stubFetch()
+    await mount(tree(<TaskDetailPanel task={task({ instructions: 'Old protocol text' })} onClose={() => {}} />), panelReady)
+    expect(byText(panel(), 'label, div, span', /^Recurrence$/).length).toBeGreaterThan(0) // the Details tab drew
+    expect(panel().textContent).not.toMatch(/Instructions/)
+    expect(panel().textContent).not.toMatch(/Old protocol text/)
+  })
+})
+
 describe('G11: the Reminder field is gone', () => {
   it('renders no Reminder control', async () => {
     stubFetch()
