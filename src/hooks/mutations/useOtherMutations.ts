@@ -109,6 +109,26 @@ export function usePostTaskUpdate(taskId: string) {
   })
 }
 
+// A raw fetch here would bypass the failed-write floor (UndoToast.tsx), which
+// only sees mutations. No onError: the floor is the error message.
+export function usePostTaskComment(taskId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (content: string) =>
+      fetchApi(`/api/tasks/${taskId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      }),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
+      queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Activity entry deletion (author or PI) ──────────────────
 // POST /api/activity/:id/delete — hard-deletes an activity_entries row
 // (comment/note/update). The server enforces author-or-PI; the UI only
