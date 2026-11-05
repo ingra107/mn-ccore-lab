@@ -29,11 +29,17 @@ let meeting: Record<string, unknown>
 let posts: { url: string; body: Record<string, unknown> }[] = []
 let reorderStatus = 200
 let writes: string[] = []
+let betaMembers: { slug: string; email: string | null }[] = []
+let betaMembersStatus = 200
+let memberReads = 0
 
 beforeEach(() => {
   posts = []
   writes = []
   reorderStatus = 200
+  betaMembers = []
+  betaMembersStatus = 200
+  memberReads = 0
   meeting = {
     id: 'm1', date: '2026-10-06', title: 'A meeting', type: 'ad-hoc', status: 'upcoming', audience: 'lab',
     attendees: JSON.stringify(['nate-mesfin', 'someone@stanford.edu']), agenda: '[]', notes: null,
@@ -51,6 +57,10 @@ beforeEach(() => {
       return json({ data: { id: 'x' } })
     }
     if (url === '/api/meetings/m1') return json({ data: meeting })
+    if (url === '/api/projects/beta/members') {
+      memberReads++
+      return betaMembersStatus === 200 ? json({ data: betaMembers, project_id: 'proj_b' }) : json({ error: 'Project not found' }, betaMembersStatus)
+    }
     if (url.startsWith('/api/projects') && !url.includes('products')) {
       return json({ data: [
         { id: 'proj_a', slug: 'alpha', title: 'Alpha project', short_name: 'Alpha', status: 'active', category: 'MNCCORE' },
@@ -114,11 +124,26 @@ describe('MeetingDetail decisions', () => {
     expect(h.textContent).not.toContain('No decisions logged yet')
   })
 
-  it("Log decision starts on the meeting's one project, and sends it", async () => {
+  // A decision naming a project is readable only by that project's members
+  // (hub_decisions in api/lib/table-scope.ts), so the form starts on the project
+  // only when that keeps it in front of everyone at the meeting.
+  const projectSelect = (h: HTMLElement) => h.querySelector<HTMLSelectElement>('select[aria-label="Decision project"]')
+  const onBeta = () => {
+    meeting.audience = 'private'
     meeting.granted_projects = JSON.stringify([{ id: 'proj_b', slug: 'beta', short_name: 'Beta', title: 'Beta project' }])
+    meeting.owner_slug = 'nate-mesfin'
+    meeting.attendees = JSON.stringify(['nate-mesfin', 'Casey@UMN.edu'])
+    betaMembers = [{ slug: 'nate-mesfin', email: 'mesfin@umn.edu' }, { slug: 'casey-eddington', email: 'casey@umn.edu' }]
+  }
+  const openForm = async (h: HTMLElement) => { await act(async () => { buttonNamed(h, 'Log decision').click() }) }
+  /** Long enough for the members read to land and the select to take its default. */
+  const settle = async () => { await expect.poll(() => memberReads).toBeGreaterThan(0); await act(async () => { await new Promise((r) => setTimeout(r, 50)) }) }
+
+  it("starts on the meeting's one project when everyone at it is on the project, and sends it", async () => {
+    onBeta()
     const h = await mount()
-    await act(async () => { buttonNamed(h, 'Log decision').click() })
-    await expect.poll(() => h.querySelector<HTMLSelectElement>('select[aria-label="Decision project"]')?.value).toBe('beta')
+    await openForm(h)
+    await expect.poll(() => projectSelect(h)?.value).toBe('beta')
     const input = h.querySelector<HTMLInputElement>('input[placeholder="What was decided?"]')!
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'A new call')
@@ -129,11 +154,45 @@ describe('MeetingDetail decisions', () => {
     expect(posts.find((p) => p.url === '/api/decisions')!.body.meeting_id).toBe('m1')
   })
 
+  it('a lab meeting starts on no project, even with one project', async () => {
+    onBeta()
+    meeting.audience = 'lab'
+    const h = await mount()
+    await openForm(h)
+    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    expect(projectSelect(h)?.value).toBe('')
+  })
+
+  it.each([
+    ['an attendee is off the project', () => { meeting.attendees = JSON.stringify(['nate-mesfin', 'Dave Wacker']) }],
+    ['an outside guest attended', () => { meeting.attendees = JSON.stringify(['nate-mesfin', 'someone@stanford.edu']) }],
+    ['the owner is off the project', () => { meeting.owner_slug = 'dave-wacker' }],
+    ['the meeting names no attendees', () => { meeting.attendees = '[]' }],
+    ['the viewer cannot read the project members', () => { betaMembersStatus = 404 }],
+  ])('starts on no project when %s', async (_label, arrange) => {
+    onBeta()
+    arrange()
+    const h = await mount()
+    await openForm(h)
+    await settle()
+    expect(projectSelect(h)?.value).toBe('')
+  })
+
   it('a meeting on two projects starts on no project', async () => {
+    meeting.audience = 'private'
     meeting.tags = JSON.stringify(['alpha', 'beta'])
     const h = await mount()
-    await act(async () => { buttonNamed(h, 'Log decision').click() })
-    await expect.poll(() => h.querySelector<HTMLSelectElement>('select[aria-label="Decision project"]')?.value).toBe('')
+    await openForm(h)
+    await act(async () => { await new Promise((r) => setTimeout(r, 100)) })
+    expect(projectSelect(h)?.value).toBe('')
+  })
+
+  it('each option says who can see the decision', async () => {
+    const h = await mount()
+    await openForm(h)
+    const labels = [...projectSelect(h)!.options].map((o) => o.textContent)
+    expect(labels).toContain('No project (everyone who can see this meeting)')
+    expect(labels).toContain('Beta (project members only)')
   })
 })
 
