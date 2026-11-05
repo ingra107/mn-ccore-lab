@@ -121,7 +121,21 @@ describe('GET /api/health is about the database, not the caller', () => {
       expect(block).toContain("method: 'GET'")
       expect(block).toContain("path: '/api/pulse',")
     }
-    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER) && !l.includes(PULSE_COUNTS))
+    // Plus the own-watch remover (api/routes/tasks.ts): one mutation, a watcher taking
+    // themselves off a task they read only as its watcher, on the task update route
+    // only. Like the join minter, it writes a row the caller is about to lose.
+    const OWN_WATCH = "ownWatchRemover(E(c), c.get('unscopedDb'))"
+    const ownWatch = lines.filter((l) => l.includes(OWN_WATCH))
+    expect(ownWatch).toHaveLength(1)
+    expect(ownWatch[0].split("get('unscopedDb')").length - 1).toBe(1)
+    expect(ownWatch[0]).toContain('handleUpdateTask(')
+    {
+      const at = src.indexOf(ownWatch[0])
+      const block = src.slice(src.lastIndexOf('defineRoute(', at), at)
+      expect(block).toContain("method: 'POST'")
+      expect(block).toContain("path: '/api/tasks/:id',")
+    }
+    const uses = lines.filter((l) => !l.includes(ORACLE) && !l.includes(TITLE_ORACLE) && !l.includes(JOIN_MINTER) && !l.includes(PULSE_COUNTS) && !l.includes(OWN_WATCH))
     expect(uses).toHaveLength(3)
     // The third: labWideEnv hands the unscoped handle to a PI only. The three Lab
     // pulse routes and the pi-dashboard call it (the pulse routes also answer a

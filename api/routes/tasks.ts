@@ -347,7 +347,18 @@ const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee', 'kind'])
 const descriptionChanged = (description: string | null): Response =>
   json({ error: 'The description changed since this edit started', code: 'description_changed', description }, 409);
 
-export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+/**
+ * The one write a viewer's handle cannot commit: a watcher taking themselves off a
+ * task they can read only as its watcher. The commit's own checks read the row back,
+ * and this write has just hidden it from them, so a landed write would read as not
+ * found. handleUpdateTask decides when; this only runs that mutation. Pinned to this
+ * route in api/health-unscoped.test.ts.
+ */
+export type OwnWatchRemover = (mutation: Parameters<typeof applyMutation>[1]) => ReturnType<typeof applyMutation>;
+export const ownWatchRemover = (env: Env, unscoped: D1Database): OwnWatchRemover =>
+  (mutation) => applyMutation({ ...env, DB: unscoped }, mutation);
+
+export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env, removeOwnWatch?: OwnWatchRemover): Promise<Response> {
   // The task must be one the caller may read (guardTaskProject).
   const guard = await guardTaskProject(env, request, id);
   if (guard.block) return guard.block;
@@ -527,7 +538,12 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     `SELECT watchers, ${WATCHED_TASK_FIELDS.join(', ')} FROM tasks WHERE id = ?`
   ).bind(id).first<Record<string, unknown>>();
 
-  const updateMutResult = await applyMutation(env, {
+  // Only a write that changes the watcher list and nothing else takes this path. The
+  // guard above already said this person may edit the task.
+  const dropsOwnWatch = watchers !== undefined && Object.keys(patchRecord).length === 0
+    && parseWatchers(prior?.watchers).includes(user.slug) && !parseWatchers(watchers).includes(user.slug);
+  const apply: OwnWatchRemover = dropsOwnWatch && removeOwnWatch ? removeOwnWatch : (m) => applyMutation(env, m);
+  const updateMutResult = await apply({
     table: 'tasks',
     record_id: id,
     op: 'update',
@@ -567,9 +583,11 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     }
   }
 
+  // The guard read the task and the write landed, so an empty read-back means this
+  // write took away the caller's own read. That is a success with no row to echo,
+  // as on the status route; the panel closes on it.
   const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
-  if (!updated) return error('Task not found', 404);
-  return json({ data: updated });
+  return json({ data: updated ?? null });
 }
 
 // POST /api/tasks — create new task
@@ -1355,11 +1373,22 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
   // Bulk edits tell a task's watchers too. A deleted task's notes were just
   // cleaned above, so a delete tells no one.
+  // The writes have landed by here: a failed note must not fail the batch. Chunked,
+  // because one IN list over D1's bound-parameter limit throws and a big bulk action
+  // answered 500 though every task had changed.
   if (body.action !== 'delete' && applied.length > 0) {
-    const marks = applied.map(() => '?').join(',')
-    const rows = await env.DB.prepare(`SELECT id, title, watchers FROM tasks WHERE watchers IS NOT NULL AND id IN (${marks})`)
-      .bind(...applied).all<{ id: string; title: string | null; watchers: string | null }>()
-    await notifyWatchersChanged(env, rows.results ?? [], user)
+    try {
+      const watched: { id: string; title: string | null; watchers: string | null }[] = []
+      for (let i = 0; i < applied.length; i += MAX_IDS_FILTER) {
+        const chunk = applied.slice(i, i + MAX_IDS_FILTER)
+        const rows = await env.DB.prepare(`SELECT id, title, watchers FROM tasks WHERE watchers IS NOT NULL AND id IN (${chunk.map(() => '?').join(',')})`)
+          .bind(...chunk).all<{ id: string; title: string | null; watchers: string | null }>()
+        watched.push(...(rows.results ?? []))
+      }
+      await notifyWatchersChanged(env, watched, user)
+    } catch (e) {
+      console.error('handleBatchUpdateTasks: watcher notes failed:', e)
+    }
   }
 
   return json({ data: { ok: failed.length === 0, count: applied.length, applied, failed } })

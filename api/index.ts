@@ -27,7 +27,7 @@ import { REALTIME_TICKET_PATH } from '../shared/realtime';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleGetNextStepGaps, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleSortTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
+import { ownWatchRemover, handleGetTasks, handleGetTask, handleGetNextStepGaps, handleGetBlockingTasks, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleSortTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity, handleGetThreadSeen, handleMarkThreadSeen } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -583,18 +583,18 @@ defineRoute({
   // provisioned rows first, as resolveSlug. Authed callers already see every
   // team_members email on GET /api/team.
   const dir = await env.DB.prepare(
-    `SELECT email, slug FROM team_members
+    `SELECT email, slug, member_type FROM team_members
      WHERE email IS NOT NULL AND email != '' AND slug IS NOT NULL AND slug != ''
      ORDER BY auto_created ASC, created_at ASC`
-  ).all<{ email: string; slug: string }>();
+  ).all<{ email: string; slug: string; member_type: string | null }>();
+  const people = dir.results ?? [];
   // #145 Lane B: the Projects page shows its "show all projects" switch only
   // when this is true; the server ignores the switch's header for anyone else.
   const canShowAllProjects = isSiteAdmin({ slug: user.slug, pi: isPi });
   // Settings shows the digest switch only to someone the digest would reach.
-  const row = await env.DB.prepare('SELECT slug, member_type, email FROM team_members WHERE slug = ?')
-    .bind(user.slug).first<{ slug: string; member_type: string | null; email: string | null }>();
-  const digest = row ? getsDigestEmail(row, env) : false;
-  return json({ authenticated: true, isMember: true, isPi, canShowAllProjects, getsDigestEmail: digest, ...user, directory: dir.results ?? [] });
+  const me = people.find((p) => p.slug === user.slug);
+  const digest = me ? getsDigestEmail(me, env) : false;
+  return json({ authenticated: true, isMember: true, isPi, canShowAllProjects, getsDigestEmail: digest, ...user, directory: people.map(({ email, slug }) => ({ email, slug })) });
 },
 });
 
@@ -2339,7 +2339,7 @@ defineRoute({
   path: '/api/tasks/:id',
   auth: 'authed',
   entity: 'tasks',
-  handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c)),
+  handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c), ownWatchRemover(E(c), c.get('unscopedDb'))),
 });
 defineRoute({
   method: 'POST',

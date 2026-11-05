@@ -987,7 +987,21 @@ async function dispatchHermes(
   // is): the listener routes the response back on it. _postHermesResponse routes
   // the answer back by the TRIGGERING ENTRY's entity_type, not by source_type.
   const sourceType = entityConfig(args.entityType)!.hermesSource;
-  const projectSlug = args.projectId;
+  // The project goes on the request only if the asker can see it. Someone can read a
+  // task (assignee, watcher) on a project they are not on, and the listener scopes its
+  // answer by this field, service key in hand, into a thread they read. Asked through
+  // the viewer's handle; a failed read names no project. The thread's own rows keep
+  // the real project (args.projectId, below), so its members still read them.
+  let projectSlug: string | null = args.projectId;
+  if (projectSlug) {
+    try {
+      const seen = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(projectSlug, projectSlug).first();
+      if (!seen) projectSlug = null;
+    } catch (e) {
+      console.error('dispatchHermes: project visibility read failed:', e);
+      projectSlug = null;
+    }
+  }
   const aiId = generateId();
 
   // context is the listener's entity-routing token ("task: <id>" / "project: <id>").

@@ -48,6 +48,12 @@ describe('/api/auth/me getsDigestEmail', () => {
     expect((await me(NIDA, envWith())).getsDigestEmail).toBe(false)
   })
 
+  it('the directory stays email and slug only', async () => {
+    const body = await me(NICK, envWith('all')) as unknown as { directory: Record<string, unknown>[] }
+    expect(body.directory.length).toBe(3)
+    for (const row of body.directory) expect(Object.keys(row).sort()).toEqual(['email', 'slug'])
+  })
+
   it('agrees with who the send actually mails', async () => {
     const env = { ...envWith(NICK), RESEND_API_KEY: 'k' } as unknown as Env
     const mailed: string[] = []

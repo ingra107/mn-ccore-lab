@@ -167,6 +167,29 @@ describe('G27: panel text stays above the opacity floor', () => {
   })
 })
 
+describe('a save that takes away the viewer own read', () => {
+  it('the panel says so and closes, with no failure toast', async () => {
+    stubFetch((url, init) => (init?.method === 'POST' && /\/api\/tasks\/task_f1$/.test(url) ? json({ data: null }) : undefined))
+    const onClose = vi.fn()
+    await mount(tree(<TaskDetailPanel task={task({ watchers: '["casey-eddington"]' })} onClose={onClose} />), panelReady)
+    const remove = await until(() => panel().querySelector<HTMLElement>('button[aria-label^="Remove watcher"]'), 'remove watcher')
+    remove.click()
+    await waitFor(() => onClose.mock.calls.length === 1, 'the panel closes')
+    await waitFor(() => /can no longer see this task/.test(document.body.textContent ?? ''), 'the words')
+    expect(document.body.textContent).not.toMatch(/did not save|didn't save|not found/i)
+  })
+
+  it('an ordinary save leaves the panel open', async () => {
+    stubFetch((url, init) => (init?.method === 'POST' && /\/api\/tasks\/task_f1$/.test(url) ? json({ data: task({ watchers: null }) }) : undefined))
+    const onClose = vi.fn()
+    await mount(tree(<TaskDetailPanel task={task({ watchers: '["casey-eddington"]' })} onClose={onClose} />), panelReady)
+    const remove = await until(() => panel().querySelector<HTMLElement>('button[aria-label^="Remove watcher"]'), 'remove watcher')
+    remove.click()
+    await new Promise((r) => setTimeout(r, 100))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+})
+
 describe('S05: the panel shows the newest cached copy of its task', () => {
   it('an older copy in an earlier list does not replace the newer one', async () => {
     stubFetch()

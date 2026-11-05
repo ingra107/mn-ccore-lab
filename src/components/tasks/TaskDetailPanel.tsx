@@ -158,6 +158,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return run().then(
       (res) => {
         const echo = res?.data
+        // The write landed and took away this person's read (a watcher removing
+        // themselves): there is no task left here for them to look at.
+        if (res && echo === null) {
+          undoToast.showInfo('Saved. You can no longer see this task.')
+          onClose()
+        }
         if (echo && typeof echo === 'object') merge((t) => ours(t, pick(echo as Record<string, unknown>)))
         return { ok: true as const, data: echo }
       },
