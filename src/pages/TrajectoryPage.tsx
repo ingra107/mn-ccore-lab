@@ -32,6 +32,7 @@ import { compactStageLabel } from '../lib/projectStage'
 import { useShowMore } from '../hooks/useShowMore'
 import { ShowMoreButton } from '../components/ui/ShowMore'
 import { PhotoOrInitials } from '../components/PhotoOrInitials'
+import { formatBrandName } from '../components/BrandName'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -734,7 +735,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                       opacity: 0.75,
                     }}
                   >
-                    {project.category}
+                    {formatBrandName(project.category)}
                   </span>
                 )}
               </div>

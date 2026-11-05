@@ -158,7 +158,7 @@ export default function LabPageLayout({
 
               {bio && (
                 <p
-                  className="text-sm leading-relaxed mb-6"
+                  className="text-sm leading-relaxed mb-6 text-left"
                   style={{ color: 'var(--slate)' }}
                 >
                   {bio}

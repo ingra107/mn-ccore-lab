@@ -44,6 +44,7 @@ export function ProjectOpenTaskCards({ tasks, project, onOpenEditor }: {
           projectsByPid={projectsByPid}
           done={isTaskDone(task)}
           noDrag
+          inProject
           onOpenEditor={() => onOpenEditor(task)}
         />
       ))}

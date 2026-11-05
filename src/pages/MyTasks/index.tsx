@@ -442,7 +442,7 @@ export default function UnifiedMyTasks() {
             <>
               {(view === 'columns' || view === 'board') && (
                 <div className="mt-band" style={{ paddingTop: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
                 </div>
               )}
               <ListView filtered={filtered} isEmpty={isEmpty} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} pageScrollRef={pageScroll ? shellRef : undefined} />

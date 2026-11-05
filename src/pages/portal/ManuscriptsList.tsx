@@ -18,6 +18,7 @@ import { Face, Person } from '../../components/today/skin'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import type { Project } from '../../data/types'
+import { formatBrandName } from '../../components/BrandName'
 
 type Opt = { value: string; label: string; color?: string }
 
@@ -150,7 +151,7 @@ export function ManuscriptsList({
             value={p.category || 'MNCCORE'}
             options={categoryOptions}
             onChange={(next) => onFieldChange(p.slug, 'category', next, p.category)}
-            display={<span className="sr-m">{categoryLabel[p.category ?? ''] ?? p.category ?? 'MNCCORE'}</span>}
+            display={<span className="sr-m">{categoryLabel[p.category ?? ''] ?? formatBrandName(p.category ?? 'MNCCORE')}</span>}
           />
         ),
       },

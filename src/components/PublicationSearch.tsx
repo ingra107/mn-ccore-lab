@@ -50,7 +50,7 @@ export default function PublicationSearch({
           type="text"
           value={internal}
           onChange={(e) => setInternal(e.target.value)}
-          placeholder="Search publications..."
+          placeholder="Search"
           className="w-full pl-10 pr-10 py-2 rounded-md text-sm"
           style={{
             fontSize: '14px',

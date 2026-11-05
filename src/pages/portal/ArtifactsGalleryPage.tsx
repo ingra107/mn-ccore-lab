@@ -83,7 +83,7 @@ export default function ArtifactsGalleryPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search artifacts — title, tag, author, or text inside"
+            placeholder="Search artifacts"
             aria-label="Search artifacts"
             style={{
               width: '100%',
@@ -125,7 +125,7 @@ export default function ArtifactsGalleryPage() {
           <EmptyState
             icon={<FileText size={28} />}
             title="No shelved artifacts yet"
-            subtitle="Tag an artifact (in-Hub on its page, or with the --tag flag on publish/save) to add it to the gallery."
+            subtitle="Open an artifact and add a tag to it, and it shows up here."
           />
         ) : filtered.length === 0 ? (
           <EmptyState

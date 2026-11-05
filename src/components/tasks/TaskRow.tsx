@@ -354,6 +354,8 @@ export type CardTaskRowProps = Omit<SharedTaskRowProps, 'card' | 'rowActions' | 
   packetTag?: ReactNode
   /** The top-right corner, in the owner face's place (the Plan section's x). */
   cornerSlot?: ReactNode
+  /** On the project's own page: the context line drops the project's name. */
+  inProject?: boolean
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.
