@@ -93,3 +93,29 @@ describe('Meeting action-item hint', () => {
     expect(meetingDetailSource).toContain('<span>Apr 15 due date</span>')
   })
 })
+
+describe('Meetings page, with a meeting and a task on it', () => {
+  const rows = () => {
+    routes['/api/meetings'] = { data: [{ id: 'm1', date: '2020-01-01', title: 'Lab sync', type: 'biweekly', attendees: '[]', agenda: null, notes: null, decisions: null, status: 'past', audience: 'lab', action_count: 1, open_action_count: 1 }] }
+    // A task can have no description: it has only a title.
+    routes['/api/tasks'] = { data: [{ id: 't1', title: 'Circulate agenda', description: null, meeting_id: 'm1', assignee: 'nick-ingraham', status: 'todo', priority: 'medium' }] }
+  }
+  const ready = () => document.querySelector('[data-testid="view-full-meeting"]')
+
+  it('a linked task with no description does not take the page down', async () => {
+    rows()
+    await mount(tree(<Meetings />), { ready, label: 'meeting detail' })
+    await waitFor(() => /1 pending/.test(document.body.textContent ?? ''), 'the task counted')
+    expect(document.querySelector('[data-testid="view-full-meeting"]')).not.toBeNull()
+  })
+
+  it('shows one filled teal button: Record Meeting is primary, View Full Meeting is secondary', async () => {
+    rows()
+    await mount(tree(<Meetings />), { ready, label: 'meeting detail' })
+    const view = document.querySelector<HTMLElement>('[data-testid="view-full-meeting"]')!
+    const record = [...document.querySelectorAll<HTMLButtonElement>('button')].find((b) => /Record Meeting/.test(b.textContent ?? ''))!
+    expect(record.style.background).toContain('var(--job-accent-solid)')
+    expect(view.style.background).not.toContain('teal')
+    expect(view.style.background).not.toContain('--job-accent')
+  })
+})
