@@ -67,7 +67,7 @@ export default defineConfig([
   // ESLint still walks its generated `.js` bundles regardless of the `files`
   // allowlist above (a base linterOption, not a rule, fires on them) and
   // flags `Unused eslint-disable directive` inside the build output.
-  globalIgnores(['dist', '.wrangler/**']),
+  globalIgnores(['dist', '.wrangler/**', '.vite-cache/**']),
   {
     files: ['src/**/*.{ts,tsx}', 'api/**/*.{ts,tsx}'],
     ignores: ['**/*.test.ts'],

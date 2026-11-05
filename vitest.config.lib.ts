@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config'
 // The browser-mode config (vitest.config.ts) covers component/DOM tests.
 // Run: npx vitest run --config vitest.config.lib.ts
 export default defineConfig({
+  cacheDir: '.vite-cache', // per checkout: node_modules is a shared junction (see vitest.config.ts)
   test: {
     include: ['src/lib/__tests__/**/*.test.ts'],
     globals: true,
