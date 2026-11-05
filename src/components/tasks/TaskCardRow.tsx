@@ -17,6 +17,7 @@
 // grip = drag-to-plan, pin = plan for today, planned pill = unplan. Styles:
 // .tk-* in index.css.
 
+import { parseWatchers } from '../../../shared/watchers'
 import { Link } from 'react-router-dom'
 import { GripHorizontal, MapPin, MessageSquare, Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
