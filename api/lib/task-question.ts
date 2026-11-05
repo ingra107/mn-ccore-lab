@@ -49,7 +49,7 @@
 // would manufacture a false conflict on the next PB update.
 
 import type { RefusalCode } from '../../pb-schema/pb_schema/generated/refusal-codes.generated.ts';
-import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanKeptError, weekPlanSpecError, weekPlanWithdrawn, weekPlanWithdrawnError } from '../../shared/weekPlan';
+import { WEEK_PLAN_SOURCE, parseWeekPlanSpec, weekPlanExpired, weekPlanFlipError, weekPlanPicksError, weekPlanKeptError, weekPlanSpecError, weekPlanWithdrawnError, weekPlanClearedError, weekPlanAllowsEmptyPicks } from '../../shared/weekPlan';
 import { nowInstant } from './time';
 
 /**
@@ -189,15 +189,21 @@ export function questionRowError(effective: Record<string, unknown>): QuestionEr
     // picks (v1 contract, 2026-10-30): required on a week_plan answer and
     // judged against its spec; optional elsewhere, shape-judged when present.
     if (isWeekPlan) {
-      // withdrawn (2026-11-04): empty picks pass only beside a non-empty withdrawn.
+      // Empty picks pass only beside a non-empty withdrawn (2026-11-04) or cleared
+      // (2026-11-05). What cleared claims is checked against the stored plan by
+      // weekPlanClearCheck (week-plan-start.ts), which needs a read this function has not.
       const why = weekPlanWithdrawnError(parsed.value)
-        ?? weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec), { allowEmpty: weekPlanWithdrawn(parsed.value).length > 0 })
+        ?? weekPlanClearedError(parsed.value)
+        ?? weekPlanPicksError(parsed.value.picks, parseWeekPlanSpec(spec), { allowEmpty: weekPlanAllowsEmptyPicks(parsed.value) })
         // kept (2026-11-04): each id is a pick of this answer.
         ?? weekPlanKeptError(parsed.value, parsed.value.picks);
       if (why) return `question_answer_invalid: ${why}`;
-    } else if (parsed.value.picks !== undefined) {
-      const why = weekPlanPicksError(parsed.value.picks, null);
-      if (why) return `question_answer_invalid: ${why}`;
+    } else {
+      if (parsed.value.cleared !== undefined) return 'question_answer_invalid: only a week_plan answer carries cleared';
+      if (parsed.value.picks !== undefined) {
+        const why = weekPlanPicksError(parsed.value.picks, null);
+        if (why) return `question_answer_invalid: ${why}`;
+      }
     }
   }
 
