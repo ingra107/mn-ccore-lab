@@ -22,6 +22,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import { useProjects } from '../../../hooks/useApiData'
 import { useBulkUpdateTasks, useCreateTask, useUpdateProjectFields, useUpdateTask } from '../../../hooks/useMutations'
 import { useToast } from '../../../hooks/useToast'
+import { reportBatch } from '../../../lib/batchResult'
 import { projectShortLabel } from '../../../lib/displayNames'
 import { isCheckin } from '../../../../shared/taskKinds'
 import type { TaskRow } from '../../../lib/api'
@@ -38,7 +39,8 @@ export function WaitingOnCard({ tasks }: { tasks: readonly TaskRow[] }) {
   const updateTask = useUpdateTask()
   const bulk = useBulkUpdateTasks()
   const qc = useQueryClient()
-  const { showUndo } = useToast()
+  const toast = useToast()
+  const { showUndo } = toast
 
   const waiting = (projects ?? []).filter((p) => p.status === 'waiting_external')
   if (waiting.length === 0) return null
@@ -66,7 +68,7 @@ export function WaitingOnCard({ tasks }: { tasks: readonly TaskRow[] }) {
             const label = projectShortLabel(p)
             const setDate = (date: string | null) => {
               if (checkin && date) updateTask.mutate({ id: checkin.id, fields: { due_date: date } })
-              else if (checkin) bulk.mutate({ ids: [checkin.id], action: 'delete' })
+              else if (checkin) bulk.mutate({ ids: [checkin.id], action: 'delete' }, { onSuccess: (res) => { reportBatch(toast, res, [checkin.id]) } })
               else if (date) createTask.mutate({ title: label, description: '', assignee: user?.slug ?? '', project_id: p.slug, kind: 'checkin', due_date: date })
             }
             return (

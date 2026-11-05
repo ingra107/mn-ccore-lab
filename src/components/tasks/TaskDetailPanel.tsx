@@ -2,6 +2,8 @@ import { TASK_KIND_OPTIONS, isQuestion, statusOptionsFor } from '../../../shared
 import { parseWatchers, serializeWatchers } from '../../../shared/watchers'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ComponentProps } from 'react'
 import { useTaskDraft, patchTaskDraft, clearSentDraft } from '../../lib/taskDrafts'
+import { freshestCachedTask } from '../../lib/freshestTask'
+import { reportBatch } from '../../lib/batchResult'
 import BodyText from '../BodyText'
 import { descriptionJsonFold } from '../../lib/tiptapToMarkdown'
 import {
@@ -115,14 +117,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   useEffect(() => { setLiveTask(baseTask) }, [baseTask])
   useEffect(() => {
     if (!baseTask?.id) return
-    const findFresh = (): TaskRow | null => {
-      const queries = qc.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
-      for (const [, data] of queries) {
-        const fresh = data?.find(t => t.id === baseTask.id)
-        if (fresh) return fresh
-      }
-      return null
-    }
+    const findFresh = () => freshestCachedTask(qc, baseTask.id)
     const initial = findFresh()
     if (initial) setLiveTask(initial)
     const unsub = qc.getQueryCache().subscribe(() => {
@@ -222,7 +217,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   // Slack-style seen: opening the panel acknowledges the assignment silently
   // (assignee-only; replaces the old explicit Acknowledge button).
   useTaskViewTracking(task)
-  const { showUndo } = useUndoToast()
+  const undoToast = useUndoToast()
+  const { showUndo } = undoToast
   // Support ?tab= deep links; retire 'notes' and 'comments' → 'activity'.
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     if (typeof window === 'undefined') return 'overview'
@@ -403,7 +399,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     let committed = false
     const commitTimer = setTimeout(() => {
       committed = true
-      bulkUpdate.mutate({ ids: [id], action: 'delete' })
+      // mutateAsync: the panel has closed by now, and mutate's callbacks die with it.
+      // A rejected write reaches the person through the failed-write floor.
+      bulkUpdate.mutateAsync({ ids: [id], action: 'delete' }).then((res) => { reportBatch(undoToast, res, [id]) }, () => {})
     }, 5000)
 
     // The delete hard-removes the task's activity, and this toast is the only

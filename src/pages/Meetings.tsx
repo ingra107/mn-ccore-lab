@@ -11,6 +11,7 @@ import type { TaskRow } from '../lib/api'
 import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
+import { reportBatch } from '../lib/batchResult'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
 import QuickAddForm, { QuickAddTrigger } from '../components/QuickAddForm'
 import { FaceDisc } from '../components/today/skin'
@@ -174,7 +175,10 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
     if (wasDone) {
       updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onError: revert, onSuccess: settle })
     } else {
-      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, { onError: revert, onSuccess: settle })
+      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, {
+        onError: revert,
+        onSuccess: (res) => { if (reportBatch({ showSuccess, showError }, res, [item.id]).length > 0) revert(); settle() },
+      })
     }
   }
 
@@ -187,7 +191,7 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
     if (showDecisionForm) decisionTitleRef.current?.focus({ preventScroll: true })
   }, [showDecisionForm])
   const createDecision = useCreateDecision()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
 
   // Add Action Item (#2700): owned by the panel of the meeting it files
   // against, like Log Decision above. It used to live in the page and reach in

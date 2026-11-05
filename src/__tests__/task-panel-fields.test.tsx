@@ -167,6 +167,19 @@ describe('G27: panel text stays above the opacity floor', () => {
   })
 })
 
+describe('S05: the panel shows the newest cached copy of its task', () => {
+  it('an older copy in an earlier list does not replace the newer one', async () => {
+    stubFetch()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    qc.setQueryData(['tasks', { assignee: 'old-list' }], [task({ title: 'The old title', updated_at: '2026-11-01 08:00:00' })])
+    qc.setQueryData(['tasks', { assignee: 'new-list' }], [task({ title: 'The new title', updated_at: '2026-11-02 08:00:00' })])
+    await mount(tree(<TaskDetailPanel task={task({ title: 'The new title', updated_at: '2026-11-02 08:00:00' })} onClose={() => {}} />, qc), panelReady)
+    await new Promise((r) => setTimeout(r, 50))
+    expect(panel().querySelector<HTMLTextAreaElement | HTMLInputElement>('textarea, input')?.value + panel().textContent).toContain('The new title')
+    expect(panel().querySelector<HTMLTextAreaElement | HTMLInputElement>('textarea, input')?.value + panel().textContent).not.toContain('The old title')
+  })
+})
+
 describe('G15: a task comment that fails says so', () => {
   it('keeps the text and raises the failed-write toast', async () => {
     stubFetch((url, init) => (init?.method === 'POST' && /\/comments$/.test(url) ? json({ error: 'You cannot comment here' }, 403) : undefined))

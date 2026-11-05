@@ -1,5 +1,5 @@
 // InlineDetail — task detail panel that expands inline within Columns + Lanes
-// views. Action bar (Work / Plan today / Move → / Snooze / Archive) +
+// views. Action bar (Work / Plan today / Move → / Snooze / Delete) +
 // SmartCompose directly under action bar + 3-entry newest-first activity peek +
 // meta line. Per CD spec: action bar mirrors the TaskDetailDrawer on TodayPage,
 // so behaviour is consistent across surfaces.
@@ -14,6 +14,7 @@ import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
 import { useTaskLinks, type StoredLink } from '../../../hooks/useApiData'
 import { useTaskViewTracking } from '../../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../../../components/UndoToast'
+import { reportBatch } from '../../../lib/batchResult'
 import { localDateKey } from '../../../lib/dateUtils'
 import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
@@ -25,6 +26,7 @@ import {
   JOB_ACCENT,
   INK, INK_DIM,
   isTaskDone,
+  bulkDeleteCopy,
 } from '../constants'
 import { SortMenu } from '../../../components/tasks/SortPicker'
 import { useTodayPlan } from '../../../lib/todayPlan'
@@ -106,15 +108,12 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
     })
   }, [task.id, updateTask, undoToast])
 
-  // MT-02 — Archive must SOFT-DELETE (set deleted_at), not flip to done.
-  // The bulk-archive path on this page already does the right thing via
-  // bulkUpdate({ action: 'delete' }); the single-row path used to write
-  // status:'done', completed:1 — same word, different state transition.
-  // Match the bulk path so confirm copy ("they'll be soft-deleted") matches.
-  const archive = useCallback(() => {
-    if (!window.confirm('Archive this task? It will be soft-deleted.')) return
+  // MT-02: Delete soft-deletes (sets deleted_at), never flips to done. Same word,
+  // same confirm, same toast and same write as the bulk bar's Delete.
+  const deleteTask = useCallback(() => {
+    if (!window.confirm(bulkDeleteCopy(1).confirm)) return
     bulkUpdate.mutate({ ids: [task.id], action: 'delete' }, {
-      onSuccess: () => undoToast.showSuccess('Archived'),
+      onSuccess: (res) => { reportBatch(undoToast, res, [task.id], (n) => bulkDeleteCopy(n).toast) },
     })
   }, [task.id, bulkUpdate, undoToast])
 
@@ -130,7 +129,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
   const complete = useCallback(() => {
     if (isTaskDone(task)) return
     bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
-      onSuccess: () => undoToast.showSuccess('Completed'),
+      onSuccess: (res) => { reportBatch(undoToast, res, [task.id], () => 'Completed') },
     })
   }, [task.id, task.completed, task.status, bulkUpdate, undoToast]) // eslint-disable-line react-hooks/exhaustive-deps
   const isCompleted = isTaskDone(task)
@@ -207,7 +206,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         {!isCompleted && (
           <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: JOB_ACCENT, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
         )}
-        <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
+        <button onClick={deleteTask} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Delete</button>
       </div>
 
       {/* SmartCompose — directly under action bar (A2) with @me lock toggle */}

@@ -9,6 +9,7 @@ import SegmentedToggle from '../../components/ui/SegmentedToggle'
 import { FaceDisc } from '../../components/today/skin'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
+import { reportBatch } from '../../lib/batchResult'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
 import { useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
@@ -43,7 +44,8 @@ export default function DeadlinesPage() {
   }, [projectsList])
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
-  const { showUndo } = useUndoToast()
+  const undoToast = useUndoToast()
+  const { showUndo } = undoToast
   // P2-3: shared task field editors (status + due here) — one optimistic + undo
   // implementation across ListView and Deadlines. A milestone is a task too
   // (kind='milestone'; a grant's post-award milestones since 2026-10-12).
@@ -70,10 +72,12 @@ export default function DeadlinesPage() {
       }, 'bulk-due')
       return
     }
-    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
-      onSuccess: () => setSelectedIds(new Set()),
+    const ids = [...selectedIds]
+    bulkUpdate.mutate({ ids, action, value }, {
+      // What the batch refused stays selected, with the reason.
+      onSuccess: (res) => setSelectedIds(new Set(reportBatch(undoToast, res, ids))),
     })
-  }, [selectedIds, setSelectedIds, tasks, handleFieldChange, showUndo, bulkUpdate])
+  }, [selectedIds, setSelectedIds, tasks, handleFieldChange, showUndo, bulkUpdate, undoToast])
 
   // P2-3: delegate task status to the shared editor (signature adapter — the
   // row callback is (id, next, prev); the shared hook is (id, prev, next)).

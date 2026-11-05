@@ -49,6 +49,9 @@ const parseGroupParam = (raw: string | null): SectionKey | null => (isSectionKey
 import { formatShortDate } from '../../lib/dateUtils'
 import { projectFullTitleHint, projectShortLabel } from '../../lib/displayNames'
 import { useTodayPlan } from '../../lib/todayPlan'
+import { reportBatch } from '../../lib/batchResult'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { Button } from '../../components/ui/Button'
 import type { TaskRow } from '../../lib/api'
 
 export default function UnifiedMyTasks() {
@@ -308,12 +311,20 @@ export default function UnifiedMyTasks() {
       .catch((err) => { console.error('Set due date failed:', err); undoToast.showError('Due date change failed — please try again.') })
   }, [selected, updateTask, undoToast])
 
+  // The batch route answers 200 with refused ids in its body. Say what landed, and
+  // keep what did not selected, so the person can see those rows and try again.
+  const finishBulk = useCallback((res: unknown, ids: string[], done: (n: number) => string) => {
+    const refused = reportBatch(undoToast, res, ids, done)
+    if (refused.length > 0) setSelected(new Set(refused))
+    else clearSelection()
+  }, [undoToast, setSelected, clearSelection])
+
   const onBulkComplete = useCallback(() => {
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'complete' }, {
-      onSuccess: () => { undoToast.showSuccess(`Completed ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+      onSuccess: (res) => finishBulk(res, ids, (n) => `Completed ${n} task${n === 1 ? '' : 's'}`),
     })
-  }, [selected, bulkUpdate, clearSelection, undoToast])
+  }, [selected, bulkUpdate, finishBulk])
 
   // Single-row complete toggle for the shared Done square (handoff §0 rule 2 —
   // the square completes on every surface). Complete uses the same bulk
@@ -327,7 +338,7 @@ export default function UnifiedMyTasks() {
       })
     } else {
       bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
-        onSuccess: () => undoToast.showSuccess('Completed'),
+        onSuccess: (res) => { reportBatch(undoToast, res, [task.id], () => 'Completed') },
       })
     }
   }, [updateTask, bulkUpdate, undoToast])
@@ -336,30 +347,30 @@ export default function UnifiedMyTasks() {
     if (!window.confirm(bulkDeleteCopy(selected.size).confirm)) return
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'delete' }, {
-      onSuccess: () => { undoToast.showSuccess(bulkDeleteCopy(ids.length).toast); clearSelection() },
+      onSuccess: (res) => finishBulk(res, ids, (n) => bulkDeleteCopy(n).toast),
     })
-  }, [selected, bulkUpdate, clearSelection, undoToast])
+  }, [selected, bulkUpdate, finishBulk])
 
   const onBulkReassign = useCallback((slug: string) => {
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'assign', value: slug }, {
-      onSuccess: () => { undoToast.showSuccess(`Reassigned ${ids.length} task${ids.length === 1 ? '' : 's'} → ${slug}`); clearSelection() },
+      onSuccess: (res) => finishBulk(res, ids, (n) => `Reassigned ${n} task${n === 1 ? '' : 's'} → ${slug}`),
     })
-  }, [selected, bulkUpdate, clearSelection, undoToast])
+  }, [selected, bulkUpdate, finishBulk])
 
   const onBulkPriority = useCallback((priority: string) => {
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'priority', value: priority }, {
-      onSuccess: () => { undoToast.showSuccess(`Set priority → ${priority} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+      onSuccess: (res) => finishBulk(res, ids, (n) => `Set priority → ${priority} for ${n} task${n === 1 ? '' : 's'}`),
     })
-  }, [selected, bulkUpdate, clearSelection, undoToast])
+  }, [selected, bulkUpdate, finishBulk])
 
   const onBulkStatus = useCallback((status: string) => {
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'status', value: status }, {
-      onSuccess: () => { undoToast.showSuccess(`Set status → ${status} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+      onSuccess: (res) => finishBulk(res, ids, (n) => `Set status → ${status} for ${n} task${n === 1 ? '' : 's'}`),
     })
-  }, [selected, bulkUpdate, clearSelection, undoToast])
+  }, [selected, bulkUpdate, finishBulk])
 
   // Board-view status drag handler — called by TaskBoardView on drop.
   const onBoardStatusChange = useCallback((id: string, status: string) => {
@@ -379,6 +390,9 @@ export default function UnifiedMyTasks() {
   }, [])
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
+  // The first read failed, so there is no list, not an empty one. A failed REFETCH
+  // keeps the rows in hand and gets the small note instead (same split as Today).
+  const tasksFailed = tasksQuery.isLoadingError
 
   return (
     /* P1-1 + fix (Nick 2026-06-10): no page-wide bg tint — My Tasks sits on the
@@ -392,7 +406,7 @@ export default function UnifiedMyTasks() {
         search={search} setSearch={setSearch}
         filter={filter} setFilter={setFilter}
         quickView={quickView} setQuickView={setQuickView}
-        taskCount={filtered.length}
+        taskCount={tasksFailed ? null : filtered.length}
         projectOptions={projectOptions}
         currentQuery={currentQuery}
         onApplyView={applyView}
@@ -409,6 +423,11 @@ export default function UnifiedMyTasks() {
           >
             Show mine
           </button>
+        </div>
+      )}
+      {tasksQuery.isRefetchError && (
+        <div className="mt-band" style={{ paddingTop: 8 }}>
+          <QueryErrorNote label="Latest tasks" onRetry={() => tasksQuery.refetch()} />
         </div>
       )}
       {drawerMiss && (
@@ -442,11 +461,19 @@ export default function UnifiedMyTasks() {
         <div style={pageScroll ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' } : { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* "Needs you" questions — shown above the pending-meetings card, same
               guard shape. Disappears once every question is answered. */}
-          {!isLoading && !needsYouFolded && <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} onCollapse={collapseNeedsYou} planNudge={!!tasksQuery.data && !viewingOther} />}
+          {!isLoading && !tasksFailed && !needsYouFolded && <QuestionsCard tasks={questionTasks} snoozed={snoozedQuestions} onCollapse={collapseNeedsYou} planNudge={!!tasksQuery.data && !viewingOther} />}
           {/* Pending meetings triage card — shown above the task list on all views.
               Disappears automatically once all meetings are accepted or declined. */}
-          {!isLoading && <PendingMeetingsCard tasks={pendingMeetingTasks} />}
-          {isLoading ? (
+          {!isLoading && !tasksFailed && <PendingMeetingsCard tasks={pendingMeetingTasks} />}
+          {tasksFailed ? (
+            <div className="mt-band" style={{ paddingTop: 32, paddingBottom: 24 }}>
+              <div role="alert" style={{ maxWidth: 'var(--col-main)' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--task-ink)', marginBottom: 6 }}>Could not load your tasks</h2>
+                <p style={{ fontSize: 13, color: 'var(--task-ink-muted)', marginBottom: 14 }}>The list did not come back from the Hub. Your tasks are still there. Check your connection and try again.</p>
+                <Button variant="primary" onClick={() => tasksQuery.refetch()}>Retry</Button>
+              </div>
+            </div>
+          ) : isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : effectiveView === 'columns' ? (
             <ColumnsView filtered={filtered} isEmpty={isEmpty} byGroup={byGroup} onOpenEditor={setDrawer} projectsByPid={projectsByPid} filterGroup={filter.group} />

@@ -27,7 +27,8 @@ interface TopBarProps {
   search: string; setSearch: (v: string) => void
   filter: FilterState; setFilter: (fn: (f: FilterState) => FilterState) => void
   quickView: QuickViewKey; setQuickView: (q: QuickViewKey) => void
-  taskCount: number
+  /** null: the list did not load, so there is no count to show. */
+  taskCount: number | null
   projectOptions: FilterOption[]
   currentQuery: string
   onApplyView: (q: string) => void
@@ -75,7 +76,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
         <div className="tk-titlerow">
           <h1 className="tk-h1" style={{ color: 'var(--sk-t1)' }}>My Tasks</h1>
-          <span className="tk-date" aria-live="polite" aria-atomic="true" style={{ fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
+          {taskCount !== null && <span className="tk-date" aria-live="polite" aria-atomic="true" style={{ fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>}
         </div>
         {/* The heartbeat line under the title (color-back pick 10): its own
             full-width line in the wrapping title row. */}

@@ -28,6 +28,7 @@ import { useMarkSeen } from '../hooks/useEntitySeen'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinkLibrary, useProjectPublications } from '../hooks/useApiData'
 import { useUpdateProject, usePostProjectUpdate, useAddComment, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useUpdateLink, usePromoteLink, useAddProjectLink } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
+import { reportBatch } from '../lib/batchResult'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
@@ -349,8 +350,10 @@ function ProjectDetailInner({ project }: InnerProps) {
       }, 'bulk-due')
       return
     }
-    bulkUpdate.mutate({ ids: [...selectedIds], action, value }, {
-      onSuccess: () => setSelectedIds(new Set()),
+    const ids = [...selectedIds]
+    bulkUpdate.mutate({ ids, action, value }, {
+      // What the batch refused stays selected, with the reason.
+      onSuccess: (res) => setSelectedIds(new Set(reportBatch({ showSuccess, showError }, res, ids))),
     })
   }
 
