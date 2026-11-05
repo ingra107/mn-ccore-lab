@@ -75,6 +75,21 @@ describe('session project names', () => {
     expect(byId.j2.project_short_name).toBe('PB System')
   })
 
+  // Improvement 6: the row links to its project, so the read carries the slug.
+  // A deleted project has no page, and a name that matches no project has no slug.
+  it('the list carries the slug of the project the name matches', async () => {
+    const list = async () => {
+      const res = await handlePBSessions(new Request('https://x/api/pb/sessions?since=2026-10-03'), env)
+      const rows = (await res.json() as { data: { id: string; project_slug: string | null }[] }).data
+      return Object.fromEntries(rows.map((r) => [r.id, r.project_slug]))
+    }
+    const before = await list()
+    expect(before.j1).toBeNull()
+    expect(before.j2).toBe('peripheral-brain-system')
+    db.prepare("UPDATE projects SET deleted_at = datetime('now') WHERE id = 'p1'").run()
+    expect((await list()).j2).toBeNull()
+  })
+
   it('the filter and the picker group the cut and whole arrays as one project', async () => {
     const res = await handlePBSessions(new Request('https://x/api/pb/sessions?project=Peripheral%20Brain%20System'), env)
     expect((await res.json() as { count: number }).count).toBe(2)

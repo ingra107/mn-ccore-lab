@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { History, Clock, Monitor, Filter, Search } from 'lucide-react'
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
@@ -15,6 +16,8 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { projectShortLabel, projectFullTitleHint } from '../../lib/displayNames'
 import { useAuth } from '../../hooks/useAuth'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
+import { PATHS } from '../../constants/paths'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -183,7 +186,7 @@ function SessionHistoryBody() {
   const [searchTerm, setSearchTerm] = useState('')
   const [activePreset, setActivePreset] = useState('all')
 
-  const { data: sessions = [], isLoading: sessionsLoading } = usePBSessions({
+  const { data: sessions = [], isLoading: sessionsLoading, isError: sessionsFailed, refetch: refetchSessions } = usePBSessions({
     limit: 100,
     project: projectFilter || undefined,
     since: sinceFilter || undefined,
@@ -272,6 +275,11 @@ function SessionHistoryBody() {
   }, [])
 
   const isLoading = sessionsLoading || statsLoading
+  const clearFilters = () => {
+    setSearchTerm('')
+    setProjectFilter('')
+    setDatePreset('all')
+  }
 
   return (
     <PageContainer>
@@ -353,7 +361,10 @@ function SessionHistoryBody() {
             <div key={i} style={{ height: 36, marginBottom: 'var(--sp-xs)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--border-subtle)', opacity: 0.85, animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
-      ) : sessions.length === 0 ? (
+      ) : sessionsFailed ? (
+        <QueryErrorNote label="session history" onRetry={() => { void refetchSessions() }} />
+      ) : sessions.length === 0 && !projectFilter && !sinceFilter ? (
+        // Only an unfiltered empty read means no session ever landed.
         <EmptyState
           icon={<History size={32} />}
           title="Set up SessionEnd hook to see Claude history"
@@ -362,6 +373,13 @@ function SessionHistoryBody() {
             label: 'Open install guide',
             onClick: () => window.open('https://github.com/ingra107/Peripheral-Brain#sessionend-hook', '_blank', 'noopener,noreferrer'),
           }}
+        />
+      ) : filteredSessions.length === 0 ? (
+        <EmptyState
+          icon={<History size={32} />}
+          title="No sessions match"
+          subtitle="Nothing in this range, project or search."
+          action={{ label: 'Clear filters', onClick: clearFilters }}
         />
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible">
@@ -465,12 +483,23 @@ function SessionHistoryBody() {
                                 flexShrink: 0,
                               }}
                             />
-                            <span
-                              style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                              title={projectFullTitleHint({ short_name: session.project_short_name, title: session.project_name })}
-                            >
-                              {projectShortLabel({ short_name: session.project_short_name, title: session.project_name })}
-                            </span>
+                            {session.project_slug ? (
+                              <Link
+                                to={PATHS.project(session.project_slug)}
+                                className="link-affordance"
+                                style={{ fontSize: 12, fontWeight: 500, color: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                title={projectFullTitleHint({ short_name: session.project_short_name, title: session.project_name })}
+                              >
+                                {projectShortLabel({ short_name: session.project_short_name, title: session.project_name })}
+                              </Link>
+                            ) : (
+                              <span
+                                style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                title={projectFullTitleHint({ short_name: session.project_short_name, title: session.project_name })}
+                              >
+                                {projectShortLabel({ short_name: session.project_short_name, title: session.project_name })}
+                              </span>
+                            )}
                           </>
                         ) : (
                           <span style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.75 }}>--</span>
