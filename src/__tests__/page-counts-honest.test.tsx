@@ -7,6 +7,7 @@
 //   walk 2        Deadlines: an approval is not a deadline.
 //   walk 3        Manuscripts names its stalled clock.
 import { describe, it, expect, afterEach, beforeEach } from 'vitest'
+import { page } from 'vitest/browser'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext, type AuthUser } from '../hooks/useAuth'
@@ -69,6 +70,10 @@ describe('Projects counts', () => {
     ] }
   })
 
+  // Wide: on a phone this line is in the Filters sheet (phone-filter-header.test.tsx).
+  beforeEach(async () => { await page.viewport(1280, 900) })
+  afterEach(async () => { await page.viewport(414, 896) })
+
   it('heroes the open rows as "open", and the tab says the same', async () => {
     const host = await mount(tree(<Projects />), { ready: (h) => h.querySelector('[data-testid="hero-number"]')?.textContent === '3open', label: 'hero' })
     expect(host.textContent).toContain('2 done hidden')
@@ -80,6 +85,21 @@ describe('Projects counts', () => {
     const host = await mount(tree(<Projects />, pi, '/?filter=stalled'), { ready: (h) => h.querySelector('[data-testid="hero-number"]')?.textContent === '1stalled', label: 'hero' })
     expect(host.textContent).toContain('1 CLIF')
     expect(host.textContent).not.toContain('MN-CCORE ·')
+  })
+
+  it('on a phone keeps Find and Filters in the header, and everything that moved in the sheet', async () => {
+    await page.viewport(390, 844)
+    const host = await mount(tree(<Projects />, pi, '/?filter=stalled'), { ready: (h) => h.querySelector<HTMLElement>('.tk-filters-btn'), label: 'Filters' })
+    const btn = host.querySelector<HTMLElement>('.tk-filters-btn')!
+    expect(btn.getAttribute('aria-label')).toBe('Filters, 1 on')
+    expect(host.querySelector('[data-testid="projects-find"]')).not.toBeNull()
+    expect(host.textContent).not.toContain('All groups')
+    expect(host.querySelector('[data-testid="pj-tally"]')).toBeNull()
+    btn.click()
+    const sheet = await waitFor(() => document.querySelector<HTMLElement>('[role="dialog"][aria-label="Filters"]'), 'the sheet')
+    await waitFor(() => sheet.textContent?.includes('1 CLIF'), 'the count line, once the list has loaded')
+    for (const w of ['All groups', 'MN-CCORE', 'CLIF', 'Open', 'Active', 'Any status', 'Stalled', 'Show all projects (admin)']) expect(sheet.textContent).toContain(w)
+    expect(sheet.querySelector('[data-testid="pj-tally"]')).not.toBeNull()
   })
 })
 

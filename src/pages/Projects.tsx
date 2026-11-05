@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { GitBranch, Plus, List, LayoutGrid, Compass, Search } from 'lucide-react'
 import { pipelineOffNote, pipelinePlaceOf } from '../lib/pipelinePlace'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useIsMobile } from '../hooks/useIsMobile'
+import { FiltersButton, FiltersSheet, FilterSection } from '../components/ui/FiltersSheet'
+import SegmentedToggle from '../components/ui/SegmentedToggle'
 import { useUrlEnumFilter } from '../hooks/useUrlEnumFilter'
 import { useProjects, useDependencies, useProjectHealth, useRecentTasks, useAllProjectLinks, useAllProjectPublications } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
@@ -23,13 +26,12 @@ import { staggerContainer, staggerItem } from '../lib/animations'
 import { ICON_PROPS } from '../lib/iconProps'
 import { Button } from '../components/ui/Button'
 import { AllProjectsBanner, AllProjectsSwitch } from '../components/AllProjectsControls'
-import { useAllProjectsOn } from '../lib/allProjects'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectPins } from '../hooks/useProjectPins'
 import { mutedCategoryOptions, isPoorHealth, projectRowName } from '../lib/projectListOptions'
 import { useAllProjectProducts } from '../hooks/useProjectProducts'
 import { homeOf, type ProductRow, type ProductsByProject } from '../lib/products'
-import ProjectSleekList from '../components/project/ProjectSleekList'
+import ProjectSleekList, { ProjectTally } from '../components/project/ProjectSleekList'
 import ProjectDirectory from '../components/project/ProjectDirectory'
 import type { SleekSort } from '../components/table/SleekRows'
 
@@ -148,8 +150,9 @@ function projectRecencyMs(p: Project): number {
 }
 
 export default function Projects() {
-  const allProjectsOn = useAllProjectsOn()
   const isPi = useAuth().user.isPi
+  const isPhone = useIsMobile(768)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const { data: projects = [], isLoading: projectsLoading } = useProjects()
   // One title writer (D3(a)): this used to race a second raw document.title
   // effect, so the tab read "My projects" or "Projects (N active)" depending
@@ -375,30 +378,120 @@ export default function Projects() {
   const hiddenCount = projects.length - statusScoped.length
   const hiddenLabel = activeStatus === 'open' ? 'done hidden' : 'hidden'
 
+  const findField = (
+    <label className="tk-find" data-testid="projects-find">
+      <Search {...ICON_PROPS} size={14} aria-hidden="true" />
+      <input
+        type="search"
+        value={findQ}
+        onChange={(e) => setFindQ(e.target.value)}
+        placeholder="Find a project"
+        title="Searches names, descriptions and products, across every filter"
+        aria-label="Find a project"
+      />
+    </label>
+  )
+  const groupLinks = categoryFilters.map((f) => (
+    <FilterPill
+      key={f.key}
+      label={f.label}
+      active={activeCategory === f.key}
+      onClick={() => setActiveCategory(f.key)}
+    />
+  ))
+  const statusLinks = (
+    <>
+      {STATUS_FILTERS.map((f) => (
+        <FilterPill
+          key={f.key}
+          label={f.label}
+          active={activeStatus === f.key}
+          onClick={() => setActiveStatus(f.key)}
+          title={f.title}
+        />
+      ))}
+      <FilterPill
+        label="Stalled"
+        active={stalledOnly}
+        onClick={() => setStalledOnly(!stalledOnly)}
+        title="Active projects with no movement in the stale window (Settings, Lab Preferences)"
+      />
+    </>
+  )
+  // "0 projects" while the list is still loading is a false claim.
+  const countsLine = projectsLoading && projects.length === 0 ? null : (
+    <span className="text-xs" style={{ color: 'var(--slate)', whiteSpace: 'nowrap' }}>
+      {categoryStrip}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
+    </span>
+  )
+  const dependenciesToggle = viewMode === 'pipeline' && (
+    <button
+      type="button"
+      onClick={() => setShowDeps(!showDeps)}
+      className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+      style={{
+        fontSize: 'var(--label-size)',
+        fontWeight: showDeps ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
+        background: showDeps ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
+        color: 'var(--job-accent)',
+        border: '1px solid transparent',
+        transition: 'all 0.2s',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <GitBranch {...ICON_PROPS} size={12} />
+      Dependencies
+    </button>
+  )
+  const activeFilterCount = [activeCategory !== 'all', activeStatus !== 'open', stalledOnly].filter(Boolean).length
+  const clearFilters = () => setSearchParams((prev) => {
+    const out = new URLSearchParams(prev)
+    for (const k of ['category', 'status', 'filter']) out.delete(k)
+    return out
+  }, { replace: true })
+  const viewOptions = [
+    { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
+    { key: 'pipeline', icon: <LayoutGrid {...ICON_PROPS} size={14} />, label: 'Pipeline' },
+    { key: 'browse', icon: <Compass {...ICON_PROPS} size={14} />, label: 'Browse' },
+  ]
+
 
   return (
     <>
     <DataPage
-      // Browse lists every lab project, not mine, so the title and the hero
-      // count (which counts mine) would mislabel it.
-      title={browsing ? 'Browse projects' : allProjectsOn ? 'All projects' : 'My projects'}
+      // The nav word on every view (Nick's mock, 2026-11-05). Browse lists every lab
+      // project, not mine, so the hero count (which counts mine) stays off there.
+      title="Projects"
       // The page's one telling number (color-back pick 2): how many projects
       // this list holds. Static: the list it counts is right below.
       hero={browsing || (projectsLoading && projects.length === 0) ? undefined : { value: totalCount, label: heroLabel }}
       actions={
         <>
-        <AllProjectsSwitch />
+        {!isPhone && <AllProjectsSwitch />}
         <Button variant="primary" type="button" onClick={() => setShowCreate(true)} className="new-project-btn">
           <Plus {...ICON_PROPS} size={14} />
           New Project
         </Button>
         </>
       }
-      views={[
-        { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
-        { key: 'pipeline', icon: <LayoutGrid {...ICON_PROPS} size={14} />, label: 'Pipeline' },
-        { key: 'browse', icon: <Compass {...ICON_PROPS} size={14} />, label: 'Browse' },
-      ]}
+      // Phone (Nick's mock, 2026-11-05): the tabs and the view switch share a row, the
+      // switch without icons, then Find and Filters. Everything else is in the sheet.
+      besideTabs={isPhone && (
+        <SegmentedToggle
+          ariaLabel="View"
+          options={viewOptions.map((v) => ({ value: v.key, label: v.label }))}
+          value={browsing ? 'browse' : viewMode}
+          onChange={onViewChange}
+        />
+      )}
+      hideControls={isPhone}
+      headControls={isPhone && !browsing && (
+        <div className="tk-phone-find">
+          {findField}
+          <FiltersButton count={activeFilterCount} open={filtersOpen} onClick={() => setFiltersOpen(true)} />
+        </div>
+      )}
+      views={viewOptions}
       activeView={browsing ? 'browse' : viewMode}
       onViewChange={onViewChange}
       /* Only Pipeline is wide. Nick 2026-10-13, asked "Should List go back to
@@ -413,84 +506,22 @@ export default function Projects() {
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
               inline in the toolbar and occluded the Pipeline toggle mid-word.
               The Pipeline view toggle (above) is already visible chrome. */}
-          {/* Phone: one nowrap row that scrolls sideways (.tk-flt-scroll), so the
-              status axis never splits across wrapped lines. From md up the
-              links wrap as before. The scroller engages only because
-              TableControls caps each of its groups at the row's width. */}
-          <label className="tk-find" data-testid="projects-find">
-            <Search {...ICON_PROPS} size={14} aria-hidden="true" />
-            <input
-              type="search"
-              value={findQ}
-              onChange={(e) => setFindQ(e.target.value)}
-              placeholder="Find a project"
-              title="Searches names, descriptions and products, across every filter"
-              aria-label="Find a project"
-            />
-          </label>
-          <div className="tk-flt tk-flt-scroll">
-          {categoryFilters.map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={activeCategory === f.key}
-              onClick={() => setActiveCategory(f.key)}
-            />
-          ))}
+          {findField}
+          <div className="tk-flt">
+          {groupLinks}
           {/* #123: status is a SECOND, orthogonal axis (category answers "whose
               work", status answers "is it still open"), so it gets its own pill
               group behind a hairline rather than being folded into the category
               row where "Active" would read as a fourth category. */}
           <span aria-hidden="true" style={{ width: 1, alignSelf: 'stretch', margin: '0 2px', background: 'var(--border-subtle)' }} />
-          {STATUS_FILTERS.map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={activeStatus === f.key}
-              onClick={() => setActiveStatus(f.key)}
-              title={f.title}
-            />
-          ))}
-          <FilterPill
-            label="Stalled"
-            active={stalledOnly}
-            onClick={() => setStalledOnly(!stalledOnly)}
-            title="Active projects with no movement in the stale window (Settings, Lab Preferences)"
-          />
+          {statusLinks}
           </div>
         </>
       }
       rightExtra={browsing ? undefined :
         <>
-          {/* "0 projects" while the list is still loading is a false claim. */}
-          {!(projectsLoading && projects.length === 0) && <span
-            className="text-xs"
-            style={{
-              color: 'var(--slate)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-              {categoryStrip}{hiddenCount > 0 ? ` · ${hiddenCount} ${hiddenLabel}` : ''}
-          </span>}
-          {viewMode === 'pipeline' && (
-            <button
-              type="button"
-              onClick={() => setShowDeps(!showDeps)}
-              className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
-              style={{
-                fontSize: 'var(--label-size)',
-                fontWeight: showDeps ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
-                background: showDeps ? 'color-mix(in srgb, var(--job-accent) 10%, transparent)' : 'transparent',
-                color: 'var(--job-accent)',
-                border: '1px solid transparent',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <GitBranch {...ICON_PROPS} size={12} />
-              Dependencies
-            </button>
-          )}
+          {countsLine}
+          {dependenciesToggle}
         </>
       }
       beforeBody={
@@ -541,6 +572,7 @@ export default function Projects() {
             productsByProject={productsByProject}
             kinds={productKinds}
             stageOf={stageOf}
+            hideTally={isPhone}
           />
         )}
 
@@ -698,6 +730,18 @@ export default function Projects() {
           </>
         )}
       </DataPage>
+    {isPhone && (
+      <FiltersSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} count={activeFilterCount} onClear={clearFilters}>
+        <AllProjectsSwitch />
+        <FilterSection label="Group"><div className="tk-flt">{groupLinks}</div></FilterSection>
+        <FilterSection label="Status"><div className="tk-flt">{statusLinks}</div></FilterSection>
+        <FilterSection label="In this list">
+          {countsLine}
+          <ProjectTally projects={filtered} stageOf={stageOf} />
+          {dependenciesToggle}
+        </FilterSection>
+      </FiltersSheet>
+    )}
 
       {/* Create Project Modal */}
       <CreateProjectModal
