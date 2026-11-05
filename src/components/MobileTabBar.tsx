@@ -3,33 +3,24 @@ import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
-  ListChecks,
-  FolderKanban,
   Search,
   MoreHorizontal,
   X,
-  Calendar,
-  Clock,
-  FileText,
-  Users,
   Activity,
   HelpCircle,
-  Award,
   BookOpen,
-  Library,
   Settings,
   Bug,
   LayoutGrid,
   User,
   History,
   Zap,
-  Video,
   ExternalLink,
   Plus,
   Inbox,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
-import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
+import { PORTAL_PAGE_ICONS, PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAuth } from '../hooks/useAuth'
 import { QUICK_ADD_EVENT, openGlobalQuickAdd } from './GlobalQuickAddModal'
@@ -72,9 +63,9 @@ export default function MobileTabBar() {
   }, [overflowOpen])
 
   const primaryTabs = [
-    { to: PATHS.dashboard, icon: LayoutDashboard, label: 'Today' },
-    { to: PATHS.myTasks, icon: ListChecks, label: 'Tasks' },
-    { to: PATHS.projects, icon: FolderKanban, label: 'Projects' },
+    { to: PATHS.dashboard, icon: PORTAL_PAGE_ICONS[PATHS.dashboard], label: 'Today' },
+    { to: PATHS.myTasks, icon: PORTAL_PAGE_ICONS[PATHS.myTasks], label: 'Tasks' },
+    { to: PATHS.projects, icon: PORTAL_PAGE_ICONS[PATHS.projects], label: 'Projects' },
     { to: PATHS.search, icon: Search, label: 'Search' },
   ]
 
@@ -332,13 +323,13 @@ const OVERFLOW_SECTIONS: { title: string; piOnly?: boolean; memberOnly?: boolean
   {
     title: 'Hub',
     routes: [
-      { to: PATHS.calendar, icon: Calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar] },
-      { to: PATHS.deadlines, icon: Clock, label: PORTAL_PAGE_LABELS[PATHS.deadlines] },
-      { to: PATHS.meetings, icon: Video, label: PORTAL_PAGE_LABELS[PATHS.meetings] },
-      { to: PATHS.manuscripts, icon: FileText, label: PORTAL_PAGE_LABELS[PATHS.manuscripts] },
-      { to: PATHS.grants, icon: Award, label: PORTAL_PAGE_LABELS[PATHS.grants] },
-      { to: PATHS.library, icon: Library, label: PORTAL_PAGE_LABELS[PATHS.library] },
-      { to: PATHS.team, icon: Users, label: PORTAL_PAGE_LABELS[PATHS.team] },
+      { to: PATHS.calendar, icon: PORTAL_PAGE_ICONS[PATHS.calendar], label: PORTAL_PAGE_LABELS[PATHS.calendar] },
+      { to: PATHS.deadlines, icon: PORTAL_PAGE_ICONS[PATHS.deadlines], label: PORTAL_PAGE_LABELS[PATHS.deadlines] },
+      { to: PATHS.meetings, icon: PORTAL_PAGE_ICONS[PATHS.meetings], label: PORTAL_PAGE_LABELS[PATHS.meetings] },
+      { to: PATHS.manuscripts, icon: PORTAL_PAGE_ICONS[PATHS.manuscripts], label: PORTAL_PAGE_LABELS[PATHS.manuscripts] },
+      { to: PATHS.grants, icon: PORTAL_PAGE_ICONS[PATHS.grants], label: PORTAL_PAGE_LABELS[PATHS.grants] },
+      { to: PATHS.library, icon: PORTAL_PAGE_ICONS[PATHS.library], label: PORTAL_PAGE_LABELS[PATHS.library] },
+      { to: PATHS.team, icon: PORTAL_PAGE_ICONS[PATHS.team], label: PORTAL_PAGE_LABELS[PATHS.team] },
     ],
   },
   {

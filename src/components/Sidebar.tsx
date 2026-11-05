@@ -3,16 +3,8 @@ import { lazyRoute } from '../lib/lazyRoute'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 const BugReportModal = lazyRoute(() => import('./BugReportModal'))
 import {
-  LayoutDashboard,
   User,
-  SquareCheck,
-  Calendar,
-  Clock,
-  FolderKanban,
-  FileText,
   Search,
-  DollarSign,
-  Users as UsersIcon,
   Activity,
   Settings,
   ChevronLeft,
@@ -22,11 +14,9 @@ import {
   Bug,
   History,
   LayoutGrid,
-  Library,
   Star,
   LogOut,
   Zap,
-  Video,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth, forgetCachedSlugs } from '../hooks/useAuth'
@@ -41,7 +31,7 @@ import { useProjectPins } from '../hooks/useProjectPins'
 import { projectsForSidebar } from '../lib/sidebarProjects'
 import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
-import { PORTAL_PAGE_LABELS } from '../constants/pageLabels'
+import { PORTAL_PAGE_ICONS, PORTAL_PAGE_LABELS } from '../constants/pageLabels'
 import { FaceDisc } from './today/skin'
 import { getPersonInfo } from '../data/team'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -99,19 +89,17 @@ interface NavItem {
 const MAIN_NAV: NavItem[] = [
   // "Today" replaces "Dashboard" as the primary landing label after the
   // Today B2 cutover (see CLAUDE.md Rule 52). Route stays /portal/dashboard.
-  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: LayoutDashboard },
-  // SquareCheck (check contained INSIDE the square) over the old
-  // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
-  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: SquareCheck },
+  { to: PATHS.dashboard, label: PORTAL_PAGE_LABELS[PATHS.dashboard], icon: PORTAL_PAGE_ICONS[PATHS.dashboard] },
+  { to: PATHS.myTasks, label: PORTAL_PAGE_LABELS[PATHS.myTasks], icon: PORTAL_PAGE_ICONS[PATHS.myTasks] },
   // Nick 2026-10-12: Today, Tasks, Projects, then Calendar and the rest.
-  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: FolderKanban },
-  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: Calendar },
-  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: Clock },
-  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: Video },
-  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: FileText },
-  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: DollarSign },
-  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: Library },
-  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: UsersIcon },
+  { to: PATHS.projects, label: PORTAL_PAGE_LABELS[PATHS.projects], icon: PORTAL_PAGE_ICONS[PATHS.projects] },
+  { to: PATHS.calendar, label: PORTAL_PAGE_LABELS[PATHS.calendar], icon: PORTAL_PAGE_ICONS[PATHS.calendar] },
+  { to: PATHS.deadlines, label: PORTAL_PAGE_LABELS[PATHS.deadlines], icon: PORTAL_PAGE_ICONS[PATHS.deadlines] },
+  { to: PATHS.meetings, label: PORTAL_PAGE_LABELS[PATHS.meetings], icon: PORTAL_PAGE_ICONS[PATHS.meetings] },
+  { to: PATHS.manuscripts, label: PORTAL_PAGE_LABELS[PATHS.manuscripts], icon: PORTAL_PAGE_ICONS[PATHS.manuscripts] },
+  { to: PATHS.grants, label: PORTAL_PAGE_LABELS[PATHS.grants], icon: PORTAL_PAGE_ICONS[PATHS.grants] },
+  { to: PATHS.library, label: PORTAL_PAGE_LABELS[PATHS.library], icon: PORTAL_PAGE_ICONS[PATHS.library] },
+  { to: PATHS.team, label: PORTAL_PAGE_LABELS[PATHS.team], icon: PORTAL_PAGE_ICONS[PATHS.team] },
 ]
 
 const PI_NAV: NavItem[] = [
