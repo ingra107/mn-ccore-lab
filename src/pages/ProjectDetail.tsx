@@ -26,7 +26,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinkLibrary, useProjectPublications } from '../hooks/useApiData'
-import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useUpdateLink, usePromoteLink, useAddProjectLink } from '../hooks/useMutations'
+import { useUpdateProject, usePostProjectUpdate, useAddComment, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask, useUpdateLink, usePromoteLink, useAddProjectLink } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
@@ -41,6 +41,7 @@ import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import CategoryIcon from '../components/CategoryIcon'
 import { ProjectOpenTaskCards } from '../components/project/ProjectOpenTaskCards'
 import TaskGridView from '../components/tasks/TaskGridView'
+import { taskListCopy } from '../lib/taskListCopy'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/LazyTaskDetailPanel'
 import EntityNotFound from '../components/EntityNotFound'
@@ -537,31 +538,25 @@ function ProjectDetailInner({ project }: InnerProps) {
   // paste and the paperclip share its one upload queue and one uploading
   // flag. This page used to wrap SmartCompose in its own drop zone with a
   // third hand-rolled upload chain and a second flag for the same box.
+  const postProjectNote = usePostProjectUpdate(project.slug)
+  const postProjectComment = useAddComment(project.slug)
   const handleQuickCompose = async () => {
     const text = quickComposeText.trim()
     if (!text || quickComposeSubmitting) return
     setQuickComposeSubmitting(true)
     try {
-      const endpoint = quickComposeKind === 'note'
-        ? `/api/projects/${project.slug}/updates`
-        : `/api/projects/${project.slug}/comments`
-      const body = quickComposeKind === 'note'
-        ? { content: text, update_type: 'progress' }
-        : { content: text }
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        setQuickComposeText('')
-        setComposeSheetOpen(false)
-        if (quickComposeKind === 'note') {
-          queryClient.invalidateQueries({ queryKey: ['project-updates', project.slug] })
-        } else {
-          queryClient.invalidateQueries({ queryKey: ['comments', project.slug] })
-        }
+      // Mutations, so a failure reaches the failed-write floor (UndoToast.tsx).
+      // The text stays until the post lands.
+      if (quickComposeKind === 'note') {
+        await postProjectNote.mutateAsync({ content: text, update_type: 'progress' })
+      } else {
+        await postProjectComment.mutateAsync({ content: text, author: user?.name ?? '' })
       }
+      setQuickComposeText('')
+      setComposeSheetOpen(false)
+      showSuccess(quickComposeKind === 'note' ? 'Note added' : 'Comment posted')
+    } catch {
+      // The floor has told the person; the text stays for a retry.
     } finally {
       setQuickComposeSubmitting(false)
     }
@@ -588,7 +583,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   function handleDescSave() {
     setEditingDescription(false)
     if (descDraft.trim() !== (project.description ?? '').trim()) {
-      d1Update.mutate({ description: descDraft.trim() || undefined })
+      d1Update.mutate({ description: descDraft.trim() || null })
     }
   }
 
@@ -596,7 +591,7 @@ function ProjectDetailInner({ project }: InnerProps) {
     setEditingShortName(false)
     const trimmed = shortNameDraft.trim()
     if (trimmed !== (project.short_name ?? '').trim()) {
-      d1Update.mutate({ short_name: trimmed || undefined } as Partial<Project>)
+      d1Update.mutate({ short_name: trimmed || null })
     }
   }
 
@@ -1191,7 +1186,7 @@ isAuthenticated && (project.slug ?? project.id) && (
               submitting={quickComposeSubmitting}
               uploadContext={{ type: 'project', id: project.slug }}
               launchContext={{ projectSlug: project.slug, primaryFolder: project.primary_folder, taskId: null }}
-              placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send, paste or drop to attach)' : 'Comment to team... (Cmd+Enter to send)'}
+              placeholder={quickComposeKind === 'note' ? 'Post a note... (Ctrl+Enter to send, paste or drop to attach)' : 'Comment to team... (Ctrl+Enter to send)'}
               rows={2}
               alwaysShowToolbar
               submitLabel={quickComposeKind === 'note' ? 'Post note' : 'Comment'}
@@ -1255,7 +1250,7 @@ isAuthenticated && (project.slug ?? project.id) && (
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                     e.preventDefault()
-                    d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined })
+                    d1Update.mutate({ strategic_context: strategicDraft.trim() || null })
                     setEditingStrategic(false)
                   }
                   if (e.key === 'Escape') {
@@ -1265,7 +1260,7 @@ isAuthenticated && (project.slug ?? project.id) && (
               />
               <div className="flex items-center gap-2 mt-2">
                 <button
-                  onClick={() => { d1Update.mutate({ strategic_context: strategicDraft.trim() || undefined }); setEditingStrategic(false) }}
+                  onClick={() => { d1Update.mutate({ strategic_context: strategicDraft.trim() || null }); setEditingStrategic(false) }}
                   className="px-3 py-1 rounded-md text-xs font-medium"
                   style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', border: 'none', cursor: 'pointer' }}
                 >
@@ -1603,11 +1598,17 @@ isAuthenticated && (project.slug ?? project.id) && (
               </div>
               <div className="flex items-center gap-1.5">
                 <button
+                  disabled={filtered.length === 0}
                   onClick={() => {
-                    const lines = pendingTasks.map(t => `- [ ] ${t.title || t.description}${t.due_date ? ` (due ${t.due_date})` : ''}`)
-                    navigator.clipboard.writeText(lines.join('\n'))
-                    setTasksCopied(true)
-                    setTimeout(() => setTasksCopied(false), 2000)
+                    const { text, label } = taskListCopy(filtered, taskFilter)
+                    navigator.clipboard.writeText(text).then(
+                      () => {
+                        showSuccess(label)
+                        setTasksCopied(true)
+                        setTimeout(() => setTasksCopied(false), 2000)
+                      },
+                      () => showError('Could not copy to the clipboard'),
+                    )
                   }}
                   className="tk-btn tk-sm tip"
                   style={{ opacity: tasksCopied ? 1 : 0.85 }}
@@ -1639,12 +1640,8 @@ isAuthenticated && (project.slug ?? project.id) && (
               <TaskGridView
                 tasks={filtered}
                 allTasks={projectTasks}
-                onStatusChange={(id, status) => {
-                  const task = projectTasks.find(t => t.id === id)
-                  const prev = task?.status
-                  updateTaskStatus.mutate({ id, status })
-                  if (prev) showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                }}
+                // The grid says what happened and offers the undo, once per action.
+                onStatusChange={(id, status) => updateTaskStatus.mutate({ id, status })}
                 onFieldChange={handleFieldChange}
                 onOpenDetail={setSelectedTask}
                 selectedIds={selectedIds}
