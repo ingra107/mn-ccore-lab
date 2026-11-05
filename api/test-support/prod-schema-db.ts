@@ -14,7 +14,11 @@
 // chain is in the test DB too. It does NOT prove prod applied every
 // migration: the deploy plan's Step 0 reads prod sqlite_master for that.
 //
-// Built once per test worker and cloned per call (serialize/deserialize).
+// Built once per run (prod-schema-global-setup.ts writes the image to a temp file
+// and names it in PROD_SCHEMA_IMAGE_FILE), read once per worker and cloned per
+// call. Each of ~150 test files used to replay the whole chain inside its first
+// test, ~3 s under a parallel run, which crossed the 5 s test timeout on a loaded
+// machine (handleSetLinkRole, 2026-11-05). A run with no setup builds its own.
 //
 // Contract (#8862, pinned by api/test-support/prod-schema-db.test.ts):
 //   - every clone enforces foreign keys, as D1 does on every query. The
@@ -41,7 +45,7 @@ import {
 
 let image: Buffer | null = null
 
-function buildImage(): Buffer {
+export function buildImage(): Buffer {
   const db = new Database(':memory:')
   db.exec(readFileSync(BOOTSTRAP_SCHEMA_PATH, 'utf8'))
   for (const m of listMigrations()) {
@@ -63,7 +67,10 @@ function buildImage(): Buffer {
 
 /** A fresh in-memory database carrying the full migrated Hub schema, FKs enforced. */
 export function prodSchemaDb(): InstanceType<typeof Database> {
-  if (!image) image = buildImage()
+  if (!image) {
+    const file = process.env.PROD_SCHEMA_IMAGE_FILE
+    image = file ? readFileSync(file) : buildImage()
+  }
   const db = new Database(image)
   db.pragma('foreign_keys = ON')
   if (db.pragma('foreign_keys', { simple: true }) !== 1) {
