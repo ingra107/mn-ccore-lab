@@ -187,7 +187,7 @@ export default function CalendarPage() {
     // the data pages and every other operating surface.
     <div className="content-container">
       <PageHeader
-        title="Lab Calendar"
+        title="Calendar"
         subtitle={(() => {
           // A count is a claim about a read that worked.
           if (isLoading || isLoadingError) return ''

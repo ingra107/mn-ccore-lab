@@ -159,13 +159,35 @@ export interface ProjectSleekListProps {
   /** The stage a row is grouped and counted under (headers, footer); the
    *  page decides it (its home product's stage). */
   stageOf: (p: Project) => { key: string; label: string }
+  /** The Filters sheet shows the tally instead (Projects on a phone). */
+  hideTally?: boolean
   emptyLabel?: string
+}
+
+/** Filtered count and per-stage tally: `projects` is the filtered list, so the numbers
+ *  follow every filter and search. */
+export function ProjectTally({ projects, stageOf }: { projects: Project[]; stageOf: (p: Project) => { key: string; label: string } }) {
+  if (projects.length === 0) return null
+  const counts = new Map<string, { label: string; count: number }>()
+  for (const p of projects) {
+    const st = stageOf(p)
+    counts.set(st.key, { label: st.label, count: (counts.get(st.key)?.count ?? 0) + 1 })
+  }
+  return (
+    <div className="pj-tally" data-testid="pj-tally">
+      <span><b>{projects.length}</b> {projects.length === 1 ? 'project' : 'projects'}</span>
+      {Array.from(counts.values()).map(({ label, count }) => (
+        <span key={label}>{label} <b>{count}</b></span>
+      ))}
+    </div>
+  )
 }
 
 export default function ProjectSleekList({
   projects, sort, onSort, focusedIndex, setFocusedIndex, keyboardEnabled, healthBySlug, taskCountByProject,
   linksByProjectId, publicationsBySlug, pinnedSlugs, togglePin, categoryOptions, onFieldChange,
   productsByProject, kinds, stageOf, emptyLabel = 'No projects in this category',
+  hideTally = false,
 }: ProjectSleekListProps) {
   const navigate = useNavigate()
   const slugs = useMemo(() => projects.map((p) => p.slug), [projects])
@@ -370,16 +392,8 @@ export default function ProjectSleekList({
 
   return (
     <>
-      {/* Filtered count and per-stage tally: `projects` is the filtered list,
-          so the numbers follow every filter and search. */}
-      {projects.length > 0 && (
-        <div className="pj-tally" data-testid="pj-tally">
-          <span><b>{projects.length}</b> {projects.length === 1 ? 'project' : 'projects'}</span>
-          {Array.from(stageCounts.values()).map(({ label, count }) => (
-            <span key={label}>{label} <b>{count}</b></span>
-          ))}
-        </div>
-      )}
+      {/* Phone: this line moves to the Filters sheet (Projects.tsx). */}
+      {!hideTally && <ProjectTally projects={projects} stageOf={stageOf} />}
       <SleekTable columns={columns} sort={sort} onSort={onSort} defaultSortLabel="Recent activity" className="pj-list">
         {projects.length === 0 && <div className="pj-empty">{emptyLabel}</div>}
         {projects.length > 0 && (

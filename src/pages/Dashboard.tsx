@@ -304,7 +304,7 @@ export default function Dashboard() {
       <div className="content-container" data-customizing={showCustomize || undefined} style={{ paddingBottom: '4rem', minHeight: 'calc(100vh - 120px)' }}>
         {/* Title, the hero number and the heartbeat line (color-back picks 2, 10). */}
         <PageHeader
-          title="Lab overview"
+          title="Lab Overview"
           hero={publishedCount !== undefined
             ? { value: publishedCount, label: 'published · public site', to: `${PUBLIC_PATHS.publications}?status=Published`, external: true, dest: 'the public Publications page, in a new tab' }
             : undefined}

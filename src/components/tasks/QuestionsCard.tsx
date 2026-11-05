@@ -53,7 +53,7 @@ import { nowInstant, parseDbUtc } from '../../lib/time'
 import { civilDatePlusDays, parseQuestionAnswer, parseQuestionSpec, questionCardState, questionSnoozedUntil, snoozeChoiceDays, todayKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 import { isWeekPlan, weekRangeLabel } from '../../lib/weekPlan'
-import { usePlanNudgeWeek } from '../../hooks/usePlanNudgeWeek'
+import { usePlanRowWeek } from '../../hooks/usePlanNudgeWeek'
 import { useAuth } from '../../hooks/useAuth'
 import { PlanButton } from '../today/PlanButton'
 import { answeredLine } from '../../lib/answerEta'
@@ -86,14 +86,8 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
   // Nick's Telegram card alone, so it is not shown here a second time.
   const tasks = all.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
   const snoozed = allSnoozed.filter((t) => t.source !== 'project_join' && !isWeekPlan(t))
-  // The week that needs a plan. Planning is the owner's alone and the plan rows
-  // are assigned to him, so another PI's list could never show a plan and the row
-  // would never clear. canShowAllProjects is the server's isSiteAdmin, the identity
-  // PACKET_OWNER uses (api/index.ts). isPi && piResolved is the Plan button's own
-  // gate (hooks/usePlanControl.tsx), so the row never shows without its button.
-  const { isPi, piResolved, canShowAllProjects } = useAuth().user
-  const nudgeWeek = usePlanNudgeWeek(all)
-  const planWeek = planNudge && isPi && piResolved && canShowAllProjects ? nudgeWeek : null
+  // The week that needs a plan (hooks/usePlanNudgeWeek.ts says who sees the row).
+  const planWeek = usePlanRowWeek(all, planNudge)
   // Three states, each read off the row (questionCardState). Waiting rows are
   // his turn; answered rows stay visible until the PB lane acts, so an answer
   // nothing picked up cannot drop off every surface, but as one muted line that
@@ -163,7 +157,7 @@ export function QuestionsCard({ tasks: all, band = true, snoozed: allSnoozed = [
               className="tk-attn-fold"
               data-testid="q-collapse"
               aria-label="Hide the Needs you card"
-              title="Hide on Today and My Tasks until you click N needs you"
+              title="Hide on Today and Tasks until you click N needs you"
               onClick={onCollapse}
             >
               <ChevronUp size={15} aria-hidden="true" />

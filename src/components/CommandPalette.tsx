@@ -192,7 +192,7 @@ export default function CommandPalette() {
     const navItems: { path: string; label: string; icon: typeof Search; piOnly?: boolean }[] = [
       { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard },
       { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
-      { path: PATHS.myTasks, label: 'My Tasks', icon: SquareCheck },
+      { path: PATHS.myTasks, label: 'Tasks', icon: SquareCheck },
       { path: PATHS.calendar, label: 'Calendar', icon: Calendar },
       { path: PATHS.deadlines, label: 'Deadlines', icon: Clock },
       { path: PATHS.labCascadeTab, label: 'Deadline Cascade', icon: GitBranch },

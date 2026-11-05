@@ -31,7 +31,8 @@ const tab = (name: string, node: React.ReactNode) => (
 export default function LabOverviewHost() {
   return (
     <PageTabs
-      ariaLabel="Lab overview"
+      title="Lab Overview"
+      ariaLabel="Lab Overview"
       keepParams={['week', 'range']}
       tabs={[
         { key: 'overview', label: 'Overview', render: () => tab('LabOverview', <Dashboard />) },

@@ -61,9 +61,12 @@ interface PlanSectionProps {
   viewerSlug: string
   /** The task read has not answered: no empty line, which would claim nothing is planned. */
   loading?: boolean
+  /** The gold Plan your week row is on screen with its own button: this section does
+   *  not offer a second one. */
+  planRowAbove?: boolean
 }
 
-export function PlanSection({ plan, weekPlanned = !!plan, model, state, projectsByPid, stepsByParent, viewerSlug, loading = false }: PlanSectionProps) {
+export function PlanSection({ plan, weekPlanned = !!plan, model, state, projectsByPid, stepsByParent, viewerSlug, planRowAbove = false, loading = false }: PlanSectionProps) {
   const qc = useQueryClient()
   // Per-surface expand state: a task on the timeline too does not open here.
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -150,7 +153,7 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
   const total = model.today.length + model.picks.length + model.done.length
   const emptyLine = plan
     ? 'Nothing planned this week.'
-    : planCtl.buttonEl
+    : planCtl.buttonEl && !planRowAbove
       ? 'Nothing planned yet. Plan the week, or drag a task here to plan it for today.'
       : 'Nothing planned. Drag a task here to plan it for today.'
 
@@ -168,13 +171,13 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
         </div>
         {plan && <span className="tk-hintx">{weekRangeLabel(plan.spec.week_start)}</span>}
         {/* Not while the task read is out: the word would claim the week has no plan. */}
-        {!loading && planCtl.buttonEl}
+        {!loading && !planRowAbove && planCtl.buttonEl}
       </div>
 
       {open && (
         <>
           {err && <p className="tk-plan-err" role="alert" style={{ margin: '0 2px 6px' }}>{err}</p>}
-          {planCtl.noteEl}
+          {!planRowAbove && planCtl.noteEl}
           {total === 0 && !loading && (
             // One quiet line, no box: the section's drop outline is the drop cue.
             <div data-testid="plan-empty" style={{ fontSize: 12, color: 'var(--sk-t3)', padding: '0 2px 2px' }}>{emptyLine}</div>

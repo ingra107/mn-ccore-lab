@@ -198,7 +198,7 @@ export default function MenteeMilestonesPage({ lead }: { lead?: ReactNode } = {}
   return (
     <PageContainer>
       <PageHeader
-        title="Lab overview"
+        title="Lab Overview"
         subtitle={'Mentee milestones: ' + (() => {
           // R4-P2-05: reconcile subtitle with the table. When a filter is
           // active and the table is narrower than the overall upcoming

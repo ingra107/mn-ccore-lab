@@ -46,7 +46,7 @@ export default function PipelineTab() {
 
   const header = (
     <PageHeader
-      title="Lab overview"
+      title="Lab Overview"
       subtitle={w.tasks.length > 0 || projects.length > 0 ? `${projects.filter((pr) => !isProjectDone(pr.status)).length} open projects, ${projects.filter((pr) => isProjectDone(pr.status)).length} done, ${w.tasks.filter((t) => !t.completed && isWorkTask(t)).length} open tasks` : 'Pipeline, velocity and stalled work'}
       actions={
         <div className="flex items-center gap-3 flex-wrap">

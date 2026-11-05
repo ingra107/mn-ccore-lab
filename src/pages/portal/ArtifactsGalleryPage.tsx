@@ -66,7 +66,7 @@ export default function ArtifactsGalleryPage() {
         {/* ── Header ── the shared PageHeader, same anatomy and top spacing as
             the Digest tab beside it (site audit F22). */}
         <PageHeader
-          title="Artifacts"
+          title="Library"
           subtitle="Curated, reusable reference artifacts. Tag an artifact to shelve it here."
         />
 

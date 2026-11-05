@@ -9,17 +9,24 @@
 // see (hidden) or an unknown key falls back to the default rather than
 // showing an empty page.
 //
-// Each tab renders the page component it replaced, unchanged, so nothing the
-// old page did is lost. Switching tabs drops the other query params: they
-// belonged to the tab you left (its filters, its ?create=true), except the
-// ones the page lists in keepParams.
+// Each tab renders the page component it replaced, so nothing the old page did
+// is lost. Switching tabs drops the other query params: they belonged to the tab
+// you left (its filters, its ?create=true), except the ones the page lists in
+// keepParams.
+//
+// The tray sits below the page title (Nick's mock, 2026-11-05): the tab's PageHeader
+// draws it, through PageTabsContext, so the title and the tray keep their places when
+// the tab changes. Every tab's page titles itself with the host's word.
 
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SegmentedToggle } from './ui/SegmentedToggle'
-import { resolveTab } from '../lib/pageTabs'
+import { PageTabsContext, resolveTab } from '../lib/pageTabs'
 import type { PageTab } from '../lib/pageTabs'
 
-export default function PageTabs({ tabs, ariaLabel, keepParams = [] }: {
+export default function PageTabs({ title, tabs, ariaLabel, keepParams = [] }: {
+  /** The page's title, the nav word. It does not change with the tab. */
+  title: string
   tabs: PageTab[]
   ariaLabel: string
   /** Query params that belong to the page, not to a tab, and survive a tab switch (the Lab overview's `?week=`). */
@@ -28,6 +35,8 @@ export default function PageTabs({ tabs, ariaLabel, keepParams = [] }: {
   const [params, setParams] = useSearchParams()
   const visible = tabs.filter((t) => !t.hidden)
   const active = resolveTab(tabs, params.get('tab'))
+  const [claims, setClaims] = useState(0)
+  const switched = useRef(false)
 
   const select = (key: string) => {
     if (key === active.key) return
@@ -37,27 +46,43 @@ export default function PageTabs({ tabs, ariaLabel, keepParams = [] }: {
       if (v !== null) next.set(k, v)
     }
     if (key !== visible[0].key) next.set('tab', key)
+    switched.current = true
     setParams(next)
   }
 
+  const claim = useCallback(() => {
+    setClaims((n) => n + 1)
+    // The tray remounts with the new tab's header. Keep the keyboard on it.
+    if (switched.current && document.activeElement === document.body) {
+      document.querySelector<HTMLElement>('[data-testid="page-tabs"] button.tk-on')?.focus()
+    }
+    return () => setClaims((n) => n - 1)
+  }, [])
+
+  const toggle = visible.length > 1 ? (
+    <SegmentedToggle
+      ariaLabel={ariaLabel}
+      options={visible.map((t) => ({ value: t.key, label: t.label }))}
+      value={active.key}
+      onChange={select}
+      scrollable
+    />
+  ) : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the toggle is new each render; the value must follow it
+  const host = useMemo(() => ({ title, tray: toggle, claim }), [title, active.key, visible.length, claim])
+
   return (
     <>
-      {visible.length > 1 && (
-        // The pill sizes to its tabs (a flex row, not a block), with a little
-        // air above the hosted page's own header.
+      {toggle && claims === 0 && (
         <div className="content-container page-tabs" data-testid="page-tabs" style={{ display: 'flex', minWidth: 0, paddingTop: 4, marginBottom: 16 }}>
-          <SegmentedToggle
-            ariaLabel={ariaLabel}
-            options={visible.map((t) => ({ value: t.key, label: t.label }))}
-            value={active.key}
-            onChange={select}
-            scrollable
-          />
+          {toggle}
         </div>
       )}
-      <div key={active.key} role="tabpanel" aria-label={active.label}>
-        {active.render()}
-      </div>
+      <PageTabsContext.Provider value={host}>
+        <div key={active.key} role="tabpanel" aria-label={active.label}>
+          {active.render()}
+        </div>
+      </PageTabsContext.Provider>
     </>
   )
 }

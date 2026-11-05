@@ -283,15 +283,10 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
           form still expands in place, beneath the row. */}
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            to={PATHS.meeting(meeting.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-            // Primary action = the teal fill (white on --teal-solid is 6.1:1, AA
-            // both modes). The gold fill read as a second accent on the page.
-            style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', textDecoration: 'none', transition: 'opacity 0.2s' }}
-          >
+          {/* Secondary: Record Meeting is the page's one filled teal button. */}
+          <Button as={Link} variant="secondary" to={PATHS.meeting(meeting.id)} data-testid="view-full-meeting" style={{ textDecoration: 'none' }}>
             View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
-          </Link>
+          </Button>
           <QuickAddTrigger
             label={showDecisionForm ? 'Cancel decision' : 'Log Decision'}
             icon={<Scale {...ICON_PROPS} size={14} />}
@@ -753,13 +748,21 @@ export default function Meetings() {
       <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0, width: '100%' }}>
         <div>
           <PageHeader
-            title="Meeting Hub"
-            subtitle={pageSubtitle || undefined}
+            title="Meetings"
+            subtitle={isPhone ? undefined : pageSubtitle || undefined}
             count={meetings.length}
+            // Phone (Nick's mock, 2026-11-05): progress and the next date are one plain
+            // line under the rule; the next-meeting box and its icons are gone.
+            meta={isPhone && (
+              <div className="tk-phone-meta">
+                <span>{pageSubtitle}</span>
+                <span>Next {daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              </div>
+            )}
             actions={
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Next meeting pill */}
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                {!isPhone && <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
                   style={{ background: daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 10%, transparent)' : 'transparent', border: `1px solid ${daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 40%, transparent)' : 'var(--sk-line2)'}` }}>
                   <Calendar {...ICON_PROPS} size={14} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', flexShrink: 0 }} />
                   <div>
@@ -775,7 +778,7 @@ export default function Meetings() {
                         guess. */}
                   </div>
                   <Clock {...ICON_PROPS} size={12} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', marginLeft: 4 }} />
-                </div>
+                </div>}
 
                 {/* Record Meeting */}
                 <QuickAddForm
@@ -784,7 +787,7 @@ export default function Meetings() {
                   onSubmit={handleAddMeeting}
                   onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']); setNewMeetingTags([]) }}
                   primary
-                  triggerLabel="Record Meeting"
+                  triggerLabel={isPhone ? 'Record' : 'Record Meeting'}
                   submitLabel="Save Meeting"
                 >
                   <div className="space-y-3">

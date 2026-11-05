@@ -1,6 +1,7 @@
 import type React from 'react'
 import PageHeartbeat from './moments/PageHeartbeat'
 import HeroNumber, { type HeroNumberProps } from './moments/HeroNumber'
+import { usePageTabsTray } from '../lib/pageTabs'
 
 // The rule under the title is the heartbeat line (color-back pick 10), and a
 // page with one telling number shows it beside the title as `hero` (pick 2).
@@ -12,6 +13,10 @@ interface PageHeaderProps {
   count?: number
   /** The page's one telling number, in Today's stat face, beside the title. */
   hero?: HeroNumberProps
+  /** A line between the rule and the tabs (Meetings' progress and next date on a phone). */
+  meta?: React.ReactNode
+  /** Beside the tab tray on its row (Projects' view switch on a phone). */
+  besideTabs?: React.ReactNode
 }
 
 export default function PageHeader({
@@ -21,7 +26,12 @@ export default function PageHeader({
   children,
   count,
   hero,
+  meta,
+  besideTabs,
 }: PageHeaderProps) {
+  // Inside a tab host (Projects, Meetings, Library, Lab Overview) the tabs sit below
+  // the title, and the title stays put when they change.
+  const tabs = usePageTabsTray()
   return (
     <div style={{ marginBottom: 'var(--sp-xl)' }}>
       {/* Title row: Today's anatomy. 28px display title, then a muted count or
@@ -71,7 +81,16 @@ export default function PageHeader({
       {/* The heartbeat line: the header's rule */}
       <PageHeartbeat />
 
-      {/* Children (filters, view controls, tabs) */}
+      {meta}
+
+      {(tabs || besideTabs) && (
+        <div className="page-tabs-row" style={{ paddingTop: 'var(--sp-md)' }}>
+          {tabs && <div className="page-tabs" data-testid="page-tabs" style={{ display: 'flex', minWidth: 0 }}>{tabs}</div>}
+          {besideTabs}
+        </div>
+      )}
+
+      {/* Children (filters, view controls) */}
       {children && (
         <div style={{ paddingTop: 'var(--sp-md)' }}>
           {children}

@@ -121,12 +121,10 @@ export default function LabPageLayout({
 
             <div className="text-center lg:text-left">
               <h1
-                className={portalChrome ? 'text-2xl mb-1' : 'text-3xl sm:text-4xl mb-1'}
+                className={portalChrome ? 'tk-h1 mb-1' : 'text-3xl sm:text-4xl mb-1'}
                 style={{
-                  fontFamily: portalChrome ? 'var(--font-sans)' : 'var(--font-display)',
-                  fontWeight: portalChrome ? 600 : 500,
+                  ...(portalChrome ? {} : { fontFamily: 'var(--font-display)', fontWeight: 500 }),
                   color: 'var(--ink)',
-                  letterSpacing: portalChrome ? '-0.01em' : undefined,
                 }}
               >
                 {credentials ? `${name}, ${credentials}` : name}

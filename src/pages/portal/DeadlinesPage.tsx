@@ -163,7 +163,7 @@ export default function DeadlinesPage() {
     const status = (tasksErr as (Error & { status?: number }) | null)?.status
     return (
       <div className="content-container">
-        <PageHeader title="Deadlines & Milestones" subtitle="" />
+        <PageHeader title="Deadlines" subtitle="" />
         <QueryState isLoading={false} isError={true} errorStatus={status}>
           {null}
         </QueryState>
@@ -174,7 +174,7 @@ export default function DeadlinesPage() {
   return (
     <div className="content-container">
       <PageHeader
-        title="Deadlines & Milestones"
+        title="Deadlines"
         subtitle={overdue.length > 0
           ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length + later.length} upcoming`
           : `${thisWeek.length + nextWeek.length + later.length} upcoming`

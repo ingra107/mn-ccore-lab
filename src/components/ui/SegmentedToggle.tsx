@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useEdgeFade } from '../../hooks/useEdgeFade'
 
 /**
  * SegmentedToggle — the ONE segmented control: Today's tray (.tk-seg), the
@@ -44,6 +45,7 @@ export function SegmentedToggle<T extends string>({
   // past the right edge with nothing visible saying which section was open.
   // Only the strip scrolls; the page does not move.
   const stripRef = useRef<HTMLDivElement>(null)
+  useEdgeFade(stripRef, scrollable)
   useLayoutEffect(() => {
     const strip = stripRef.current
     if (!scrollable || !strip) return
