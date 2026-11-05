@@ -21,7 +21,7 @@
 // suppresses their own Reply control, and the API rejects a reply-to-a-reply
 // outright. There is deliberately no recursion here.
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from './activityRender'
 import { canDeleteActivityEntry } from './activityPermissions'
@@ -55,6 +55,8 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   const [expanded, setExpanded] = useState(startComposing)
   const [composing, setComposing] = useState(startComposing)
   const [draft, setDraft] = useState<string | null>(null)
+  // The box as it stands now, for a reply that lands after the person kept typing.
+  const draftNow = useRef<string | null>(null)
 
   const replyCount = root.reply_count ?? 0
   const { hasNew, markRead } = useThreadNew(root, user?.slug ?? '')
@@ -72,7 +74,7 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
   }
   // The reply box sits at the bottom of an open thread; until typed in it holds the seed.
   const replyDraft = draft ?? (isHermesThread ? '@hermes ' : '')
-  const setReplyDraft = (v: string) => setDraft(v)
+  const setReplyDraft = (v: string) => { draftNow.current = v; setDraft(v) }
 
   const pendingPoll = useBoundedPendingPoll()
   const { data: replies = [] } = useQuery<ActivityEntryItemRow[]>({
@@ -116,8 +118,6 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
       // A Hermes reply arrives asynchronously via the ai-requests lane, so the
       // unseen signal can change as a result of this post too.
       queryClient.invalidateQueries({ queryKey: ['unseen-activity'] })
-      setComposing(false)
-      setDraft(null)
       setExpanded(true)
     },
   })
@@ -179,7 +179,15 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
               submitting={postReply.isPending}
               submitLabel="Reply"
               submittingLabel="Posting…"
-              onSubmit={async (content: string) => { await postReply.mutateAsync(content); setDraft(null) }}
+              onSubmit={async (content: string) => {
+                const sent = draftNow.current
+                await postReply.mutateAsync(content)
+                // Text written while the reply was pending was never sent: it stays, open.
+                if (draftNow.current !== sent) return
+                draftNow.current = null
+                setDraft(null)
+                setComposing(false)
+              }}
             />
           )}
         </div>

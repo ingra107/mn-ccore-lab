@@ -254,6 +254,8 @@ export default function SmartCompose(props: SmartComposeProps) {
   const submit = useCallback(async () => {
     const raw = val.trim()
     if (!raw) return
+    // Clear only what this send sent: text written while it was pending stays.
+    const clearSent = () => setVal((cur) => (cur === val ? '' : cur))
     // @workon/@quickchat launch tags never post as comments (seed isolation —
     // see useLaunchCommands). EVERY mode intercepts by default; a surface that
     // routes the tags itself opts out via ownLaunchRouting. Runs on `raw`,
@@ -277,7 +279,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       // controlled custom-mode + launchContext consumer — without this fix a
       // successful @workon/@quickchat launch would leave the seed text
       // sitting in the (controlled) compose box instead of clearing it.
-      const routed = tryLaunchCommand(raw, ctx, () => setVal(''))
+      const routed = tryLaunchCommand(raw, ctx, clearSent)
       if (routed) return
     }
     // ── @hermes prefix (task mode): unified timeline (Hermes wave Phase 5) ──────
@@ -293,7 +295,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       const taskId = (props as TaskModeProps).taskId
       const result = await askHermesOnTask(taskId, raw)
       if (result.ok) {
-        setVal('')
+        clearSent()
         queryClient.invalidateQueries({ queryKey: activityQueryKey('task', taskId) })
         // Shared copy (src/lib/askHermes.ts) — the POST differs from the day feed's,
         // the outcome wording does not.
@@ -317,14 +319,14 @@ export default function SmartCompose(props: SmartComposeProps) {
         await onSubmit(content)
         // Clear when caller didn't control state. If controlled, it's the caller's
         // job to clear (in case they want to retry on error etc.).
-        if (!isControlled) setVal('')
+        if (!isControlled) clearSent()
       } catch (err) {
         console.error('SmartCompose submit failed:', err)
       }
     } else {
       taskMutation.mutate({ content }, {
         onSuccess: () => {
-          setVal('')
+          clearSent()
           undoToast.showSuccess('Note posted')
         },
       })

@@ -54,6 +54,7 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
   async function handleSubmit() {
     const content = text.trim()
     if (!content || submitting) return
+    const sent = text
     setSubmitting(true)
     try {
       // A typed @hermes PREFIX selects the default audience (private), the same
@@ -62,7 +63,8 @@ export default function MeetingActivityFeed({ meetingId }: { meetingId: string }
       // VERBATIM either way — the stored token is what the server fires on.
       const askedHermes = isHermesPrefix(content)
       const result = await askHermesOnMeeting(meetingId, content, askedHermes ? 'author' : 'team')
-      if (result.ok) setText('')
+      // Only what this post sent: text written while it was pending stays.
+      if (result.ok) setText((cur) => (cur === sent ? '' : cur))
       if (askedHermes) {
         const t = hermesOutcomeToast(result, 'Posted')
         toast[t.kind === 'error' ? 'showError' : t.kind === 'info' ? 'showInfo' : 'showSuccess'](t.text)
