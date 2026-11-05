@@ -1,10 +1,24 @@
-# ▶▶ 2026-11-04 (work): BUG SWEEP #156-#168 SHIPPED; #169 OPEN. main `2f4e291e` live (probe PASS). **Schema v157.**
+# ▶▶ 2026-11-04 (work, late): #169 LIVE, WAITING ON ONE REAL PLAN. main `23f8e898` deployed `3339bf31` (probe PASS). PB main `96db2a6fb`, home listener restarted. **Schema v157.**
 
 ## Shipped
-- #163 a failed refetch keeps Today (`isLoadingError`, not `isError`) with a retry note; Project detail and Team directory too (`4b7d0090`). #164 a changed packet can be used: "Got it anyway" sends `accept_changed` (`dd8a3698`). #165 check-in/milestone rows carry `.tk` themselves (`1ac8eeee`). #167 done earlier-plan picks drop off (`0d117ef9`). #166 plan draft in localStorage, `lib/planDraft.ts` (`21bd9218`). #157 duration column (`cca2fbb0`). #161 link rows stack (`ad983a9a`). #158 pulse wins link (`4dc125d1`). #159/#160/#162 search: products source, `p:`-style prefixes in `shared/searchPrefix.ts`, named projects outrank tasks, one matcher `lib/projectSearch.ts` (`9310fa33`, `884d0d4f`, `2f4e291e`). #168 Waiting on card, status `waiting_external` + optional check-in task, no schema change (`055ffe8a`). #156 was already live.
+- Week planning is a live session plus a working desk (CLAUDE.md Rule 57a). Pick page, Re-plan, the `week_replan` lane and the Sunday offer are retired. Rollback is reverting the commits: there is no old page to fall back on.
+
+## Do first
+- **Keep #169 and `bug_mw291o484isxfj` open until a real plan reaches the Hub.** Ask Nick for one real plan from each device. The first real run must confirm: the skill loads, the real desk publishes and `answers` read back, the PB-key answer lands with one `packet_prepare` per started pick, the bookkeeping task's source is accepted, and edits don't trip BrainDB's base-hash check. If `apply` stops partway, `ps apply <id>` resumes it.
+- Nick approves release draft `rel_01M6HAQMME6P2D8DZVXD2V2EZ1` in the pill. Plan is PI-only, so the draft leaves it out.
+
+## Open from this work
+- A note starting `@me ` on a note-only prep pick posts team-visible with a literal `@me` (`weekPlanNotes`, `api/lib/week-plan-start.ts:331`): strip it and set `visibility='author'`. Beside a picked option it goes private, so the approval line's "for the team" is wrong there.
+- Small leftovers: `planNudgeWeek`'s `nowIso` could be typed `Instant`; `/claim` doesn't refuse a retired `week_replan` id; `_agent_floor` in `week_plan.py` reserves for a run that no longer exists; dead `deps.agent` guards in `test_plan_session.py`; `ThisWeekSection.test.tsx` logs two query warnings.
+
+---
+
+# ▶▶ 2026-11-04 (work): BUG SWEEP #156-#168 SHIPPED. main `2f4e291e` live (probe PASS). **Schema v157.**
+
+## Shipped
+- #163 a failed refetch keeps Today (`isLoadingError`, not `isError`) with a retry note; Project detail and Team directory too (`4b7d0090`). #164 a changed packet can be used: "Got it anyway" sends `accept_changed` (`dd8a3698`). #165 check-in/milestone rows carry `.tk` themselves (`1ac8eeee`). #167 done earlier-plan picks drop off (`0d117ef9`). #166 plan draft in localStorage (`21bd9218`; the page and `lib/planDraft.ts` retired later the same day by #169). #157 duration column (`cca2fbb0`). #161 link rows stack (`ad983a9a`). #158 pulse wins link (`4dc125d1`). #159/#160/#162 search: products source, `p:`-style prefixes in `shared/searchPrefix.ts`, named projects outrank tasks, one matcher `lib/projectSearch.ts` (`9310fa33`, `884d0d4f`, `2f4e291e`). #168 Waiting on card, status `waiting_external` + optional check-in task, no schema change (`055ffe8a`). #156 was already live.
 
 ## Open
-- **#169 stays open: a design call for Nick** (replace the Hub pick page with a terminal session plus a saved planning artifact). Crosses into PB.
 - **D1 overload is unexplained.** `hub_errors`: 237 "D1 DB is overloaded" on 2026-11-04 (08:46-13:43 UTC), 253 this week vs 20 last. #163 only stops it blanking Today. `d1 insights` returned empty and `hub_errors` keeps one sample path per fingerprint, so the source is not identified.
 - Release draft `rel_01M6HAQMME6P2D8DZVXD2V2EZ1` has title + blurbs; Nick approves it in the pill.
 - #157 passes its component test but nothing was planned on 11-04, so it was not seen on live rows.

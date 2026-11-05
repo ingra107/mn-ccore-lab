@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-11-04 — Week planning moves to a live session (#169)
+
+Plan on Today starts a Claude session from a laptop or a phone. It briefs, builds a working desk Nick answers, shows one exact list he approves once, then applies it, resumably. A started task can now leave This week through `withdrawn`. Retired together: the pick page, Re-plan and its lane, and the Sunday unattended offer. The gold Plan your week row is computed on read. No schema change. Spec `docs/superpowers/specs/2026-11-04-plan-session-design.md`; PB decision `Context/Decisions/2026-11-04-week-plan-offer-retired.md`.
+
 ## 2026-11-03 — Today sections by work kind (schema-v157)
 
 Today and My Tasks place every task through one resolver, `src/lib/taskSections.ts`: hand sort, With others, CLIF ETL, check-in, `work_kind`, then Sort. Sections: This week + Plan today, Sort, Review, Writing, Analysis & Build, Replies & admin, CLIF ETL, With others (collapsed). Inside a section: planned, urgent, high, due date, done last; a fold rule keeps planned, overdue, due or deadline within 7 days, urgent, high and New rows visible. The Move menu is replaced by Set section (`POST /api/tasks/:id/sort`, logged in `task_sort_events`); `GET /api/tasks?others_of=` feeds With others. `getGroupForTask`, the Deep Work / Priorities / Quick groups, the 5-row preview and the `today.dueWindow` pref are gone. `tasks.group_override` stays in the schema but nothing reads it; phase 2 drops it.
