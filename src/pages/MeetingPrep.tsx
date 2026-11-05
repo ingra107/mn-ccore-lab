@@ -23,6 +23,14 @@ import { nameSlugsInText } from '../lib/personLabel'
 import PageHeartbeat from '../components/moments/PageHeartbeat'
 import { useShowMore } from '../hooks/useShowMore'
 import { ShowMoreButton } from '../components/ui/ShowMore'
+import { QueryErrorNote } from '../components/QueryErrorNote'
+import { ApiError, fetchApi } from '../lib/api'
+import { meetingCountdownLabel } from '../lib/meetingStatus'
+import { taskLinkFor } from '../../shared/taskLink'
+
+// How many rows each list shows before "Show more".
+const OVERDUE_FIRST = 5
+const DEADLINES_FIRST = 8
 
 // The prep API returns at most this many activity rows (meetings.ts LIMIT 30).
 // A full page means "at least this many", so the stat says 30+, not 30.
@@ -48,9 +56,8 @@ function useMeetingPrep(meetingId: string) {
   return useQuery<PrepData>({
     queryKey: ['meeting-prep', meetingId],
     queryFn: async () => {
-      const res = await fetch(`/api/meetings/${meetingId}/prep`)
-      const json = await res.json() as { data: PrepData }
-      return json.data
+      const res = await fetchApi<PrepData>(`/api/meetings/${meetingId}/prep`)
+      return res.data
     },
     enabled: !!meetingId,
   })
@@ -58,7 +65,7 @@ function useMeetingPrep(meetingId: string) {
 
 export default function MeetingPrep() {
   const { id } = useParams<{ id: string }>()
-  const { data, isLoading } = useMeetingPrep(id || '')
+  const { data, isLoading, error, refetch } = useMeetingPrep(id || '')
 
   usePageMeta(
     data ? `Prep: ${data.meeting.title} | MN-CCORE` : 'Meeting Prep | MN-CCORE',
@@ -68,12 +75,25 @@ export default function MeetingPrep() {
   // The list shows 10 and the rest one tap away (principle 5); the stat above
   // it used to say 30 over a list that stopped at 10 (O2B, 2026-10-14).
   const activityList = useShowMore(data?.recentActivity ?? NO_ACTIVITY, 10)
+  const overdueList = useShowMore(data?.overdueTasks ?? NO_ACTIVITY, OVERDUE_FIRST)
+  const deadlineList = useShowMore(data?.upcomingDeadlines ?? NO_ACTIVITY, DEADLINES_FIRST)
 
   if (isLoading) {
     return (
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
         <Breadcrumb backTo="/meetings" backLabel="Meetings" current="Prep" />
         <TableSkeleton rows={6} cols={3} />
+      </div>
+    )
+  }
+
+  // Only a 404 means the meeting is not there. Anything else is a failed read of
+  // a meeting the person just came from, so it must not say "not found".
+  if (!data && error && !(error instanceof ApiError && error.status === 404)) {
+    return (
+      <div className="content-container" style={{ paddingBottom: '4rem' }}>
+        <Breadcrumb backTo={PATHS.meeting(id || '')} backLabel="Meeting" current="Prep" />
+        <QueryErrorNote label="this meeting's prep" onRetry={() => { void refetch() }} />
       </div>
     )
   }
@@ -129,19 +149,15 @@ export default function MeetingPrep() {
           <PageHeartbeat />
           {/* Meeting countdown */}
           {(() => {
-            const meetingDate = new Date(meeting.date + 'T15:00:00') // 3pm CT
-            const now = new Date()
-            const diffMs = meetingDate.getTime() - now.getTime()
-            if (diffMs < 0) return null
-            const days = Math.floor(diffMs / 86400000)
-            const hours = Math.floor((diffMs % 86400000) / 3600000)
-            const label = days > 0 ? `${days}d ${hours}h until meeting` : hours > 0 ? `${hours}h until meeting` : 'Meeting starting soon'
+            const label = meetingCountdownLabel(meeting.date)
+            if (!label) return null
+            const isToday = label === 'Today'
             return (
               <span
                 className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                 style={{
-                  backgroundColor: days === 0 ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--sk-line)',
-                  color: days === 0 ? 'var(--job-wants)' : 'var(--sk-t2)',
+                  backgroundColor: isToday ? 'color-mix(in srgb, var(--job-wants) 15%, transparent)' : 'var(--sk-line)',
+                  color: isToday ? 'var(--job-wants)' : 'var(--sk-t2)',
                 }}
               >
                 <Clock {...ICON_PROPS} size={10} />
@@ -191,7 +207,7 @@ export default function MeetingPrep() {
               )}
               {previousActionItems.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, textAlign: 'center', padding: 'var(--sp-lg) 0', margin: 0 }}>
-                  No previous meeting found
+                  {previousMeeting ? `No action items from ${formatShortDate(previousMeeting.date)}` : 'No previous meeting found'}
                 </p>
               )}
             </div>
@@ -207,18 +223,19 @@ export default function MeetingPrep() {
                   <p style={{ fontSize: 10, fontWeight: 500, color: 'var(--job-overdue)', marginBottom: 6 }}>
                     Discuss: Overdue items
                   </p>
-                  {overdueTasks.slice(0, 5).map(task => {
+                  {overdueList.visible.map(task => {
                     const person = getPersonInfo(task.assignee)
                     return (
                       <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
                         <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(task)}</span>
+                        <TaskLink task={task} />
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
                       </div>
                     )
                   })}
+                  <ShowMoreButton list={overdueList} noun="overdue" />
                 </div>
               )}
 
@@ -248,7 +265,7 @@ export default function MeetingPrep() {
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1.5">
                         <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(item)}</span>
+                        <TaskLink task={item} />
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                         </div>
@@ -271,12 +288,12 @@ export default function MeetingPrep() {
             <SectionHead title="Upcoming deadlines" count="Next 14 days" />
             <div className="detail-card" style={{ borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
               {upcomingDeadlines.length > 0 ? (
-                upcomingDeadlines.slice(0, 8).map(task => {
+                deadlineList.visible.map(task => {
                   const person = getPersonInfo(task.assignee)
                   return (
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid var(--sk-line)` }}>
                       <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--sk-t3)', flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{taskShortLabel(task)}</span>
+                      <TaskLink task={task} />
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
@@ -289,6 +306,7 @@ export default function MeetingPrep() {
                   No deadlines in the next two weeks.
                 </p>
               )}
+              <ShowMoreButton list={deadlineList} noun="deadlines" />
             </div>
 
             <SectionHead title="Recent activity" count="Last 14 days" />
@@ -334,6 +352,15 @@ export default function MeetingPrep() {
 
 // ── Sub-components ──────────────────
 
+// A task's name, opening it in the My Tasks drawer.
+function TaskLink({ task, style }: { task: { id: string } & Parameters<typeof taskShortLabel>[0]; style?: React.CSSProperties }) {
+  return (
+    <Link to={taskLinkFor(task.id)} className="link-affordance" style={{ fontSize: 12, color: 'var(--ink)', flex: 1, ...style }}>
+      {taskShortLabel(task)}
+    </Link>
+  )
+}
+
 function ActionRow({ item }: { item: PrepActionItem }) {
   const person = getPersonInfo(item.assignee)
   // R4: canonical isOverdue() uses T23:59:59 — hand-rolled missed same-day items.
@@ -345,13 +372,7 @@ function ActionRow({ item }: { item: PrepActionItem }) {
       ) : (
         <Circle {...ICON_PROPS} size={12} style={{ color: isOverdue ? 'var(--job-overdue)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
       )}
-      <span style={{
-        fontSize: 12, color: 'var(--ink)', flex: 1,
-        textDecoration: item.completed ? 'line-through' : 'none',
-        opacity: item.completed ? 0.85 : 1,
-      }}>
-        {taskShortLabel(item)}
-      </span>
+      <TaskLink task={item} style={item.completed ? { textDecoration: 'line-through', color: 'var(--muted)' } : undefined} />
       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
       </div>

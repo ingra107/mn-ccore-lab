@@ -23,6 +23,7 @@ import ActivityHeatmap from '../components/ActivityHeatmap'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
 import { parseDbUtc } from '../lib/time'
+import { formatShortDate } from '../lib/dateUtils'
 import { isPublished } from '../lib/publicationCounts'
 import { ICON_PROPS } from '../lib/iconProps'
 import SectionHead from '../components/ui/SectionHead'
@@ -50,6 +51,10 @@ const STAGE_COLORS: Record<string, string> = {
 function homeStageColor(p: { home_kind: string | null; home_stage: string | null }): string {
   return (p.home_kind === 'manuscript' && p.home_stage && STAGE_COLORS[p.home_stage]) || 'var(--slate)'
 }
+
+// The chip's tint. The stage color is a var() or a color-mix(), so a hex alpha
+// suffix (`${color}15`) was an invalid value and the chip had no tint at all.
+const stageTint = (color: string) => `color-mix(in srgb, ${color} 8%, transparent)`
 
 // ── Cumulative Publication Curve ──────────────────────────
 
@@ -202,8 +207,8 @@ function ProjectVelocityList({ projectStages }: { projectStages: TrajectoryData[
           return (
             <motion.div
               key={project.id}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ x: -12 }}
+              animate={{ x: 0 }}
               transition={{ delay: i * 0.04, duration: 0.25 }}
             >
               {/* The title wraps and the stage chip drops under it on a narrow
@@ -233,7 +238,7 @@ function ProjectVelocityList({ projectStages }: { projectStages: TrajectoryData[
                     fontSize: '10px',
                     fontWeight: 500,
                     color: stageColor,
-                    background: `${stageColor}15`,
+                    background: stageTint(stageColor),
                     flexShrink: 0,
                   }}
                 >
@@ -681,8 +686,8 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
         return (
           <motion.div
             key={project.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ y: 8 }}
+            animate={{ y: 0 }}
             transition={{ delay: i * 0.04, duration: 0.25 }}
           >
             <Link
@@ -715,7 +720,7 @@ function ActiveProjects({ projects }: { projects: TrajectoryData['projects'] }) 
                     fontSize: 'var(--label-size)',
                     fontWeight: 500,
                     color: stageColor,
-                    background: `${stageColor}15`,
+                    background: stageTint(stageColor),
                   }}
                 >
                   {compactStageLabel(project) || 'No product'}
@@ -780,8 +785,8 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
         return (
           <motion.div
             key={ms.id}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ x: -8 }}
+            animate={{ x: 0 }}
             transition={{ delay: i * 0.04, duration: 0.25 }}
             className="card"
             style={{
@@ -823,7 +828,7 @@ function UpcomingMilestones({ milestones }: { milestones: TrajectoryData['milest
                   }}
                 >
                   {isOverdue ? 'overdue ' : ''}
-                  {ms.due_date}
+                  {formatShortDate(ms.due_date)}
                 </span>
               )}
             </div>
@@ -1184,6 +1189,20 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
   )
 }
 
+// ── Print header ──────────────────────────────────────────
+
+const longToday = () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+
+// Only visible in print: both tabs say whose packet this is and how current.
+function PrintHeader({ title, note }: { title: string; note: string }) {
+  return (
+    <div className="trajectory-print-header" style={{ display: 'none' }}>
+      <h2 style={{ fontSize: '16pt', fontWeight: 500, margin: '0 0 4pt' }}>{title}</h2>
+      <p style={{ fontSize: '10pt', color: '#666', margin: 0 }}>{note}</p>
+    </div>
+  )
+}
+
 // ── Contributions Panel ───────────────────────────────────
 
 function ContributionsPanel({ slug, memberName }: { slug: string; memberName: string }) {
@@ -1248,21 +1267,7 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 
-      {/* Print header -- only visible in print */}
-      <div className="contributions-print-header" style={{ display: 'none' }}>
-        <h2
-          style={{
-            fontSize: '16pt',
-            fontWeight: 500,
-            margin: '0 0 4pt',
-          }}
-        >
-          Contribution Portfolio -- {memberName}
-        </h2>
-        <p style={{ fontSize: '10pt', color: '#666', margin: 0 }}>
-          {period === 365 ? '1 year' : `${period} days`} ending {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </p>
-      </div>
+      <PrintHeader title={`Contribution Portfolio -- ${memberName}`} note={`${period === 365 ? '1 year' : `${period} days`} ending ${longToday()}`} />
 
       {/* Summary stats grid */}
       <div
@@ -1312,7 +1317,7 @@ export default function TrajectoryPage() {
   )
 
   if (!member) {
-    return <Navigate to="/team" replace />
+    return <Navigate to={teamBase} replace />
   }
 
   const displayName = member.credentials
@@ -1325,13 +1330,7 @@ export default function TrajectoryPage() {
   ]
 
   return (
-    <div
-      style={{
-        maxWidth: '64rem',
-        margin: '0 auto',
-        padding: '2rem 1.5rem 4rem',
-      }}
-    >
+    <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
       {/* Back link */}
       <Link
         to={`${teamBase}/${slug}`}
@@ -1494,6 +1493,8 @@ export default function TrajectoryPage() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25 }}
           >
+            <PrintHeader title={`Development Trajectory -- ${displayName}`} note={`As of ${longToday()}`} />
+
             {/* Loading state */}
             {isLoading && (
               <div className="flex items-center justify-center py-16" role="status" aria-label="Loading">
@@ -1633,7 +1634,7 @@ export default function TrajectoryPage() {
             display: none !important;
           }
 
-          .contributions-print-header {
+          .trajectory-print-header {
             display: block !important;
             margin-bottom: 16pt;
             padding-bottom: 8pt;
@@ -1675,7 +1676,7 @@ export default function TrajectoryPage() {
           }
 
           /* Maximize content width */
-          main, [role="main"] {
+          main, [role="main"], .content-container {
             max-width: 100% !important;
             padding: 0 !important;
             margin: 0 !important;

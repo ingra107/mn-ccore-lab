@@ -57,8 +57,8 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
+      initial={{ x: -8 }}
+      animate={{ x: 0 }}
       exit={{ opacity: 0, x: 8 }}
       transition={{ duration: 0.2 }}
       className="card"
