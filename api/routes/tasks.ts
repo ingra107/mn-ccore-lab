@@ -14,6 +14,7 @@ import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { TASK_MEETING_COLS, TASK_MEETING_JOIN } from '../lib/meeting-ref';
 import { postActivityEntry, replySummaryColumns, activityVisibilityGate, activityHiddenClause, sourceKeyFrom } from '../lib/activity-entry';
 import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
+import { parseWatchers, serializeWatchers } from '../../shared/watchers';
 import { blockedByContainsSql } from '../../shared/blockedBy';
 import { DEFAULT_TASK_KIND, NOT_QUESTION_SQL, NOT_QUESTION_SQL_T, TASK_KINDS, notApprovalSql, isTaskKind, withKindLabel, type TaskKind } from '../../shared/taskKinds';
 import { NEXT_STEP_GAPS_SQL, TASK_STEP_COUNT_COLS, TASK_STEPS_SQL } from '../lib/task-steps';
@@ -400,6 +401,19 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     }
   }
 
+  // tasks.watchers has one stored shape, a JSON array or NULL: the read rule
+  // (taskRule, api/lib/table-scope.ts) grants nothing on any other (shared/watchers.ts).
+  // It is Hub-only, off the PB wire, so it rides applyMutation's hubOnly argument
+  // rather than the patch, which the TABLE_FIELDS whitelist would refuse.
+  let watchers: string | null | undefined;
+  if ('watchers' in body) {
+    const v = body.watchers;
+    if (v !== null && typeof v !== 'string' && !Array.isArray(v)) {
+      return error('Invalid watchers: send a list of member slugs', 400);
+    }
+    watchers = serializeWatchers(parseWatchers(v));
+  }
+
   const updates: string[] = [];
   const params: unknown[] = [];
 
@@ -453,7 +467,7 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     params.push(gmailThreadUrl(typeof body.source_thread_id === 'string' && body.source_thread_id ? body.source_thread_id : null));
   }
 
-  if (updates.length === 0) return error('No valid fields to update', 400);
+  if (updates.length === 0 && watchers === undefined) return error('No valid fields to update', 400);
 
   // D22 (2026-05-22): snapshot the current assignee before mutation so we can
   // emit a typed 'assignee_change' event when it genuinely changes. Fetch only
@@ -503,6 +517,7 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     route: 'handleUpdateTask',
     user,
     ...cas,
+    ...(watchers === undefined ? {} : { hubOnly: { watchers } }),
   });
   if (guardsDescription && updateMutResult.status === 'conflict') {
     const now = updateMutResult.current_payload?.description;
