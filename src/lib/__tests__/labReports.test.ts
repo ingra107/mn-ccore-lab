@@ -54,4 +54,8 @@ describe('reports', () => {
     const csv = buildTasksCsv([{ title: 'a, b', assignee: 'nick', completed: 1, priority: 'high', created_at: '2026-10-01T10:00:00Z' }])
     expect(csv.split('\n')[1]).toBe('a; b,nick,Done,high,,,2026-10-01,')
   })
+  it('CSV dates are a day, not the whole D1 stamp', () => {
+    const csv = buildTasksCsv([{ title: 'a', created_at: '2026-10-01 18:00:00', completed_at: '2026-10-02 18:00:00' }])
+    expect(csv.split('\n')[1]).toMatch(/,2026-10-01,2026-10-02$/)
+  })
 })

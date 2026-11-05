@@ -94,6 +94,16 @@ export function todayCivil(zone?: string, now: Date = new Date()): CivilDate {
   return `${get('year')}-${get('month')}-${get('day')}` as CivilDate;
 }
 
+/**
+ * A stored DB timestamp → the viewer-local calendar day (YYYY-MM-DD), '' when it
+ * cannot be read. The one way to get a day out of a stamp: D1's `datetime('now')`
+ * has a space and no T, so `.split('T')[0]` hands back the whole timestamp.
+ */
+export function dbStampDay(value: string | null | undefined): string {
+  const d = parseDbUtc(value)
+  return isNaN(d.getTime()) ? '' : civilFromInstant(d.toISOString())
+}
+
 /** Instant → its weekday (0 = Sunday) and 24-hour clock hour in a zone. The civil
  *  day of the same instant is civilFromInstant. */
 export function zoneWeekdayHour(iso: string, zone?: string): { weekday: number; hour: number } {

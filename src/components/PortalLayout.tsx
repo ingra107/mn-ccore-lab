@@ -20,6 +20,7 @@ import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
 import PulsePill from './whatsnew/PulsePill'
+import NotificationBell from './NotificationBell'
 import { PATHS } from '../constants/paths'
 import { PORTAL_PAGE_LABELS, portalTitle } from '../constants/pageLabels'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -260,6 +261,13 @@ export default function PortalLayout() {
               it shows a short label, like the Search trigger above. */}
           <div className="flex items-center mr-1 sm:mr-2">
             <PulsePill />
+          </div>
+
+          {/* The bell, below lg only: there the sidebar it lives in is a closed
+              drawer, and unread mentions showed nothing until you opened it
+              (Rule 73). */}
+          <div className="lg:hidden flex items-center">
+            <NotificationBell touch />
           </div>
 
           {/* P3-7: per-surface density toggle removed — one global density lives

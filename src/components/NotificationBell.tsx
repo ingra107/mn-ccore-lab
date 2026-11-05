@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
-import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
+import { formatRelativeTime } from '../lib/dateUtils'
+import { groupByViewerDay } from '../lib/notificationDays'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
 import { clampToViewport, type AnchoredBox } from '../lib/viewportClamp'
@@ -25,7 +26,8 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 // rightward when the bell lives in the portal sidebar.
 // triggerColor: the bell icon's ink. The public bar passes a light ink while it
 // sits on the Home hero's dark band; the dropdown keeps the theme's colors.
-export default function NotificationBell({ align = 'right', triggerColor = 'var(--slate)' }: { align?: 'left' | 'right'; triggerColor?: string }) {
+// touch: a 44px target, beside the phone top bar's other controls.
+export default function NotificationBell({ align = 'right', triggerColor = 'var(--slate)', touch = false }: { align?: 'left' | 'right'; triggerColor?: string; touch?: boolean }) {
   const { user, isAuthenticated } = useAuth()
   const slug = user?.slug ?? ''
   const { data: notifications = [] } = useNotifications(slug)
@@ -38,18 +40,15 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
   // when the panel opens and again on resize, so the panel stays on screen
   // wherever the bell sits (a phone header put it 72px off the left edge).
   const [box, setBox] = useState<AnchoredBox | null>(null)
-  const measure = () => {
+  const measure = useCallback(() => {
     const el = ref.current
     if (el) setBox(clampToViewport(el.getBoundingClientRect(), PANEL_WIDTH, window.innerWidth, align))
-  }
-  const measureRef = useRef(measure)
-  measureRef.current = measure
+  }, [align])
   useEffect(() => {
     if (!open) return
-    const onResize = () => measureRef.current()
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [open])
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [open, measure])
 
   // Slack-style read semantics (Nick 2026-06-11): opening the list IS seeing
   // it. Unread highlights stay visible while the dropdown is open; when it
@@ -58,9 +57,11 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
   // without re-running the effect.
   const wasOpen = useRef(false)
   const unreadRef = useRef(0)
-  unreadRef.current = unreadCount
   const markAllRef = useRef(markAllRead.mutate)
-  markAllRef.current = markAllRead.mutate
+  useEffect(() => {
+    unreadRef.current = unreadCount
+    markAllRef.current = markAllRead.mutate
+  })
   useEffect(() => {
     if (open) { wasOpen.current = true; return }
     if (wasOpen.current) {
@@ -104,29 +105,7 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
     [isAuthenticated, notifications],
   )
 
-  const groupedByDay = useMemo(() => {
-    const today = localDateKey()
-    // Intentional snapshot at memoize time (day-boundary label), not a bug —
-    // recomputes whenever displayNotifications changes, which is frequent
-    // enough that a day-stale label is not observable in practice.
-    // eslint-disable-next-line react-hooks/purity -- see comment above
-    const yesterday = localDateKey(new Date(Date.now() - 86400000))
-    const groups: { label: string; items: typeof displayNotifications }[] = []
-    const map = new Map<string, typeof displayNotifications>()
-
-    for (const n of displayNotifications) {
-      const date = (n.created_at || '').split('T')[0] || 'unknown'
-      if (!map.has(date)) map.set(date, [])
-      map.get(date)!.push(n)
-    }
-
-    for (const [date, items] of map) {
-      const label = date === today ? 'Today' : date === yesterday ? 'Yesterday' : formatMediumDate(date)
-      groups.push({ label, items })
-    }
-
-    return groups
-  }, [displayNotifications])
+  const groupedByDay = useMemo(() => groupByViewerDay(displayNotifications), [displayNotifications])
 
   if (!isAuthenticated) return null
 
@@ -134,7 +113,7 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
     <div ref={ref} className="relative" style={{ display: 'inline-flex' }}>
       <button
         onClick={() => { if (!open) measure(); setOpen(!open) }}
-        className="p-2 rounded-md cursor-pointer transition-colors duration-200 relative"
+        className={`${touch ? 'flex items-center justify-center min-w-[44px] min-h-[44px]' : 'p-2'} rounded-md cursor-pointer transition-colors duration-200 relative`}
         style={{ color: triggerColor }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
@@ -143,8 +122,8 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
           <span
             style={{
               position: 'absolute',
-              top: '2px',
-              right: '2px',
+              top: touch ? '4px' : '2px',
+              right: touch ? '4px' : '2px',
               background: 'var(--job-wants)',
               // Ink that holds AA on the gold in each theme (white on light gold, dark on dark-mode gold).
               color: 'var(--job-wants-fg)',
@@ -179,7 +158,8 @@ export default function NotificationBell({ align = 'right', triggerColor = 'var(
               right: box || align === 'left' ? undefined : 0,
               marginTop: '8px',
               width: box ? `${box.width}px` : `min(${PANEL_WIDTH}px, calc(100vw - 24px))`,
-              maxHeight: '480px',
+              // A phone in landscape is shorter than the list: stop above the tab bar.
+              maxHeight: 'min(480px, calc(100dvh - 136px))',
               background: 'var(--cream)',
               border: `1px solid ${withAlpha('var(--sk-t1)', 10)}`,
               borderRadius: 'var(--radius-xl)',
