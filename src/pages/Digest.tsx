@@ -977,7 +977,7 @@ export default function Digest() {
               dates, so it has none. */}
           {dates.length > 0 && (
             <div className="mb-6">
-              <SectionHead title={isSavedView ? 'Saved papers' : isUnprocessedView ? 'Unprocessed papers' : 'Digest date'} />
+              {isCrossDate && <SectionHead title={isSavedView ? 'Saved papers' : 'Unprocessed papers'} />}
               {isCrossDate ? (
                 <p className="text-xs" style={{ color: 'var(--slate)' }}>
                   {isSavedView
@@ -1052,15 +1052,17 @@ export default function Digest() {
             )}
 
             {/* Paper count */}
-            <span
-              className="text-xs"
-              style={{
-                color: 'var(--slate)',
-                opacity: 0.85,
-              }}
-            >
-              {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
-            </span>
+            {narrowed && (
+              <span
+                className="text-xs"
+                style={{
+                  color: 'var(--slate)',
+                  opacity: 0.85,
+                }}
+              >
+                {filteredPapers.length} paper{filteredPapers.length !== 1 ? 's' : ''}
+              </span>
+            )}
 
             {copyPapers.length > 0 && (
               <button

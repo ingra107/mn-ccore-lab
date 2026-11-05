@@ -300,7 +300,7 @@ function CascadeRow({
           color: node.type === 'milestone' ? 'var(--job-milestone)' : 'var(--sk-t2)',
           flexShrink: 0,
         }}>
-          {node.type === 'milestone' ? 'Milestone' : 'Task'}
+          {node.type === 'milestone' ? 'Milestone' : null}
         </span>
 
         {/* Downstream count indicator */}
@@ -523,6 +523,8 @@ interface DeadlineCascadeProps {
   onSimulateImpact?: (id: string, type: string, newDate: string) => void
   filterAtRisk?: boolean
   compact?: boolean
+  /** The page's own header already states the counts. */
+  hideSummary?: boolean
 }
 
 export default function DeadlineCascade({
@@ -532,6 +534,7 @@ export default function DeadlineCascade({
   onSimulateImpact,
   filterAtRisk = false,
   compact = false,
+  hideSummary = false,
 }: DeadlineCascadeProps) {
   const [selectedNode, setSelectedNode] = useState<CascadeTreeNode | null>(null)
 
@@ -582,7 +585,7 @@ export default function DeadlineCascade({
   return (
     <div>
       {/* Summary bar */}
-      {!compact && (
+      {!compact && !hideSummary && (
         <div style={{
           display: 'flex',
           gap: 'var(--sp-lg)',

@@ -168,7 +168,7 @@ describe('Pipeline tab', () => {
       label: 'pipeline tab (PI)',
       ready: (h) => h.textContent?.includes('Stalled study') && h.textContent?.includes('Products by stage'),
     })
-    expect(host.textContent).toContain('+ Set follow-up')
+    expect(host.textContent).toContain('+ Add follow-up')
     const registry = host.querySelector('[data-testid="stalled-registry"]') as HTMLElement
     expect(registry.textContent).not.toContain('Never touched')
     const more = Array.from(registry.querySelectorAll('button')).find((b) => b.textContent === 'Show all 7') as HTMLButtonElement

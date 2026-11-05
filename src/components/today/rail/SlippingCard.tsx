@@ -137,7 +137,7 @@ export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), no
       {open && (
         <>
           <div className="tk-rsub" style={{ marginTop: 0 }}>
-            Going quiet <span style={{ opacity: 0.8 }}>· checked {seriesCount} meeting series, {waitingCount} waiting {waitingCount === 1 ? 'task' : 'tasks'}</span>
+            Going quiet <span>· checked {seriesCount} meeting series, {waitingCount} waiting {waitingCount === 1 ? 'task' : 'tasks'}</span>
           </div>
           {quietRows === 0 && <div className="pk-s">Nothing has gone quiet.</div>}
           {shownSeries.map((q) => {
@@ -167,7 +167,7 @@ export function SlippingCard({ meetings, tasks, viewerSlug, now = new Date(), no
           ))}
           {moreQuiet > 0 && <div className="pk-s" data-testid="quiet-more">{moreQuiet} more quiet, not shown.</div>}
 
-          <div className="tk-rsub">Deadlines casting back <span style={{ opacity: 0.8 }}>· next 2 weeks</span></div>
+          <div className="tk-rsub">Deadlines casting back <span>· next 2 weeks</span></div>
           {shadows.length === 0 && <div className="pk-s">No milestones, hard deadlines or deep work due in the next 2 weeks.</div>}
           {shadows.length > 0 && (
             <div className="pk-cal" style={{ ['--pk-days' as string]: days.length }} aria-label="Free calendar time before each deadline">
