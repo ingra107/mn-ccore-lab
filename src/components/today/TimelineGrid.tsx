@@ -39,7 +39,7 @@ import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   buildTimelineModel, pxForMeeting, minToPx, GAP_FLOOR,
-  TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
+  TIMELINE_TASK_BLOCKS, packTaskBlocks, plannedSlotsFor, MEETING_FLOOR,
   type TimelineUnit, type DayBalance,
 } from './timelineModel'
 import {
@@ -311,6 +311,7 @@ function AgendaGapRow({
   nowMin,
   freeWindows,
   tasks,
+  plannedSlots,
   state,
   projectsByPid,
   expandedId,
@@ -318,6 +319,8 @@ function AgendaGapRow({
   nowLineEl,
   nowOffsetPx,
 }: {
+  /** Where each planned task renders today (plannedSlotsFor), not its stored slot. */
+  plannedSlots: ReadonlyMap<string, string>
   slot: PlannedSlot
   freeMinutes: number
   baseHeight: number
@@ -359,24 +362,28 @@ function AgendaGapRow({
 
   const tasksInGap = useMemo(() =>
     state.plannedIds()
-      .filter((id) => state.planned[id]?.slot === slot)
+      .filter((id) => plannedSlots.get(id) === slot)
       .map((id) => tasks.find((t) => t.id === id))
       .filter((t): t is TaskRow => !!t),
-    [state, slot, tasks],
+    [state, slot, tasks, plannedSlots],
   )
 
   // Phase 3: partition into timed (absolute lane) vs untimed (stacked).
   // Memoized so the downstream useMemos for placements/height don't over-fire.
   const { timedTasks, untimedTasks } = useMemo(() => {
     if (TIMELINE_TASK_BLOCKS && gapStartMin > 0) {
+      // A gap's interior is a coordinate system: only a minute inside it can draw on
+      // it. A task whose time a meeting now covers stacks here instead of drawing at
+      // a false height, until the person moves it.
+      const onAxis = (t: TaskRow) => t.plan_start_min != null && t.plan_start_min >= gapStartMin && t.plan_start_min <= gapEndMin
       return {
-        timedTasks: tasksInGap.filter((t) => t.plan_start_min != null),
-        untimedTasks: tasksInGap.filter((t) => t.plan_start_min == null),
+        timedTasks: tasksInGap.filter(onAxis),
+        untimedTasks: tasksInGap.filter((t) => !onAxis(t)),
       }
     }
     // Phase 1 fallback: all tasks are "untimed" (full-width stack)
     return { timedTasks: [] as typeof tasksInGap, untimedTasks: tasksInGap }
-  }, [tasksInGap, gapStartMin])
+  }, [tasksInGap, gapStartMin, gapEndMin])
 
   // Compute absolute placements once; derive container height from them.
   // Gap auto-grow: max(pxForGap(freeMinutes), tasksExtentPx).
@@ -867,6 +874,10 @@ export function TimelineGrid({
   // Pass nowMin so dayStart always encompasses now + MORNING_FLOOR.
   const model = useMemo(() => buildTimelineModel(events, { nowMin: now }), [events, now])
   const { allDayEvents, serviceBlocks, units, dayStart } = model
+  const plannedSlots = useMemo(
+    () => plannedSlotsFor(units, state.plannedIds(), state.planned, tasks),
+    [units, state, tasks],
+  )
 
   // The shared now marker (color-back pick 4): the same object as Calendar,
   // Grants and Deadlines, labelled with the time here.
@@ -930,6 +941,7 @@ export function TimelineGrid({
           nowMin={now}
           freeWindows={freeWindows}
           tasks={tasks}
+          plannedSlots={plannedSlots}
           state={state}
           projectsByPid={projectsByPid}
           expandedId={expandedId}
@@ -981,6 +993,7 @@ export function TimelineGrid({
             gapEndMin={0}
             freeWindows={freeWindows}
             tasks={tasks}
+            plannedSlots={plannedSlots}
             state={state}
             projectsByPid={projectsByPid}
             expandedId={expandedId}

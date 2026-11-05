@@ -195,6 +195,14 @@ export interface TaskBlockPlacement extends ColPlacement {
   heightPx: number
 }
 
+/**
+ * How far apart two blocks must start to share a column. 30 minutes, not the
+ * floor's 39: 30-minute tasks back to back are the common day, and they overlap by
+ * only the floor's 6px. Taking them apart would halve every block in the gap, because
+ * a gap has one column count. So this changes nothing for a task of 30 minutes or more.
+ */
+const MIN_STACK_CLEAR_MIN = 30
+
 /** Sort predicate for timed tasks within a gap: by start time, then plan_rank. */
 export function sortTimedTasks(tasks: TaskRow[]): TaskRow[] {
   return [...tasks].sort((a, b) => {
@@ -222,6 +230,11 @@ export function packTaskBlocks(
 
   // Build minimal TodayEvent-shaped objects for packColumns().
   // packColumns only reads .startMin and .endMin.
+  //
+  // For COLUMNS only, a block under MIN_STACK_CLEAR_MIN occupies that long: a block
+  // renders at least MEETING_FLOOR tall, so a 15-minute task at 09:00 is drawn over
+  // one at 09:15 though their times do not touch. topPx and heightPx below still
+  // come from the real start and duration, so no pixel-to-minute conversion moves.
   const fakeEvents: TodayEvent[] = sorted.map((t) => {
     const start = t.plan_start_min as number
     const dur = t.estimated_minutes ?? 30
@@ -230,7 +243,7 @@ export function packTaskBlocks(
       time: '',
       title: t.title,
       startMin: start,
-      endMin: start + dur,
+      endMin: start + Math.max(dur, MIN_STACK_CLEAR_MIN),
     }
   })
 
@@ -312,6 +325,51 @@ export interface TimelineModel {
   /** total globalClusterCount — so trailing gap slot = between-{globalClusterCount} */
   globalClusterCount: number
   balance: DayBalance
+}
+
+// ── Where a planned task renders ──────────────────────────────────────────
+
+/**
+ * The slot each planned task renders in today, from the units as they stand now.
+ * Read only: nothing here writes, and the stored plan_slot stays as it is until the
+ * person moves the task.
+ *
+ * A between-N slot is an ordinal, and it names a different gap (or none) once a
+ * meeting comes or goes. So a timed task goes by its stored minute: the gap that holds
+ * it, or the nearest gap if a meeting now covers it (AgendaGapRow stacks that one,
+ * since the gap's axis has no place for its time). A task with no time keeps its slot
+ * if the slot still exists, or else falls to the last gap, which is the day's open
+ * end. A 'strip' task is not on the timeline and is left alone.
+ */
+export function plannedSlotsFor(
+  units: readonly TimelineUnit[],
+  plannedIds: readonly string[],
+  planned: Readonly<Record<string, { slot: string } | undefined>>,
+  tasks: readonly TaskRow[],
+): Map<string, string> {
+  const gaps = units.filter((u): u is GapUnit => u.kind === 'gap')
+  const slots = new Set(units.flatMap((u) => (u.kind === 'gap' || u.kind === 'untimed' ? [u.slot as string] : [])))
+  const fallback = gaps.length > 0 ? gaps[gaps.length - 1].slot : undefined
+  const nearest = (min: number): string | undefined => {
+    let best: GapUnit | undefined
+    let bestDist = Infinity
+    for (const g of gaps) {
+      if (min >= g.startMin && min < g.endMin) return g.slot
+      const dist = min < g.startMin ? g.startMin - min : min - g.endMin
+      if (dist < bestDist) { best = g; bestDist = dist }
+    }
+    return best?.slot
+  }
+  const out = new Map<string, string>()
+  for (const id of plannedIds) {
+    const stored = planned[id]?.slot
+    const task = tasks.find((t) => t.id === id)
+    if (!stored || !task) continue
+    if (stored === 'strip') out.set(id, stored)
+    else if (task.plan_start_min != null) out.set(id, nearest(task.plan_start_min) ?? stored)
+    else out.set(id, slots.has(stored) ? stored : (fallback ?? stored))
+  }
+  return out
 }
 
 // ── Main export ────────────────────────────────────────────────────────────

@@ -31,7 +31,7 @@
 import { useMemo, useState, useCallback } from 'react'
 import { useDroppable, useDndContext } from '@dnd-kit/core'
 import { PlannedTaskRow } from './PlannedTaskRow'
-import { buildTimelineModel } from './timelineModel'
+import { buildTimelineModel, plannedSlotsFor } from './timelineModel'
 import type { TodayEvent, PlannedSlot } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
@@ -157,8 +157,10 @@ export function AgendaListView({
   // (one source of truth — kills the heuristic divergence).
   const plannedTasksBySlot = useMemo(() => {
     const m = new Map<PlannedSlot, TaskRow[]>()
+    // Where each task renders today: a stored between-N can name a gap that has gone.
+    const slots = plannedSlotsFor(units, plannedIds, state.planned, tasks)
     for (const id of plannedIds) {
-      const slot = state.planned[id]?.slot
+      const slot = slots.get(id) as PlannedSlot | undefined
       if (!slot) continue
       const task = tasks.find((t) => t.id === id)
       if (!task) continue
@@ -167,7 +169,7 @@ export function AgendaListView({
       m.set(slot, arr)
     }
     return m
-  }, [plannedIds, state.planned, tasks])
+  }, [units, plannedIds, state.planned, tasks])
 
   // Build the interleaved rows list from model units.
   //

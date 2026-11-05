@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   pxForMeeting, pxForGap, buildTimelineModel,
-  minToPx, MEETING_FLOOR, GAP_FLOOR,
+  minToPx, MEETING_FLOOR, GAP_FLOOR, packTaskBlocks, plannedSlotsFor,
 } from './timelineModel'
 import type { TodayEvent } from './constants'
+import type { TaskRow } from '../../lib/api'
 
 // The 2026-08-03 height reduction (PX_PER_MIN 0.9 -> 0.7) traded some of the
 // duration hierarchy for a shorter page. These pin what must survive the trade,
@@ -112,5 +113,66 @@ describe('a clock past the last event', () => {
     const { balance } = buildTimelineModel(events, { defaultDayStart: 8 * 60, defaultDayEnd: 17 * 60, nowMin: 15 * 60 })
     // gap 10:00-17:00 minus the elapsed 10:00-15:00 = 120 min; 8:30-9:00 is over too.
     expect(balance.freeMinutes).toBe(120)
+  })
+})
+
+describe('packTaskBlocks: short tasks and the rendered floor (S07)', () => {
+  const t = (id: string, plan_start_min: number, estimated_minutes: number | null) =>
+    ({ id, title: id, plan_start_min, estimated_minutes }) as unknown as TaskRow
+  const cols = (tasks: TaskRow[]) => Object.fromEntries(packTaskBlocks(tasks, 480).map((p) => [p.id, p.colIdx]))
+
+  it('two 15-minute tasks 15 minutes apart take two columns', () => {
+    expect(cols([t('a', 540, 15), t('b', 555, 15)])).toEqual({ a: 0, b: 1 })
+  })
+
+  it('back-to-back 30-minute tasks stay in one column: the common day is not halved', () => {
+    expect(cols([t('a', 540, 30), t('b', 570, 30)])).toEqual({ a: 0, b: 0 })
+    expect(cols([t('a', 540, null), t('b', 570, null)])).toEqual({ a: 0, b: 0 })
+  })
+
+  it('a 15-minute task with 30 clear minutes after its start stays in one column', () => {
+    expect(cols([t('a', 540, 15), t('b', 570, 15)])).toEqual({ a: 0, b: 0 })
+  })
+
+  it('tops and heights still come from the real times and durations', () => {
+    const [a, b] = packTaskBlocks([t('a', 540, 15), t('b', 555, 15)], 480)
+    expect(a.topPx).toBe(Math.round(minToPx(60)))
+    expect(b.topPx).toBe(Math.round(minToPx(75)))
+    expect(a.heightPx).toBe(MEETING_FLOOR)
+  })
+})
+
+describe('plannedSlotsFor: a slot is an ordinal, a planned minute is not (S06)', () => {
+  const ev = (id: string, startMin: number, endMin: number) => ({ id, title: id, time: '', startMin, endMin })
+  const t = (id: string, plan_start_min: number | null) => ({ id, plan_start_min }) as unknown as TaskRow
+  const slotOf = (events: ReturnType<typeof ev>[], task: TaskRow, stored: string) =>
+    plannedSlotsFor(buildTimelineModel(events).units, [task.id], { [task.id]: { slot: stored } }, [task]).get(task.id)
+
+  it('a timed task goes to the gap holding its minute, whatever the stored ordinal says', () => {
+    expect(slotOf([ev('b', 660, 720)], t('x', 780), 'between-2')).toBe('between-1')
+    expect(slotOf([ev('b', 660, 720)], t('x', 630), 'between-1')).toBe('between-0')
+  })
+
+  it('a timed task on its gap keeps it', () => {
+    expect(slotOf([ev('a', 540, 600), ev('b', 660, 720)], t('x', 630), 'between-1')).toBe('between-1')
+  })
+
+  it('a timed task under a meeting goes to the nearest gap', () => {
+    expect(slotOf([ev('a', 600, 720)], t('x', 610), 'between-0')).toBe('between-0')
+    expect(slotOf([ev('a', 600, 720)], t('x', 710), 'between-0')).toBe('between-1')
+  })
+
+  it('no time: an existing slot stands, a missing one falls to the last gap', () => {
+    expect(slotOf([ev('b', 660, 720)], t('x', null), 'between-0')).toBe('between-0')
+    expect(slotOf([ev('b', 660, 720)], t('x', null), 'between-9')).toBe('between-1')
+  })
+
+  it('a strip task is left alone, timed or not', () => {
+    expect(slotOf([ev('b', 660, 720)], t('x', 780), 'strip')).toBe('strip')
+  })
+
+  it('a planned id with no task row is skipped', () => {
+    const units = buildTimelineModel([]).units
+    expect(plannedSlotsFor(units, ['gone'], { gone: { slot: 'between-0' } }, []).has('gone')).toBe(false)
   })
 })
