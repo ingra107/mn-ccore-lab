@@ -80,19 +80,19 @@ export default function GrantList({ rows, kinds, onEdit }: {
         ),
       },
       { key: 'venue', label: 'Venue', width: 'minmax(0, 1fr)', phone: 'line', render: venue, renderPhone: (g) => <Labelled label="Venue">{venue(g)}</Labelled> },
-      { key: 'stage', label: 'Stage', width: '170px', phone: 'line', render: stage, renderPhone: (g) => <Labelled label="Stage">{stage(g)}</Labelled> },
+      { key: 'stage', label: 'Stage', width: '124px', phone: 'line', render: stage, renderPhone: (g) => <Labelled label="Stage">{stage(g)}</Labelled> },
       {
-        key: 'start', label: 'Start', width: '150px', phone: 'line',
+        key: 'start', label: 'Start', width: '100px', phone: 'line',
         render: (g) => g.kind === 'honor' ? <span className="gl-none">—</span> : start(g, g.kind === 'award' ? undefined : 'proposed'),
         renderPhone: (g) => g.kind === 'honor' ? null : <Labelled label={g.kind === 'award' ? 'Start' : 'Proposed start'}>{start(g)}</Labelled>,
       },
       {
-        key: 'end', label: 'End / due', width: '150px', phone: 'line',
+        key: 'end', label: 'End / due', width: '100px', phone: 'line',
         render: (g) => end(g, 'due'),
         renderPhone: (g) => <Labelled label={g.kind === 'award' ? 'End' : 'Due'}>{end(g)}</Labelled>,
       },
       {
-        key: 'amount', label: 'Amount', width: '96px', phone: 'line',
+        key: 'amount', label: 'Amount', width: '76px', phone: 'line',
         render: (g) => g.kind === 'award' ? amount(g) : <span className="gl-none" title="Only an award carries an amount">—</span>,
         renderPhone: (g) => g.kind === 'award' ? <Labelled label="Amount">{amount(g)}</Labelled> : null,
       },
@@ -101,7 +101,7 @@ export default function GrantList({ rows, kinds, onEdit }: {
 
   return (
     <div data-testid="grant-list">
-      <SleekTable columns={columns} className="gl sr-page" narrowBelow={860} ariaLabel="Grants">
+      <SleekTable columns={columns} className="gl sr-page" narrowBelow={600} ariaLabel="Grants">
         {rows.map((g) => (
           <SleekRow key={g.id} row={g} data={{ testid: `grant-row-${g.id}`, bucket: g.bucket }} />
         ))}
@@ -168,6 +168,9 @@ function DateCell({ label, value, hint, testId, onSave }: {
 const CSS = `
 /* No row click to promise: the row's cells are what edit. */
 .gl .sr-row { cursor: default; }
+/* Two-line cells: rows must not touch, and a long subtitle stays on one line. */
+.gl:not(.sr-narrow) .sr-row { height: auto; min-height: 48px; }
+.gl:not(.sr-narrow) .gl-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gl .sr-row[data-bucket="ended"] { opacity: .7; }
 .gl-name { display: flex; flex-direction: column; min-width: 0; }
 .gl-name a { color: var(--sk-t1); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -180,7 +183,7 @@ const CSS = `
 .gl-date .sr-trig { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 4px; min-height: 24px; padding: 2px 6px; margin-left: -6px; border-radius: 6px; cursor: pointer; }
 .gl-date .sr-trig:hover, .gl-date .sr-trig[aria-expanded="true"] { background: var(--sk-panel); }
 .gl-date .sr-trig:focus-visible { outline: 2px solid var(--job-accent); outline-offset: 1px; }
-.gl-date .sr-car { color: var(--sk-t3); font-size: 9px; }
+.gl-date .sr-car { color: var(--sk-t3); font-size: 11px; }
 .gl-date-val { font-size: 13px; color: var(--sk-t2); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .gl-date-empty { color: var(--sk-t3); }
 .gl-hint { font-size: 10px; color: var(--sk-t3); padding-left: 7px; line-height: 1; }

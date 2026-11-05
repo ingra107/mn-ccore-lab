@@ -94,3 +94,33 @@ describe('GrantList date cells', () => {
     expect(sub).toMatch(/Award · \S+/)
   })
 })
+
+// Review, 2026-11-05: the list measures itself, so narrowBelow={860} showed the stacked
+// phone rows on every laptop between 1024 and about 1195px wide (sidebar + band pad).
+describe('GrantList width', () => {
+  const at = async (width: string) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return mount(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter><GrantList rows={[award]} kinds={[]} onEdit={() => {}} /></MemoryRouter>
+      </QueryClientProvider>,
+      { ready: (h) => !!h.querySelector('[data-testid="grant-row-prd_K23"]'), label: 'GrantList', width },
+    )
+  }
+
+  // 618px is what Playwright measured on a 1024 viewport with the sidebar open.
+  it.each(['618px', '694px'])('is a columnar table at %s, and the dates do not clip', async (width) => {
+    const host = await at(width)
+    await vi.waitFor(() => expect(host.querySelector('.sr')!.classList.contains('sr-narrow')).toBe(false))
+    expect(host.querySelector('.sr')!.scrollWidth).toBeLessThanOrEqual(parseInt(width))
+    const end = host.querySelector<HTMLElement>('[data-testid="grant-end-prd_K23"]')!
+    expect(end.scrollWidth).toBeLessThanOrEqual(end.clientWidth + 1)
+  })
+
+  it('stacks on a phone', async () => {
+    const host = await at('560px')
+    await vi.waitFor(() => expect(host.querySelector('.sr')!.classList.contains('sr-narrow')).toBe(true))
+  })
+})
+
