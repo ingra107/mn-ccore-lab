@@ -746,16 +746,24 @@ export default function Meetings() {
       {/* H-02: PageHeader replaces inline H1. width:100% stops the auto side
           margins of .content-container from shrinking and centring it inside
           this flex column (it is the host-tab band's own left edge). */}
-      <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0, width: '100%' }}>
+      <div className="content-container" style={{ paddingBottom: isPhone ? 0 : '1rem', flexShrink: 0, width: '100%' }}>
         <div>
           <PageHeader
-            title="Meeting Hub"
-            subtitle={pageSubtitle || undefined}
+            title="Meetings"
+            subtitle={isPhone ? undefined : pageSubtitle || undefined}
             count={meetings.length}
+            // Phone (Nick's mock, 2026-11-05): progress and the next date are one plain
+            // line under the rule; the next-meeting box and its icons are gone.
+            meta={isPhone && (
+              <div className="tk-phone-meta">
+                <span>{pageSubtitle}</span>
+                <span>Next {daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              </div>
+            )}
             actions={
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Next meeting pill */}
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                {!isPhone && <div className="flex items-center gap-2 px-3 py-1 rounded-xl"
                   style={{ background: daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 10%, transparent)' : 'transparent', border: `1px solid ${daysUntil === 0 ? 'color-mix(in srgb, var(--job-wants) 40%, transparent)' : 'var(--sk-line2)'}` }}>
                   <Calendar {...ICON_PROPS} size={14} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', flexShrink: 0 }} />
                   <div>
@@ -771,7 +779,7 @@ export default function Meetings() {
                         guess. */}
                   </div>
                   <Clock {...ICON_PROPS} size={12} style={{ color: daysUntil === 0 ? 'var(--job-wants)' : 'var(--sk-t3)', marginLeft: 4 }} />
-                </div>
+                </div>}
 
                 {/* Record Meeting */}
                 <QuickAddForm
@@ -780,7 +788,7 @@ export default function Meetings() {
                   onSubmit={handleAddMeeting}
                   onCancel={() => { setShowAddMeeting(false); setNewMeetingDate(''); setNewMeetingTitle(''); setNewMeetingAttendees(['nick-ingraham', 'nate-mesfin']); setNewMeetingAgenda(['']); setNewMeetingTags([]) }}
                   primary
-                  triggerLabel="Record Meeting"
+                  triggerLabel={isPhone ? 'Record' : 'Record Meeting'}
                   submitLabel="Save Meeting"
                 >
                   <div className="space-y-3">
@@ -894,13 +902,12 @@ export default function Meetings() {
 
         {/* Left panel — M-28: minHeight, M-34: hidden when mobile-detail active */}
         <div className="meetings-list-panel" style={{ borderRight: '1px solid var(--sk-line)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '12px', borderBottom: '1px solid var(--sk-line)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ padding: isPhone ? '8px 12px' : '12px', borderBottom: '1px solid var(--sk-line)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <SegmentedToggle
               options={FILTER_OPTIONS.map((f) => ({ value: f.key, label: f.label }))}
               value={filter}
               onChange={setFilter}
               ariaLabel="Filter meetings"
-              scrollable
             />
             <div className="relative">
               <Search {...ICON_PROPS} size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />

@@ -1,4 +1,5 @@
-import type React from 'react'
+import { useRef, type default as React } from 'react'
+import { useEdgeFade } from '../../hooks/useEdgeFade'
 
 /**
  * FilterLinks — the ONE filter row: sentence-case text links, the active one
@@ -31,8 +32,10 @@ interface FilterLinksProps<T extends string> {
 }
 
 export function FilterLinks<T extends string>({ options, value, onChange, ariaLabel, className, controls }: FilterLinksProps<T>) {
+  const rowRef = useRef<HTMLDivElement>(null)
+  useEdgeFade(rowRef, !!className?.includes('tk-flt-scroll'))
   return (
-    <div role="group" aria-label={ariaLabel} className={`tk-flt${className ? ` ${className}` : ''}`}>
+    <div ref={rowRef} role="group" aria-label={ariaLabel} className={`tk-flt${className ? ` ${className}` : ''}`}>
       {options.map((o) => (
         <button
           key={o.value}
