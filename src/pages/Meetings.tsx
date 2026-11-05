@@ -85,7 +85,8 @@ function meetingRowToMeeting(row: MeetingRow, tasksByMeetingId: Map<string, Task
     audience: row.audience === 'lab' ? 'lab' : 'private',
     actionItems: meetingActions.map((t) => ({
       id: t.id,
-      description: t.description,
+      // A task may have no description; its title is then the action's words.
+      description: t.description || t.title,
       assignee: t.assignee,
       dueDate: t.due_date || undefined,
       completed: isTaskDone(t),
@@ -287,15 +288,10 @@ function MeetingDetail({ meeting }: MeetingDetailProps) {
           form still expands in place, beneath the row. */}
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            to={PATHS.meeting(meeting.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-            // Primary action = the teal fill (white on --teal-solid is 6.1:1, AA
-            // both modes). The gold fill read as a second accent on the page.
-            style={{ background: 'var(--job-accent)', color: 'var(--sk-card)', textDecoration: 'none', transition: 'opacity 0.2s' }}
-          >
+          {/* Secondary: Record Meeting is the page's one filled teal button. */}
+          <Button as={Link} variant="secondary" to={PATHS.meeting(meeting.id)} data-testid="view-full-meeting" style={{ textDecoration: 'none' }}>
             View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
-          </Link>
+          </Button>
           <QuickAddTrigger
             label={showDecisionForm ? 'Cancel decision' : 'Log Decision'}
             icon={<Scale {...ICON_PROPS} size={14} />}
