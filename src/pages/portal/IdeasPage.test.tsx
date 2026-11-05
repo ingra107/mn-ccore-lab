@@ -93,6 +93,15 @@ describe('IdeasPage', () => {
     await expect.poll(() => h.textContent).toContain('Idea a')
   })
 
+  it('the Board shows the rows the Archived filter found, not an empty board', async () => {
+    ideas = [idea('a'), idea('old', { status: 'archived' })]
+    const h = await mount()
+    await expect.poll(() => h.textContent).toContain('Idea a')
+    await pick(buttonNamed(h, /All Statuses/)!, 'Archived')
+    await expect.poll(() => h.textContent).toContain('Idea old')
+    expect(h.textContent).not.toContain('Idea a')
+  })
+
   it('an empty board with no filter still invites the first idea', async () => {
     ideas = []
     const h = await mount()
