@@ -117,14 +117,15 @@ export default function ProfilePage() {
       </div>
     )
   }
-  if (teamQuery.isLoading || !rawRow) return <TextSkeleton lines={8} />
+  // Wait on the queries, not the row: a PI with no directory row (Rule 66) never
+  // has one, and this read as a skeleton forever (fable audit F12).
+  if (teamQuery.isLoading || rawQuery.isPending) return <TextSkeleton lines={8} />
   if (!member || !rawRow) {
     return (
       <div className="content-container">
         <PageHeader title="Profile" subtitle="No profile yet" />
         <p className="text-sm" style={{ color: 'var(--muted)' }}>
-          Your team_members row hasn't been provisioned yet. Visit any portal page to trigger auto-create,
-          then return here.
+          You are not on the Team page yet. Ask Nick to add you, then come back.
         </p>
       </div>
     )
