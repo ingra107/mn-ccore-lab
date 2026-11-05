@@ -29,8 +29,11 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
     // possible).
     env.DB.prepare('SELECT DISTINCT id, date, title, type, (owner_slug IS ?) AS mine FROM meetings WHERE date >= ? AND date <= ? ORDER BY date, mine DESC, id')
       .bind(viewerSlug, startDate, endDate).all<{ id: string; date: string; title: string; type: string }>(),
-    env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.kind, t.due_date, t.assignee, t.status, t.priority FROM tasks t WHERE t.due_date IS NOT NULL AND t.due_date >= ? AND t.due_date <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND t.assignee = ? ORDER BY t.due_date`)
-      .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; kind: string | null; due_date: string; assignee: string; status: string; priority: string }>(),
+    // The two-date rule (products.ts): due_date is the internal date, deadline
+    // the hard one, and a milestone may carry only the hard one (R14). A task
+    // with both sits on its due date, as it always has.
+    env.DB.prepare(`SELECT t.id, t.title, t.short_title, t.description, t.kind, t.due_date, t.deadline, t.assignee, t.status, t.priority FROM tasks t WHERE COALESCE(t.due_date, t.deadline) >= ? AND COALESCE(t.due_date, t.deadline) <= ? AND t.completed = 0 AND t.deleted_at IS NULL AND ${NOT_QUESTION_SQL_T} AND t.assignee = ? ORDER BY t.due_date`)
+      .bind(startDate, endDate, viewerSlug).all<{ id: string; title: string; short_title: string | null; description: string; kind: string | null; due_date: string | null; deadline: string | null; assignee: string; status: string; priority: string }>(),
     // A milestone is a task with kind='milestone' (Rule 86), so the tasks leg
     // above returns it; the legacy `milestones` table has no leg here.
   ]);
@@ -52,13 +55,14 @@ export async function handleCalendarEvents(url: URL, env: Env, viewerSlug: strin
   for (const t of tasks.results || []) {
     events.push({
       id: t.id,
-      date: t.due_date,
+      date: (t.due_date ?? t.deadline) as string, // the WHERE above refuses a task with neither
       title: t.title || t.description,
       short_title: t.short_title || null,
       kind: t.kind ?? 'task',
       type: 'task',
       category: t.priority,
-      meta: { assignee: t.assignee, status: t.status },
+      // date_kind names what this row's date means, so the page can say so.
+      meta: { assignee: t.assignee, status: t.status, date_kind: t.due_date ? 'due' : 'deadline' },
     });
   }
 
