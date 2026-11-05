@@ -194,8 +194,15 @@ function taskRule(v: ScopedViewer): string | null {
   if (!projectsScoped(v)) return null
   if (v.kind !== 'person') return '0'
   const ids = idList(v)
+  // A watcher can read the task (and so edit it: writes pass the same handle).
+  // The stored shape is a JSON array (shared/watchers.ts); the older comma list
+  // still counts, whole names only.
+  const commaList = `',' || replace(lower(tasks.watchers), ' ', '') || ','`
+  const inCommaList = [...new Set([v.slug, v.email].filter((s) => s.length > 0))]
+    .map((id) => `instr(${commaList}, ${sqlList([`,${id.toLowerCase()},`])}) > 0`).join(' OR ')
   const mine = `(tasks.assignee = ${sqlList([v.slug])} OR lower(COALESCE(tasks.assigned_by, '')) IN (${ids}) `
-    + `OR (json_valid(tasks.watchers) AND EXISTS (SELECT 1 FROM json_each(tasks.watchers) w WHERE w.type = 'text' AND lower(w.value) IN (${ids}))))`
+    + `OR (json_valid(tasks.watchers) AND EXISTS (SELECT 1 FROM json_each(tasks.watchers) w WHERE w.type = 'text' AND lower(w.value) IN (${ids}))) `
+    + `OR (tasks.watchers IS NOT NULL AND NOT json_valid(tasks.watchers) AND (${inCommaList})))`
   return `(${inVisibleProject('tasks.project_id')} OR ${mine} OR ${meetingTaskArm(v)})`
 }
 

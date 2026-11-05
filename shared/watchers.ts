@@ -1,11 +1,10 @@
 // shared/watchers.ts -- the one reader and writer of tasks.watchers, used by the
 // Worker (handleUpdateTask) and by the task UI.
 //
-// A watcher can see the task: the read rule (taskRule in api/lib/table-scope.ts)
-// runs json_each over the column, so only a JSON array grants anything. The
-// panel used to send a comma list, which json_valid() would reject, to a route
-// that refused the field. The server now stores the JSON array whatever it is
-// sent; the reader still takes both shapes.
+// A watcher can see and edit the task (taskRule in api/lib/table-scope.ts) and
+// is notified when it changes (api/lib/task-watchers.ts). The server stores a
+// JSON array whatever it is sent. An older comma list still reads, here and in
+// the rule.
 
 import { parseBlockedBy } from './blockedBy'
 

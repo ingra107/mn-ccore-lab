@@ -5,7 +5,9 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import type Database from 'better-sqlite3'
-import { handleUpdateTask, handleGetTasks } from './tasks'
+import { handleUpdateTask, handleGetTasks, handleGetTask, handleUpdateTaskStatus, handleBatchUpdateTasks } from './tasks'
+import { postActivityEntry } from '../lib/activity-entry'
+import { taskLinkFor } from '../../shared/taskLink'
 import { applyMutation } from './mutations'
 import { prodSchemaDb, d1Adapter, insertRow } from '../test-support/prod-schema-db'
 import { viewerDb, personViewer } from '../lib/viewer-db'
@@ -132,5 +134,137 @@ describe('parseWatchers reads either stored form', () => {
   it('serializes to a JSON array, or null when empty', () => {
     expect(serializeWatchers(['a', 'b'])).toBe('["a","b"]')
     expect(serializeWatchers([])).toBeNull()
+  })
+})
+
+describe("from a watcher's seat: full access, and told when it changes", () => {
+  const casey = { ...user, name: 'Casey', slug: 'casey-eddington', email: 'eddin022@umn.edu' } as AuthUser
+  const dan = { ...user, name: 'Dan', slug: 'dan-shyu', email: 'shyu@umn.edu' } as AuthUser
+  const seat = (u: AuthUser) => ({ DB: viewerDb(d1Adapter(db), personViewer({ slug: u.slug!, email: u.email, pi: false })) }) as unknown as Env
+  const notes = (slug: string) => db.prepare('SELECT type, source_type, source_id, title, link, read FROM notifications WHERE recipient_slug = ? ORDER BY created_at, id').all(slug) as Array<Record<string, unknown>>
+  const setStored = (v: string | null) => db.prepare("UPDATE tasks SET watchers = ? WHERE id = 't_w'").run(v)
+  const edit = (u: AuthUser, body: unknown) => handleUpdateTask('t_w', post(body), u, seat(u))
+  const hdrs = { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod', 'Content-Type': 'application/json' }
+
+  beforeEach(() => {
+    insertRow(db, 'team_members', { id: 'tm-dan', name: 'Dan', slug: 'dan-shyu', email: 'shyu@umn.edu' })
+    insertRow(db, 'team_members', { id: 'tm-nick', name: 'Nick', slug: 'nick-ingraham', email: 'ingra107@umn.edu' })
+  })
+
+  it('a watcher not on the project can read the task and edit it', async () => {
+    expect((await handleGetTask('t_w', seat(casey))).status).toBe(404)
+    expect((await edit(casey, { priority: 'high' })).status).toBe(404)
+    await handleUpdateTask('t_w', post({ watchers: ['casey-eddington'] }), user, env)
+    expect((await handleGetTask('t_w', seat(casey))).status).toBe(200)
+    expect((await edit(casey, { priority: 'high' })).status).toBe(200)
+    expect((db.prepare("SELECT priority FROM tasks WHERE id = 't_w'").get() as { priority: string }).priority).toBe('high')
+  })
+
+  it('removed, the watcher loses the read and the edit, and hears nothing more', async () => {
+    await handleUpdateTask('t_w', post({ watchers: ['casey-eddington'] }), user, env)
+    db.prepare('UPDATE notifications SET read = 1').run()
+    await handleUpdateTask('t_w', post({ watchers: null }), user, env)
+    expect((await handleGetTask('t_w', seat(casey))).status).toBe(404)
+    expect((await edit(casey, { priority: 'low' })).status).toBe(404)
+    await handleUpdateTask('t_w', post({ priority: 'urgent' }), user, env)
+    expect(notes('casey-eddington').filter((n) => !n.read)).toEqual([])
+  })
+
+  it.each([['a bare slug', 'casey-eddington'], ['a comma list', 'dan-shyu, casey-eddington']])(
+    'a stored comma value still grants the read and the edit: %s', async (_label, value) => {
+      setStored(value)
+      expect(await caseySeesIt()).toBe(true)
+      expect((await handleGetTask('t_w', seat(casey))).status).toBe(200)
+      expect((await edit(casey, { priority: 'high' })).status).toBe(200)
+    },
+  )
+
+  it('a stored comma value does not match on part of a name', async () => {
+    setStored('casey-eddington-2, xcasey-eddington')
+    expect(await caseySeesIt()).toBe(false)
+  })
+
+  it('a stored comma value is notified of a change', async () => {
+    setStored('casey-eddington')
+    await handleUpdateTask('t_w', post({ priority: 'high' }), user, env)
+    expect(notes('casey-eddington')).toHaveLength(1)
+  })
+
+  it('being added notifies you once, with the task link', async () => {
+    await handleUpdateTask('t_w', post({ watchers: ['casey-eddington'], priority: 'high' }), user, env)
+    const got = notes('casey-eddington')
+    expect(got).toHaveLength(1)
+    expect(got[0]).toMatchObject({ type: 'update', source_type: 'task', source_id: 't_w', link: taskLinkFor('t_w') })
+    expect(String(got[0].title)).toMatch(/added you/i)
+  })
+
+  it('only the person just added hears it: the one already watching does not', async () => {
+    await handleUpdateTask('t_w', post({ watchers: ['casey-eddington'] }), user, env)
+    db.prepare('UPDATE notifications SET read = 1').run()
+    await handleUpdateTask('t_w', post({ watchers: ['casey-eddington', 'dan-shyu'] }), user, env)
+    expect(notes('dan-shyu')).toHaveLength(1)
+    expect(notes('casey-eddington').filter((n) => !n.read)).toEqual([])
+  })
+
+  it('adding yourself notifies no one', async () => {
+    insertRow(db, 'project_members', { project_id: 'proj_other', member_slug: 'casey-eddington', added_by: 'test' })
+    await edit(casey, { watchers: ['casey-eddington'] })
+    expect(notes('casey-eddington')).toEqual([])
+  })
+
+  it('a change notifies the other watchers with the task link, and not the person who made it', async () => {
+    setStored('["casey-eddington","dan-shyu"]')
+    await edit(casey, { priority: 'high' })
+    expect(notes('casey-eddington')).toEqual([])
+    const got = notes('dan-shyu')
+    expect(got).toHaveLength(1)
+    expect(got[0]).toMatchObject({ type: 'update', source_type: 'task', source_id: 't_w', link: taskLinkFor('t_w') })
+  })
+
+  it('a save that changes nothing, or only a planning field, is silent', async () => {
+    setStored('["casey-eddington"]')
+    await handleUpdateTask('t_w', post({ priority: 'medium' }), user, env)
+    await handleUpdateTask('t_w', post({ planned_for: '2026-11-05' }), user, env)
+    expect(notes('casey-eddington')).toEqual([])
+  })
+
+  it('does not flood: one unread note per task, however many edits; reading it opens the next', async () => {
+    setStored('["casey-eddington"]')
+    await handleUpdateTask('t_w', post({ priority: 'high' }), user, env)
+    await handleUpdateTask('t_w', post({ priority: 'low' }), user, env)
+    await handleUpdateTask('t_w', post({ due_date: '2026-12-01' }), user, env)
+    expect(notes('casey-eddington')).toHaveLength(1)
+    db.prepare('UPDATE notifications SET read = 1').run()
+    await handleUpdateTask('t_w', post({ priority: 'urgent' }), user, env)
+    expect(notes('casey-eddington')).toHaveLength(2)
+  })
+
+  it('the status route and the bulk route notify too', async () => {
+    setStored('["casey-eddington"]')
+    const statusReq = new Request('https://x/api/tasks/t_w/status', { method: 'POST', headers: hdrs, body: JSON.stringify({ status: 'in_progress' }) })
+    expect((await handleUpdateTaskStatus('t_w', statusReq, user, env)).status).toBe(200)
+    expect(notes('casey-eddington')).toHaveLength(1)
+    db.prepare('UPDATE notifications SET read = 1').run()
+    const bulk = new Request('https://x/api/tasks/batch', { method: 'POST', headers: hdrs, body: JSON.stringify({ ids: ['t_w'], action: 'priority', value: 'high' }) })
+    expect((await handleBatchUpdateTasks(bulk, user, env)).status).toBe(200)
+    expect(notes('casey-eddington').filter((n) => !n.read)).toHaveLength(1)
+  })
+
+  it('a comment notifies a watcher as it does the assignee: every comment, never the author, never an @me', async () => {
+    setStored('["casey-eddington","dan-shyu"]')
+    const first = await postActivityEntry({ env: seat(dan), user: dan, entityType: 'task', entityId: 't_w', kind: 'comment', body: 'first', actorSlug: 'dan-shyu' })
+    expect(first.ok).toBe(true)
+    await postActivityEntry({ env: seat(dan), user: dan, entityType: 'task', entityId: 't_w', kind: 'comment', body: 'second', actorSlug: 'dan-shyu' })
+    await postActivityEntry({ env: seat(dan), user: dan, entityType: 'task', entityId: 't_w', kind: 'comment', body: '@me a note to self', actorSlug: 'dan-shyu' })
+    const got = notes('casey-eddington')
+    expect(got).toHaveLength(2)
+    expect(got[0]).toMatchObject({ type: 'update', source_type: 'task_comment', source_id: 't_w', link: taskLinkFor('t_w') })
+    expect(notes('dan-shyu')).toEqual([])
+  })
+
+  it('a watcher who is also the assignee gets one note for a comment', async () => {
+    setStored('["nick-ingraham","dan-shyu"]')
+    await postActivityEntry({ env: seat(dan), user: dan, entityType: 'task', entityId: 't_w', kind: 'comment', body: 'hello', actorSlug: 'dan-shyu' })
+    expect(notes('nick-ingraham')).toHaveLength(1)
   })
 })
