@@ -7,6 +7,7 @@ import {
   parseName,
   parsePubmedAuthors,
   publicationExclusions,
+  publicationStatus,
 } from '../publicationFilter'
 
 // Every example is a real row from the 2026-10-13 prod publications audit
@@ -265,5 +266,28 @@ describe('publication exclusions', () => {
   it('never catches the row kept beside an excluded hand-entered copy (88bbf111 vs ingraham-2024-ehr-primary-provider)', () => {
     expect(excludedPublication({ id: '88bbf111' })).toBe(true)
     expect(excludedPublication({ id: 'ingraham-2024-ehr-primary-provider', doi: 'https://doi.org/10.1097/CCE.0000000000001189' })).toBe(false)
+  })
+})
+
+describe('audit of 2026-11-04', () => {
+  const names = ['Dave MacDonald', 'MacDonald DM', 'David M. MacDonald']
+  const old = { title: 'Thyroglossal cysts and fistulae', year: 1974, byline: { count: 1, memberIndex: 0, rawName: 'D.M. MacDonald', claimed: false } }
+
+  it('refuses a work older than the first verified paper, which the initials alone would pass', () => {
+    expect(isAcceptableWork(old, names).ok).toBe(true)
+    expect(isAcceptableWork(old, names, undefined, 2012)).toMatchObject({ ok: false, reason: 'before-career' })
+  })
+
+  it('keeps an old work the member listed themselves', () => {
+    expect(isAcceptableWork({ ...old, byline: { ...old.byline, claimed: true } }, names, undefined, 2012).ok).toBe(true)
+  })
+
+  it('labels abstracts and preprints the way Nick ruled, and leaves papers alone', () => {
+    expect(publicationStatus({ title: 'HEMOPTYSIS DUE TO ENDOBRONCHIAL HSV TUMOR-LIKE LESION' })).toBe('Abstract')
+    expect(publicationStatus({ title: 'Hyperammonemia After Lung Transplantation', firstPage: 'A1116' })).toBe('Abstract')
+    expect(publicationStatus({ title: 'Rheumatoid Meningitis', issue: '15_supplement' })).toBe('Abstract')
+    expect(publicationStatus({ title: 'Air pollution and respiratory failure', doi: 'https://doi.org/10.2139/ssrn.6153166' })).toBe('Preprint')
+    expect(publicationStatus({ title: 'Lung-protective ventilation', firstPage: '116' })).toBe('Published')
+    expect(publicationStatus({ title: 'Quality of care', issue: '2_suppl', firstPage: '116' })).toBe('Abstract')
   })
 })

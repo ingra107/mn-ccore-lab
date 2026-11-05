@@ -3,6 +3,18 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-11-05 — Missing swipes, the importer, hosted photos, tsc at commit
+
+**Missing swipes.** `GrantGantt`'s touch tests failed only in the full suite. CPU was not the cause: the file alone with all 20 cores busy sent each touch in 17-137 ms, while in the full suite one send took up to 2,287 ms and `requestAnimationFrame` stayed under 33 ms. Each `cdp().send` passes through vitest's Node process, which is serving the other files (that last link is inferred, not measured). A gesture then outlasted the 15 s timeout; the timed-out test kept running, found the next test's bar and sent it stray touches ("Must send a TouchStart first"). `color-back-depth` (`userEvent.hover`) timed out the same way. Both files now run after the main suite, one at a time, in their own process (`vitest.realInputTests.ts`, `vitest.config.realinput.ts`), the retry loop is gone, and `realInputTests.test.ts` refuses a new `cdp()` or `userEvent` test left off the list. A mutation (hold of 1 ms) still fails the swipe test.
+
+Two smaller flakes from the same runs: `SmartCompose` moved the caret to the end in a passive effect, so a click right after mount inserted at position 0 (now a layout effect), and `task-board-cards` waited a fixed count of ticks (now `expect.poll`).
+
+**`tsc -b` at commit.** Never tried before (`git log -S` on the hook and workflows is empty). Runs first, when a `src/**/*.test.ts(x)` file is staged: test files are the case that escaped, it takes about 70 s even with nothing changed, and beside vitest it timed out unrelated tests. Source files are still caught at the deploy build.
+
+**Importer** (`scripts/fetch-publications.ts`). Bylines use the name as printed, never the member's name as a stand-in; a work with no byline asks Crossref, then is refused. Bylines keep up to 100 names. New rows get `Abstract` or `Preprint` by the test matching Nick's 2026-11-04 rulings. `firstPaperYear` (Dudley 1993, Chipman 1991, MacDonald 2012) refuses older strangers in a name cluster. OpenAlex now answers a second `cursor=` page with 401 without a key, and the old "never abort" fence turned that into a skip and overwrote the file, dropping all of Dudley's rows: it pages by number now, and any member's failure exits 1 and writes nothing. Nothing new was inserted into prod: 65 generated rows await Nick's list (PB `Scratch/public-site-audit-2026-11-04/import-candidates.json`).
+
+**Photos.** The 13 hotlinked team photos now live in `public/team/` (372 KB as JPEG, was about 2.5 MB), so they no longer depend on med.umn.edu or va.gov. `team_members.photo_url` updated in prod, with `photos-rollback.sql` in the same PB folder.
+
 ## 2026-11-05 — The plan as one section of task cards (#169, round 2)
 
 Today's plan is one section of real task cards, each task shown once, with finished ones at the bottom until the next plan. Pressing Plan rebuilds a fresh round of the desk; unfinished picks stay unless removed, and answers not yet sent survive. A card may offer one first step. The desk clears by keyboard or tap, and the session watches for Send. Key links described as a Gmail draft get the draft icon everywhere. No schema change. Spec `docs/superpowers/specs/2026-11-04-plan-section-design.md`.

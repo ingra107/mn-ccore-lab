@@ -380,8 +380,21 @@ fi
 #   src/lib/__tests__/link-fixtures.json  read by api/lib/artifact-link-mirror.test.ts
 #   src/hooks/mutations/utils.ts          imported by api/routes/optimistic-rollback.test.ts
 #   vitest.config*.ts, package.json       shape every config
+# Vitest strips types, so a type error in a test passes every suite and stops the
+# deploy at `tsc -b`, after the push (twice, 2026-11-04). The same command as the
+# deploy build, so the two cannot disagree. Test files only: it takes about 70 s even
+# with nothing changed, and running it beside vitest timed out unrelated tests
+# (measured 2026-11-05), so it runs first and alone.
+if git diff --cached --name-only --diff-filter=ACMR | grep -qE '^src/.*[.]test[.]tsx?$'; then
+    echo "[hub-precommit] test file staged -- running tsc -b..."
+    if ! npx tsc -b; then
+        echo ""
+        echo "BLOCKED: type error (see above). The deploy build would stop on it."
+        exit 1
+    fi
+fi
 staged_all=$(git diff --cached --name-only --diff-filter=ACMR)
-vt_both=$(printf '%s\n' "$staged_all" | grep -E "^shared/|^pb-schema$|^src/lib/__tests__/link-fixtures[.]json$|^src/hooks/mutations/utils[.]ts$|^vitest[.]config.*[.]ts$|^package[.]json$" || true)
+vt_both=$(printf '%s\n' "$staged_all" | grep -E "^shared/|^pb-schema$|^src/lib/__tests__/link-fixtures[.]json$|^src/hooks/mutations/utils[.]ts$|^vitest[.](config.*|realInputTests)[.]ts$|^package[.]json$" || true)
 vt_api=$(printf '%s\n' "$staged_all" | grep -E "^api/.*[.]tsx?$" || true)
 vt_src=$(printf '%s\n' "$staged_all" | grep -E "^src/.*[.]tsx?$" || true)
 vt_scripts=""

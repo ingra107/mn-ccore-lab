@@ -22,6 +22,8 @@ export interface Director {
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD, e.g. "0000-0002-1825-0097" — primary publications source (#357)
   openalexId?: string // OpenAlex author id, e.g. "A5048294211" — fullest publications source (#905)
+  /** Earliest verified paper, set when a name cluster has swallowed older strangers. */
+  firstPaperYear?: number
   authorName?: string // PubMed-style name for matching in author strings, e.g. "Ingraham NE" (#906)
 }
 
@@ -34,6 +36,8 @@ export interface TeamMember {
   slug?: string
   photoUrl?: string
   photoFrame?: PhotoFrame
+  /** Earliest verified paper, set when a name cluster has swallowed older strangers. */
+  firstPaperYear?: number
   authorName?: string // PubMed-style name for matching in author strings, e.g. "Chipman JG"
   bio?: string
   fullBio?: string // longer bio for the member page; falls back to `bio`

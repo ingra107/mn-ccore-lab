@@ -330,6 +330,8 @@ Live since 2026-04-09. Team members @mention `@hermes` in task comments, project
 | `playwright.config.dogfood.ts` | ungated preview (`DOGFOOD_BASE_URL=https://<hash>...` + fake auth; N6 2026-06-11 — pointed at gated prod it just tests the CF sign-in interstitial) | Page-health + mobile spot checks |
 | `playwright.config.local.ts` | Miniflare local | Unshipped changes |
 
+**Real-input tests run apart:** a test using `cdp()` or `userEvent` goes on the list in `vitest.realInputTests.ts`, and runs with `npx vitest run --config vitest.config.realinput.ts <file>` (the main config excludes it, so naming the file there finds nothing). Why: that file's header.
+
 **Test DB isolation:** Tests run against `mnccore-lab-test` (separate D1). Canonical test prefix: `_TEST_DELETE_`. See `TESTING.md`.
 
 **Playwright MCP vs CLI:** CLI default (fast, cheap). MCP only for debugging a specific failing test after CLI doesn't give enough context — each `browser_snapshot` costs ~2K tokens.

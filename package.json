@@ -24,7 +24,7 @@
     "test": "npm run test:local",
     "test:api": "vitest run --config vitest.config.api.ts",
     "test:lib": "vitest run --config vitest.config.lib.ts",
-    "test:src": "vitest run --config vitest.config.ts",
+    "test:src": "vitest run --config vitest.config.ts && vitest run --config vitest.config.realinput.ts",
     "test:vitest": "npm run test:api && npm run test:lib && npm run test:src",
     "test:realtime": "vitest run --config workers/hub-realtime/vitest.config.mts",
     "audit:schema-contract": "tsx scripts/audit-schema-contract.ts",

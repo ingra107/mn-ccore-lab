@@ -26,7 +26,7 @@
 // `boxed` and `bare` went with it: both only changed the dark wrapper, so the
 // box now always renders flush and the caller owns spacing.
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
 import { MeLockToggle } from './ui/MeLockToggle'
 import MentionInput, { CommandBadge } from './MentionInput'
@@ -207,11 +207,12 @@ export default function SmartCompose(props: SmartComposeProps) {
   const undoToast = useUndoToast()
   const { tryLaunchCommand } = useLaunchCommands()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // React 19 mounts a controlled textarea by setting defaultValue and then
     // the same value, so the caret starts at 0. Put it at the end once, so a
     // composer opened on existing text (MeetingDetail "Edit notes") takes
     // toolbar inserts at the end until the user places the caret (#1360).
+    // A layout effect, so no click can reach a mounted composer with the caret at 0.
     const ta = textareaRef.current
     if (ta) ta.setSelectionRange(ta.value.length, ta.value.length)
   }, [])

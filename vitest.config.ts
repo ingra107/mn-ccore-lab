@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import tailwindcss from '@tailwindcss/vite'
+import { REAL_INPUT_TESTS } from './vitest.realInputTests'
 
 // #513: `src/**/*.test.{ts,tsx}` also sweeps up src/lib/__tests__/** --
 // node-mode tests (node:fs / node:crypto / global.fetch mocking) exclusively
@@ -26,6 +27,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: [
       'src/lib/__tests__/**',
+      ...REAL_INPUT_TESTS,
     ],
     globals: true,
     // Browser tests wait on a condition after an interaction

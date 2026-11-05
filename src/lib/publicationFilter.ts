@@ -26,6 +26,8 @@ export type RejectReason =
   | 'consortium-byline'
   | 'preprint-shadowed'
   | 'abstract-shadowed'
+  | 'no-byline'
+  | 'before-career'
 
 export interface Verdict {
   ok: boolean
@@ -62,6 +64,10 @@ export interface CandidateWork {
   type?: string
   /** Venue display name, e.g. 'medRxiv', 'JAMA'. */
   sourceName?: string
+  year?: number
+  /** First page and issue: meeting abstracts print on A/S pages or in a supplement. */
+  firstPage?: string
+  issue?: string
   /** Absent for sources that carry no byline detail (prior generated rows). */
   byline?: Byline
 }
@@ -231,8 +237,27 @@ export function bylineNameMatchesMember(rawName: string, memberNames: MemberName
   return words.some((w) => wordsAgree(raw.first!.text, w))
 }
 
-/** The one gate: may this work be listed as the member's publication? */
-export function isAcceptableWork(work: CandidateWork, memberNames: MemberNames, titles?: TitleIndex): Verdict {
+/**
+ * The status a new row arrives with. Every paper count reads 'Published', so an
+ * abstract or preprint labeled here never inflates one. The test matches the rows
+ * Nick ruled on 2026-11-04: A/S page numbers, a supplement issue, or an all-caps
+ * title (CHEST prints its meeting abstracts that way).
+ */
+export function publicationStatus(work: CandidateWork): 'Published' | 'Abstract' | 'Preprint' {
+  if (isPreprint(work)) return 'Preprint'
+  const letters = work.title.replace(/[^\p{L}]/gu, '')
+  const allCaps = letters.length > 0 && letters === letters.toUpperCase()
+  if (allCaps || /^[AS]\d/i.test(work.firstPage ?? '') || /^(supplement_?\d*|\d+_suppl(ement)?)$/i.test(work.issue ?? '')) return 'Abstract'
+  return 'Published'
+}
+
+/**
+ * The one gate: may this work be listed as the member's publication?
+ * `firstYear` is the member's earliest verified paper: an OpenAlex name cluster
+ * holds strangers with the same initials, and a work older than that is one of
+ * them unless the member listed it themselves.
+ */
+export function isAcceptableWork(work: CandidateWork, memberNames: MemberNames, titles?: TitleIndex, firstYear?: number): Verdict {
   const doi = normalizeDoi(work.doi)
   if (REPOSITORY_DOI_PREFIXES.some((p) => doi.startsWith(p))) {
     return { ok: false, reason: 'repository-doi', detail: doi }
@@ -245,6 +270,9 @@ export function isAcceptableWork(work: CandidateWork, memberNames: MemberNames, 
   }
 
   const b = work.byline
+  if (firstYear && work.year && work.year < firstYear && b && !b.claimed) {
+    return { ok: false, reason: 'before-career', detail: `${work.year}, first verified paper ${firstYear}` }
+  }
   if (b) {
     if (!b.claimed) {
       if (b.memberIndex < 0) return { ok: false, reason: 'name-conflict', detail: 'member not on the byline' }

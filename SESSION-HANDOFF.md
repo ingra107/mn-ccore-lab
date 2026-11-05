@@ -1,3 +1,16 @@
+# ▶▶ 2026-11-05 (work, early): SWIPES FIXED, IMPORTER FIXED, PHOTOS HOSTED. Schema unchanged (v157). Detail: CHANGELOG 2026-11-05 "Missing swipes".
+
+## Landmines added
+- `npm run test:src` is now two vitest runs; passing a file to it reaches only the second. Run a real-input file with `npx vitest run --config vitest.config.realinput.ts <file>`.
+- `npm run fetch:publications` exits 1 and writes nothing if any member fails. OpenAlex's free budget is $0.10 a day per IP, so several runs in a day can trip this.
+- Worktrees that share `node_modules/.vite` can hang a suite with no output after "Port ... is in use" (seen twice here, peer session's fix: a `.vite-cache` per checkout).
+
+## Open
+- 65 generated publications are not in prod and wait for Nick's approved list: PB `Scratch/public-site-audit-2026-11-04/import-candidates.json`. Some are noise (a Figshare "Additional file", numbered meeting abstracts labeled Published).
+- The swipe mechanism's last link (vitest's Node process being the delay) is inferred; send latency and the fix are measured.
+
+---
+
 # ▶▶ 2026-11-05 (work, overnight): #169 ROUND 2 LIVE; WHOLE-HUB SWEEP RUNNING. Hub `f198beb5` deployed, PB `2daf9e2d0`. **Schema v157.**
 
 ## Shipped
@@ -18,12 +31,10 @@ Keep #169 and `bug_mw291o484isxfj` open until a real plan reaches the Hub. Check
 - Faces, layout and claims, then Nick's data rulings. Detail: CHANGELOG 2026-11-04 "Public site audit". Backups, forward and rollback SQL: PB `Scratch/public-site-audit-2026-11-04/`. Time Travel bookmarks before each write: `000007e3-00000068-0000511a-640adc4b6a1a7a2bb3123f959b7589d1`, `000007e3-0000007a-0000511a-041576292084c77c7c6377f3386d4c0d`.
 
 ## Landmines added
-- **Vitest does not type-check and the commit gate does not run `tsc -b`.** A type error in a test passes the commit and stops the deploy at the build, after the push. Run `npx tsc -b` before committing a test change.
 - **`npm run deploy:pages:gated | tail` reports the pipe's exit 0.** A failed build looked like a finished deploy. Redirect to a file and read `$?`.
-- `scripts/fetch-publications.ts` still writes the member's name as the whole byline when contributors are missing, and still matches OpenAlex name clusters. Before the next import, read `src/data/publicationExclusions.json`; `dave-macdonald`'s `openalexId` A5077559572 is a conflated cluster. New rows also arrive as `Published`, so a new abstract counts as a paper until someone relabels it.
 
 ## Open
-- 5 journal fields still read "PubMed" (Dudley 4, McEachron 1). `GrantGantt.test.tsx` "a swipe up that starts on a bar" timed out the commit gate twice on 2026-11-04 and passes alone. Six people have no photo; photos hotlink med.umn.edu, including Jeff Chipman's now that he has moved.
+- 5 journal fields still read "PubMed" (Dudley 4, McEachron 1). Six people have no photo; photos hotlink med.umn.edu, including Jeff Chipman's now that he has moved.
 - Footer "Join the lab" conflicts with the site's not-recruiting purpose (`project_public-site-purpose`).
 
 ---

@@ -128,8 +128,7 @@ describe('Tasks Board cards', () => {
       // dnd-kit's drag instructions are announced on the header (dnd-kit
       // portals the instruction text in after its first mount, so wait for it).
       const id = header.getAttribute('aria-describedby') ?? ''
-      for (let i = 0; i < 50 && !document.getElementById(id); i++) await new Promise((r) => setTimeout(r, 20))
-      expect(document.getElementById(id)?.textContent).toMatch(/Space picks the card up/)
+      await expect.poll(() => document.getElementById(id)?.textContent ?? '').toMatch(/Space picks the card up/)
       // No title span stop on the board: the header already opens the task.
       expect(w.querySelector('.tk-ct [role="button"]')).toBeNull()
     }
