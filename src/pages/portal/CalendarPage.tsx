@@ -16,7 +16,7 @@ import { PATHS } from '../../constants/paths'
 import { isMilestone } from '../../../shared/taskKinds'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { SleekTable, SleekRow, type SleekColumn } from '../../components/table/SleekRows'
-import { TaskPriorityLabel, TaskStatusPill } from '../../components/tasks/taskSleekCells'
+import { TaskStatusPill } from '../../components/tasks/taskSleekCells'
 import { Face } from '../../components/today/skin'
 import { NowMarker } from '../../components/moments/NowMarker'
 import { agendaEmptyTitle, agendaWindow, showsToday, stepDate, stepLabel, type ViewMode } from '../../lib/calendarPaging'
@@ -595,7 +595,8 @@ const agendaRestColumns = (withKind: boolean): SleekColumn<CalendarEvent>[] => [
         <div className="sr-tt">
           {!withKind && <span className="sr-only">{KIND_WORD[visualType(e)] ?? e.type}</span>}
           {to ? <Link to={to} className="sr-x sr-open sr-lk" title={eventFullTitleHint(e)}>{label}</Link> : <span className="sr-x" title={eventFullTitleHint(e)}>{label}</span>}
-          {e.type === 'task' && e.category === 'urgent' && <TaskPriorityLabel priority="urgent" />}
+          {/* Urgency is the row's rail (Rule 76); this says it to a screen reader. */}
+          {e.type === 'task' && e.category === 'urgent' && <span className="sr-only">Urgent</span>}
         </div>
       )
     },

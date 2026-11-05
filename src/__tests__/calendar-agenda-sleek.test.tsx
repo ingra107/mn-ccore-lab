@@ -74,12 +74,13 @@ describe('Calendar Agenda: sleek rows', () => {
     expect(host.querySelectorAll('.sr-panel')).toHaveLength(2)
   })
 
-  it('reads a task like Today: short title, Urgent tag, urgent edge, non-default status, owner face', async () => {
+  it('reads a task like Today: short title, urgent edge (the rail alone, Rule 76), non-default status, owner face', async () => {
     const host = await mountAgenda()
     const t1 = host.querySelector('[data-event-id="t1"]') as HTMLElement
     expect(t1.querySelector('a.sr-lk')?.textContent).toBe('Data core synthesis')
     expect(t1.querySelector('a.sr-lk')?.getAttribute('title')).toContain('long-named')
-    expect(t1.querySelector('.tk-urgtag')?.textContent).toBe('Urgent')
+    expect(t1.querySelector('.tk-urgtag')).toBeNull()
+    expect(t1.textContent).toContain('Urgent') // the sr-only word
     expect(t1.classList.contains('sr-urg')).toBe(true)
     expect(t1.textContent).toContain('In Progress')
     expect(t1.querySelector('[data-col="owner"]')?.children.length).toBe(1)
