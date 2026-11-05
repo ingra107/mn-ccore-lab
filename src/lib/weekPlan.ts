@@ -181,10 +181,12 @@ export function pickTag(task: TaskRow | undefined, started: boolean, carried = f
   if (task?.packet_state === 'ready') return { label: 'Ready', cls: 'tk-ac' }
   if (task?.packet_state === 'changed') return { label: 'Changed', cls: 'tk-stale' }
   if (task?.packet_state === 'unverified') return { label: 'Check it', cls: 'tk-stale' }
+  // A real Prep press: the listener has it, so this says that before it says whose it is.
+  if (started && !carried) return { label: 'Preparing', cls: 'tk-n' }
   if (owner === 'nick') return { label: 'Yours', cls: 'tk-ac' }
   if (owner === 'claude') return { label: 'With Claude', cls: 'tk-n' }
-  if (started && carried) return null
-  return started ? { label: 'Preparing', cls: 'tk-n' } : { label: 'Saved', cls: 'tk-n' }
+  if (started) return null
+  return { label: 'Saved', cls: 'tk-n' }
 }
 
 /**

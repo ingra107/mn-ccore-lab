@@ -62,4 +62,13 @@ describe('pickTag with an owner', () => {
     expect(pickTag({ packet_state: 'ready' } as never, false, false, 'claude')?.label).toBe('Ready')
     expect(pickTag(undefined, false, false, null)?.label).toBe('Saved')
   })
+  it('a real Prep press reads Preparing until the packet lands, whoever owns the step', () => {
+    expect(pickTag(undefined, true, false, 'claude')).toEqual({ label: 'Preparing', cls: 'tk-n' })
+    expect(pickTag({ packet_state: 'ready' } as never, true, false, 'claude')?.label).toBe('Ready')
+  })
+  it('a carried start queued nothing, so it keeps its owner tag, and with no owner no tag', () => {
+    expect(pickTag(undefined, true, true, 'claude')?.label).toBe('With Claude')
+    expect(pickTag(undefined, true, true, 'nick')?.label).toBe('Yours')
+    expect(pickTag(undefined, true, true, null)).toBeNull()
+  })
 })

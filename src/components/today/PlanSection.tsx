@@ -45,7 +45,7 @@ const TAG_HELP: Record<string, string> = {
   'Check it': 'A first step is prepared but could not be verified: open the task to check it',
   Preparing: 'The first step is being prepared in the background. It shows here when ready',
   Yours: 'This step is yours: Claude has nothing to prepare for it',
-  'With Claude': 'Claude can take this step: press Prep to have it prepared in the background, or Prep & start to do it with Claude now',
+  'With Claude': 'Claude is working on this in a session. If that session has ended, press Prep or Replan.',
   Saved: 'Saved, not prepped: press Prep to have the first step prepared in the background, or Prep & start to do it with Claude now',
 }
 const OPENS_DRAWER = new Set(['Ready', 'Changed', 'Check it'])
