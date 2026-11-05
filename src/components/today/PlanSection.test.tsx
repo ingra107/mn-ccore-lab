@@ -303,6 +303,20 @@ const cards = (h: ParentNode) => [...h.querySelectorAll('[data-testid="plan-card
 const stored = () => currentWeekPlan([answered([{ task_id: 'task_a', option_key: 'a2', text: null, start: true }])], DAY)!
 
 describe('One Plan week button on the screen', () => {
+  // Review, 2026-11-05: the plan rows are the owner's, so another PI's list never holds
+  // one and the button would read Plan week forever.
+  it('a PI who is not the owner gets no button and no plan words', async () => {
+    vi.setSystemTime(new Date('2026-11-03T15:00:00Z'))
+    stubFetch({ used: 0, cap: 3 })
+    const host = await mount(
+      <PlanSection plan={null} model={planSectionModel(null, [], state({}).planned, DAY, state({}).done)} state={state({})} projectsByPid={new Map()} viewerSlug="" />,
+      'other-pi',
+    )
+    await tick()
+    expect(host.querySelector('[data-testid="plan-button"]')).toBeNull()
+    expect(host.querySelector('[data-testid="plan-empty"]')?.textContent).toBe('Nothing planned. Drag a task here to plan it for today.')
+  })
+
   const quiet = (above: boolean) => (
     <PlanSection plan={null} planRowAbove={above} model={planSectionModel(null, [], state({}).planned, DAY, state({}).done)} state={state({})} projectsByPid={new Map()} viewerSlug="" />
   )

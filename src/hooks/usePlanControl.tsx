@@ -25,8 +25,10 @@ const POLL_MS = 30_000
 /** `weekPlanned`: the week a press would plan already has a plan, so the button
  *  reads Replan rather than Plan week (lib/planLaunch.ts). */
 export function usePlanControl({ weekPlanned = false }: { weekPlanned?: boolean } = {}) {
-  const { isPi, piResolved } = useAuth().user
-  const active = isPi && piResolved
+  // The owner only, as usePlanRowWeek: plan rows are assigned to him, so another PI's
+  // list never holds one and the button would read Plan week forever.
+  const { isPi, piResolved, canShowAllProjects } = useAuth().user
+  const active = isPi && piResolved && canShowAllProjects
   const qc = useQueryClient()
   const run = useRunLaunch()
   const q = useQuery({
