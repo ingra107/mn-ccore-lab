@@ -314,7 +314,8 @@ export default function IdeasPage() {
         ) : viewMode === 'kanban' ? (
           /* P2-10: kanban-first board view */
           <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-[repeat(4,minmax(220px,1fr))]">
-            {(['new', 'under_review', 'approved', 'parked'] as const).map((col) => {
+            {/* Archived has no column on the open board; its filter gets its own, or the rows it found would not show. */}
+            {(filterStatus === 'archived' ? (['archived'] as const) : (['new', 'under_review', 'approved', 'parked'] as const)).map((col) => {
               const colIdeas = sortedIdeas.filter((i) => i.status === col)
               const cfg = statusConfig[col]
               const isOver = dragOverCol === col
