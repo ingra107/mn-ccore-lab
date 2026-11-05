@@ -13,9 +13,10 @@ const IdeasPage = lazyRoute(() => import('../IdeasPage'))
 export default function ProjectsHost() {
   return (
     <PageTabs
-      ariaLabel="Projects"
+      title="Projects"
+      ariaLabel="Projects views"
       tabs={[
-        { key: 'projects', label: 'Projects', render: () => <Suspense fallback={<TabFallback />}><Projects /></Suspense> },
+        { key: 'projects', label: 'All', render: () => <Suspense fallback={<TabFallback />}><Projects /></Suspense> },
         { key: 'ideas', label: 'Ideas', render: () => <Suspense fallback={<TabFallback />}><IdeasPage /></Suspense> },
       ]}
     />

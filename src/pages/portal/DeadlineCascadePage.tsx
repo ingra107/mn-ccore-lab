@@ -99,7 +99,7 @@ export default function DeadlineCascadePage() {
         // Renamed to match what's on screen.
         // The tab lives under Lab overview, which every tab names as its one
         // header (principle 11); what this tab shows moves to the subtitle.
-        title="Lab overview"
+        title="Lab Overview"
         subtitle={totalDeps > 0
           ? `Deadline cascade: ${totalDeps} dependency ${totalDeps === 1 ? 'link' : 'links'} across ${chainsWithDeps} ${chainsWithDeps === 1 ? 'project' : 'projects'}`
           : `Deadlines by project: ${totalNodes} across ${projectGroups.length} ${projectGroups.length === 1 ? 'project' : 'projects'}`

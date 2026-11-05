@@ -1271,15 +1271,7 @@ export default function TrajectoryPage() {
           />
 
           <div>
-            <h1
-              style={{
-                fontSize: '1.75rem',
-                fontWeight: 700,
-                color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.2,
-              }}
-            >
+            <h1 className="tk-h1" style={{ color: 'var(--sk-t1)' }}>
               {displayName}
             </h1>
             <p

@@ -133,7 +133,7 @@ export default function MeetingNotesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Meeting Transcripts"
+        title="Meetings"
         subtitle="Each meeting's transcript and notes"
         count={processedCount}
         actions={

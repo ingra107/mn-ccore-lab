@@ -36,7 +36,7 @@ export default function TeamTab() {
 
   const header = (
     <PageHeader
-      title="Lab overview"
+      title="Lab Overview"
       subtitle="Team workload, engagement and commitments"
       actions={
         <div className="flex items-center gap-3 flex-wrap">

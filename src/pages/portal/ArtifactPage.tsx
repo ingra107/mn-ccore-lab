@@ -240,7 +240,7 @@ export default function ArtifactPage() {
             <FileText {...ICON_PROPS} size={20} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.25 }}>
+            <h1 className="tk-h1" style={{ color: 'var(--sk-t1)' }}>
               {artifact.title}
             </h1>
             <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 4 }}>

@@ -10,10 +10,10 @@ import { P } from '../../helpers/paths'
 
 test.describe('Journey 5: Research Reader', () => {
   test('Digest → publications → ideas → vote → create idea', async ({ journeyPage: page }) => {
-    // 1-3. Navigate to /digest — h1 = "Research Digest"
+    // 1-3. Navigate to /digest — h1 = "Library", tab "Research Digest"
     const errors = await go(page, P.digest)
     expect(errors).toEqual([])
-    await expect(page.locator('h1')).toContainText(/digest/i, { timeout: 5000 })
+    await expect(page.locator('h1')).toContainText(/library/i, { timeout: 5000 })
 
     // Check for any digest content
     const digestContent = page.locator('article, [class*="card"], [class*="paper"], h3, h2').first()

@@ -14,6 +14,7 @@ const Digest = lazyRoute(() => import('../../Digest'))
 export default function LibraryPage() {
   return (
     <PageTabs
+      title="Library"
       ariaLabel="Library"
       tabs={[
         { key: 'artifacts', label: 'Artifacts', render: () => <Suspense fallback={<TabFallback />}><ArtifactsGalleryPage /></Suspense> },

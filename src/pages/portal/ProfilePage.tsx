@@ -113,7 +113,7 @@ export default function ProfilePage() {
   if (!slug) {
     return (
       <div className="content-container">
-        <PageHeader title="Profile" subtitle="Sign in to view your profile" />
+        <PageHeader title="My Profile" subtitle="Sign in to view your profile" />
       </div>
     )
   }
@@ -123,7 +123,7 @@ export default function ProfilePage() {
   if (!member || !rawRow) {
     return (
       <div className="content-container">
-        <PageHeader title="Profile" subtitle="No profile yet" />
+        <PageHeader title="My Profile" subtitle="No profile yet" />
         <p className="text-sm" style={{ color: 'var(--muted)' }}>
           You are not on the Team page yet. Ask Nick to add you, then come back.
         </p>

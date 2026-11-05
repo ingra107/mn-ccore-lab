@@ -17,7 +17,7 @@ async function openMyTasks(page: import('@playwright/test').Page, email: string,
   page.on('pageerror', (e) => errors.push(e.message))
   page.on('console', (m) => { if (m.type() === 'error' && /re-renders|#301/.test(m.text())) errors.push(m.text()) })
   await page.goto(`/portal/my-tasks${query}`)
-  await expect(page.getByText('My Tasks').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible({ timeout: 20_000 })
   // Give the task query time to resolve so the empty list actually renders.
   await page.waitForLoadState('networkidle')
   return errors

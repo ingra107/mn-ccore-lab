@@ -50,7 +50,7 @@ test('a brand-new UMN NetID sees the members-only page and reads nothing', async
   expect(q.get('body')).toContain(`UMN email: ${NEWBIE}`)
 
   // The portal behind the wall is not there, and the API agrees.
-  await expect(page.getByText('My Tasks')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toHaveCount(0)
   for (const path of ['/api/tasks', '/api/projects/test_delete_sepsis_outcomes_reg', '/api/meetings', '/api/team/slugs']) {
     const r = await page.request.get(path, { headers: { ...HEADERS, 'X-Test-User': NEWBIE } })
     expect(r.status(), path).toBe(403)
@@ -102,7 +102,7 @@ test('the PI adds them from the Team page on a phone, and they get the Hub', asy
   await page.setViewportSize({ width: 1280, height: 800 })
   await as(page, NEWBIE)
   await page.goto('/portal/my-tasks')
-  await expect(page.getByText('My Tasks').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible({ timeout: 20_000 })
   await expect(page.getByTestId('members-only')).toHaveCount(0)
   const r = await page.request.get('/api/tasks', { headers: { ...HEADERS, 'X-Test-User': NEWBIE } })
   expect(r.status()).toBe(200)

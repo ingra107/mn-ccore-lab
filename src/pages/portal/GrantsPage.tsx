@@ -116,7 +116,7 @@ export default function GrantsPage() {
 
   return (
     <div className="content-container">
-      <PageHeader title="Grants & Funding">
+      <PageHeader title="Grants">
         {/* The list's controls leave with the list: on the other tabs the pills
             changed nothing on screen (fable audit F19). */}
         {activeTab === 'grants' && <TableControls

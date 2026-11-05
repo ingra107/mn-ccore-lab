@@ -256,7 +256,7 @@ export default function IdeasPage() {
   return (
     <div className="content-container flex flex-col gap-4">
       <PageHeader
-        title="Ideas Board"
+        title="Projects"
         hero={isLoading ? undefined : { value: activeCount, label: activeCount === 1 ? 'active idea' : 'active ideas' }}
         actions={
           <Button variant="primary" onClick={() => setShowCreate(true)}>

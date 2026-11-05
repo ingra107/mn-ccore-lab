@@ -129,7 +129,7 @@ export default function MeetingPrep() {
               Facilitator Prep
             </span>
           </div>
-          <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--ink)', margin: 0 }}>
+          <h1 className="tk-h1" style={{ color: 'var(--sk-t1)' }}>
             {meeting.title}
           </h1>
           <div className="flex items-center gap-3 mt-1">
