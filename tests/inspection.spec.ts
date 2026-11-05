@@ -57,8 +57,6 @@ test.describe('API — Read Endpoints', () => {
     ['/api/decisions/review', 200, 'Decisions for review'],
     ['/api/search?q=CLIF', 200, 'Full-text search'],
     ['/api/version', 200, 'Version check'],
-    ['/api/settings', 200, 'Lab settings'],
-    ['/api/workflow-templates', 200, 'Workflow templates'],
     ['/api/calendar/events', 200, 'Calendar events'],
     ['/api/activity?limit=5', 200, 'Activity feed'],
     ['/api/activity/heatmap?slug=nick-ingraham&days=90', 200, 'Activity heatmap'],
@@ -149,15 +147,6 @@ test.describe('API — Write Endpoints', () => {
     expect(res.status()).toBe(201)
   })
 
-  // #8949: this used to POST { key, value }, which the route stored as two
-  // junk rows named 'key' and 'value' (BASE defaults to prod). The route now
-  // accepts only the Settings-page keys, so check that it refuses an unknown
-  // key: the check writes nothing wherever BASE points.
-  test('API POST: lab settings refuses an unknown key', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/settings`, { data: { key: '_inspection_test', value: 'delete_me' } })
-    expect(res.status()).toBe(400)
-  })
-
   test('API POST: Vote on idea', async ({ request }) => {
     const ideas = await (await request.get(`${BASE}/api/ideas`)).json()
     if (!ideas.data?.length) { test.skip(); return }
@@ -207,7 +196,7 @@ test.describe('PAGE — Portal pages render without errors', () => {
     [P.meetingNotes, 'Meeting Transcripts', ['Meeting Transcripts', 'Upload Audio']],
     [P.activity, 'Activity', ['Activity']],
     [P.labPipeline, 'Lab overview Pipeline', ['Lab overview', 'Completed']],
-    [P.settings, 'Settings', ['Settings', 'Lab name']],
+    [P.settings, 'Settings', ['Settings', 'Lab Preferences']],
     [P.narratives, 'Narratives', ['Research Narratives']],
     [P.sessions, 'Session History', ['Session History']],
     [P.menteeMilestones, 'Mentee Milestones', ['Mentee Milestones']],

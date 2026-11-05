@@ -51,7 +51,6 @@ import { handleGetPulse, handleReleaseIntake, handleUpdateRelease, handleCreateA
 import { pulseCountsFrom } from './lib/pulse-aggregates';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
 import { handleGetSearch } from './routes/search';
-import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleTodayMentees } from './routes/today-mentees';
@@ -1691,20 +1690,6 @@ defineRoute({
 });
 defineRoute({
   method: 'GET',
-  path: '/api/settings',
-  auth: 'authed',
-  entity: 'settings',
-  handler: (c) => handleGetSettings(E(c)),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/workflow-templates',
-  auth: 'authed',
-  entity: 'settings',
-  handler: (c) => handleGetWorkflowTemplates(E(c)),
-});
-defineRoute({
-  method: 'GET',
   path: '/api/calendar/events',
   auth: 'authed',
   entity: 'calendar',
@@ -2640,22 +2625,6 @@ defineRoute({
   auth: 'authed',
   entity: 'handoffs',
   handler: (c) => handleAcknowledgeHandoff(c.req.param('id'), USER(c), E(c)),
-});
-
-// Settings
-defineRoute({
-  method: 'POST',
-  path: '/api/settings',
-  auth: 'authed',
-  entity: 'settings',
-  handler: (c) => handleUpdateSettings(R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/workflow-templates',
-  auth: 'authed',
-  entity: 'settings',
-  handler: (c) => handleCreateWorkflowTemplate(R(c), E(c)),
 });
 
 // Ideas

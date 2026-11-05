@@ -65,8 +65,8 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 | activity_entries | dynamic | **v77 unified timeline (2026-06-10)** — ALL task/project human messages + completions/system events; ONE write path `postActivityEntry()` (CLAUDE.md Rule 70) |
 | task_comments | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | task_updates | DROPPED 2026-06-10 | schema-v78; the GET /api/tasks/:id/updates projection was removed 2026-10-09 (POST stays); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
-| lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
-| workflow_templates | 3+ | Custom project stage templates |
+| lab_settings | 11 on prod 2026-11-05 | Key-value settings store (`pi_emails` JSON, the `hub_*` flags, `workflow_stages`, the legacy `lab_*` keys). Read in the Worker; no route serves or writes it since 2026-11-05 |
+| workflow_templates | 3 on prod 2026-11-05 | No reader or writer since the Settings Templates tab and its routes were removed 2026-11-05; drop waits for Nick |
 | email_drafts | RETIRING | No reader or writer since the mirror was retired 2026-09-30 (#8836); drop pending in schema-v115 |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
@@ -166,8 +166,8 @@ server-side via X-API-Key + JWT verify, failing closed (`api/lib/auth-mode.ts`).
 - POST /api/artifacts/:id/comments (→ activity_entries entity_type='artifact')
 
 ### Search & Settings
-- GET /api/search?q=, /api/settings, /api/workflow-templates
-- POST /api/settings, /api/workflow-templates
+- GET /api/search?q=
+- (GET + POST /api/settings and /api/workflow-templates were removed 2026-11-05; Settings no longer has Profile or Templates tabs)
 - GET /api/user-prefs, PUT + DELETE /api/user-prefs/:key (`{ value }`): the caller's own view preferences (schema-v143); an unlisted key answers 400, a non-member 403
 
 ### Notifications
