@@ -20,6 +20,18 @@ export function useAddAgendaItem(meetingId: string) {
   })
 }
 
+// A useMutation, not a bare fetch: the failed-write floor (UndoToast) only sees
+// the mutation cache, so a refused reorder was silent and snapped back on reload.
+export function useReorderAgenda(meetingId: string) {
+  return useMutation({
+    mutationFn: (ids: string[]) =>
+      fetchApi(`/api/meetings/${meetingId}/agenda/reorder`, {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      }),
+  })
+}
+
 // ── Prep a future meeting from a calendar row ───────────────
 //
 // The Today timeline shows personal-calendar events (cal-*) that have no D1
