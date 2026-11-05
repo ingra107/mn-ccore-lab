@@ -96,8 +96,10 @@ export function DoneBox({ done, onToggle, color = 'var(--job-accent)', taskId }:
 }
 
 // ── SelectBox — the visible multi-select control (opt-in via `selectBox`). A
-// small accent square at the row's left edge; the DoneBox beside it stays the
-// complete control. Selection is the accent's job, so it fills teal.
+// small circle at the row's left edge, because the square means complete (Rule
+// 68) and two squares side by side invite the wrong tap (sweep audit H6): the
+// DoneBox beside it stays the only square. Selection is the accent's job, so it
+// fills teal.
 export function SelectBox({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <Button size="icon"

@@ -21,7 +21,8 @@ import { useSelectMode } from '../../../hooks/useSelectMode'
 import { useLongPress } from '../../../hooks/useLongPress'
 import { LONG_PRESS_MS } from '../../../lib/uiTiming'
 import { isTaskDone } from '../constants'
-import { OverdueBanner } from './OverdueBanner'
+import { SleekOverdueLine } from '../../../components/table/SleekRows'
+import { isOverdue } from '../../../lib/dateUtils'
 import { NoTasksMatch, AllCaughtUp } from './MyTasksEmpty'
 import type { TaskRow } from '../../../lib/api'
 
@@ -116,7 +117,7 @@ export function ListView({ filtered, isEmpty, selected, toggleSelect, selectRang
       <div ref={scrollRef} className="fab-clear" style={pageScrollRef ? undefined : { flex: 1, overflow: 'auto' }}>
         <div className="mt-band">
           <div className="tk" style={{ paddingTop: 10 }}>
-            <OverdueBanner tasks={filtered} />
+            <SleekOverdueLine count={filtered.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length} />
             {filtered.length === 0 && (isEmpty ? <AllCaughtUp /> : <NoTasksMatch />)}
             {filtered.length > 0 && (
               <div ref={listRef} style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>

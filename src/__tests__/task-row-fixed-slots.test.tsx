@@ -65,7 +65,7 @@ describe('card title tail', () => {
       const ct = host.querySelector<HTMLElement>('.tk-ct')!
       const text = ct.querySelector<HTMLElement>('.tk-ct > span:not(.tk-tail):not(.sr-only)') ?? ct.firstElementChild as HTMLElement
       const pin = host.querySelector<HTMLElement>('button[data-plan-btn]')!
-      const right = host.querySelector<HTMLElement>('.tk-tr-r')!
+      const right = host.querySelector<HTMLElement>('.tk-av')! // the phone grid dissolves .tk-tr-r
       const lines = new Set([...text.getClientRects()].map((r) => Math.round(r.top))).size
       const lineH = parseFloat(getComputedStyle(ct).lineHeight)
       expect(ct.getBoundingClientRect().height, title).toBeLessThanOrEqual(lines * lineH + 1)
