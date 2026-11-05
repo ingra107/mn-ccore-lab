@@ -132,50 +132,46 @@ describe('GrantGantt drag gesture, real touch input', () => {
     return { onMove, scroller, at, touch, done }
   }
 
-  it('a swipe up that starts on a bar scrolls the page and writes nothing', async () => {
+  // The whole gesture can repeat (the loop below), so the default 5 s is shorter
+  // than the test's own worst case on a loaded machine.
+  it('a swipe up that starts on a bar scrolls the page and writes nothing', { timeout: 20_000 }, async () => {
     const { onMove, at, touch, done } = await touchSetup()
     // The contract is "the browser is free to pan": no touchmove is cancelled and
     // the bar allows vertical pan. Reading scrollTop instead depends on the
     // compositor scrolling this test iframe, which it did alone and did not in
     // the full parallel run (2026-10-14 gate, twice), so it proved nothing there.
     //
-    // A swipe is only a swipe if the finger moves before the hold arms
-    // (BAR_DRAG.holdMs). Under a loaded parallel run the CDP-dispatched first
-    // move has landed later than that, which IS a press-and-hold, and the bar
-    // then rightly stops the pan. So the gap is measured from the events' own
-    // timestamps, and a gesture that came in too slow is re-run, not judged.
-    let cancelled: boolean[] = []
-    let startAt = 0
-    let firstMoveAt = 0
-    const onStart = (e: TouchEvent) => { startAt = e.timeStamp }
-    const seen = (e: TouchEvent) => { if (!cancelled.length) firstMoveAt = e.timeStamp; cancelled.push(e.defaultPrevented) }
-    window.addEventListener('touchstart', onStart)
+    // A swipe is only a swipe if the finger moves before the hold arms. The first
+    // CDP-dispatched move has landed 270-950 ms after the press under load, which
+    // IS a press-and-hold, and the bar rightly stops the pan. Measuring that gap
+    // and re-running did not help: once a hold armed, no later attempt delivered a
+    // touchmove. So the hold cannot arm during this test; a real hold is the next
+    // test's job, on the real delay.
+    const hold = BAR_DRAG.holdMs
+    const dials = BAR_DRAG as { holdMs: number }
+    dials.holdMs = 60_000
+    const cancelled: boolean[] = []
+    const seen = (e: TouchEvent) => { cancelled.push(e.defaultPrevented) }
     window.addEventListener('touchmove', seen)
     try {
       const bar = document.querySelector<HTMLElement>('[data-testid="gantt-bar-p-k23"]')!
       expect(getComputedStyle(bar).touchAction).toBe('pan-y')
-      let gaps: number[] = []
       // Under the same load a gesture can miss this frame entirely: no touchmove
-      // arrives, which says nothing about the bar, so it is re-run too (three of
-      // five gate runs on 2026-11-04 failed here and all passed alone). A run where
-      // none ever arrives still fails below.
-      for (let attempt = 0; attempt < 6; attempt++) {
-        cancelled = []
-        onMove.mockClear() // a too-slow attempt was a hold; it is not the swipe under test
+      // arrives, which says nothing about the bar, so it is re-run (three of five
+      // gate runs on 2026-11-04 failed here and all passed alone). A run where none
+      // ever arrives still fails below.
+      for (let attempt = 0; attempt < 6 && !cancelled.length; attempt++) {
         const o = at(0, 0)
         await touch('touchStart', o)
         for (let i = 1; i <= 10; i++) await touch('touchMove', { x: o.x + i * 0.4, y: o.y - i * 8 })
         await touch('touchEnd')
         const arrived = await expect.poll(() => cancelled.length, { timeout: 500 }).toBeGreaterThan(0).then(() => true, () => false)
-        if (!arrived) { await wait(250); continue }
-        gaps = [...gaps, firstMoveAt - startAt]
-        if (firstMoveAt - startAt < BAR_DRAG.holdMs) break
+        if (!arrived) await wait(250)
       }
-      expect(gaps.length, 'no swipe ever reached this frame').toBeGreaterThan(0)
-      expect(gaps[gaps.length - 1], `every swipe reached the bar after the hold delay: ${gaps.join(', ')} ms`).toBeLessThan(BAR_DRAG.holdMs)
+      expect(cancelled.length, 'no swipe ever reached this frame').toBeGreaterThan(0)
       expect(cancelled.every((c) => !c)).toBe(true)
       expect(onMove).not.toHaveBeenCalled()
-    } finally { window.removeEventListener('touchstart', onStart); window.removeEventListener('touchmove', seen); await done() }
+    } finally { dials.holdMs = hold; window.removeEventListener('touchmove', seen); await done() }
   })
 
   it('press and hold, then drag: the bar moves and the page does not pan', async () => {

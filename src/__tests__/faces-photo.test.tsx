@@ -3,7 +3,7 @@
 // The Avatar fallback is initials only, never initials over a silhouette (#8969).
 // Real Chromium (vitest.config.ts browser mode).
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { ReactElement } from 'react'
 import { Face, FaceDisc, NameFace, Faces } from '../components/today/skin'
 import { resolveAttendeeViews } from '../lib/attendeeViews'
@@ -12,6 +12,22 @@ import css from '../index.css?raw'
 import { mount, cleanupMountsAfterEach } from './testMount'
 
 cleanupMountsAfterEach()
+
+// Team photos live on med.umn.edu, and a photo that fails drops to initials (the
+// second test). The tests below are about a photo that LOADS, so each member's
+// photo is a local image here; the real one was refused ~40ms after mount, and
+// these passed only when their assertion beat that reply.
+vi.mock('../data/team', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../data/team')>()
+  const photo = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+  return {
+    ...real,
+    getPersonInfo: (slug: string) => {
+      const person = real.getPersonInfo(slug)
+      return person.photoUrl ? { ...person, photoUrl: photo } : person
+    },
+  }
+})
 
 // The .tk-* skin (same slice timeline-meeting-height.test.tsx injects), so the
 // size check measures the real face CSS.
@@ -61,7 +77,10 @@ describe('Today faces', () => {
     const [a, b] = Array.from(host.querySelectorAll<HTMLElement>('.tk-face'))
     expect(a.getBoundingClientRect().width).toBe(22)
     expect(b.getBoundingClientRect().width).toBe(22)
+    expect(a.querySelector('img')).not.toBeNull()
     expect(a.querySelector('img')!.getBoundingClientRect().width).toBe(22)
+    // It stays: a photo that loads is not swapped for initials a moment later.
+    await new Promise((r) => setTimeout(r, 100))
     expect(a.querySelector('img')).not.toBeNull()
   })
 })
