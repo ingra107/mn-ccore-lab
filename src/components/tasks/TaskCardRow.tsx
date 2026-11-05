@@ -27,6 +27,7 @@ import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import { useContext, type ReactNode } from 'react'
 import { TASK_KIND_LABELS } from '../../../shared/taskKinds'
+import { parseWatchers } from '../../../shared/watchers'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import { HideViewerFaceContext } from '../today/hideViewerFace'
 import TaskTitle from './TaskTitle'
@@ -195,7 +196,7 @@ export function CardRow(props: CardTaskRowProps) {
 
   const urgent = !isDone && task.priority === 'urgent'
   const displayTitle = taskShortLabel(task)
-  const others = [task.assigned_by, ...(task.watchers ? task.watchers.split(',').map((w) => w.trim()) : [])]
+  const others = [task.assigned_by, ...parseWatchers(task.watchers)]
     // assigned_by is often stored as an email, assignee as a slug: compare slugs.
     .map((s) => (s && s.includes('@') ? slugForEmail(s) : s))
     .filter((s): s is string => !!s && s !== task.assignee && s !== hideFaceOf)

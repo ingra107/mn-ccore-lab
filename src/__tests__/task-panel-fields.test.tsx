@@ -70,26 +70,30 @@ describe('G04: the assignee menu offers only what the API accepts', () => {
   })
 })
 
-describe('G01: the watcher picker', () => {
-  it('says what it does and writes a JSON array', async () => {
-    const calls = stubFetch()
+describe('G01: Watchers while the server refuses the field', () => {
+  // POST /api/tasks/:id refuses `watchers` until the server half lands, so the
+  // panel offers no way to set them and promises nothing. A stored value shows.
+  const blockText = () => panel().textContent ?? ''
+
+  it('with no watchers there is no Watchers block, no Add and no promise', async () => {
+    stubFetch()
     await mount(tree(<TaskDetailPanel task={task()} onClose={() => {}} />), panelReady)
-    expect(panel().textContent).toMatch(/can see this task/i)
-    byText(panel(), 'button', /^\+ Add/)[0].click()
-    const casey = await until(() => byText(panel(), 'button', /Casey/)[0], 'people list')
-    casey.click()
-    const isWrite = (c: { url: string; method: string }) => c.method === 'POST' && /\/api\/tasks\/task_f1/.test(c.url)
-    await until(() => calls.find(isWrite), 'the write')
-    const watchers = (calls.find(isWrite)!.body as { watchers: string }).watchers
-    expect(JSON.parse(watchers)).toEqual([expect.stringMatching(/casey/)])
+    expect(byText(panel(), 'label, div, span', /^Recurrence$/).length).toBeGreaterThan(0) // the Details tab drew
+    expect(blockText()).not.toMatch(/Watchers/)
+    expect(blockText()).not.toMatch(/can see this task/i)
+    expect(byText(panel(), 'button', /^\+ Add/)).toEqual([])
   })
 
   it.each([['the JSON form', '["casey-eddington"]'], ['the old comma form', 'casey-eddington']])(
-    'shows a chip from %s',
+    'shows a stored watcher from %s, read-only',
     async (_label, watchers) => {
       stubFetch()
       await mount(tree(<TaskDetailPanel task={task({ watchers })} onClose={() => {}} />), panelReady)
-      expect(panel().querySelector('[aria-label^="Remove watcher Casey"]')).not.toBeNull()
+      expect(blockText()).toMatch(/Watchers/)
+      expect(blockText()).toMatch(/Casey/)
+      expect(blockText()).not.toMatch(/can see this task/i)
+      expect(panel().querySelector('[aria-label^="Remove watcher"]')).toBeNull()
+      expect(byText(panel(), 'button', /^\+ Add/)).toEqual([])
     },
   )
 })

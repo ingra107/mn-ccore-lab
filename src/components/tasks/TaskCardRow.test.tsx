@@ -23,7 +23,7 @@ const task = {
   completed: 0, completed_at: null, project_id: null, group_override: null, acknowledged_at: '2026-01-01',
 } as unknown as TaskRow
 
-function mount(onToggleExpand: () => void, isExpanded = false, onAncestorKey: () => void = () => {}): HTMLElement {
+function mount(onToggleExpand: () => void, isExpanded = false, onAncestorKey: () => void = () => {}, row: TaskRow = task): HTMLElement {
   const host = document.createElement('div')
   document.body.appendChild(host)
   const root = createRoot(host)
@@ -32,7 +32,7 @@ function mount(onToggleExpand: () => void, isExpanded = false, onAncestorKey: ()
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter>
         <div className="tk" onKeyDown={onAncestorKey}>
-          <CardRow card task={task} project={null} isDone={false} onToggleDone={() => {}} isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
+          <CardRow card task={row} project={null} isDone={false} onToggleDone={() => {}} isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
         </div>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -84,5 +84,17 @@ describe('CardRow header keyboard contract', () => {
     const host = mount(() => {})
     await header(host)
     expect(host.querySelectorAll('[role="button"]').length).toBe(1)
+  })
+})
+
+describe('CardRow watcher faces', () => {
+  it.each([['JSON', '["casey-eddington"]'], ['comma', 'casey-eddington']])('reads the %s form as one person', async (_label, watchers) => {
+    const host = mount(() => {}, false, () => {}, { ...task, watchers } as TaskRow)
+    await header(host)
+    const faces = [...host.querySelectorAll('.tk-faces > *')]
+    expect(faces.length).toBe(1)
+    // A JSON value split on commas drew a face named after the raw brackets.
+    expect(host.innerHTML).not.toContain('[&quot;casey')
+    expect(faces[0].outerHTML).not.toContain('[')
   })
 })
