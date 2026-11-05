@@ -24,7 +24,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       className="project-card sk-mat"
       style={{
         borderRadius: 'var(--radius-lg)',
-        padding: 'var(--sp-lg)',
+        padding: 'var(--sp-md)',
         cursor: 'pointer',
         transition: 'box-shadow 0.2s ease',
       }}
@@ -41,6 +41,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             color: 'var(--ink)',
             lineHeight: 1.4,
             margin: 0,
+            minWidth: 0,
+            overflowWrap: 'anywhere',
           }}
         >
           {project.title}

@@ -606,8 +606,9 @@ export default function Projects() {
                 // The track is the column's whole width. A minWidth on the column
                 // larger than its track spilled over the next one, which put each
                 // count beside the next column's title and pushed the last column
-                // off the band. 132px fits seven stages in Today's width.
-                gridTemplateColumns: `repeat(${STAGES.length}, minmax(132px, 1fr))`,
+                // off the band. --pipe-min fits seven stages in Today's width; a
+                // phone scrolls sideways at a readable column width.
+                gridTemplateColumns: `repeat(${STAGES.length}, minmax(var(--pipe-min), 1fr))`,
                 gap: 'var(--sp-sm)',
                 overflowX: 'auto',
                 paddingBottom: '1rem',
@@ -712,9 +713,13 @@ export default function Projects() {
       {/* Scoped styles */}
       <style>{`
         .pipeline-board {
+          --pipe-min: 132px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
           scrollbar-color: var(--sk-line2) transparent;
+        }
+        @media (max-width: 767px) {
+          .pipeline-board { --pipe-min: 200px; }
         }
         .pipeline-board::-webkit-scrollbar {
           height: 6px;

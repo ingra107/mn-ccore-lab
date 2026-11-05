@@ -54,7 +54,7 @@ export default function DeadlineCascadePage() {
       const key = node.project_id || '__unassigned'
       if (!groups.has(key)) {
         groups.set(key, {
-          title: node.project_title || 'Unassigned',
+          title: node.project_title || 'No project',
           nodes: [],
           deps: [],
         })
@@ -221,6 +221,7 @@ export default function DeadlineCascadePage() {
                       onSimulateImpact={handleSimulateImpact}
                       filterAtRisk={filterAtRisk}
                       compact={false}
+                      hideSummary
                     />
                   </div>}
                 </motion.div>

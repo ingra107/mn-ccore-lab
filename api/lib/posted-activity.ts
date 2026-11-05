@@ -88,7 +88,7 @@ export async function postedActivityRows(env: Env, opts: PostedOptions): Promise
     if (r.kind === 'comment') {
       return {
         id: r.id, type: 'comment', actor: r.actor_slug, related_id: r.entity_id, related_type: r.entity_type, timestamp: r.created_at,
-        description: r.entity_type === 'task' ? 'Commented on task' : `Commented on "${project}"`,
+        description: r.entity_type === 'task' ? `Commented on "${task}"` : `Commented on "${project}"`,
       };
     }
     return r.entity_type === 'task'

@@ -199,10 +199,10 @@ export default function SettingsPage() {
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Moon {...ICON_PROPS} size={12} style={{ color: 'var(--sk-t3)' }} />
+                <Moon {...ICON_PROPS} size={12} style={{ color: '#94a3b8' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#e2e8f0' }}>Dark</span>
               </div>
-              <div className="rounded" style={{ background: 'color-mix(in oklch, var(--cream), white 3%)', padding: 6 }}>
+              <div className="rounded" style={{ background: '#151c25', padding: 6 }}>
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '80%', background: '#e2e8f0', opacity: 0.2 }} />
                 <div className="h-1.5 rounded-full mb-1.5" style={{ width: '60%', background: '#e2e8f0', opacity: 0.15 }} />
                 <div className="h-1.5 rounded-full" style={{ width: '70%', background: '#2d8a8a', opacity: 0.85 }} />

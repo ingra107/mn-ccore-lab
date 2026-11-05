@@ -85,6 +85,8 @@ describe('a comment or note is stored once', () => {
       description: 'Posted note on "One store task": "task note ONESTORE"',
     })
     expect(posted.find((x) => x.type === 'project_update')).toMatchObject({ related_type: 'project', related_id: PROJ })
+    // A comment names its task: "Commented on task" seven times says nothing (visual audit 2, M15).
+    expect(posted.find((x) => x.type === 'comment' && x.related_type === 'task')?.description).toBe('Commented on "One store task"')
     expect(rows.filter((x) => x.description.includes('ONESTORE')).length).toBe(2)
   })
 

@@ -11,14 +11,14 @@ import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import type { InsightsDashboardData } from '../../hooks/useInsightsDashboard'
 
-const COLS = 'minmax(220px, 3fr) 90px 90px 140px 130px'
+const COLS = 'minmax(180px, 3fr) 112px 80px 120px 130px'
 // Progressive disclosure (principle 5, G8-05): the longest-idle few, the rest
 // one tap away. 68 rows inline made the Pipeline tab ~10,400px tall on a phone.
 const PREVIEW = 5
 
 /**
  * Stalled projects (no project update in 14 days), each with a follow-up date
- * and "+ Set follow-up". That button is the one write action on the Lab
+ * and "+ Add follow-up". That button is the one write action on the Lab
  * overview: it posts a high-priority task, due on the chosen date (default
  * three days out), to POST /api/tasks.
  */
@@ -83,14 +83,14 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
       ) : (
         <div data-testid="stalled-registry">
           <div className="hidden sm:grid px-3 py-2" style={{ gridTemplateColumns: COLS, borderBottom: '1px solid var(--sk-line)' }}>
-            {['Project', 'Days idle', 'Open tasks', 'Follow-up date', 'Action'].map((label) => (
+            {['Project', 'Days idle', 'Open tasks', 'Follow up by', 'Action'].map((label) => (
               <span key={label} className="text-[11px] font-medium" style={{ color: 'var(--sk-t3)' }}>{label}</span>
             ))}
           </div>
           {shown.map((r) => (
             <div key={r.slug} className="hidden sm:grid items-center px-3 py-2 text-[13px]" style={{ gridTemplateColumns: COLS, borderBottom: '1px solid var(--sk-line)', color: 'var(--ink)' }}>
               <Link to={PATHS.project(r.slug)} className="truncate" style={{ color: 'var(--ink)', textDecoration: 'none' }}>{r.title}</Link>
-              <span className="font-semibold tabular-nums" style={{ color: 'var(--job-stale)' }}>{r.daysIdle === null ? 'no updates yet' : `${r.daysIdle}d`}</span>
+              <span className="font-semibold tabular-nums whitespace-nowrap" style={{ color: 'var(--job-stale)' }}>{r.daysIdle === null ? 'no updates yet' : `${r.daysIdle}d`}</span>
               <span className="tabular-nums" style={{ color: 'var(--slate)' }}>{r.openTasks}</span>
               <InlineDatePicker value={dueFor(r.slug)} onChange={(d) => setDueFor(r.slug, d)} />
               <button
@@ -100,7 +100,7 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
                 className="tk-btn tk-sm"
                 style={{ width: 'fit-content' }}
               >
-                + Set follow-up
+                + Add follow-up
               </button>
             </div>
           ))}
@@ -121,7 +121,7 @@ export default function StalledRegistry({ rows }: { rows: InsightsDashboardData[
                   className="tk-btn tk-sm"
                   style={{ marginLeft: 'auto' }}
                 >
-                  + Set follow-up
+                  + Add follow-up
                 </button>
               </div>
             </div>

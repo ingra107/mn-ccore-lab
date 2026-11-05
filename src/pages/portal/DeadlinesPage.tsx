@@ -192,7 +192,7 @@ export default function DeadlinesPage() {
           />
           <Link to={PATHS.labCascadeTab} className="tk-btn tk-sm" style={{ textDecoration: 'none' }}>
             <GitBranch {...ICON_PROPS} size={12} />
-            Cascade View
+            Cascade in Lab overview
           </Link>
           <button
             onClick={() => {

@@ -154,7 +154,7 @@ export default function MeetingNotesPage() {
       />
 
       {/* How it works — auto-collapsed after 3+ transcripts exist */}
-      <HowTranscriptsWorkPanel collapsedByDefault={processedCount >= 3} />
+      <HowTranscriptsWorkPanel collapsedByDefault={processedCount >= 3 || window.innerWidth < 640} />
 
       {/* Search + Recent meetings */}
       <div className="mt-6">

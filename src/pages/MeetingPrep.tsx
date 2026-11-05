@@ -12,7 +12,8 @@ import Breadcrumb from '../components/Breadcrumb'
 import { FaceDisc } from '../components/today/skin'
 import { getPersonInfo } from '../data/team'
 import { slugForEmail } from '../lib/emailSlug'
-import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
+import { formatLongDate, formatRelativeTime, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
+import { verbAfterName } from '../lib/verbAfterName'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { PATHS } from '../constants/paths'
 import EntityNotFound from '../components/EntityNotFound'
@@ -320,8 +321,11 @@ export default function MeetingPrep() {
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={16} />
                       </div>
-                      {/* eslint-disable-next-line body/body-text -- system-written activity line (names linked by nameSlugsInText), not authored body text */}
-                      <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>{nameSlugsInText(act.description)}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink)', flex: 1, lineHeight: 1.4 }}>
+                        {act.actor && <span style={{ fontWeight: 500 }}>{person.name.split(' ')[0]} </span>}
+                        {nameSlugsInText(act.actor ? verbAfterName(act.description) : act.description)}
+                        {act.created_at && <span style={{ color: 'var(--sk-t3)' }}> · {formatRelativeTime(act.created_at)}</span>}
+                      </span>
                     </div>
                   )
                 })

@@ -114,6 +114,14 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
       count={m ? `${m.avg} open per person` : 'Open tasks per person'}
     >
       <div className="flex flex-col gap-2">
+        {shown.length > 0 && (
+          <div className="flex items-center gap-2 text-[10px]" aria-hidden="true" style={{ color: 'var(--sk-t3)' }}>
+            <span className="flex-1" />
+            <span className="w-8 text-right">Open</span>
+            {isPi && <span className="w-14 text-right">Done</span>}
+            {isPi && <span className="w-16" />}
+          </div>
+        )}
         {shown.map((r) => {
           const person = getPersonInfo(r.slug)
           const body = (
@@ -121,11 +129,11 @@ export function WorkloadBlock({ isPi, tasks, insights }: { isPi: boolean; tasks:
               <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                 <FaceDisc label={person.name} initials={person.initials} photo={person.photoUrl} px={22} decorative />
               </div>
-              <span className="text-[12px] w-28 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
-              <div className="flex-1 h-3.5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
+              <span className="text-[12px] w-14 sm:w-28 truncate" style={{ color: 'var(--ink)' }}>{person.name.split(' ')[0]}</span>
+              <div className="flex-1 min-w-8 h-3.5 rounded overflow-hidden" style={{ backgroundColor: BAR_TRACK }}>
                 <div className="h-full rounded" style={{ width: `${Math.max((r.open / max) * 100, r.open > 0 ? 4 : 0)}%`, transition: 'width 300ms ease', ...rampBar(1) }} />
               </div>
-              <span className="text-[11px] w-6 text-right tabular-nums font-medium" style={{ color: 'var(--sk-t2)' }}>{r.open}</span>
+              <span className="text-[11px] w-8 text-right tabular-nums font-medium" style={{ color: 'var(--sk-t2)' }}>{r.open}</span>
               {isPi && (
                 <>
                   <span className="text-[11px] w-14 text-right tabular-nums" style={{ color: 'var(--sk-t3)' }} title="Done of all tasks">{r.done}/{r.total}</span>

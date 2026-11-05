@@ -287,9 +287,9 @@ export function VelocityBlock({ weeks, tasks }: { weeks: VelocityWeek[]; tasks: 
           <div className="flex items-center gap-3 flex-wrap">
             {(['urgent', 'high', 'medium', 'low'] as const).map((p) => (
               <div key={p} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: PRIORITY_COLORS[p] }} />
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: p === 'medium' ? 'var(--sk-t3)' : PRIORITY_COLORS[p] }} />
                 <span className="text-xs capitalize" style={{ color: 'var(--ink)' }}>{p}</span>
-                <span className="text-xs font-semibold" style={{ color: PRIORITY_COLORS[p] }}>{byPriority.get(p) || 0}</span>
+                <span className="text-xs font-semibold" style={{ color: p === 'medium' ? 'var(--sk-t2)' : PRIORITY_COLORS[p] }}>{byPriority.get(p) || 0}</span>
               </div>
             ))}
           </div>
@@ -406,7 +406,7 @@ export function VelocityOutliersBlock({ rows }: { rows: InsightsDashboardData['v
         x = days since last update · y = open task count · orange = outlier (&gt;30d OR &gt;10 tasks)
         {unplotted > 0 && ` · ${unplotted} never updated, not plotted`}
       </p>
-      <div style={{ overflow: 'auto' }}>
+      <div style={{ overflow: 'auto' }} tabIndex={0}>
         <svg width={w} height={h} role="img" aria-label="Project velocity scatter chart">
           <line x1={padL} y1={h - padB} x2={w - 8} y2={h - padB} stroke="var(--border-subtle)" />
           <line x1={padL} y1={8} x2={padL} y2={h - padB} stroke="var(--border-subtle)" />
