@@ -213,6 +213,10 @@ export async function handleAddAgendaItem(meetingId: string, request: Request, u
 export async function handleReorderAgenda(meetingId: string, request: Request, env: Env): Promise<Response> {
   const body = await request.json() as { ids: string[] }
   if (!body.ids?.length) return error('ids array required', 400)
+  // The handle already drops an UPDATE on a hidden row, which left this route
+  // answering ok after writing nothing. Hidden and missing answer the same 404.
+  const parent = await env.DB.prepare('SELECT id FROM meetings WHERE id = ?').bind(meetingId).first()
+  if (!parent) return error('Meeting not found', 404)
 
   // Update sort_order based on array position
   const stmt = env.DB.prepare('UPDATE agenda_items SET sort_order = ? WHERE id = ? AND meeting_id = ?')

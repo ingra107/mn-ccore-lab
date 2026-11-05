@@ -14,7 +14,7 @@ export async function handleGetContributions(slug: string, url: URL, env: Env, v
   const [tasks, updates, comments, decisions, meetings, publications] = await Promise.all([
     // Tasks completed
     env.DB.prepare(
-      "SELECT id, title, description, project_id, completed_at, priority FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND completed_at > ? ORDER BY completed_at DESC"
+      "SELECT id, title, description, project_id, completed_at, priority FROM tasks WHERE instr(lower(completed_by), lower(?)) > 0 AND completed = 1 AND deleted_at IS NULL AND completed_at > ? ORDER BY completed_at DESC"
     ).bind(slug, cutoff).all(),
 
     // Project updates authored (activity_entries kind='update', entity_type='project')
