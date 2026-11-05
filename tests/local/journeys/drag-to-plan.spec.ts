@@ -2,8 +2,8 @@
  * Today drag-to-plan / 📌-plan regression spec (2026-06-04).
  *
  * Guards the fix for Nick's "I can't drag on the Today page" report:
- *   - 📌 button (no-drag plan path) plans a task into the "no specific time"
- *     strip and the PlannedChip becomes the unplan control.
+ *   - 📌 button (no-drag plan path) plans a task into the Plan section, where
+ *     the card carries a Today tag and an x that unplans it.
  *   - Dragging the row's grip also plans into the strip. Updated 2026-07-06:
  *     the native-HTML5-DragEvent mechanism this originally guarded was fully
  *     replaced by dnd-kit (bcd72c6a, GH#150, 2026-06-24) — dnd-kit's
@@ -12,13 +12,12 @@
  *     can never activate it. The drag is now simulated via page.mouse
  *     (move/down/move/up), matching dnd-kit's PointerSensor contract.
  *
- * The "Planned today, no specific time" strip lives in PlannedTodaySection
- * (data-b2-planned-today), a sibling of Timeline (data-b2-timeline) since
- * 2f080f0f (2026-06-16) extracted it out of the Timeline component.
+ * The drop target is the Plan section (data-testid="plan-section"), a sibling of
+ * Timeline (data-b2-timeline), registered as the `slot:strip` droppable.
  *
  * Stable hooks added to the shared row for this: data-task-id (row),
- * data-plan-btn (the 📌 plan button). The planned chip carries
- * aria-label="Unplan task".
+ * data-plan-btn (the 📌 plan button). The x on a card in the section carries
+ * aria-label="Remove from plan".
  */
 import { test, expect, go } from './fixtures'
 import { P } from '../../helpers/paths'
@@ -39,13 +38,11 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
     await row.hover()
     await planBtn.click()
 
-    // The same task now shows the unplan control (planned chip) ...
-    const unplan = page.locator(`[data-task-id="${taskId}"] [aria-label="Unplan task"]`).first()
-    await expect(unplan).toBeVisible({ timeout: 4_000 })
-    // ... and appears inside the Planned-today strip section (sibling of
-    // Timeline since 2f080f0f, 2026-06-16 — see file header).
-    const inStrip = page.locator(`[data-b2-planned-today] [data-task-id="${taskId}"]`)
+    // The task is now a card in the Plan section, with the x that unplans it.
+    const inStrip = page.locator(`[data-testid="plan-section"] [data-task-id="${taskId}"]`)
     await expect(inStrip.first()).toBeVisible({ timeout: 4_000 })
+    const unplan = inStrip.first().locator('[aria-label="Remove from plan"]')
+    await expect(unplan).toBeVisible({ timeout: 4_000 })
 
     // Toggle back off.
     await unplan.click()
@@ -73,7 +70,7 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
     const rects = await page.evaluate((id) => {
       const rowEl = document.querySelector(`[data-task-id="${id}"]`)
       const grip = rowEl?.querySelector('[aria-label="Drag to schedule"]')
-      const stripEl = document.querySelector('[data-b2-planned-today]')
+      const stripEl = document.querySelector('[data-testid="plan-section"]')
       if (!grip || !stripEl) return null
       const g = grip.getBoundingClientRect()
       const s = stripEl.getBoundingClientRect()
@@ -82,7 +79,7 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
         strip: { x: s.x, y: s.y, width: s.width, height: s.height },
       }
     }, taskId as string)
-    expect(rects, 'grip + Planned-today drop target both present').toBeTruthy()
+    expect(rects, 'grip + Plan section drop target both present').toBeTruthy()
 
     const srcX = rects!.grip.x + rects!.grip.width / 2
     const srcY = rects!.grip.y + rects!.grip.height / 2
@@ -99,7 +96,7 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
     await page.waitForTimeout(250)
     await page.mouse.up()
 
-    const unplan = page.locator(`[data-task-id="${taskId}"] [aria-label="Unplan task"]`).first()
+    const unplan = page.locator(`[data-testid="plan-section"] [data-task-id="${taskId}"] [aria-label="Remove from plan"]`).first()
     await expect(unplan).toBeVisible({ timeout: 4_000 })
   })
 
@@ -116,9 +113,9 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
  * Guards Nick's three live-reported Today row bugs:
  *   (a) completing a task fires the 5s undo toast and Undo reopens it
  *       (design principle #8 — markDone was silently un-undoable).
- *   (b) the "Planned today · no specific time" strip row uses the shared
- *       DoneBox (aria-label "Mark done") AND has a draggable grip so it can
- *       be re-slotted (it never got the P0 shared-row treatment).
+ *   (b) a planned task's card in the Plan section uses the shared check
+ *       (aria-label "Mark done") AND has a draggable grip so it can be
+ *       re-slotted.
  *   (c) "Completed today" items are clickable (DoneBox) to uncomplete.
  *
  * Hooks reused: [data-plan-btn] (unplanned task), [data-testid="undo-toast"]
@@ -167,14 +164,13 @@ test.describe('Today: complete + undo + uncomplete (9a007fd1)', () => {
     await row.hover()
     await planBtn.click()
 
-    // The planned task now renders in the Planned-today strip as a PlannedTaskRow
-    // (sibling of Timeline since 2f080f0f, 2026-06-16 — see file header).
-    const stripRow = page.locator(`[data-b2-planned-today] [data-task-id="${taskId}"]`).first()
+    // The planned task now renders in the Plan section as a task card.
+    const stripRow = page.locator(`[data-testid="plan-section"] [data-task-id="${taskId}"]`).first()
     await expect(stripRow).toBeVisible({ timeout: 4_000 })
 
     // It must carry the shared DoneBox (Mark done) and a drag grip to re-slot.
     // dnd-kit's useDraggable never sets a native draggable="true" attribute
-    // (see file header) — PlannedTaskRow's grip is identified by its stable
+    // (see file header) — the card's grip is identified by its stable
     // .task-grip class instead.
     await expect(stripRow.locator('[aria-label="Mark done"]').first()).toBeVisible()
     await expect(stripRow.locator('.task-grip').first()).toHaveCount(1)

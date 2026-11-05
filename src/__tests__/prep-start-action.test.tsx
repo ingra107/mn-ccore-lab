@@ -2,15 +2,16 @@
 // Nick: "I guess i would assume that if i click start i am getting an interactive
 // session". The button renders only for the PI with the launcher, only on an open
 // task, fires mnccore://prep/<task id> with nothing else in the URI, and reads
-// "Open session" on a task whose first step is already prepared. This week shows it
-// per pick beside the background Prep.
+// "Open session" on a task whose first step is already prepared. The Plan section
+// shows it per pick beside the background Prep.
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { DndContext } from '@dnd-kit/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import PrepStartAction from '../components/PrepStartAction'
-import { ThisWeekSection } from '../components/today/ThisWeekSection'
+import { PlanSection } from '../components/today/PlanSection'
+import { planSectionModel } from '../lib/planSection'
 import { PacketBlock } from '../components/today/PacketBlock'
 import { UndoToastProvider } from '../components/UndoToast'
 import { AuthContext, type AuthUser } from '../hooks/useAuth'
@@ -139,16 +140,16 @@ const state = {
   planned: {}, done: {}, plannedIds: () => [], markDone: () => {}, uncheck: () => {}, planAt: () => {}, unplan: () => {},
 } as unknown as TodayStateApi
 
-describe('This week', () => {
+describe('The Plan section', () => {
   it('a saved pick offers Prep (background) and Prep & start; a Ready pick offers Open session', async () => {
     const p = currentWeekPlan([plan([
       { task_id: A, option_key: 'a1', text: null, start: false },
       { task_id: B, option_key: 'b1', text: null, start: true },
     ])], '2026-11-03')!
     const h = await mount(
-      <ThisWeekSection plan={p} allTasks={[task(A), task(B, { packet_state: 'ready' })]} stripTasks={[]} state={state} projectsByPid={new Map()} />,
+      <PlanSection plan={p} model={planSectionModel(p, [task(A), task(B, { packet_state: 'ready' })], {}, '2026-11-03')} state={state} projectsByPid={new Map()} viewerSlug="" />,
     )
-    const [rowA, rowB] = [...h.querySelectorAll('[data-testid="this-week-pick"]')]
+    const [rowA, rowB] = [...h.querySelectorAll('[data-testid="plan-card"]')]
     expect(rowA.querySelector('[data-testid="pick-start"]')!.textContent).toBe('Prep')
     expect(prep(rowA).map((b) => b.textContent?.trim())).toEqual(['Prep & start'])
     expect(rowB.querySelector('[data-testid="pick-start"]')).toBeNull()
@@ -158,9 +159,9 @@ describe('This week', () => {
   it('a member sees no session button and no empty action wrapper', async () => {
     const p = currentWeekPlan([plan([{ task_id: B, option_key: 'b1', text: null, start: true }])], '2026-11-03')!
     const h = await mount(
-      <ThisWeekSection plan={p} allTasks={[task(B)]} stripTasks={[]} state={state} projectsByPid={new Map()} />, MEMBER,
+      <PlanSection plan={p} model={planSectionModel(p, [task(B)], {}, '2026-11-03')} state={state} projectsByPid={new Map()} viewerSlug="" />, MEMBER,
     )
-    expect(h.querySelector('.tk-week-acts')).toBeNull()
+    expect(h.querySelector('.tk-first-acts')).toBeNull()
   })
 })
 

@@ -21,7 +21,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 
 // expandedId/onExpand no longer come from TodayPage: TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
-// or PlannedTodaySection (Item 2 fix, 2026-06-22).
+// or PlanSection (Item 2 fix, 2026-06-22).
 export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug }: {
   skey: SectionKey
   tasks: TaskRowData[]

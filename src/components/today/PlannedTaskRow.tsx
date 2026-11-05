@@ -1,6 +1,6 @@
-// PlannedTaskRow — the "planned strip" row variant on the timeline.
-// Used for tasks dropped into between-meeting gaps OR the "no specific time"
-// strip below the timeline.
+// PlannedTaskRow — a planned task's row on the schedule (timeline and agenda):
+// tasks dropped into between-meeting gaps. The no-time list is the Plan section,
+// which uses the shared task card.
 //
 // Look (Today reskin, 2026-10-09): a card with a dashed edge and a hatched left
 // bar, the same anatomy as a task card (bold name, project short name under it),
@@ -10,7 +10,6 @@
 // Extracted from src/pages/portal/TodayPage.tsx. Same TaskDetailDrawer
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
-import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useDraggable } from '@dnd-kit/core'
 import { GripHorizontal, Clock, MapPin } from 'lucide-react'
@@ -28,10 +27,7 @@ import { taskFullTitleHint, taskShortLabel } from '../../lib/displayNames'
 import { usePairName } from '../../hooks/useProjectPairs'
 import { Button } from '../ui/Button'
 
-// `badges` (after the title) and `note` (a dim line under the project) let This
-// week show a pick's packet tag and chosen direction on the same row that
-// finishes and unplans it (ThisWeekSection, 2026-10-31).
-export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId, badges, note }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>; badges?: ReactNode; note?: ReactNode }) {
+export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid?: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
   const projectName = usePairName(task, project?.name ?? '')
   const expanded = expandedId === task.id
@@ -58,7 +54,6 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
               the expanded drawer), matching the unplanned cards below. */}
           <div className="tk-ct" style={isDone ? { textDecoration: 'line-through', color: 'var(--sk-t3)', fontWeight: 500 } : undefined}>
             <span title={taskFullTitleHint(task)}>{taskShortLabel(task)}</span>
-            {badges}
             {task.work_kind_set === 'hand' && (
               <span className="tk-tag tk-n tip" data-tip="Sorted by hand: automatic rules do not move it" aria-label="Sorted by hand">
                 <MapPin {...ICON_PROPS} size={10} aria-hidden /> Sorted by hand
@@ -87,7 +82,6 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
               <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} aria-label={`Open ${projectName}`}>{projectName}</Link>
             ) : 'No project'}
           </div>
-          {note && <div className="tk-plan-why">{note}</div>}
         </div>
         <div className="tk-tr-r">
           {/* Compact WorkOnActions — revealed by hovering the ROW (.tk-hovv),

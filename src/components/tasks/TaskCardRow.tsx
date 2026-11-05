@@ -25,7 +25,7 @@ import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { civilDaysOverdue, dueLabelCompact, dueTone, formatShortDate, isOverdue } from '../../lib/dateUtils'
 import { slugForEmail } from '../../lib/emailSlug'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
-import { useContext } from 'react'
+import { useContext, type ReactNode } from 'react'
 import { TASK_KIND_LABELS } from '../../../shared/taskKinds'
 import { Face, Faces, CheckGlyph } from '../today/skin'
 import { HideViewerFaceContext } from '../today/hideViewerFace'
@@ -154,11 +154,15 @@ export function useTaskAttention(task: { id: string; assignee?: string | null; a
 }
 
 /** The title-line tags: New, "n new" activity, and the sorted-by-hand pin. */
-export function CardTags({ task, isNew, activityCount = 0, showSortedByHand = false }: { task: { work_kind_set?: string | null; packet_state?: string | null }; isNew: boolean; activityCount?: number; showSortedByHand?: boolean }) {
+export function CardTags({ task, isNew, activityCount = 0, showSortedByHand = false, packetTag }: { task: { work_kind_set?: string | null; packet_state?: string | null }; isNew: boolean; activityCount?: number; showSortedByHand?: boolean; packetTag?: ReactNode }) {
   return (
     <>
-      {task.packet_state === 'ready' && <span className="tk-tag tk-ac" title="A first step is prepared. Open the task to see it.">Ready</span>}
-      {task.packet_state === 'changed' && <span className="tk-tag tk-stale" title="The prepared first step changed since it was drafted.">Changed</span>}
+      {packetTag !== undefined ? packetTag : (
+        <>
+          {task.packet_state === 'ready' && <span className="tk-tag tk-ac" title="A first step is prepared. Open the task to see it.">Ready</span>}
+          {task.packet_state === 'changed' && <span className="tk-tag tk-stale" title="The prepared first step changed since it was drafted.">Changed</span>}
+        </>
+      )}
       {isNew && <span className="tk-tag" title="New to you: you have not opened this yet">New</span>}
       {!isNew && activityCount > 0 && (
         <span className="tk-tag tk-ac" title={`${activityCount} new ${activityCount === 1 ? 'entry' : 'entries'} since you last opened this`}>
@@ -179,7 +183,7 @@ export function CardRow(props: CardTaskRowProps) {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand,
     onOpenEditor, dense = false, draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showSortedByHand = false,
-    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, children,
+    leadingTag, extraMeta, belowTitle, footPills, linksSlot, meetingSlot, workSlot, stepsSlot, doneLocked, titleTag, packetTag, cornerSlot, children,
   } = props
 
   const { isNewToViewer, activityRow } = useTaskAttention(task, isDone)
@@ -299,7 +303,8 @@ export function CardRow(props: CardTaskRowProps) {
             {urgent && <span className="sr-only">Urgent: </span>}
             {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
             {titleNode}
-            <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} />
+            {titleTag}
+            <CardTags task={task} isNew={isNewToViewer} activityCount={activityRow?.new_count ?? 0} showSortedByHand={showSortedByHand} packetTag={packetTag} />
             {urgent && <span className="tk-tag tk-urgtag" aria-hidden="true">Urgent</span>}
             {tailW > 0 && <span className="tk-tail">{planBtn}{grip}</span>}
           </div>
@@ -327,7 +332,7 @@ export function CardRow(props: CardTaskRowProps) {
           {!isDone && stepsSlot}
         </div>
         <div className="tk-tr-r">
-          <span className="tk-av">{showOwnerFace && <Face slug={task.assignee!} lg />}</span>
+          <span className="tk-av">{cornerSlot ?? (showOwnerFace && <Face slug={task.assignee!} lg />)}</span>
           <span className="tk-wk">{workSlot}</span>
         </div>
       </div>

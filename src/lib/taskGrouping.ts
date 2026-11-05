@@ -323,7 +323,7 @@ export function isQuestionWaiting(t: {
  * as one muted line (QuestionsCard, lib/answerEta.ts), never in the number.
  *
  * A week_plan row never counts (2026-11-04): a plan is made in a session, its
- * answered row shows as This week, and a stray waiting one is on no list. The
+ * answered row shows in the Plan section, and a stray waiting one is on no list. The
  * Plan your week nudge is not a row and asks no one to answer anything, so it
  * is not in this number either.
  */

@@ -16,27 +16,15 @@ export function isWeekPlan(t: { source?: string | null; kind?: string | null }):
   return t.source === WEEK_PLAN_SOURCE && t.kind === 'question'
 }
 
-/** A pick kept from an EARLIER answered plan of the same week, with that
- *  plan's own row and spec (its direction reads from its own spec). Read-only:
- *  it is started or done, so no follow-up write can target it. */
-export interface EarlierPick {
-  pick: WeekPlanPick
-  task: TaskRow
-  spec: WeekPlanSpec
-}
-
 export interface AcceptedWeekPlan {
   task: TaskRow
   spec: WeekPlanSpec
   picks: WeekPlanPick[]
   /** The answer's `at`, for picking the newest plan. */
   at: string
-  /** "Today forward" (Nick 2026-11-01): earlier plans' started picks this week
-   *  that are still open, for tasks the newest plan does not pick. */
-  earlier: EarlierPick[]
   /** Task ids any answered plan of this week took off (2026-11-04): Nick's
-   *  "not this week", even for a pick prep had started. They are not in
-   *  `earlier`; the session's brief reads them to not offer them again. */
+   *  "not this week", even for a pick prep had started. The session's brief
+   *  reads them to not offer them again. */
   withdrawn: string[]
   /** This plan's picks carried from the plan before (2026-11-04): their first
    *  answer made no request and no note, whatever their start reads. A later Prep
@@ -104,27 +92,20 @@ export function weekRangeLabel(start: string): string {
 }
 
 /**
- * The week plan This week shows: the newest answered (or acted-on) week_plan
- * whose window [week_start - 1, week_start + 6] holds `today`. The day before
- * counts because a Sunday session plans the week that starts Monday, and an
- * answer given that evening must not vanish until morning.
- * Null when there is none, and then Planned today shows as before. A plan
- * whose spec or picks do not parse is skipped, never half-shown.
+ * The week plan the Plan section shows: the newest answered (or acted-on)
+ * week_plan whose window [week_start - 1, week_start + 6] holds `today`. The day
+ * before counts because a Sunday session plans the week that starts Monday, and
+ * an answer given that evening must not vanish until morning.
+ * Null when there is none. A plan whose spec or picks do not parse is skipped,
+ * never half-shown.
  *
- * A week planned twice (a second session mid-week) has more than one answered
- * plan. Nick's ruling: "This week keeps the earlier plan's started or finished
- * picks, read-only, marked 'earlier plan'", then 2026-11-04 (#167): "earlier
- * plan stuff that is COMPLETED should drop off". So `earlier` carries every pick
- * of an older answered plan of the SAME week_start that was started (start:true)
- * and whose task is still open, when the newest plan does not pick that task;
- * the newest earlier plan wins a task named twice. Computed on read: nothing is
- * copied into a spec, so the plans cannot drift apart. A saved pick that was
- * never started is not carried: PB offered it again ("from what is still
- * open"), and the newest plan's answer is the decision on it. A pick whose task
- * row is gone (deleted) has nothing left to show either.
+ * A week planned twice has more than one answered plan, and the newest is the
+ * whole plan: every open pick has a card on the next round, so a pick the newest
+ * answer does not hold was finished or left. `withdrawn` stays the union of the
+ * week's answers, so a task taken off is not offered again that week.
  */
 export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPlan | null {
-  const plans: (Omit<AcceptedWeekPlan, 'earlier' | 'withdrawn'> & { withdrawn: string[] })[] = []
+  const plans: AcceptedWeekPlan[] = []
   for (const t of tasks) {
     if (!isWeekPlan(t)) continue
     const state = questionCardState(t)
@@ -140,24 +121,12 @@ export function currentWeekPlan(tasks: TaskRow[], today: string): AcceptedWeekPl
   if (plans.length === 0) return null
   plans.sort((a, b) => (a.at === b.at ? 0 : a.at > b.at ? -1 : 1))
   const [best, ...older] = plans
-  const byId = new Map(tasks.map((t) => [t.id, t]))
-  // A withdrawal holds against every OLDER plan's pick; a newer plan that
-  // picks the task again wins (its pick is in `taken` or the main list).
-  const taken = new Set([...best.picks.map((p) => p.task_id), ...best.withdrawn])
   const withdrawn = new Set(best.withdrawn)
-  const earlier: EarlierPick[] = []
   for (const plan of older) {
     if (plan.spec.week_start !== best.spec.week_start) continue
-    for (const pick of plan.picks) {
-      if (taken.has(pick.task_id)) continue
-      const row = byId.get(pick.task_id)
-      if (!pick.start || !row || isTaskDone(row)) continue
-      taken.add(pick.task_id)
-      earlier.push({ pick, task: plan.task, spec: plan.spec })
-    }
-    for (const id of plan.withdrawn) { taken.add(id); withdrawn.add(id) }
+    for (const id of plan.withdrawn) withdrawn.add(id)
   }
-  return { task: best.task, spec: best.spec, picks: best.picks, at: best.at, earlier, withdrawn: [...withdrawn], kept: best.kept }
+  return { ...best, withdrawn: [...withdrawn] }
 }
 
 export type AnswerResult =
@@ -168,7 +137,7 @@ export type AnswerResult =
 /**
  * Write the answer through the question-answer route (POST /api/tasks/:id,
  * question_answer_json). Not useUpdateTask: the cap refusal's body
- * ({code:'daily_cap', used, cap}) is what This week shows, and the generic
+ * ({code:'daily_cap', used, cap}) is what the Plan section shows, and the generic
  * client keeps only the message.
  */
 export async function postWeekPlanAnswer(taskId: string, answer: Record<string, unknown>): Promise<AnswerResult> {

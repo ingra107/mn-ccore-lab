@@ -3536,12 +3536,12 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
 .quick-add-textarea::selection{background:color-mix(in srgb, var(--job-accent) 28%, transparent);color:transparent}
 
 /* ── Week plan (2026-10-30; the pick page retired 2026-11-04) ──
-   The gold "Plan your week" row and This week on Today. Tokens only: gold stays
+   The gold "Plan your week" row and the Plan section on Today. Tokens only: gold stays
    the card's, red is errors. */
 .tk .tk-plan-row{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;width:100%;padding:2px 0;font-size:13px}
 .tk .tk-plan-row>[data-testid="plan-note"]{flex-basis:100%}
 .tk .tk-plan-row-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-/* A real focus ring: this link-styled button sits on the card and in This week. */
+/* A real focus ring: this link-styled button sits on the card and in the Plan section. */
 .tk .tk-plan-retry{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .tk .tk-plan-retry:focus-visible{outline:2px solid var(--job-accent);outline-offset:2px;border-radius:2px}
 .tk .tk-plan-link:not(.tk-tag){background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
@@ -3552,17 +3552,15 @@ a.pg-hero:focus-visible{outline:2px solid var(--job-accent);outline-offset:3px;b
    tag button inherits the .tk-tag look (size, weight, padding, pill). */
 .tk button.tk-tag{border:0;font-family:inherit;font-size:10px;font-weight:600;line-height:inherit;min-height:0;white-space:nowrap;cursor:pointer;text-align:center}
 .tk button.tk-tag:hover{filter:brightness(1.15)}
-.tk .tk-plan-t{font-weight:500;color:var(--sk-t1);font-size:13px}
 .tk .tk-plan-why{font-size:12px;color:var(--sk-t3)}
-.tk .tk-week-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.tk .tk-week-row{display:flex;flex-direction:column;gap:2px;padding:7px 2px}
-.tk .tk-week-row+.tk-week-row{border-top:1px solid var(--sk-line)}
 .tk .tk-plan-err{margin:6px 0 0;font-size:12px;color:var(--job-danger)}
-.tk .tk-week-row.tk-week-planned{padding:2px 0}
-/* A plain pick: check, text block, links on one line (links stay put on wrap). */
-.tk .tk-week-line{display:flex;align-items:flex-start;gap:10px}
-.tk .tk-week-line>.tk-ck{margin-top:2px}
-.tk .tk-week-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.tk .tk-week-links{flex-shrink:0;display:inline-flex;align-items:center;min-height:20px}
-/* A pick's actions (Prep, Prep & start): one line, left-aligned under the direction. */
-.tk .tk-week-acts{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* A pick's first step: a line under the card's context line, with Prep and
+   Prep & start at its end (they wrap under it on a phone). */
+.tk .tk-first{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;min-width:0;font-size:12px;color:var(--sk-t2)}
+.tk .tk-first-t{min-width:0;flex:1 1 200px}
+.tk .tk-first-acts{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* The x on a Today card: the 24px icon box, which .tk-x's padding would shrink. */
+.tk .tk-plan-x{display:inline-grid;place-items:center;width:24px;height:24px;padding:0}
+/* The section's Done area: the same cards, under a quiet label. */
+.tk .tk-plan-done{margin-top:12px}
+.tk .tk-plan-donehd{font-size:12px;font-weight:500;color:var(--sk-t3);margin:0 2px 6px}
