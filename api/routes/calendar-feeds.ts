@@ -18,8 +18,8 @@ import type { Env, AuthUser } from '../helpers'
 import { json, error } from '../helpers'
 
 import { idempotentDelete } from '../lib/idempotent-delete'
-import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
-import { nowInstant } from '../lib/time'
+import { civilDayStartUtc, parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
+import { dbStampToIso, nowInstant } from '../lib/time'
 import { ctToday } from '../lib/ct-date'
 
 // Staleness threshold: feeds older than this are eligible for a cron re-poll.
@@ -56,6 +56,38 @@ const MAX_EVENTS_PER_FEED = 5000
 // timeout). 14 days halves the event set without losing utility.
 const WINDOW_BACK_DAYS = 1
 const WINDOW_FWD_DAYS = 14
+
+// R05: RRULE expansion happens only on a full body, so a feed that keeps answering
+// 304 stops gaining future occurrences and eventually reads as an empty calendar.
+// Once the last full fetch is this old the poll drops its validators. Today reads 7
+// days ahead, so 6 keeps that window covered, and an unchanged calendar costs one
+// full fetch a week. The age comes off the cached rows (every row of a full fetch
+// stamps updated_at), so this needs no column.
+const FULL_FETCH_MAX_AGE_DAYS = 6
+// A feed with nothing in its window has no rows to date. It may be a monthly meeting
+// about to enter the window, so it asks in full once a day: in the hour the lab sleeps.
+const EMPTY_FEED_FULL_FETCH_UTC_HOUR = 8
+
+// R13: a bare date range with no zone means the lab's day, the same anchor ctToday uses.
+const DEFAULT_RANGE_ZONE = 'America/Chicago'
+const CIVIL_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+function rangeZone(requested: string | null): string {
+  if (!requested) return DEFAULT_RANGE_ZONE
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: requested })
+    return requested
+  } catch {
+    return DEFAULT_RANGE_ZONE
+  }
+}
+
+function nextCivilDay(civil: string): string {
+  const d = new Date(`${civil}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  // eslint-disable-next-line local/time-discipline -- pure calendar arithmetic: anchored at UTC midnight of a civil date, read back in UTC; no "now" enters it
+  return d.toISOString().slice(0, 10)
+}
 
 interface FeedRow {
   id: string
@@ -203,6 +235,8 @@ export async function handleListEvents(
   const endDefault = ctToday(7)
   const end = url.searchParams.get('end') || endDefault
   const forceRefresh = url.searchParams.get('force') === '1'
+  if (!CIVIL_DATE.test(start) || !CIVIL_DATE.test(end)) return error('start and end must be YYYY-MM-DD', 400)
+  const zone = rangeZone(url.searchParams.get('tz'))
 
   // ?force=1: fire stale-feed polls in the background so the response still
   // returns immediately (cached data). Poll runs after response via waitUntil.
@@ -242,16 +276,29 @@ export async function handleListEvents(
   // The extra day of lead-in is bounded: `end_at > startBound` cannot match an
   // event that finished before the window, so this widens the result by
   // in-flight events only, not by history.
-  const startBound = `${start}T00:00:00.000Z`
-  const endBound = `${end}T23:59:59.999Z`
+  //
+  // R13: start and end are CIVIL days, so a timed event is compared against the
+  // instants those days begin in the viewer's zone: a 6:30 PM Chicago event is stored
+  // as tomorrow UTC and still belongs to today. An all-day event is the opposite: the
+  // parser stores its calendar date at UTC midnight, and a zone must not move it to
+  // the day before, so it compares on the date text. Its end date is exclusive (iCal).
+  const startBound = civilDayStartUtc(start, zone)
+  const endExclusive = civilDayStartUtc(nextCivilDay(end), zone)
   const rows = await env.DB.prepare(
     `SELECT id, uid, summary, location, start_at, end_at, is_all_day
      FROM user_calendar_events
      WHERE user_slug = ?
-       AND start_at <= ?
-       AND (end_at > ? OR (end_at IS NULL AND start_at >= ?))
+       AND (
+         (is_all_day = 0
+           AND start_at < ?
+           AND (end_at > ? OR (end_at IS NULL AND start_at >= ?)))
+         OR
+         (is_all_day = 1
+           AND substr(start_at, 1, 10) <= ?
+           AND (substr(end_at, 1, 10) > ? OR (end_at IS NULL AND substr(start_at, 1, 10) >= ?)))
+       )
      ORDER BY start_at`
-  ).bind(slug, endBound, startBound, startBound).all<{ id: string; uid: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
+  ).bind(slug, endExclusive, startBound, startBound, end, start, start).all<{ id: string; uid: string; summary: string | null; location: string | null; start_at: string; end_at: string | null; is_all_day: number }>()
 
   // `id` is re-minted on every 200-poll; `uid` + `startAt` is the stable key
   // (schema v61's natural key) the Prep pill sends to prep-from-event (#2225).
@@ -303,6 +350,15 @@ export async function pollAllStaleFeeds(env: Env): Promise<void> {
   }
 }
 
+/** R05: must this poll drop its validators so RRULE expansion runs again? */
+async function fullFetchDue(env: Env, feedId: string): Promise<boolean> {
+  const row = await env.DB.prepare(
+    'SELECT MAX(updated_at) AS fetched_at FROM user_calendar_events WHERE feed_id = ?'
+  ).bind(feedId).first<{ fetched_at: string | null }>()
+  if (!row?.fetched_at) return new Date().getUTCHours() === EMPTY_FEED_FULL_FETCH_UTC_HOUR
+  return Date.now() - Date.parse(dbStampToIso(row.fetched_at)) >= FULL_FETCH_MAX_AGE_DAYS * 86400000
+}
+
 // Internal: poll a single feed, parse, upsert events, update last_polled_at.
 // ownerEmail is passed through to the parser so it can drop events the
 // user has declined (PARTSTAT=DECLINED). timeoutMs defaults to the
@@ -314,6 +370,19 @@ export async function pollAllStaleFeeds(env: Env): Promise<void> {
 // we update last_polled_at and return early without touching the events table.
 // This makes the typical cron firing ~200 bytes instead of ~500KB.
 async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs = FETCH_TIMEOUT_ONDEMAND_MS): Promise<void> {
+  // R06: cron and a manual refresh can both pick the same stale feed, and two polls
+  // interleaving their token swaps can erase each other's rows. Moving last_polled_at
+  // from the value this caller read is the lease: one caller wins, the other stops.
+  // It holds for the staleness window (far longer than a poll) and needs no release,
+  // because a poll that dies just leaves the feed to the next stale pass.
+  const claim = await env.DB.prepare(
+    'UPDATE user_calendar_feeds SET last_polled_at = ? WHERE id = ? AND last_polled_at IS ?'
+  ).bind(nowInstant(), feed.id, feed.last_polled_at).run()
+  if (!claim.meta?.changes) {
+    console.log(`pollFeed ${feed.id}: another poll holds this feed, skipping`)
+    return
+  }
+
   let body = ''
   let newEtag: string | null = null
   let newLastModified: string | null = null
@@ -324,8 +393,10 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
       'User-Agent': 'mn-ccore-lab-hub/1.0 (calendar-feed-poller)',
       'Accept': 'text/calendar',
     }
-    if (feed.etag) reqHeaders['If-None-Match'] = feed.etag
-    if (feed.last_modified) reqHeaders['If-Modified-Since'] = feed.last_modified
+    if ((feed.etag || feed.last_modified) && !(await fullFetchDue(env, feed.id))) {
+      if (feed.etag) reqHeaders['If-None-Match'] = feed.etag
+      if (feed.last_modified) reqHeaders['If-Modified-Since'] = feed.last_modified
+    }
     const res = await fetch(feed.feed_url, {
       headers: reqHeaders,
       signal: ctrl.signal,
