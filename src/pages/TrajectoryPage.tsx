@@ -31,6 +31,7 @@ import PageHeartbeat from '../components/moments/PageHeartbeat'
 import { compactStageLabel } from '../lib/projectStage'
 import { useShowMore } from '../hooks/useShowMore'
 import { ShowMoreButton } from '../components/ui/ShowMore'
+import { PhotoOrInitials } from '../components/PhotoOrInitials'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -1362,19 +1363,17 @@ export default function TrajectoryPage() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Avatar */}
-          {member.photoUrl ? (
-            <img
-              src={member.photoUrl}
-              alt={member.name}
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 'var(--radius-circle)',
-                objectFit: 'cover',
-                border: '2px solid var(--sk-line2)',
-              }}
-            />
-          ) : (
+          <PhotoOrInitials
+            src={member.photoUrl}
+            alt={member.name}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 'var(--radius-circle)',
+              objectFit: 'cover',
+              border: '2px solid var(--sk-line2)',
+            }}
+            fallback={(
             <div
               style={{
                 width: 56,
@@ -1391,7 +1390,8 @@ export default function TrajectoryPage() {
             >
               {member.initials}
             </div>
-          )}
+            )}
+          />
 
           <div>
             <h1
