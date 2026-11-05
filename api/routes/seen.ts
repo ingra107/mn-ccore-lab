@@ -119,9 +119,11 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
           AND ae.actor_slug != es.viewer_slug
           -- R09: a Hermes answer is an UPDATE onto its placeholder, so created_at is
           -- the ask's time. answered_at is when it landed; the placeholder itself
-          -- is not news. Scoped to Hermes: a person may open with the same words.
+          -- is not news. A placeholder is Hermes's row, unanswered, with the prefix.
+          -- A person or a landed answer may open with the same words, and a note
+          -- PB posts as Hermes has no answered_at, so no one test alone will do.
           AND COALESCE(ae.answered_at, ae.created_at) > es.last_seen_at
-          AND NOT (ae.actor_slug = 'claude-ai' AND ae.body LIKE 'Thinking about this%')
+          AND NOT (ae.actor_slug = 'claude-ai' AND ae.answered_at IS NULL AND ae.body LIKE 'Thinking about this%')
          LEFT JOIN tasks t ON es.entity_type = 'task' AND t.id = es.entity_id
          LEFT JOIN projects p ON es.entity_type = 'project' AND p.id = es.entity_id
          WHERE es.viewer_slug = ?
@@ -175,8 +177,9 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
       //     is no longer dropped by the cap, and latest_at reflects answer
       //     time. NULL answered_at (pre-v103 rows) falls back to created_at —
       //     unchanged behavior for anything Hermes hasn't touched since.
-      //   - reply.body NOT LIKE the pending-placeholder text — a thread Hermes
-      //     hasn't answered YET must not badge (a bare ask ≠ an answer). Matches
+      //   - not the pending placeholder (unanswered + the prefix) — a thread Hermes
+      //     hasn't answered YET must not badge (a bare ask ≠ an answer), while an
+      //     answer that happens to open with those words still does. Matches
       //     activity-entry.ts's HERMES_PENDING_BODY = 'Thinking about this...
       //     (AI response pending)' ("one literal, N consumers — do not reword
       //     without updating all of them"; ai-requests.ts's placeholder lookup
@@ -234,7 +237,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
          WHERE reply.actor_slug = 'claude-ai'
            AND reply.parent_id IS NOT NULL
            AND reply.hidden_at IS NULL
-           AND reply.body NOT LIKE 'Thinking about this%'
+           AND NOT (reply.answered_at IS NULL AND reply.body LIKE 'Thinking about this%')
            AND (root.entity_type != 'task' OR t.deleted_at IS NULL)
            AND COALESCE(reply.answered_at, reply.created_at) > datetime('now', ?)
            AND (es.last_seen_at IS NULL OR COALESCE(reply.answered_at, reply.created_at) > es.last_seen_at)
