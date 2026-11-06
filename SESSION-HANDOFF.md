@@ -1,15 +1,35 @@
-# ▶▶ 2026-11-05 (work): WHO-DOES-WHAT BUILT ON BRANCH `plan-owner`, NOT LANDED. Hub and PB both need the controller to merge; Hub deploys first.
+# ▶▶ 2026-11-05 (work, evening): WHO-DOES-WHAT LIVE. Hub `0aeadd4c` deployed (probe PASS), PB `a29aae90b` on main, home pulled. No real plan has run on it.
 
 ## Do first
-- Land after Nick's current plan session ends: merge Hub, `npm run deploy:pages:gated`, merge PB, write the What's new draft.
-- #169 stays open until a plan with a kept pick runs on the new code. A plan with no kept pick doesn't test it.
+- Nick reports anything from his next plan as a new issue. Read it before changing the flow.
+- #169 stays open until a plan with a kept pick runs on the new code. Then check kept picks made no `packet_prepare` rows, and close #169 and `bug_mw291o484isxfj`.
 
 ## First-run watch list
 - Time from approval to the last Ready.
-- Whether agents respect the brief (no task change, comment, send or close).
+- Whether agents respect the brief (no task change, comment, send or close). The dispatch loop is skill prose: this is its only test.
 - Whether "With Claude" reads right to Nick.
 - Whether eight picks at once strain the laptop.
-- A close: it lands after publish, and a teammate's comment since the brief holds it. Check a held close is listed as a conflict.
+- A close lands after publish, only from the newest list of its Send. A teammate's comment since the brief holds it, as a conflict that names the comment.
+
+## What the 11:09 run left
+- Prep started on four picks. Aspiration (`...JC9GRS`) still has no packet: check whether its request ended.
+- CLIF 3.0 and the CLHSS survey read `changed`, K Club `ready`.
+
+## Parked from the final review (not blocking)
+- A typed pick lost to a newer list that already ran gets no "No longer applies" line; his note comes back as a comment.
+- With Claude's help says press Prep, but a carried start has no Prep button. Replan still works.
+- A started pick whose request ended with no packet reads Preparing indefinitely, with no Prep button. Replan recovers it.
+- After a run, a live-only change has no door until he changes a card, since the same answers give the same id.
+- `built_at` uses the laptop clock; a clock ahead of the Hub's can miss a comment.
+
+## Owed to Nick
+- Mockups for the 11 taste questions (`.superpowers/sweep/fix-k-report.md`).
+- The `/api/tasks` load: 3.8 MB for 1,930 rows, 2.6-4.7 s by curl, about 7 s in the browser. A slim read can't drop `question_*_json` on Today, because Plan rows need it (`fix-n-report.md`).
+- What's new draft `rel_01M6HAQMME6P2D8DZVXD2V2EZ1` waits for his approval in the pill.
+
+## Landing traps met
+- PB's merge commit was refused by the doctrine budget gate over another author's growth to `recognition.md`: rebase reviewed commits instead.
+- `cmd | tail` hid that refusal, and a chained cleanup deleted the branch; restored from the sha. Cleanup is conditional on `git merge-base --is-ancestor`.
 
 ---
 

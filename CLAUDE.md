@@ -288,6 +288,12 @@ Live since 2026-04-09. Team members @mention `@hermes` in task comments, project
 
 91. **Reply threads are summarized server-side (`replySummaryColumns()` in `api/lib/activity-entry.ts`, 2026-10-09).** Feed rows carry `reply_count`, `last_reply_at` and `last_reply_actor`; "last" orders by `COALESCE(answered_at, created_at)` so a Hermes reply sorts by when it landed, and Hermes's pending placeholder (body starting `HERMES_PENDING_PREFIX`) is excluded. Never fetch replies per row to count them (the N+1 the review removed).
 
+92. **An idea's votes live in `idea_votes` (schema-v158): one per person, with a toggle.** `ideas.votes` is a frozen column: never read it. `/api/ideas` returns `votes` and `voters`. A vote from before the table counts and has no face.
+
+93. **A task's watchers go through `shared/watchers.ts`.** A watcher can see and edit the task and hears about changes. The Hub's watcher write goes through `hubOnly` in `mutations.ts`; PB's `/api/mutations` writes don't notify watchers yet.
+
+94. **One page title (`src/components/PageHeader.tsx`), one phone filter (`src/components/ui/FiltersSheet.tsx`).** Use them on new pages rather than a local heading or filter row. Phone headers stay tight so rows come before the fold; design a page's phone view on its own.
+
 ## Known Gotchas (active traps only)
 
 | Problem | Fix |
