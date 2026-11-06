@@ -594,6 +594,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               placeholder={taskShortLabel(task) || 'Add a title'}
               onSave={(v) => handleFieldUpdate('title', v)}
             />
+            {/* Short title: the concise row label (Rule 68), edited under the title
+                it shortens (Nick 2026-11-06: could not find it on Details). */}
+            <div style={{ marginTop: 4 }}>
+              <EditableShortTitle
+                value={task.short_title || ''}
+                onSave={(v) => handleFieldUpdate('short_title', v || null)}
+              />
+            </div>
             {/* Task age + acknowledged — descriptive metadata, snug
                 under the title group (Nick 2026-06-11: it belongs WITH the
                 title, not floating between the control sections). */}
@@ -901,15 +909,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Dependencies — S14: clicking a blocker/blocked task swaps the
                 panel to it instead of dead-ending on a no-op handler. */}
             <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={(t) => setSwapTask(t)} />
-
-            {/* Short title: the concise row label (Rule 68). Its own field here, not
-                on the first screen, where an empty one sat on every task. */}
-            <FieldBlock label="Short title" noContainer>
-              <EditableShortTitle
-                value={task.short_title || ''}
-                onSave={(v) => handleFieldUpdate('short_title', v || null)}
-              />
-            </FieldBlock>
 
             {/* Handoffs */}
             <CollapsibleSection

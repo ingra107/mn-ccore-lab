@@ -5,7 +5,7 @@
 import type { TaskRow } from './api'
 import { PATHS } from '../constants/paths'
 import { isTaskDone } from './taskGrouping'
-import { isOverdue, localDateKey } from './dateUtils'
+import { localDateKey } from './dateUtils'
 
 export type QuickFilterIcon = 'done' | 'active' | 'high' | 'urgent' | 'today' | 'overdue' | 'blocked'
 
@@ -54,7 +54,7 @@ export function taskQuickFilters(allTasks: readonly FilterTask[], viewerSlug: st
     },
     {
       id: 'filter-overdue', label: 'Overdue Tasks', icon: 'overdue',
-      sublabel: n(open.filter((t) => isOverdue(t.due_date, t.status)), 'past due'),
+      sublabel: n(open.filter((t) => !!t.due_date && t.due_date.slice(0, 10) < today), 'past due'),
       href: `${base}?filter=overdue`,
     },
     {

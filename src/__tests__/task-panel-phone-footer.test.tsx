@@ -59,14 +59,16 @@ describe('task panel fields', () => {
     expect(Math.abs(assignee.getBoundingClientRect().top - status.getBoundingClientRect().top)).toBeLessThan(60)
   })
 
-  it('states Created and Source once each, and keeps an empty Short title on Details', async () => {
+  it('states Created and Source once each, and offers the Short title under the title, not on Details', async () => {
     await page.viewport(1440, 900)
     await renderPanel()
-    expect(visibleText()).not.toMatch(/Short title/)
+    const title = panel().querySelector<HTMLElement>('#task-detail-title')!
+    expect(title.innerText).toMatch(/Add short title/)
     expect(visibleText()).not.toMatch(/manual/)
     expect(visibleText().match(/Created /g)).toHaveLength(1)
     tab('Details')!.click()
-    await expect.poll(() => visibleText()).toMatch(/Short title/)
+    await expect.poll(() => panel().querySelector<HTMLElement>('#task-detail-title')!.innerText).toMatch(/Add short title/)
+    expect(visibleText().match(/short title/gi)).toHaveLength(1)
     expect(visibleText().match(/Created /g)).toHaveLength(1)
     expect(visibleText().match(/manual/g)).toHaveLength(1)
   })
