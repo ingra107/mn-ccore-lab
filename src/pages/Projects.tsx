@@ -284,7 +284,8 @@ export default function Projects() {
   const statusScoped = useMemo(() => statusScope(activeStatus, projects), [projects, activeStatus])
   const [findQ, setFindQ] = useState('')
 
-  const filtered = useMemo(() => {
+  // `scoped` = every other filter applied; `filtered` (below) adds the stage pick.
+  const scoped = useMemo(() => {
     let base: typeof statusScoped
     if (activeCategory === 'all') base = statusScoped
     else if (activeCategory === 'stale') {
@@ -345,6 +346,30 @@ export default function Projects() {
       return sortAsc ? cmp : -cmp
     })
   }, [activeCategory, statusScoped, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays, stalledOnly, stageOf, findQ, projects, productsByProject])
+
+  // Hub #170: the stage tally's chips are filters. `?stage=<key>` (a stageOf key,
+  // e.g. `grant:preparing`) keeps projects whose home stage group is that key. The
+  // tally counts `scoped`, so the other chips keep their counts under every other
+  // filter and stay pressable. A stage no project in `scoped` holds (a stale link, or
+  // another filter emptied it) reads as no stage pick, so the list is never empty
+  // under a chip that is not on screen.
+  const stageParam = searchParams.get('stage')
+  const activeStage = useMemo(
+    () => (stageParam && scoped.some((p) => stageOf(p).key === stageParam) ? stageParam : null),
+    [stageParam, scoped, stageOf],
+  )
+  const filtered = useMemo(
+    () => (activeStage ? scoped.filter((p) => stageOf(p).key === activeStage) : scoped),
+    [activeStage, scoped, stageOf],
+  )
+  const pickStage = useCallback((key: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (prev.get('stage') === key) out.delete('stage')
+      else out.set('stage', key)
+      return out
+    }, { replace: true })
+  }, [setSearchParams])
 
   // Reset focus when filter/view changes. Adjusted during render (React's
   // "adjusting state based on a prop change" pattern:
@@ -443,10 +468,10 @@ export default function Projects() {
       Dependencies
     </button>
   )
-  const activeFilterCount = [activeCategory !== 'all', activeStatus !== 'open', stalledOnly].filter(Boolean).length
+  const activeFilterCount = [activeCategory !== 'all', activeStatus !== 'open', stalledOnly, activeStage !== null].filter(Boolean).length
   const clearFilters = () => setSearchParams((prev) => {
     const out = new URLSearchParams(prev)
-    for (const k of ['category', 'status', 'filter']) out.delete(k)
+    for (const k of ['category', 'status', 'filter', 'stage']) out.delete(k)
     return out
   }, { replace: true })
   const viewOptions = [
@@ -573,6 +598,9 @@ export default function Projects() {
             kinds={productKinds}
             stageOf={stageOf}
             hideTally={isPhone}
+            tallyProjects={scoped}
+            activeStage={activeStage}
+            onStagePick={pickStage}
           />
         )}
 
@@ -737,7 +765,7 @@ export default function Projects() {
         <FilterSection label="Status"><div className="tk-flt">{statusLinks}</div></FilterSection>
         <FilterSection label="In this list">
           {countsLine}
-          <ProjectTally projects={filtered} stageOf={stageOf} />
+          <ProjectTally projects={scoped} stageOf={stageOf} activeStage={activeStage} onStagePick={pickStage} />
           {dependenciesToggle}
         </FilterSection>
       </FiltersSheet>

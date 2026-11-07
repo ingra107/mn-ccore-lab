@@ -77,6 +77,9 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
   // Session-only collapse: starts open on every load, like the sections below.
   const [open, setOpen] = useState(true)
+  // The Done group starts folded (Nick, Hub #171: "this should be default collapsed").
+  // Session-only like every fold on this page; the count stays on its header.
+  const [doneOpen, setDoneOpen] = useState(false)
   const [starting, setStarting] = useState<string | null>(null)
   // A kept pick's flip is a real start, but its stored answer reads the same as a
   // carried one (AcceptedWeekPlan.kept). So only the press that made it can say so,
@@ -197,8 +200,12 @@ export function PlanSection({ plan, weekPlanned = !!plan, model, state, projects
           )}
           {model.done.length > 0 && (
             <div className="tk-plan-done" data-testid="plan-done">
-              <div className="tk-plan-donehd">Done</div>
-              <div className="tk-stack">{model.done.map((t) => card(t, 'done'))}</div>
+              <div {...collapseToggleProps(doneOpen, () => setDoneOpen((o) => !o), 'Done')} className="tk-plan-donehd tk-clk">
+                <CollapseChevron open={doneOpen} />
+                Done
+                <span className="tk-cnt">{model.done.length}</span>
+              </div>
+              {doneOpen && <div className="tk-stack">{model.done.map((t) => card(t, 'done'))}</div>}
             </div>
           )}
         </>

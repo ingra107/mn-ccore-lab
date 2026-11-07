@@ -105,7 +105,12 @@ function page(user: typeof nick = nick) {
 
 const section = (h: ParentNode) => h.querySelector('[data-testid="plan-section"]') as HTMLElement | null
 const inSection = (h: ParentNode, id: string) => !!section(h)?.querySelector(`[data-task-id="${id}"]`)
-const inDone = (h: ParentNode, id: string) => !!section(h)?.querySelector(`[data-testid="plan-done"] [data-task-id="${id}"]`)
+// The Done group starts folded (Hub #171). The first read of a row in it opens the group.
+const inDone = (h: ParentNode, id: string) => {
+  const head = section(h)?.querySelector('[data-testid="plan-done"] .tk-plan-donehd') as HTMLElement | null
+  if (head && head.getAttribute('aria-expanded') === 'false') head.click()
+  return !!section(h)?.querySelector(`[data-testid="plan-done"] [data-task-id="${id}"]`)
+}
 const inGroups = (h: ParentNode, id: string) => h.querySelectorAll(`[data-group] [data-task-id="${id}"]`).length
 const completedSection = (h: ParentNode) => h.querySelector('[data-b2-completed]') as HTMLElement
 const openCompleted = (h: ParentNode) => (completedSection(h).querySelector('.tk-clk') as HTMLElement).click()

@@ -161,12 +161,24 @@ export interface ProjectSleekListProps {
   stageOf: (p: Project) => { key: string; label: string }
   /** The Filters sheet shows the tally instead (Projects on a phone). */
   hideTally?: boolean
+  /** What the tally counts: the list before the stage pick, so the other stages stay pressable. Default `projects`. */
+  tallyProjects?: Project[]
+  /** The stage group now picked (a stageOf key), and the press that picks or clears one. */
+  activeStage?: string | null
+  onStagePick?: (key: string) => void
   emptyLabel?: string
 }
 
 /** Filtered count and per-stage tally: `projects` is the filtered list, so the numbers
  *  follow every filter and search. */
-export function ProjectTally({ projects, stageOf }: { projects: Project[]; stageOf: (p: Project) => { key: string; label: string } }) {
+export function ProjectTally({ projects, stageOf, activeStage = null, onStagePick }: {
+  projects: Project[]
+  stageOf: (p: Project) => { key: string; label: string }
+  /** The picked stage key; its chip reads pressed. */
+  activeStage?: string | null
+  /** With it, each stage is a subtle link that filters the list to it; a second press clears. */
+  onStagePick?: (key: string) => void
+}) {
   if (projects.length === 0) return null
   const counts = new Map<string, { label: string; count: number }>()
   for (const p of projects) {
@@ -176,8 +188,20 @@ export function ProjectTally({ projects, stageOf }: { projects: Project[]; stage
   return (
     <div className="pj-tally" data-testid="pj-tally">
       <span><b>{projects.length}</b> {projects.length === 1 ? 'project' : 'projects'}</span>
-      {Array.from(counts.values()).map(({ label, count }) => (
-        <span key={label}>{label} <b>{count}</b></span>
+      {Array.from(counts.entries()).map(([key, { label, count }]) => (
+        onStagePick ? (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onStagePick(key)}
+            aria-pressed={activeStage === key}
+            title={activeStage === key ? `Showing ${label} only. Press to show every stage` : `Show only ${label}`}
+          >
+            {label} <b>{count}</b>
+          </button>
+        ) : (
+          <span key={key}>{label} <b>{count}</b></span>
+        )
       ))}
     </div>
   )
@@ -187,7 +211,7 @@ export default function ProjectSleekList({
   projects, sort, onSort, focusedIndex, setFocusedIndex, keyboardEnabled, healthBySlug, taskCountByProject,
   linksByProjectId, publicationsBySlug, pinnedSlugs, togglePin, categoryOptions, onFieldChange,
   productsByProject, kinds, stageOf, emptyLabel = 'No projects in this category',
-  hideTally = false,
+  hideTally = false, tallyProjects, activeStage, onStagePick,
 }: ProjectSleekListProps) {
   const navigate = useNavigate()
   const slugs = useMemo(() => projects.map((p) => p.slug), [projects])
@@ -393,7 +417,7 @@ export default function ProjectSleekList({
   return (
     <>
       {/* Phone: this line moves to the Filters sheet (Projects.tsx). */}
-      {!hideTally && <ProjectTally projects={projects} stageOf={stageOf} />}
+      {!hideTally && <ProjectTally projects={tallyProjects ?? projects} stageOf={stageOf} activeStage={activeStage} onStagePick={onStagePick} />}
       <SleekTable columns={columns} sort={sort} onSort={onSort} defaultSortLabel="Recent activity" className="pj-list">
         {projects.length === 0 && <div className="pj-empty">{emptyLabel}</div>}
         {projects.length > 0 && (

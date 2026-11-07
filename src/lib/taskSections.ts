@@ -199,8 +199,23 @@ export function orderSection<T extends TaskRow>(
 // The fold rule
 // ──────────────────────────────────────────────────────────────────────────
 
-/** A row due, or with a hard deadline, within this many days stays visible. */
+/** A row due, or with a hard deadline, within this many days stays visible (My Tasks lanes). */
 export const FOLD_DAYS = 7
+
+/**
+ * Today's due window (Nick, Hub #172): 7, 14 or 30 days, default 14. It sets
+ * how far ahead a section shows rows without a click; past it, and undated,
+ * wait behind "Show N more". Overdue and due today always show.
+ */
+export const TODAY_WINDOW_OPTIONS = [7, 14, 30] as const
+export type TodayWindowDays = typeof TODAY_WINDOW_OPTIONS[number]
+export const TODAY_WINDOW_DEFAULT: TodayWindowDays = 14
+
+/** A stored value (possibly from an older build: '7' | '14' | '30' | 'all' strings) as a window, else the default. */
+export function toTodayWindow(stored: unknown): TodayWindowDays {
+  const n = typeof stored === 'string' ? Number(stored) : stored
+  return (TODAY_WINDOW_OPTIONS as readonly unknown[]).includes(n) ? (n as TodayWindowDays) : TODAY_WINDOW_DEFAULT
+}
 
 export interface FoldCtx {
   viewerSlug: string
@@ -209,6 +224,8 @@ export interface FoldCtx {
   stepsOf?: (t: TaskRow) => readonly TaskRow[] | undefined
   /** Civil today; injectable for tests. */
   today?: string
+  /** How many days ahead a due date or hard deadline still shows. Default FOLD_DAYS. */
+  windowDays?: number
   /**
    * My Tasks lists keep finished rows in view while "Show completed" is on.
    * Today does not: a ticked row sinks, then folds like any other, and leaves
@@ -228,13 +245,13 @@ function rowNeedsEyes(t: TaskRow, ctx: FoldCtx, edge: string): boolean {
 }
 
 /**
- * Always visible: planned, overdue, due or deadline within 7 days, urgent or
- * high, New to the viewer, a parent with such a step, a milestone (the horizon
+ * Always visible: planned, overdue, due or deadline within the window (7 days
+ * unless ctx.windowDays says otherwise), urgent or high, New to the viewer, a parent with such a step, a milestone (the horizon
  * itself). The rest folds behind "Show N more".
  */
 export function isAlwaysVisible(t: TaskRow, ctx: FoldCtx): boolean {
   const today = ctx.today ?? todayKey()
-  const edge = civilDatePlusDays(today, FOLD_DAYS)
+  const edge = civilDatePlusDays(today, ctx.windowDays ?? FOLD_DAYS)
   if (isMilestone(t)) return true
   if (ctx.keepDone && isTaskDone(t)) return true
   if (rowNeedsEyes(t, ctx, edge)) return true
