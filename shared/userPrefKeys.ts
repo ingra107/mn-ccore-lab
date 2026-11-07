@@ -41,6 +41,8 @@ export const USER_PREF_FAMILIES = [
   // Lab preferences: the staleness thresholds every stale chip reads.
   { key: 'labprefs', param: false, merge: 'scalar' },
   { key: 'today.defaultView', param: false, merge: 'scalar' },
+  // Today: how many days ahead a section shows tasks without a click: the number 7, 14 or 30 (Hub #172; an older build stored it as a string).
+  { key: 'today.dueWindow', param: false, merge: 'scalar' },
   // Today: the whole Needs you card folded into the stat line (a boolean).
   { key: 'today.needsYouCollapsed', param: false, merge: 'scalar' },
   // Today's What is slipping card: rows marked Fine, id -> hidden-until date,

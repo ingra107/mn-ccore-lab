@@ -2,7 +2,7 @@
 // Replies & admin, CLIF ETL, With others). Header (label + count + extending
 // rule) over its rows. Which tasks land here is lib/taskSections.ts; the order
 // inside is orderSection (planned, urgent, high, due date, done last); the fold
-// is isAlwaysVisible (planned, overdue, due or deadline within 7 days, urgent or
+// is isAlwaysVisible (planned, overdue, due or deadline within the Today window (7/14/30, default 14), urgent or
 // high, New, a parent with such a step stay; the rest folds behind "Show N
 // more"). Replaces the fixed 5-row preview slice (2026-11-03).
 //
@@ -14,7 +14,7 @@ import { CollapseChevron } from './SectionCollapseToggle'
 import { collapseToggleProps } from './collapseToggleProps'
 import { isTaskDone } from './constants'
 import { SortKindButtons } from '../tasks/SortPicker'
-import { isAlwaysVisible, orderSection, othersSummary, SECTION_LABEL, type SectionKey } from '../../lib/taskSections'
+import { isAlwaysVisible, orderSection, othersSummary, SECTION_LABEL, TODAY_WINDOW_DEFAULT, type SectionKey } from '../../lib/taskSections'
 import type { MilestoneEntry } from '../../lib/taskGrouping'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -22,7 +22,7 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // expandedId/onExpand no longer come from TodayPage: TaskGroup owns its own
 // expand state so clicking a row here never expands the same task in Timeline
 // or PlanSection (Item 2 fix, 2026-06-22).
-export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug, loading = false }: {
+export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, viewerSlug, windowDays = TODAY_WINDOW_DEFAULT, loading = false }: {
   skey: SectionKey
   tasks: TaskRowData[]
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
@@ -30,6 +30,8 @@ export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, vi
   stepsByParent?: Map<string, TaskRowData[]>
   /** Whose Today this is: the New test (assigned to you, never opened) reads it. */
   viewerSlug: string
+  /** Days ahead a row shows without a click (Today's 7 / 14 / 30 pick); past it, and undated, fold. */
+  windowDays?: number
   /** A read that feeds this section has not answered: its count would be partial, so a dash. */
   loading?: boolean
 }) {
@@ -61,11 +63,20 @@ export function TaskGroup({ skey, tasks, projectsByPid, state, stepsByParent, vi
   const kept = useMemo(
     () => sorted.filter((t) => isAlwaysVisible(t, {
       viewerSlug,
+      windowDays,
       isPlanned: (r) => !!state.planned[r.id],
       stepsOf: (r) => stepsByParent?.get(r.id),
     })),
-    [sorted, viewerSlug, state.planned, stepsByParent],
+    [sorted, viewerSlug, windowDays, state.planned, stepsByParent],
   )
+  // A new window re-folds the section: pressing 7d / 14d / 30d must change what shows,
+  // not sit under an open "Show N more". Adjusted during render, as React advises.
+  const [prevWindow, setPrevWindow] = useState(windowDays)
+  if (windowDays !== prevWindow) {
+    setPrevWindow(windowDays)
+    setShowAll(false)
+    setExpandedId(null)
+  }
   const visible = showAll ? sorted : kept
   const hiddenCount = sorted.length - kept.length
 
