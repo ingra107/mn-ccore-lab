@@ -31,7 +31,7 @@ describe('TASK_SELECT_COLS_TYPED — A2 typed wire shape (Slice C)', () => {
 
   it('TASK_SELECT_COLS keeps its slug alias (pinned by task-cols.test.ts)', () => {
     expect(TASK_SELECT_COLS).toContain(
-      '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id',
+      '(SELECT p.slug FROM projects p WHERE p.slug = t.project_id LIMIT 1) END) AS project_id',
     )
   })
 

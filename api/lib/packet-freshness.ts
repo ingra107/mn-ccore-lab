@@ -1,7 +1,7 @@
 // packet-freshness.ts -- is a prepared first step still good? (schema-v153)
 //
-// ONE function, packetFreshness(), derives ready / changed / unverified from a
-// packet version's input manifest on every read. Nothing about freshness is
+// ONE function, packetFreshnessMany(), derives ready / changed / unverified from
+// packet versions' input manifests on every read (packetFreshness is its one-job form). Nothing about freshness is
 // stored, so a reply, a comment or an edit cannot be missed by a cache that
 // forgot to update. Plan: PB Scratch/plans/2026-10-30-first-step-packet-RECONCILED.md
 // "Freshness".
@@ -34,7 +34,7 @@ import type { PacketFreshness, PacketInput, PacketReason, PacketState } from '..
 /**
  * Columns of `tasks` that are NOT the work: bookkeeping, ordering in the day
  * plan, and read receipts. Every other column is work and is hashed.
- * api/lib/packet-freshness.test.ts fails when a tasks column is in neither
+ * api/routes/packets.test.ts fails when a tasks column is in neither
  * list, so a new column cannot reach the hash (or escape it) unclassified.
  */
 export const TASK_PACKET_NOISE_COLS = [
@@ -79,11 +79,13 @@ export function manifestHash(inputs: readonly PacketInput[]): Promise<string> {
   return sha256Hex(stableStringify(inputs))
 }
 
+const workToken = (row: Record<string, unknown>): Promise<string> => sha256Hex(stableStringify(row))
+
 /** The task's work-field token, or null when the caller cannot read the task. */
 export async function taskWorkToken(db: D1Database, taskId: string): Promise<string | null> {
   const row = await db.prepare(`SELECT ${TASK_PACKET_WORK_COLS.join(', ')} FROM tasks WHERE id = ?`)
     .bind(taskId).first<Record<string, unknown>>()
-  return row ? sha256Hex(stableStringify(row)) : null
+  return row ? workToken(row) : null
 }
 
 /** The id of the product's live current-draft link, or null when it has none. */
@@ -98,31 +100,108 @@ const stamp = (s: string | null | undefined): number => (s ? Date.parse(dbStampT
 
 const CHANGED_CODES = new Set<PacketReason['code']>(['task_changed', 'reply_arrived', 'activity_added', 'draft_replaced', 'task_missing', 'version_moved'])
 
-async function threadReasons(db: D1Database, input: PacketInput, nowMs: number): Promise<PacketReason[]> {
+// The freshness evidence for a whole page of packets, read in one statement per
+// input kind, never one per packet. The Today list carries every live packet
+// (21 on 2026-11-06), and the per-input loop this replaced issued ~6 statements
+// for each on every list read, a large share of what tripped D1's 10-second
+// resource limit (PB #9033). Every read still goes through the caller's handle.
+interface FreshnessEvidence {
+  taskTokens: Map<string, string>
+  mail: Map<string, { internal_at: string; from_display: string | null }[]>
+  receipts: Map<string, { readAt: string | null; lastResult: string | null; lastClosedAt: string | null }>
+  activity: Map<string, { actor_slug: string; created_at: string }[]>
+  draftTokens: Map<string, string>
+}
+
+function push<T>(m: Map<string, T[]>, k: string, v: T): void {
+  const list = m.get(k)
+  if (list) list.push(v)
+  else m.set(k, [v])
+}
+
+const activityRef = (taskId: string, input: PacketInput): string => input.ref || taskId
+
+async function readEvidence(db: D1Database, jobs: readonly PacketFreshnessJob[]): Promise<FreshnessEvidence> {
+  const refs = { task: new Set<string>(), thread: new Set<string>(), activity: new Set<string>(), product_draft: new Set<string>() }
+  for (const job of jobs) {
+    for (const input of job.inputs) {
+      if (input.kind === 'task') refs.task.add(input.ref)
+      else if (input.kind === 'thread') refs.thread.add(input.ref)
+      else if (input.kind === 'activity') refs.activity.add(activityRef(job.taskId, input))
+      else if (input.kind === 'product_draft') refs.product_draft.add(input.ref)
+    }
+  }
+  const ids = (set: Set<string>) => JSON.stringify([...set])
+  const none = Promise.resolve({ results: [] })
+  const [taskRows, mailRows, receiptRows, activityRows, draftRows] = await Promise.all([
+    refs.task.size === 0 ? none : db.prepare(`SELECT ${TASK_PACKET_WORK_COLS.join(', ')} FROM tasks WHERE id IN (SELECT value FROM json_each(?))`)
+      .bind(ids(refs.task)).all<Record<string, unknown>>(),
+    // The newest 50 of each thread, bounded in SQL: j.value drives one indexed,
+    // limited read per thread, and D1 never returns a long thread's history.
+    refs.thread.size === 0 ? none : db.prepare(
+      `SELECT j.value AS thread_id, m.internal_at, m.from_display
+         FROM json_each(?) j
+         JOIN mail_messages m ON m.message_id IN (
+           SELECT x.message_id FROM mail_messages x
+            WHERE x.thread_id = j.value AND x.party <> 'nick'
+            ORDER BY x.internal_at DESC LIMIT 50)
+        ORDER BY m.internal_at DESC`,
+    ).bind(ids(refs.thread)).all<{ thread_id: string; internal_at: string; from_display: string | null }>(),
+    refs.thread.size === 0 ? none : db.prepare(
+      `SELECT wrt.thread_id, wrt.result, r.closed_at
+         FROM watch_run_threads wrt JOIN watch_runs r ON r.id = wrt.run_id
+        WHERE wrt.thread_id IN (SELECT value FROM json_each(?)) AND r.closed_at IS NOT NULL`,
+    ).bind(ids(refs.thread)).all<{ thread_id: string; result: string | null; closed_at: string }>(),
+    // The newest 20 of each task, the same bound.
+    refs.activity.size === 0 ? none : db.prepare(
+      `SELECT j.value AS entity_id, a.actor_slug, a.created_at
+         FROM json_each(?) j
+         JOIN activity_entries a ON a.hidden_at IS NULL AND a.id IN (
+           SELECT x.id FROM activity_entries x
+            WHERE x.entity_type = 'task' AND x.entity_id = j.value AND x.kind IN ('comment', 'update')
+              AND x.actor_slug <> 'claude-ai' AND x.hidden_at IS NULL
+            ORDER BY x.created_at DESC LIMIT 20)
+        ORDER BY a.created_at DESC`,
+    ).bind(ids(refs.activity)).all<{ entity_id: string; actor_slug: string; created_at: string }>(),
+    refs.product_draft.size === 0 ? none : db.prepare(
+      `SELECT product_id, id FROM links WHERE product_id IN (SELECT value FROM json_each(?)) AND role = 'current_draft' AND deleted_at IS NULL`,
+    ).bind(ids(refs.product_draft)).all<{ product_id: string; id: string }>(),
+  ])
+
+  const ev: FreshnessEvidence = { taskTokens: new Map(), mail: new Map(), receipts: new Map(), activity: new Map(), draftTokens: new Map() }
+  for (const row of (taskRows.results ?? []) as Record<string, unknown>[]) ev.taskTokens.set(String(row.id), await workToken(row))
+  for (const m of (mailRows.results ?? []) as { thread_id: string; internal_at: string; from_display: string | null }[]) push(ev.mail, m.thread_id, m)
+  for (const r of (receiptRows.results ?? []) as { thread_id: string; result: string | null; closed_at: string }[]) {
+    const rec = ev.receipts.get(r.thread_id) ?? { readAt: null, lastResult: null, lastClosedAt: null }
+    if (r.result === 'read' && (rec.readAt === null || r.closed_at > rec.readAt)) rec.readAt = r.closed_at
+    if (r.result !== null && (rec.lastClosedAt === null || r.closed_at > rec.lastClosedAt)) {
+      rec.lastClosedAt = r.closed_at
+      rec.lastResult = r.result
+    }
+    ev.receipts.set(r.thread_id, rec)
+  }
+  for (const a of (activityRows.results ?? []) as { entity_id: string; actor_slug: string; created_at: string }[]) push(ev.activity, a.entity_id, a)
+  for (const d of (draftRows.results ?? []) as { product_id: string; id: string }[]) {
+    if (!ev.draftTokens.has(d.product_id)) ev.draftTokens.set(d.product_id, d.id)
+  }
+  return ev
+}
+
+function threadReasons(ev: FreshnessEvidence, input: PacketInput, nowMs: number): PacketReason[] {
   const observed = stamp(input.observed_at)
-  const msgs = await db.prepare(
-    "SELECT internal_at, from_display FROM mail_messages WHERE thread_id = ? AND party <> 'nick' ORDER BY internal_at DESC LIMIT 50",
-  ).bind(input.ref).all<{ internal_at: string; from_display: string | null }>()
-  const newer = (msgs.results ?? []).filter((m) => stamp(m.internal_at) > observed)
+  const newer = (ev.mail.get(input.ref) ?? []).filter((m) => stamp(m.internal_at) > observed)
   if (newer.length > 0) {
     const who = newer[0].from_display || 'Someone'
     return [{ kind: 'thread', ref: input.ref, code: 'reply_arrived', text: `${who} replied on the thread after this was prepared` }]
   }
   // The watcher's receipts for this thread: its latest read, and its result in
   // the latest closed run that handed the thread out.
-  const rec = await db.prepare(
-    `SELECT MAX(CASE WHEN wrt.result = 'read' THEN r.closed_at END) AS read_at,
-            (SELECT w2.result FROM watch_run_threads w2 JOIN watch_runs r2 ON r2.id = w2.run_id
-              WHERE w2.thread_id = ? AND r2.closed_at IS NOT NULL AND w2.result IS NOT NULL
-              ORDER BY r2.closed_at DESC LIMIT 1) AS last_result
-       FROM watch_run_threads wrt JOIN watch_runs r ON r.id = wrt.run_id
-      WHERE wrt.thread_id = ? AND r.closed_at IS NOT NULL`,
-  ).bind(input.ref, input.ref).first<{ read_at: string | null; last_result: string | null }>()
-  if (rec?.last_result === 'not_found' || rec?.last_result === 'error') {
-    return [{ kind: 'thread', ref: input.ref, code: 'thread_unreadable', text: `The mail watcher could not read the thread (${rec.last_result})` }]
+  const rec = ev.receipts.get(input.ref)
+  if (rec?.lastResult === 'not_found' || rec?.lastResult === 'error') {
+    return [{ kind: 'thread', ref: input.ref, code: 'thread_unreadable', text: `The mail watcher could not read the thread (${rec.lastResult})` }]
   }
   // Seen through = the later of the producer's own read and the watcher's.
-  const seen = Math.max(Number.isFinite(observed) ? observed : 0, stamp(rec?.read_at ?? null) || 0)
+  const seen = Math.max(Number.isFinite(observed) ? observed : 0, stamp(rec?.readAt ?? null) || 0)
   const [latestDue] = dueSlots(nowMs, 1)
   if (latestDue !== undefined && seen < latestDue) {
     return [{ kind: 'thread', ref: input.ref, code: 'thread_not_checked', text: 'The mail watcher has not checked the thread since its last slot' }]
@@ -130,44 +209,55 @@ async function threadReasons(db: D1Database, input: PacketInput, nowMs: number):
   return []
 }
 
-async function activityReasons(db: D1Database, taskId: string, input: PacketInput): Promise<PacketReason[]> {
-  const rows = await db.prepare(
-    `SELECT actor_slug, created_at FROM activity_entries
-      WHERE entity_type = 'task' AND entity_id = ? AND kind IN ('comment', 'update')
-        AND actor_slug <> 'claude-ai' AND hidden_at IS NULL
-      ORDER BY created_at DESC LIMIT 20`,
-  ).bind(taskId).all<{ actor_slug: string; created_at: string }>()
+function activityReasons(ev: FreshnessEvidence, taskId: string, input: PacketInput): PacketReason[] {
+  const rows = ev.activity.get(activityRef(taskId, input)) ?? []
   const observed = stamp(input.observed_at)
-  const newer = (rows.results ?? []).filter((r) => stamp(r.created_at) > observed)
+  const newer = rows.filter((r) => stamp(r.created_at) > observed)
   if (newer.length === 0) return []
-  return [{ kind: 'activity', ref: taskId, code: 'activity_added', text: `${newer[0].actor_slug} posted on the task after this was prepared` }]
+  return [{ kind: 'activity', ref: activityRef(taskId, input), code: 'activity_added', text: `${newer[0].actor_slug} posted on the task after this was prepared` }]
 }
 
+/** One packet version to judge: its task, and its version's stored manifest. */
+export interface PacketFreshnessJob { taskId: string; inputs: readonly PacketInput[] }
+
 /**
- * Freshness of one packet version. `taskId` is the packet's task; `inputs` the
- * version's stored manifest. `nowMs` is the clock (injected for the watcher's
- * slot arithmetic).
+ * Freshness of many packet versions, in the order given. `nowMs` is the clock
+ * (injected for the watcher's slot arithmetic).
  */
+export async function packetFreshnessMany(
+  db: D1Database, jobs: readonly PacketFreshnessJob[], nowMs: number,
+): Promise<PacketFreshness[]> {
+  if (jobs.length === 0) return []
+  const ev = await readEvidence(db, jobs)
+  return jobs.map((job) => judge(ev, job, nowMs))
+}
+
+/** Freshness of one packet version: packetFreshnessMany with one job. */
 export async function packetFreshness(
   db: D1Database, taskId: string, inputs: readonly PacketInput[], nowMs: number,
 ): Promise<PacketFreshness> {
+  const [one] = await packetFreshnessMany(db, [{ taskId, inputs }], nowMs)
+  return one
+}
+
+function judge(ev: FreshnessEvidence, job: PacketFreshnessJob, nowMs: number): PacketFreshness {
   const reasons: PacketReason[] = []
-  for (const input of inputs) {
+  for (const input of job.inputs) {
     switch (input.kind) {
       case 'task': {
-        const now = await taskWorkToken(db, input.ref)
+        const now = ev.taskTokens.get(input.ref) ?? null
         if (now === null) reasons.push({ kind: 'task', ref: input.ref, code: 'task_missing', text: 'The task is gone' })
         else if (now !== input.token) reasons.push({ kind: 'task', ref: input.ref, code: 'task_changed', text: 'The task changed after this was prepared' })
         break
       }
       case 'thread':
-        reasons.push(...(await threadReasons(db, input, nowMs)))
+        reasons.push(...threadReasons(ev, input, nowMs))
         break
       case 'activity':
-        reasons.push(...(await activityReasons(db, input.ref || taskId, input)))
+        reasons.push(...activityReasons(ev, job.taskId, input))
         break
       case 'product_draft': {
-        const now = await currentDraftToken(db, input.ref)
+        const now = ev.draftTokens.get(input.ref) ?? null
         if (now !== input.token) reasons.push({ kind: 'product_draft', ref: input.ref, code: 'draft_replaced', text: 'The product\'s current draft changed after this was prepared' })
         break
       }

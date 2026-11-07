@@ -23,7 +23,7 @@
 // This module writes only the three packet tables; it changes no task.
 
 import { nowInstant } from '../lib/time'
-import { manifestHash, packetFreshness, taskWorkToken, currentDraftToken } from '../lib/packet-freshness'
+import { manifestHash, packetFreshness, packetFreshnessMany, taskWorkToken, currentDraftToken } from '../lib/packet-freshness'
 import {
   DELIVERABLE_KINDS, INPUT_KINDS, missingAnchors,
   type Deliverable, type PacketCall, type PacketInput, type PacketRow, type PacketVersion, type PacketView,
@@ -128,17 +128,34 @@ export async function livePacketView(db: D1Database, taskId: string, nowMs = Dat
  * null. The helper column is removed from each row.
  */
 export async function attachPacketStates(db: D1Database, rows: Record<string, unknown>[], nowMs = Date.now()): Promise<void> {
+  const rowsByPacket = new Map<string, Record<string, unknown>[]>()
   for (const row of rows) {
     const id = typeof row.packet_id === 'string' ? row.packet_id : null
     delete row.packet_id
     row.packet_state = null
     if (!id) continue
-    const p = await packetBy(db, 'p.id = ?', id)
-    const v = p ? await currentVersion(db, p) : null
-    // A used packet has done its job: no Ready/Changed tag on the row.
-    if (!p || !v || p.used_at) continue
-    row.packet_state = (await packetFreshness(db, p.task_id, toVersion(v).inputs, nowMs)).state
+    const list = rowsByPacket.get(id)
+    if (list) list.push(row)
+    else rowsByPacket.set(id, [row])
   }
+  if (rowsByPacket.size === 0) return
+  // One read for the whole page, whatever its size (PB #9033). A used packet has
+  // done its job: no Ready/Changed tag on the row. A packet with no current
+  // version drops out of the join and stays null.
+  const live = await db.prepare(
+    `SELECT p.id, p.task_id, v.manifest_json
+       FROM task_packets p
+       JOIN task_packet_versions v ON v.packet_id = p.id AND v.version = p.current_version
+      WHERE p.id IN (SELECT value FROM json_each(?))
+        AND NOT EXISTS (SELECT 1 FROM task_packet_actions a WHERE a.packet_id = p.id AND a.action = 'use')`,
+  ).bind(JSON.stringify([...rowsByPacket.keys()])).all<{ id: string; task_id: string; manifest_json: string }>()
+  const packets = live.results ?? []
+  const freshness = await packetFreshnessMany(
+    db, packets.map((p) => ({ taskId: p.task_id, inputs: JSON.parse(p.manifest_json) as PacketInput[] })), nowMs,
+  )
+  packets.forEach((p, i) => {
+    for (const row of rowsByPacket.get(p.id) ?? []) row.packet_state = freshness[i].state
+  })
 }
 
 /** The live packet id of a task read aliased `t`; NULL for any viewer whose

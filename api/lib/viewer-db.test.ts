@@ -173,9 +173,9 @@ describe('writes cannot reach a row the viewer cannot read', () => {
   it('the rewrite text: guard ANDed ahead of the original WHERE, before RETURNING / ORDER BY / LIMIT', () => {
     const active = activeScopes(CASEY)
     const out = scopeSql('UPDATE meetings SET notes = ? WHERE id = ? RETURNING *', active)
-    expect(out).toMatch(/WHERE meetings\.id IN \(SELECT id FROM meetings\) AND \( id = \? \) RETURNING \*$/)
+    expect(out).toMatch(/WHERE EXISTS \(SELECT 1 FROM meetings vg WHERE vg\.id = meetings\.id\) AND \( id = \? \) RETURNING \*$/)
     const noWhere = scopeSql('DELETE FROM agenda_items;', active)
-    expect(noWhere).toMatch(/DELETE FROM agenda_items WHERE agenda_items\.id IN \(SELECT id FROM agenda_items\);$/)
+    expect(noWhere).toMatch(/DELETE FROM agenda_items WHERE EXISTS \(SELECT 1 FROM agenda_items vg WHERE vg\.id = agenda_items\.id\);$/)
   })
 })
 

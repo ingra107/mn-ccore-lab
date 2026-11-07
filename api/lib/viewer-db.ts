@@ -19,8 +19,9 @@
 // WHAT THE SHADOW DOES NOT COVER, and what covers it here:
 //   - A DML TARGET resolves to the real table, not the CTE: `UPDATE meetings
 //     SET .. WHERE id = ?` would change a row the viewer cannot read. So an
-//     UPDATE or DELETE whose target is scoped gets `<key> IN (SELECT <key>
-//     FROM <table>)` ANDed into its WHERE, and that subquery reads the CTE.
+//     UPDATE or DELETE whose target is scoped gets `EXISTS (SELECT 1 FROM <table>
+//     vg WHERE vg.<key> = <table>.<key>)` ANDed into its WHERE; the subquery reads
+//     the CTE, and `<table>.<key>` there can only mean the row being changed.
 //   - An INSERT into a child of a hidden parent (an agenda item on someone
 //     else's meeting) is not a read at all. The handler checks the parent
 //     through this handle first; api/routes/viewer-sweep.test.ts drives every
@@ -61,6 +62,11 @@
 // is scoped too (projects and tasks) and pays the same kind of prefix; since
 // schema-v122 "show all projects" keeps the meeting prefix too, so only the
 // PB key gets the raw handle.
+// Since PB #9033 (2026-11-07) the rules reach their parents by key (EXISTS on a
+// primary key), so the prefix costs rows per row read, not the viewer's whole
+// visible set per statement. Prod, Nick: one task by id 978 -> 3 rows read; one
+// task's comments 4,346 -> 6; a whole-table read pays per row (COUNT of tasks
+// 4,146 -> 6,307). A new rule keeps that shape: api/lib/scope-cost.test.ts.
 // Statements naming no scoped table are passed through unchanged.
 //   - nobody:  no identity (anonymous, a signed-in non-member on a public GET,
 //     a credential-less local caller). Every scoped table is empty.
@@ -360,9 +366,11 @@ export function depDepth(t: ScopedTable, seen: ReadonlySet<ScopedTable> = new Se
   return d
 }
 
-// UPDATE / DELETE whose target is a scoped table: AND `<key> IN (SELECT <key>
-// FROM <table>)` into the top-level WHERE (or add one), so a row the viewer
-// cannot read cannot be changed either. The subquery reads the CTE.
+// UPDATE / DELETE whose target is a scoped table: AND an EXISTS on the row's key
+// into the top-level WHERE (or add one), so a row the viewer cannot read cannot
+// be changed either. The subquery reads the CTE. A probe, not `<key> IN (SELECT
+// <key> FROM <table>)`: that list read the viewer's whole visible table on every
+// write (PB #9033). A NULL key matches nothing either way.
 function applyDmlRestriction(sql: string, active: ReadonlyMap<ScopedTable, string>, named: Set<ScopedTable>): string {
   const words = topLevelWords(sql)
   // Skip a leading WITH .. clause: the DML keyword is the first top-level
@@ -414,9 +422,7 @@ function applyDmlRestriction(sql: string, active: ReadonlyMap<ScopedTable, strin
   const rest = words.slice(verbIdx + 1).filter((w) => w.depth === 0)
   const where = rest.find((w) => w.word === 'where' && w.start > target!.end)
   const keys = typeof scope.key === 'string' ? [scope.key] : scope.key
-  const guard = keys.length === 1
-    ? `${table}.${keys[0]} IN (SELECT ${keys[0]} FROM ${table})`
-    : `(${keys.map((k) => `${table}.${k}`).join(', ')}) IN (SELECT ${keys.join(', ')} FROM ${table})`
+  const guard = `EXISTS (SELECT 1 FROM ${table} vg WHERE ${keys.map((k) => `vg.${k} = ${table}.${k}`).join(' AND ')})`
   const tailKw = (from: number) => rest.find((w, k) =>
     w.start > from && (w.word === 'returning' || w.word === 'limit'
       || (w.word === 'order' && rest[k + 1]?.word === 'by')))

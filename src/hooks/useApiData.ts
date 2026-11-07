@@ -1847,6 +1847,13 @@ export function usePBSessionStats(params?: { project?: string; since?: string })
     },
     staleTime: STALE_TIME,
     retry: false,
+    // A scan of all PB session history (14K rows, PB #9033), so not re-run on
+    // every write anywhere in the lab. It opts out of that refetch, so it keeps
+    // itself fresh: staleTime alone starts no fetch. Session History also refetches
+    // it when its list changes, so the tiles and the list agree.
+    refetchInterval: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    meta: { labChangeRefetch: false },
   })
 }
 

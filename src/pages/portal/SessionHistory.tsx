@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { History, Clock, Monitor, Filter, Search } from 'lucide-react'
@@ -202,6 +203,19 @@ function SessionHistoryBody() {
       : undefined,
   )
   const { data: allStats } = usePBSessionStats()
+  // The stats opt out of the lab-wide refetch, the list does not. When the list's
+  // sessions change, the tiles follow, so the two never describe different data.
+  // Only pb-session-stats: a write that changes no session runs no scan.
+  const queryClient = useQueryClient()
+  const sessionsSeen = useRef<string | null>(null)
+  const sessionsKey = sessions.map((s) => `${s.id}:${s.ended_at ?? ''}:${s.duration_minutes ?? ''}`).join(',')
+  useEffect(() => {
+    if (sessionsLoading) return
+    if (sessionsSeen.current !== null && sessionsSeen.current !== sessionsKey) {
+      void queryClient.invalidateQueries({ queryKey: ['pb-session-stats'] })
+    }
+    sessionsSeen.current = sessionsKey
+  }, [sessionsKey, sessionsLoading, queryClient])
 
   // Derive project list for dropdown: the value is the name the sessions
   // carry (the filter key), the label its short name (principle 8).

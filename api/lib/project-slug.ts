@@ -2,7 +2,7 @@
 // the membership lane).
 //
 // A slug is a second spelling of a project reference: the visibility rule
-// (api/lib/table-scope.ts VISIBLE_PROJECT_REFS) admits a child row whose
+// (api/lib/table-scope.ts inVisibleProject) admits a child row whose
 // project column holds either a visible project's id or its slug. So a slug
 // that spells ANOTHER project's id is a key to that project: a member renames
 // their own project's slug to a hidden project's typed id (which the task wire

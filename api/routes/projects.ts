@@ -284,9 +284,9 @@ export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
   // for a project worked only through PB field writes, which post no timeline
   // line by design; advanceProjectOwnMovement moves LMM on those writes.
   //
-  // One constant-cost aggregate (idx_ae_project = (project_id, created_at DESC),
-  // so MAX-per-group is an ordered index scan), merged in memory — the same
-  // batched shape handleProjectHealth uses instead of a per-project N+1. It does
+  // One statement with an indexed probe per project (idx_ae_project =
+  // (project_id, created_at DESC)), merged in memory — the same batched shape
+  // handleProjectHealth uses instead of a per-project N+1. It does
   // not depend on the projects SELECT, so the two are ISSUED TOGETHER: awaiting
   // them in sequence would add a whole D1 round-trip to every Projects-page load
   // for no reason.
@@ -300,11 +300,15 @@ export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
     env.DB.prepare(isBrowserRead ? browserQuery : query).bind(...params).all(),
     isBrowserRead
       ? env.DB.prepare(
-          `SELECT project_id, MAX(created_at) AS latest
-             FROM activity_entries
-            WHERE project_id IS NOT NULL AND hidden_at IS NULL
-            GROUP BY project_id`
-        ).all<{ project_id: string; latest: string }>()
+          // One indexed probe per project (idx_ae_project), not a GROUP BY over
+          // every activity row and its visibility rule. Prod, Nick's handle:
+          // 26,770 rows read -> 1,028, same answer (PB #9033).
+          `SELECT p.id AS project_id,
+                  (SELECT a.created_at FROM activity_entries a
+                    WHERE a.project_id = p.id AND a.hidden_at IS NULL
+                    ORDER BY a.created_at DESC LIMIT 1) AS latest
+             FROM projects p`
+        ).all<{ project_id: string; latest: string | null }>()
       : null,
   ]);
 

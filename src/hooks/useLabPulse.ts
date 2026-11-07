@@ -19,6 +19,12 @@ function usePulseQuery<T>(key: string) {
     },
     staleTime: 5 * 60 * 1000,
     retry: false,
+    // Year-scale aggregates (6K rows a read, PB #9033), so not re-run on every
+    // write anywhere in the lab. They opt out of that refetch, so they keep
+    // themselves fresh: staleTime alone starts no fetch.
+    refetchInterval: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    meta: { labChangeRefetch: false },
   })
 }
 
