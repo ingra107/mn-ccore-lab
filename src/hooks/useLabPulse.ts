@@ -19,6 +19,9 @@ function usePulseQuery<T>(key: string) {
     },
     staleTime: 5 * 60 * 1000,
     retry: false,
+    // Year-scale aggregates (6K rows a read, PB #9033): fresh on their own
+    // staleTime, not re-run on every write anywhere in the lab.
+    meta: { labChangeRefetch: false },
   })
 }
 

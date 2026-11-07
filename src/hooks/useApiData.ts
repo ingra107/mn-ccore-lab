@@ -1847,6 +1847,9 @@ export function usePBSessionStats(params?: { project?: string; since?: string })
     },
     staleTime: STALE_TIME,
     retry: false,
+    // A scan of all PB session history (14K rows, PB #9033): fresh on its own
+    // staleTime, not re-run on every write anywhere in the lab.
+    meta: { labChangeRefetch: false },
   })
 }
 

@@ -300,11 +300,14 @@ export async function handleGetProjects(url: URL, env: Env): Promise<Response> {
     env.DB.prepare(isBrowserRead ? browserQuery : query).bind(...params).all(),
     isBrowserRead
       ? env.DB.prepare(
-          `SELECT project_id, MAX(created_at) AS latest
-             FROM activity_entries
-            WHERE project_id IS NOT NULL AND hidden_at IS NULL
-            GROUP BY project_id`
-        ).all<{ project_id: string; latest: string }>()
+          // One indexed probe per project (idx_ae_project), not a GROUP BY over
+          // every activity row and its visibility rule: 26,770 rows -> see PB #9033.
+          `SELECT p.id AS project_id,
+                  (SELECT a.created_at FROM activity_entries a
+                    WHERE a.project_id = p.id AND a.hidden_at IS NULL
+                    ORDER BY a.created_at DESC LIMIT 1) AS latest
+             FROM projects p`
+        ).all<{ project_id: string; latest: string | null }>()
       : null,
   ]);
 
