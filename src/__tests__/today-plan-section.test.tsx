@@ -105,7 +105,12 @@ function page(user: typeof nick = nick) {
 
 const section = (h: ParentNode) => h.querySelector('[data-testid="plan-section"]') as HTMLElement | null
 const inSection = (h: ParentNode, id: string) => !!section(h)?.querySelector(`[data-task-id="${id}"]`)
-const inDone = (h: ParentNode, id: string) => !!section(h)?.querySelector(`[data-testid="plan-done"] [data-task-id="${id}"]`)
+// The Done group starts folded (Hub #171). The first read of a row in it opens the group.
+const inDone = (h: ParentNode, id: string) => {
+  const head = section(h)?.querySelector('[data-testid="plan-done"] .tk-plan-donehd') as HTMLElement | null
+  if (head && head.getAttribute('aria-expanded') === 'false') head.click()
+  return !!section(h)?.querySelector(`[data-testid="plan-done"] [data-task-id="${id}"]`)
+}
 const inGroups = (h: ParentNode, id: string) => h.querySelectorAll(`[data-group] [data-task-id="${id}"]`).length
 const completedSection = (h: ParentNode) => h.querySelector('[data-b2-completed]') as HTMLElement
 const openCompleted = (h: ParentNode) => (completedSection(h).querySelector('.tk-clk') as HTMLElement).click()
@@ -115,6 +120,16 @@ const AT1 = `${civilPlus(-1)}T14:00:00Z`
 const AT2 = `${civilPlus(0)}T00:30:00Z`
 
 describe('The Plan section on Today', () => {
+  it('the due-window control starts at 14 days and moves to 30 on a press (Hub #172)', async () => {
+    stubHub([task('other')])
+    const h = await mount(page(), { ready: loaded('other'), label: 'today' })
+    const btns = () => [...h.querySelectorAll<HTMLButtonElement>('[aria-label="Show tasks due within"] button')]
+    expect(btns().map((b) => `${b.textContent}:${b.getAttribute('aria-pressed')}`)).toEqual(['7d:false', '14d:true', '30d:false'])
+    btns()[2].click()
+    await waitFor(() => btns()[2].getAttribute('aria-pressed') === 'true', '30d pressed')
+    expect(btns()[1].getAttribute('aria-pressed')).toBe('false')
+  })
+
   it('a_pick_does_not_also_show_in_its_section', async () => {
     stubHub([plan('p', AT1, ['a']), task('a'), task('other')])
     const h = await mount(page(), { ready: loaded('a'), label: 'today' })

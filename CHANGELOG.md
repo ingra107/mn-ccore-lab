@@ -3,6 +3,12 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-11-07 — Today's due window, Done folded, stage chips
+
+**Today.** A 7/14/30 day control sits beside the Tasks heading (default 14, saved per person as `today.dueWindow`). Each section shows overdue, due-today and tasks due inside the window without a click; tasks past it, and undated tasks, wait behind "Show N more", which shows even when nothing in the section is kept. Planned, urgent, high and New rows still show. My Tasks lanes keep the fixed 7 days. The Plan section's Done group now starts folded, its count on the header (Hub #171, #172).
+
+**Projects.** Each stage count under the title (`Grant application · Preparing 9`) is a subtle link that filters the list to that stage (`?stage=`); a second press clears it. The counts follow the other filters (Hub #170).
+
 ## 2026-11-05 — Missing swipes, the importer, hosted photos, tsc at commit
 
 **Missing swipes.** `GrantGantt`'s touch tests failed only in the full suite. CPU was not the cause: the file alone with all 20 cores busy sent each touch in 17-137 ms, while in the full suite one send took up to 2,287 ms and `requestAnimationFrame` stayed under 33 ms. Each `cdp().send` passes through vitest's Node process, which is serving the other files (that last link is inferred, not measured). A gesture then outlasted the 15 s timeout; the timed-out test kept running, found the next test's bar and sent it stray touches ("Must send a TouchStart first"). `color-back-depth` (`userEvent.hover`) timed out the same way. Both files now run after the main suite, one at a time, in their own process (`vitest.realInputTests.ts`, `vitest.config.realinput.ts`), the retry loop is gone, and `realInputTests.test.ts` refuses a new `cdp()` or `userEvent` test left off the list. A mutation (hold of 1 ms) still fails the swipe test.

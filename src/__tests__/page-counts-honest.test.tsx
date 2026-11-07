@@ -74,6 +74,73 @@ describe('Projects counts', () => {
   beforeEach(async () => { await page.viewport(1280, 900) })
   afterEach(async () => { await page.viewport(414, 896) })
 
+  // Hub #170: the stage tally's chips filter the list. a and c share one stage
+  // (grant, Preparing); b is a manuscript.
+  describe('stage tally chips', () => {
+    const prod = (kind: string, kindLabel: string, stage: string, label: string, ord: number) =>
+      [{ id: `pr_${stage}`, kind, kind_label: kindLabel, stage, stage_label: label, kind_sort: 1, stage_ordinal: ord, is_home: 1 }]
+    beforeEach(() => {
+      routes['/api/projects/products'] = { byProject: {
+        proj_a: prod('grant', 'Grant application', 'preparing', 'Preparing', 1),
+        proj_b: prod('manuscript', 'Manuscript', 'drafting', 'Drafting', 2),
+        proj_c: prod('grant', 'Grant application', 'preparing', 'Preparing', 1),
+      }, kinds: [] }
+    })
+    // Sorted by text: the tally lists stages in the order the list meets them.
+    const chips = (h: HTMLElement) => [...h.querySelectorAll<HTMLButtonElement>('[data-testid="pj-tally"] button')].sort((x, y) => (x.textContent ?? '').localeCompare(y.textContent ?? ''))
+    const heroOf = (h: HTMLElement) => h.querySelector('[data-testid="hero-number"]')?.textContent
+
+    it('a chip is a keyboard-reachable button; pressing it filters the list, a second press clears it', async () => {
+      const host = await mount(tree(<Projects />), { ready: (h) => chips(h).length === 2, label: 'chips' })
+      expect(chips(host).map((b) => b.textContent)).toEqual(['Drafting 1', 'Grant application · Preparing 2'])
+      expect(chips(host).every((b) => b.tabIndex === 0 && b.getAttribute('aria-pressed') === 'false')).toBe(true)
+      expect(heroOf(host)).toBe('3open')
+      chips(host)[1].click()
+      await waitFor(() => heroOf(host) === '2open', 'filtered to the grant stage')
+      // The other chip keeps its count and stays pressable; the pressed one is marked.
+      expect(chips(host).map((b) => b.textContent)).toEqual(['Drafting 1', 'Grant application · Preparing 2'])
+      expect(chips(host)[1].getAttribute('aria-pressed')).toBe('true')
+      expect(chips(host)[0].getAttribute('aria-pressed')).toBe('false')
+      chips(host)[1].click()
+      await waitFor(() => heroOf(host) === '3open', 'cleared by a second press')
+    })
+
+    it('the tally total reads the rows under the pick, the chips keep their counts', async () => {
+      const host = await mount(tree(<Projects />), { ready: (h) => chips(h).length === 2, label: 'chips' })
+      chips(host)[0].click()
+      await waitFor(() => heroOf(host) === '1open', 'filtered to Drafting')
+      expect(host.querySelector('[data-testid="pj-tally"] span')?.textContent).toBe('1 project')
+      expect(chips(host).map((b) => b.textContent)).toEqual(['Drafting 1', 'Grant application · Preparing 2'])
+    })
+
+    it('on Pipeline the pick does not narrow the board (no chip is there to clear it)', async () => {
+      const host = await mount(tree(<Projects />), { ready: (h) => chips(h).length === 2, label: 'chips' })
+      chips(host)[0].click()
+      await waitFor(() => heroOf(host) === '1open', 'filtered')
+      ;[...host.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.getAttribute('aria-label') === 'Pipeline' || /Pipeline/.test(b.textContent ?? ''))!.click()
+      await waitFor(() => heroOf(host) === '3open', 'the full list under Pipeline')
+    })
+
+    it('a pick no project holds is dropped from the URL, so it cannot come back', async () => {
+      const host = await mount(tree(<Projects />, pi, '/?stage=manuscript%3Adrafting&category=CLIF'), { ready: (h) => chips(h).length > 0, label: 'chips' })
+      await waitFor(() => chips(host).length === 1 && heroOf(host) === '2open', 'two CLIF projects, no pick')
+      // Let the URL write land (a click in the same tick would read the old query), then go back to All groups.
+      await new Promise((r) => setTimeout(r, 50))
+      ;[...host.querySelectorAll<HTMLButtonElement>('.tk-flt button')].find((b) => /^All groups/.test(b.textContent ?? ''))!.click()
+      await waitFor(() => heroOf(host) === '3open', 'all groups, nothing narrowed')
+      expect(chips(host).every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true)
+    })
+
+    it('counts stay correct under another filter, and a stage nothing holds is no filter', async () => {
+      // ?category=CLIF leaves a and c (both Preparing); b is MN-CCORE.
+      const host = await mount(tree(<Projects />, pi, '/?category=CLIF&stage=manuscript%3Adrafting'), { ready: (h) => chips(h).length > 0, label: 'chips' })
+      expect(chips(host).map((b) => b.textContent)).toEqual(['Grant application · Preparing 2'])
+      // the stale ?stage= matches no chip: the list is not emptied under it
+      expect(heroOf(host)).toBe('2open')
+      expect(chips(host)[0].getAttribute('aria-pressed')).toBe('false')
+    })
+  })
+
   it('heroes the open rows as "open", and the tab says the same', async () => {
     const host = await mount(tree(<Projects />), { ready: (h) => h.querySelector('[data-testid="hero-number"]')?.textContent === '3open', label: 'hero' })
     expect(host.textContent).toContain('2 done hidden')

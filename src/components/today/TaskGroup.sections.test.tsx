@@ -86,6 +86,40 @@ describe('the fold', () => {
     expect(ids(h)).toEqual(['urgent', 'late', 'calm2', 'calm1', 'fresh', 'theirs'])
   })
 
+  it('the window decides what shows without a click (Hub #172); the default is 14 days', async () => {
+    const civil = (d: number) => { const t = new Date(); t.setDate(t.getDate() + d); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}` }
+    const rows = [row('in10', { due_date: civil(10) }), row('in20', { due_date: civil(20) }), row('undated')]
+    const h14 = await mountUi(group('writing', rows))
+    expect(ids(h14)).toEqual(['in10'])
+    const h30 = await mountUi(<TaskGroup skey="writing" tasks={rows} projectsByPid={new Map()} state={state} viewerSlug={ME} windowDays={30} />)
+    expect(ids(h30)).toEqual(['in10', 'in20'])
+  })
+
+  it('a new window re-folds a section that had Show more open', async () => {
+    const far = [row('far1', { due_date: '2099-01-01' }), row('near', { due_date: '2000-01-01' })]
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    mounted.push({ host, root })
+    const ui = (w: number) => (
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter><div className="tk"><TaskGroup skey="writing" tasks={far} projectsByPid={new Map()} state={state} viewerSlug={ME} windowDays={w} /></div></MemoryRouter>
+      </QueryClientProvider>
+    )
+    root.render(ui(14))
+    await waitFor(() => host.querySelector('section'), 'section')
+    ;[...host.querySelectorAll('button')].find((b) => /Show 1 more/.test(b.textContent ?? ''))!.click()
+    await expect.poll(() => ids(host).length).toBe(2)
+    root.render(ui(30))
+    await expect.poll(() => ids(host)).toEqual(['near'])
+  })
+
+  it('a section whose rows are all past the window still shows its "Show N more"', async () => {
+    const h = await mountUi(<TaskGroup skey="writing" tasks={[row('far1', { due_date: '2099-01-01' }), row('far2')]} projectsByPid={new Map()} state={state} viewerSlug={ME} windowDays={7} />)
+    expect(ids(h)).toEqual([])
+    expect([...h.querySelectorAll('button')].some((b) => /Show 2 more/.test(b.textContent ?? ''))).toBe(true)
+  })
+
   it('a section with nothing to fold shows no "Show more"', async () => {
     const h = await mountUi(group('review', [row('a', { priority: 'high' })]))
     expect([...h.querySelectorAll('button')].some((b) => /Show \d+ more/.test(b.textContent ?? ''))).toBe(false)

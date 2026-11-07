@@ -50,6 +50,9 @@ import { PlanSection } from '../../components/today/PlanSection'
 import { currentWeekPlan, sessionWeekPlanned } from '../../lib/weekPlan'
 import { planSectionModel } from '../../lib/planSection'
 import { TaskGroup } from '../../components/today/TaskGroup'
+import { useTodayDueWindow } from '../../hooks/useTodayDueWindow'
+import { TODAY_WINDOW_OPTIONS, toTodayWindow } from '../../lib/taskSections'
+import { FilterLinks } from '../../components/ui/FilterLinks'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { PastThoughts } from '../../components/today/PastThoughts'
 import { DayActivityFeed } from '../../components/today/DayActivityFeed'
@@ -273,6 +276,7 @@ export default function TodayPage() {
   // sections consume it. `useTodayState`, Timeline, Agenda
   // and the overdue rail keep receiving the FULL own open set (Rule 63b: the day
   // plan is synced task state derived from those rows).
+  const [dueWindow, setDueWindow] = useTodayDueWindow()
   // Milestones on/off (Nick 2026-09-17: "we need a filter to turn off
   // milestones"). Per-viewer convenience, so localStorage; default on.
   const [showMilestones, setShowMilestones] = useState<boolean>(() => {
@@ -832,9 +836,9 @@ export default function TodayPage() {
           </section>
         )}
 
-        {/* Everything open, by kind of work. The due-window picker is gone: each
-            section folds its far-out rows itself (Show N more). */}
-        <div className="tk-ph" style={{ marginTop: 6 }}>
+        {/* Everything open, by kind of work. The window picks how far ahead each
+            section shows without a click; the rest waits behind Show N more. */}
+        <div className="tk-ph tk-ph-tasks" style={{ marginTop: 6 }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--sk-t1)', margin: 0, whiteSpace: 'nowrap' }}>Tasks</h2>
           <i className="sk-fade" aria-hidden="true" />
           <button
@@ -849,6 +853,13 @@ export default function TodayPage() {
             <Diamond {...ICON_PROPS} size={11} />
             Milestones
           </button>
+          <FilterLinks
+            className="tk-flt-win"
+            ariaLabel="Show tasks due within"
+            options={TODAY_WINDOW_OPTIONS.map((d) => ({ value: String(d), label: `${d}d`, title: `Show tasks due within ${d} days; the rest wait behind Show more` }))}
+            value={String(dueWindow)}
+            onChange={(v) => setDueWindow(toTodayWindow(v))}
+          />
           <span className="tk-hintx today-section-hint">click to expand · pin or drag the grip to plan</span>
         </div>
 
@@ -864,6 +875,7 @@ export default function TodayPage() {
               state={state}
               stepsByParent={stepsByParent}
               viewerSlug={userSlug}
+              windowDays={dueWindow}
               loading={skey === 'others' && othersQuery.isPending}
             />
           ))

@@ -483,6 +483,11 @@ describe('The Plan section cards', () => {
     const st = state({}, { done: { task_a: true }, uncheck: (id: string) => { reopened.push(id) } })
     const host = await mount(section(stored(), [task('task_a')], st))
     const done = host.querySelector('[data-testid="plan-done"]')!
+    // Folded until opened: the header carries the count, the rows are not drawn.
+    expect(done.querySelector('.tk-plan-donehd')?.getAttribute('aria-expanded')).toBe('false')
+    expect(done.querySelector('.tk-plan-donehd .tk-cnt')?.textContent).toBe('1')
+    expect(done.querySelector('.tk-card')).toBeNull()
+    await click(done.querySelector('.tk-plan-donehd'))
     expect(done.querySelector('.tk-card.tk-done')).not.toBeNull()
     expect(done.querySelector('[data-testid="pick-step"]')).toBeNull()
     expect(done.querySelector('[data-testid="pick-packet-tag"]')).toBeNull()
