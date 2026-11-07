@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRealtimeBus } from '../lib/realtimeBus'
-import { refetchesOnLabChange } from '../lib/realtimeRefetch'
+import { LAB_REFETCH_WINDOW_MS, coalesceCalls, refetchesOnLabChange } from '../lib/realtimeRefetch'
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
@@ -10,11 +10,19 @@ export function useRealtimeSync() {
   // useCallback so this has a stable identity across renders — otherwise
   // every effect below that references it would need to re-subscribe on
   // every render just because a new function was created.
-  const invalidateAll = useCallback(() => {
+  const coalesced = useMemo(() => coalesceCalls(() => {
     queryClient.invalidateQueries({
       predicate: refetchesOnLabChange,
     })
-  }, [queryClient])
+  }, LAB_REFETCH_WINDOW_MS), [queryClient])
+  const invalidateAll = useCallback(() => coalesced.call(), [coalesced])
+  useEffect(() => () => coalesced.cancel(), [coalesced])
+  // One write reaches this tab twice: the socket at once, then the version poll
+  // up to 25 s later. Prod, 3 days to 2026-11-06: 830 version bumps, ~1,570 task
+  // list reads. The socket having spoken since the last version change means the
+  // poll's change is already refetched (PB #9033). A socket that is down never
+  // sets this, so the poll still carries every change on its own.
+  const socketSpokeRef = useRef(false)
 
   // Phase 2: WebSocket via Durable Object (instant, ~1s). Shares the single
   // realtimeBus socket with presence/typing/intent hooks.
@@ -31,6 +39,7 @@ export function useRealtimeSync() {
         // invalidateQueries({queryKey:['data']}) matched no real query key;
         // call with no filter instead so every cache entry is refreshed.
         if (msg.type === 'data') {
+          socketSpokeRef.current = true
           invalidateAll()
         } else {
           queryClient.invalidateQueries({ queryKey: [msg.type] })
@@ -68,7 +77,8 @@ export function useRealtimeSync() {
 
   useEffect(() => {
     if (data && data !== lastVersionRef.current && lastVersionRef.current !== '0') {
-      invalidateAll()
+      if (socketSpokeRef.current) socketSpokeRef.current = false
+      else invalidateAll()
     }
     if (data) {
       lastVersionRef.current = data

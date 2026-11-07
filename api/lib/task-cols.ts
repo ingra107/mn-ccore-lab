@@ -32,8 +32,15 @@ export { TASK_PLAIN_COLS };
 // first step of the slug spoof (api/lib/project-slug.ts). The subquery now
 // also matches a legacy slug-stored value, so a visible project always
 // resolves to its slug; anything else (hidden, or no such project) is NULL.
+// 2026-11-07 (PB #9033): two lookups, the TASK_MEETING_REF_SQL shape, not
+// `p.id = x OR p.slug = x`. That OR read ~240 rows per task on a scoped handle
+// (the live 220-task Today list read 53,617 rows for this one column), since the
+// only slug index is partial. A `proj_` value skips the slug lookup: no valid slug
+// has that shape (schema-v121), and the guard saves a table scan per hidden task.
 const PROJECT_ID_AS_SLUG =
-  '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id';
+  "COALESCE((SELECT p.slug FROM projects p WHERE p.id = t.project_id), "
+  + "CASE WHEN lower(substr(t.project_id, 1, 5)) <> 'proj_' "
+  + 'THEN (SELECT p.slug FROM projects p WHERE p.slug = t.project_id LIMIT 1) END) AS project_id';
 
 export const TASK_SELECT_COLS = [
   ...TASK_PLAIN_COLS.map((c) => `t.${c}`),

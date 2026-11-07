@@ -47,10 +47,10 @@ describe('TASK_SELECT_COLS — project_id resolved to slug at the read boundary'
   // hidden project's typed id (the first step of the slug spoof).
   it('aliases a slug subquery (by id or legacy slug) AS project_id, with no raw fallback', () => {
     expect(TASK_SELECT_COLS).toContain('AS project_id')
-    expect(TASK_SELECT_COLS).toContain(
-      '(SELECT p.slug FROM projects p WHERE p.id = t.project_id OR p.slug = t.project_id LIMIT 1) AS project_id',
-    )
-    expect(TASK_SELECT_COLS).not.toContain('COALESCE((SELECT p.slug')
+    expect(TASK_SELECT_COLS).toContain('(SELECT p.slug FROM projects p WHERE p.id = t.project_id)')
+    expect(TASK_SELECT_COLS).toContain('(SELECT p.slug FROM projects p WHERE p.slug = t.project_id LIMIT 1)')
+    // The fallback ends in the slug lookup, never in the raw stored value.
+    expect(TASK_SELECT_COLS).not.toMatch(/,\s*t\.project_id\s*\)\s*AS project_id/)
   })
 
   it('never selects the raw t.project_id column on its own (would leak the typed PK)', () => {

@@ -157,7 +157,10 @@ function meetingRule(v: ScopedViewer): string {
 function projectRule(v: ScopedViewer): string | null {
   if (v.kind === 'person' && v.allProjects) return null
   if (v.kind !== 'person') return `COALESCE(projects.category, '') <> 'Peripheral Brain'`
-  return `projects.id IN (SELECT pm.project_id FROM main.project_members pm WHERE pm.member_slug = ${sqlList([v.slug])})`
+  // Correlated on project_members' primary key, not an IN list. The list form
+  // re-read every membership (195 for Nick) once per reference to this CTE, and
+  // a statement copies the CTE into each subquery that names it (PB #9033).
+  return `EXISTS (SELECT 1 FROM main.project_members pm WHERE pm.project_id = projects.id AND pm.member_slug = ${sqlList([v.slug])})`
 }
 
 /** True when project rows are filtered for this viewer (every rule below keys on it). */
@@ -172,11 +175,18 @@ const projectsScoped = (v: ScopedViewer) => projectRule(v) !== null
 // rows visible to whoever can see the slug's own project (the slug-spoof,
 // api/lib/project-slug.ts). The write paths and schema-v121 refuse such a
 // slug; this keeps a row that predates them inert.
-const VISIBLE_PROJECT_REFS = '(SELECT id FROM projects UNION ALL SELECT slug FROM projects WHERE slug IS NOT NULL '
+const VISIBLE_PROJECT_SLUGS = '(SELECT slug FROM projects WHERE slug IS NOT NULL '
   + "AND lower(substr(slug, 1, 5)) <> 'proj_' AND slug NOT IN (SELECT id FROM main.projects))"
 
-/** `col` names a visible project. NULL is not a project reference: callers decide. */
-const inVisibleProject = (col: string) => `${col} IN ${VISIBLE_PROJECT_REFS}`
+/**
+ * `col` names a visible project. NULL is not a project reference: callers decide.
+ * The id arm is one primary-key probe per row. The slug arm is the list above,
+ * built once and only when a row gets that far: a `proj_` value cannot match it,
+ * because the list drops every slug of that shape, so a typed reference (every
+ * tasks.project_id on prod, 2026-11-07) never builds it. PB #9033.
+ */
+const inVisibleProject = (col: string) => `(EXISTS (SELECT 1 FROM projects vp WHERE vp.id = ${col}) `
+  + `OR (lower(substr(${col}, 1, 5)) <> 'proj_' AND ${col} IN ${VISIBLE_PROJECT_SLUGS}))`
 
 /**
  * A task is visible when its project is, or when it names the viewer: the
@@ -222,18 +232,27 @@ function taskRule(v: ScopedViewer): string | null {
 function meetingTaskArm(v: ScopedViewer): string {
   const arms = meetingArms(v).filter((a) => a.arm === 'owner' || a.arm === 'attendee')
   if (arms.length === 0) return '0'
-  const mine = `(SELECT meetings.id AS mid, meetings.source_id AS sid FROM main.meetings AS meetings WHERE ${arms.map((a) => a.sql).join(' OR ')})`
+  const anyArm = `(${arms.map((a) => a.sql).join(' OR ')})`
+  // One meeting by each indexed key, so the rule reads a row per probe rather
+  // than every meeting per reference (PB #9033).
+  const onMeeting = (key: string) => `EXISTS (SELECT 1 FROM main.meetings AS meetings WHERE meetings.${key} = tasks.meeting_id AND ${anyArm})`
   // Peripheral Brain projects stay private to Nick (their only member), even
   // for a task he linked to a meeting others attended; a ref that names no
   // project reaches no one by this arm either.
+  // projects.slug has only a partial index (live rows), so `p.id = x OR p.slug = x`
+  // scanned the table per task. The slug spellings are lists, built once.
   const notPrivate = `(COALESCE(tasks.project_id, '') = '' OR (`
-    + `EXISTS (SELECT 1 FROM main.projects p WHERE p.id = tasks.project_id OR p.slug = tasks.project_id) `
-    + `AND NOT EXISTS (SELECT 1 FROM main.projects p WHERE (p.id = tasks.project_id OR p.slug = tasks.project_id) AND p.category = 'Peripheral Brain')))`
-  return `(tasks.meeting_id IS NOT NULL AND ${notPrivate} AND (tasks.meeting_id IN (SELECT mid FROM ${mine}) OR tasks.meeting_id IN (SELECT sid FROM ${mine} WHERE sid IS NOT NULL)))`
+    + `(EXISTS (SELECT 1 FROM main.projects p WHERE p.id = tasks.project_id) `
+    + `OR tasks.project_id IN (SELECT p.slug FROM main.projects p WHERE p.slug IS NOT NULL)) `
+    + `AND tasks.project_id NOT IN (SELECT p.id FROM main.projects p WHERE p.category = 'Peripheral Brain' `
+    + `UNION ALL SELECT p.slug FROM main.projects p WHERE p.category = 'Peripheral Brain' AND p.slug IS NOT NULL)))`
+  return `(tasks.meeting_id IS NOT NULL AND (${onMeeting('id')} OR ${onMeeting('source_id')}) AND ${notPrivate})`
 }
 
-/** A visible task's id. */
-const VISIBLE_TASK_IDS = '(SELECT id FROM tasks)'
+/** `col` names a visible task (one primary-key probe, not the whole visible list). */
+const inVisibleTask = (col: string) => `EXISTS (SELECT 1 FROM tasks vt WHERE vt.id = ${col})`
+/** `col` names a visible meeting. */
+const inVisibleMeeting = (col: string) => `EXISTS (SELECT 1 FROM meetings vm WHERE vm.id = ${col})`
 
 /** AND the non-null parts; null when nothing restricts (every part was null). */
 function all(parts: (string | null)[]): string | null {
@@ -257,7 +276,7 @@ function byProject(table: HubTable, col: string, key: string | readonly string[]
 function byTask(table: HubTable, col: string): Scope {
   return {
     kind: 'scoped', key: 'id', dependsOn: ['tasks'],
-    where: (v) => (projectsScoped(v) ? `${table}.${col} IN ${VISIBLE_TASK_IDS}` : null),
+    where: (v) => (projectsScoped(v) ? inVisibleTask(`${table}.${col}`) : null),
   }
 }
 
@@ -267,10 +286,10 @@ function byTask(table: HubTable, col: string): Scope {
  * Meetings are scoped for every viewer, so there is always at least one arm.
  */
 function entityVisible(v: ScopedViewer, typeCol: string, idCol: string, extra: Record<string, string> = {}): string {
-  const arms = [`WHEN 'meeting' THEN ${idCol} IN (SELECT id FROM meetings)`]
+  const arms = [`WHEN 'meeting' THEN ${inVisibleMeeting(idCol)}`]
   if (projectsScoped(v)) {
     arms.push(`WHEN 'project' THEN ${inVisibleProject(idCol)}`)
-    arms.push(`WHEN 'task' THEN ${idCol} IN ${VISIBLE_TASK_IDS}`)
+    arms.push(`WHEN 'task' THEN ${inVisibleTask(idCol)}`)
     for (const [type, pred] of Object.entries(extra)) arms.push(`WHEN '${type}' THEN ${pred}`)
   }
   return `(CASE COALESCE(${typeCol}, '') ${arms.join(' ')} ELSE 1 END)`
@@ -445,7 +464,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   watchlist: {
     kind: 'scoped', key: 'id', dependsOn: ALL_PARENTS,
     where: (v) => entityVisible(v, 'watchlist.entity_type', 'watchlist.entity_id', {
-      action_item: `watchlist.entity_id IN ${VISIBLE_TASK_IDS}`,
+      action_item: inVisibleTask('watchlist.entity_id'),
     }),
   },
   // A reaction on an activity entry (a project update or a comment) follows it.
@@ -457,7 +476,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   links: {
     kind: 'scoped', key: 'id', dependsOn: ['projects', 'tasks'],
     where: (v) => (projectsScoped(v)
-      ? `(CASE links.owner_table WHEN 'projects' THEN ${inVisibleProject('links.owner_id')} WHEN 'tasks' THEN links.owner_id IN ${VISIBLE_TASK_IDS} ELSE 0 END)`
+      ? `(CASE links.owner_table WHEN 'projects' THEN ${inVisibleProject('links.owner_id')} WHEN 'tasks' THEN ${inVisibleTask('links.owner_id')} ELSE 0 END)`
       : null),
   },
   // activity_log: a meeting's, project's or task's rows follow it, and PB
@@ -468,12 +487,12 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   activity_log: {
     kind: 'scoped', key: 'id', dependsOn: ALL_PARENTS,
     where: (v) => {
-      const arms = [`WHEN 'meeting' THEN activity_log.related_id IN (SELECT id FROM meetings)`]
+      const arms = [`WHEN 'meeting' THEN ${inVisibleMeeting('activity_log.related_id')}`]
       if (projectsScoped(v)) {
         arms.push(`WHEN 'project' THEN ${inVisibleProject('activity_log.related_id')}`)
         arms.push(`WHEN 'projects' THEN ${inVisibleProject('activity_log.related_id')}`)
-        arms.push(`WHEN 'task' THEN activity_log.related_id IN ${VISIBLE_TASK_IDS}`)
-        arms.push(`WHEN 'tasks' THEN activity_log.related_id IN ${VISIBLE_TASK_IDS}`)
+        arms.push(`WHEN 'task' THEN ${inVisibleTask('activity_log.related_id')}`)
+        arms.push(`WHEN 'tasks' THEN ${inVisibleTask('activity_log.related_id')}`)
       }
       return all([
         v.kind === 'person' && v.pi ? null : `COALESCE(activity_log.type, '') NOT IN ('pb_session', 'sync')`,
@@ -536,7 +555,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
   artifacts: {
     kind: 'scoped', key: 'id', dependsOn: ['projects', 'tasks'],
     where: (v) => (projectsScoped(v)
-      ? `(artifacts.visibility = 'public' OR ((artifacts.task_id IS NULL OR artifacts.task_id IN ${VISIBLE_TASK_IDS}) `
+      ? `(artifacts.visibility = 'public' OR ((artifacts.task_id IS NULL OR ${inVisibleTask('artifacts.task_id')}) `
         + `AND (artifacts.project_id IS NULL OR ${inVisibleProject('artifacts.project_id')})))`
       : null),
   },
@@ -553,7 +572,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
     kind: 'scoped', key: 'id', dependsOn: ['projects', 'tasks'],
     where: (v) => (projectsScoped(v)
       ? `((ai_requests.project_slug IS NULL OR ${inVisibleProject('ai_requests.project_slug')}) `
-        + `AND (COALESCE(ai_requests.source_type, '') <> 'task' OR ai_requests.source_id IN ${VISIBLE_TASK_IDS}))`
+        + `AND (COALESCE(ai_requests.source_type, '') <> 'task' OR ${inVisibleTask('ai_requests.source_id')}))`
       : null),
   },
   commitments: {
@@ -562,7 +581,7 @@ export const TABLE_SCOPE: Record<HubTable, Scope> = {
       // commitments.project is free text; '' is how a writer says "no
       // project", so it reads as NULL, not as a reference nobody can see.
       ? `((NULLIF(commitments.project, '') IS NULL OR ${inVisibleProject('commitments.project')}) `
-        + `AND (commitments.task_id IS NULL OR commitments.task_id IN ${VISIBLE_TASK_IDS}))`
+        + `AND (commitments.task_id IS NULL OR ${inVisibleTask('commitments.task_id')}))`
       : null),
   },
 
