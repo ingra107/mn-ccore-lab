@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest'
 import {
   SECTION_ORDER, SECTION_LABEL, WORK_KINDS, bucketBySection, isAlwaysVisible, isHandSorted, isNewToViewer,
   isPbTask, isSectionKey, isWorkKind, orderSection, othersSummary, sectionForTask, sortTarget,
+  toTodayWindow, TODAY_WINDOW_DEFAULT,
   type SectionCtx,
 } from '../taskSections'
 import type { TaskRow } from '../api'
@@ -267,6 +268,49 @@ describe('isAlwaysVisible: the fold rule (today = 2026-11-03, window 7 days)', (
   it('a finished row folds like any other on Today, and stays in My Tasks lists (keepDone)', () => {
     expect(vis({ status: 'done', due_date: '2027-03-01' })).toBe(false)
     expect(vis({ status: 'done', due_date: '2027-03-01' }, { keepDone: true })).toBe(true)
+  })
+})
+
+describe("isAlwaysVisible: Today's due window (Hub #172, today = 2026-11-03)", () => {
+  const base = { viewerSlug: ME, isPlanned: () => false, today: '2026-11-03' }
+  const vis = (extra: Record<string, unknown>, windowDays: number) =>
+    isAlwaysVisible(task(extra), { ...base, windowDays })
+
+  it('the window moves the edge: 20 days out folds at 7 and 14, shows at 30', () => {
+    const due = { due_date: '2026-11-23' }
+    expect(vis(due, 7)).toBe(false)
+    expect(vis(due, 14)).toBe(false)
+    expect(vis(due, 30)).toBe(true)
+  })
+  it('the edge day is in, the day after is out (14)', () => {
+    expect(vis({ due_date: '2026-11-17' }, 14)).toBe(true)
+    expect(vis({ due_date: '2026-11-18' }, 14)).toBe(false)
+  })
+  it('overdue and due today show at every window', () => {
+    for (const w of [7, 14, 30]) {
+      expect(vis({ due_date: '2026-10-01' }, w)).toBe(true)
+      expect(vis({ due_date: '2026-11-03' }, w)).toBe(true)
+    }
+  })
+  it('an undated row folds at every window (it waits behind Show more)', () => {
+    for (const w of [7, 14, 30]) expect(vis({ due_date: null }, w)).toBe(false)
+  })
+  it('all past the window folds; a hard deadline inside the window still shows', () => {
+    expect(vis({ due_date: '2026-12-25' }, 14)).toBe(false)
+    expect(vis({ due_date: '2026-12-25', deadline: '2026-11-15' }, 14)).toBe(true)
+  })
+  it('no windowDays keeps the 7-day fold (My Tasks lanes)', () => {
+    expect(isAlwaysVisible(task({ due_date: '2026-11-12' }), base)).toBe(false)
+  })
+})
+
+describe('toTodayWindow', () => {
+  it('reads 7, 14 and 30 (a number or the stored string); anything else is 14', () => {
+    expect(toTodayWindow('7')).toBe(7)
+    expect(toTodayWindow(30)).toBe(30)
+    expect(toTodayWindow('14')).toBe(14)
+    for (const bad of ['all', '', '10', null, undefined, {}, NaN]) expect(toTodayWindow(bad)).toBe(TODAY_WINDOW_DEFAULT)
+    expect(TODAY_WINDOW_DEFAULT).toBe(14)
   })
 })
 
